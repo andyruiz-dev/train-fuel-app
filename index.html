@@ -295,74 +295,105 @@ function persist() {
 
 // ---- exercise library ----
 const BUILTIN_EXERCISES = [
-  // ---- push ----
-  { id: "knee-pushup", name: "Knee push-up", muscle_group: "push", equipment: "bodyweight", cue: "Straight line knees-to-shoulders, chest to floor." },
+  // ---- push: wall -> incline -> floor -> rings ----
+  { id: "wall-pushup", name: "Wall push-up", muscle_group: "push", equipment: "bodyweight", cue: "Hands on wall at shoulder height, straight line body." },
+  { id: "incline-pushup-high", name: "Incline push-up (high)", muscle_group: "push", equipment: "bodyweight", cue: "Hands on a counter/high surface, full range." },
   { id: "incline-pushup", name: "Incline push-up", muscle_group: "push", equipment: "bodyweight", cue: "Hands on a bench/step, full range of motion." },
+  { id: "knee-pushup", name: "Knee push-up", muscle_group: "push", equipment: "bodyweight", cue: "Straight line knees-to-shoulders, chest to floor." },
   { id: "pushup", name: "Push-up", muscle_group: "push", equipment: "bodyweight", cue: "Elbows ~45°, brace core, chest to floor." },
   { id: "diamond-pushup", name: "Diamond push-up", muscle_group: "push", equipment: "bodyweight", cue: "Hands under chest, elbows track back." },
+  { id: "decline-pushup", name: "Decline push-up", muscle_group: "push", equipment: "bodyweight", cue: "Feet elevated on a chair/step, more load up top." },
   { id: "archer-pushup", name: "Archer push-up", muscle_group: "push", equipment: "bodyweight", cue: "Shift weight to one side each rep, other arm stays long." },
   { id: "pseudo-planche-pushup", name: "Pseudo planche push-up", muscle_group: "push", equipment: "bodyweight", cue: "Hands by hips, lean forward past your fingertips." },
+  { id: "one-arm-pushup-assisted", name: "One-arm push-up (assisted)", muscle_group: "push", equipment: "bodyweight", cue: "Other hand lightly on a ball/step for balance only." },
   { id: "pike-pushup", name: "Pike push-up", muscle_group: "push", equipment: "bodyweight", cue: "Hips high, crown of head toward floor." },
   { id: "decline-pike-pushup", name: "Decline pike push-up", muscle_group: "push", equipment: "bodyweight", cue: "Feet elevated, more load on shoulders." },
+  { id: "wall-handstand-hold", name: "Wall handstand hold", muscle_group: "push", equipment: "bodyweight", cue: "Chest or back to wall, brace and hold." },
   { id: "handstand-pushup", name: "Wall handstand push-up", muscle_group: "push", equipment: "bodyweight", cue: "Chest to wall, controlled descent, press to lockout." },
+  { id: "ring-pushup-easy", name: "Ring push-up (feet forward)", muscle_group: "push", equipment: "rings", cue: "Body angled upright — easier version to learn ring stability." },
   { id: "ring-pushup", name: "Ring push-up", muscle_group: "push", equipment: "rings", cue: "Elbows at 45°, turn rings out at lockout." },
-  { id: "ring-dip", name: "Ring dip", muscle_group: "push", equipment: "rings", cue: "Control the bottom, avoid shoulder roll." },
   { id: "ring-archer-pushup", name: "Ring archer push-up", muscle_group: "push", equipment: "rings", cue: "One ring stays high while the other descends." },
+  { id: "ring-typewriter-pushup", name: "Ring typewriter push-up", muscle_group: "push", equipment: "rings", cue: "Stay low, shift side to side without rising." },
+  { id: "ring-dip-supported", name: "Supported ring dip", muscle_group: "push", equipment: "rings", cue: "Feet on floor taking some weight, build dip control." },
+  { id: "ring-dip", name: "Ring dip", muscle_group: "push", equipment: "rings", cue: "Control the bottom, avoid shoulder roll." },
+  { id: "ring-dip-weighted", name: "Weighted ring dip", muscle_group: "push", equipment: "rings", cue: "Add load once bodyweight dips are smooth for reps." },
   { id: "db-floor-press", name: "Dumbbell floor press", muscle_group: "push", equipment: "dumbbell", cue: "Upper arms touch floor lightly, press to lockout." },
   { id: "db-overhead-press", name: "Dumbbell overhead press", muscle_group: "push", equipment: "dumbbell", cue: "Brace core, press straight overhead, avoid arching." },
   { id: "push-board-press", name: "Push board press", muscle_group: "push", equipment: "push board", cue: "Full lockout, controlled tempo down." },
 
-  // ---- pull ----
+  // ---- pull: dead hang -> bar -> rings ----
   { id: "dead-hang", name: "Dead hang", muscle_group: "pull", equipment: "bar", cue: "Shoulders engaged, don't fully relax into the joint." },
+  { id: "active-hang", name: "Active hang", muscle_group: "pull", equipment: "bar", cue: "Pull shoulder blades down and back, hold." },
   { id: "scap-pull", name: "Scapular pull-up", muscle_group: "pull", equipment: "bar", cue: "Pull shoulder blades down without bending elbows." },
   { id: "band-assisted-pullup", name: "Band-assisted pull-up", muscle_group: "pull", equipment: "band", cue: "Band under knee/foot, full range each rep." },
   { id: "negative-pullup", name: "Negative pull-up", muscle_group: "pull", equipment: "bar", cue: "Jump to top, lower for a slow 4-5 count." },
   { id: "pullup", name: "Pull-up", muscle_group: "pull", equipment: "bar", cue: "Chin over bar, controlled descent." },
   { id: "chinup", name: "Chin-up", muscle_group: "pull", equipment: "bar", cue: "Underhand grip, drive elbows down." },
   { id: "archer-pullup", name: "Archer pull-up", muscle_group: "pull", equipment: "bar", cue: "Pull toward one hand, other arm stays extended." },
+  { id: "typewriter-pullup", name: "Typewriter pull-up", muscle_group: "pull", equipment: "bar", cue: "Hold at top, shift side to side without dropping." },
+  { id: "one-arm-pullup-assisted", name: "One-arm pull-up (band assisted)", muscle_group: "pull", equipment: "band", cue: "Band takes most of the load on the free side." },
+  { id: "ring-row-easy", name: "Ring row (feet forward)", muscle_group: "pull", equipment: "rings", cue: "More upright body angle — easier version." },
   { id: "ring-row", name: "Ring row", muscle_group: "pull", equipment: "rings", cue: "Body straight, pull chest to hands." },
+  { id: "ring-row-feet-elevated", name: "Ring row (feet elevated)", muscle_group: "pull", equipment: "rings", cue: "Feet on a bench — more horizontal, more load." },
+  { id: "ring-pullup-assisted", name: "Ring pull-up (feet supported)", muscle_group: "pull", equipment: "rings", cue: "Feet lightly touching floor, build toward full ring pull-up." },
+  { id: "ring-pullup", name: "Ring pull-up", muscle_group: "pull", equipment: "rings", cue: "Rings add instability — brace through the whole pull." },
+  { id: "ring-archer-pullup", name: "Ring archer pull-up", muscle_group: "pull", equipment: "rings", cue: "Advanced — one arm dominant, other stays extended." },
   { id: "inverted-row", name: "Inverted row", muscle_group: "pull", equipment: "bar", cue: "Body straight under a low bar, pull chest up." },
   { id: "band-pull-apart", name: "Band pull-apart", muscle_group: "pull", equipment: "band", cue: "Squeeze shoulder blades, slow return." },
   { id: "db-single-arm-row", name: "Single-arm dumbbell row", muscle_group: "pull", equipment: "dumbbell", cue: "Flat back, pull elbow past hip, no torso rotation." },
   { id: "db-renegade-row", name: "Renegade row", muscle_group: "pull", equipment: "dumbbell", cue: "Plank position, minimize hip sway as you row." },
   { id: "weighted-pullup", name: "Weighted pull-up", muscle_group: "pull", equipment: "dumbbell", cue: "Dumbbell between feet or on a belt, full range." },
 
-  // ---- legs ----
+  // ---- legs: wall sit -> bodyweight -> pistol -> rings-assisted ----
+  { id: "wall-sit", name: "Wall sit", muscle_group: "legs", equipment: "bodyweight", cue: "Thighs parallel to floor, back flat against wall." },
+  { id: "box-squat-high", name: "Box squat (high box)", muscle_group: "legs", equipment: "bodyweight", cue: "Sit back to the box, stand tall each rep." },
   { id: "bodyweight-squat", name: "Bodyweight squat", muscle_group: "legs", equipment: "bodyweight", cue: "Knees track toes, hips back and down." },
   { id: "split-squat", name: "Split squat", muscle_group: "legs", equipment: "bodyweight", cue: "Torso upright, controlled descent." },
   { id: "bulgarian-split-squat", name: "Bulgarian split squat", muscle_group: "legs", equipment: "bodyweight", cue: "Torso upright, front knee tracks toe." },
-  { id: "assisted-pistol", name: "Assisted pistol squat", muscle_group: "legs", equipment: "bodyweight", cue: "Hold a support, lower under control on one leg." },
+  { id: "shrimp-squat", name: "Shrimp squat", muscle_group: "legs", equipment: "bodyweight", cue: "Back knee toward floor, stay controlled." },
+  { id: "ring-assisted-pistol", name: "Ring-assisted pistol squat", muscle_group: "legs", equipment: "rings", cue: "Hold rings lightly for balance, not to pull yourself up." },
   { id: "box-pistol", name: "Box pistol squat", muscle_group: "legs", equipment: "bodyweight", cue: "Sit to a box on one leg, stand without the other foot helping." },
   { id: "pistol-squat", name: "Pistol squat", muscle_group: "legs", equipment: "bodyweight", cue: "Full range on one leg, other leg stays extended." },
   { id: "jump-squat", name: "Jump squat", muscle_group: "legs", equipment: "bodyweight", cue: "Soft landing, immediately reset stance." },
   { id: "db-goblet-squat", name: "Goblet squat", muscle_group: "legs", equipment: "dumbbell", cue: "Hold weight at chest, elbows inside knees at bottom." },
   { id: "db-lunge", name: "Dumbbell lunge", muscle_group: "legs", equipment: "dumbbell", cue: "Step long enough that front shin stays vertical." },
   { id: "db-step-up", name: "Dumbbell step-up", muscle_group: "legs", equipment: "dumbbell", cue: "Drive through the heel of the working leg." },
+  { id: "db-weighted-pistol", name: "Weighted pistol squat", muscle_group: "legs", equipment: "dumbbell", cue: "Hold a dumbbell at chest once bodyweight pistols are smooth." },
 
   // ---- hinge ----
   { id: "glute-bridge", name: "Glute bridge", muscle_group: "hinge", equipment: "bodyweight", cue: "Squeeze glutes at top, avoid overarching low back." },
   { id: "single-leg-glute-bridge", name: "Single-leg glute bridge", muscle_group: "hinge", equipment: "bodyweight", cue: "Hips level throughout, squeeze at top." },
+  { id: "hip-thrust-bw", name: "Bodyweight hip thrust", muscle_group: "hinge", equipment: "bodyweight", cue: "Shoulders on a bench, drive hips up." },
   { id: "single-leg-rdl", name: "Single-leg RDL", muscle_group: "hinge", equipment: "bodyweight", cue: "Hinge at hip, flat back, slow eccentric." },
   { id: "good-morning-bw", name: "Bodyweight good morning", muscle_group: "hinge", equipment: "bodyweight", cue: "Hinge from hips, soft knees, chest stays proud." },
-  { id: "db-rdl", name: "Dumbbell RDL", muscle_group: "hinge", equipment: "dumbbell", cue: "Bar/dumbbells close to legs, hinge, flat back." },
+  { id: "nordic-curl-banded", name: "Banded nordic curl", muscle_group: "hinge", equipment: "band", cue: "Band assists the lower — lower as slow as you control." },
+  { id: "nordic-curl", name: "Nordic curl", muscle_group: "hinge", equipment: "bodyweight", cue: "Anchor ankles, lower under control as far as possible." },
+  { id: "db-rdl", name: "Dumbbell RDL", muscle_group: "hinge", equipment: "dumbbell", cue: "Dumbbells close to legs, hinge, flat back." },
   { id: "db-deadlift", name: "Dumbbell deadlift", muscle_group: "hinge", equipment: "dumbbell", cue: "Brace before lifting, drive through heels." },
   { id: "db-swing", name: "Dumbbell swing", muscle_group: "hinge", equipment: "dumbbell", cue: "Hip hinge power, not a squat — arms are just along for the ride." },
 
-  // ---- core ----
+  // ---- core: floor -> hanging -> rings ----
   { id: "dead-bug", name: "Dead bug", muscle_group: "core", equipment: "bodyweight", cue: "Low back stays pressed to floor throughout." },
-  { id: "hollow-hold", name: "Hollow body hold", muscle_group: "core", equipment: "bodyweight", cue: "Low back pressed to floor." },
+  { id: "hollow-hold-tucked", name: "Hollow hold (tucked)", muscle_group: "core", equipment: "bodyweight", cue: "Knees tucked, low back pressed down — easier lever." },
+  { id: "hollow-hold", name: "Hollow body hold", muscle_group: "core", equipment: "bodyweight", cue: "Low back pressed to floor, legs extended." },
   { id: "plank", name: "Plank", muscle_group: "core", equipment: "bodyweight", cue: "Straight line head to heels, ribs down." },
+  { id: "plank-shoulder-tap", name: "Plank shoulder taps", muscle_group: "core", equipment: "bodyweight", cue: "Minimize hip rotation with each tap." },
   { id: "side-plank", name: "Side plank", muscle_group: "core", equipment: "bodyweight", cue: "Hips stacked and lifted, don't let them sag." },
   { id: "hanging-knee-raise", name: "Hanging knee raise", muscle_group: "core", equipment: "bar", cue: "Avoid swinging, control the descent." },
   { id: "hanging-leg-raise", name: "Hanging leg raise", muscle_group: "core", equipment: "bar", cue: "Legs straight, raise to at least parallel." },
+  { id: "toes-to-bar", name: "Toes to bar", muscle_group: "core", equipment: "bar", cue: "Control the swing, touch bar with control." },
   { id: "ring-plank", name: "Ring plank", muscle_group: "core", equipment: "rings", cue: "Rings add instability — brace harder than a floor plank." },
+  { id: "ring-pike", name: "Ring pike", muscle_group: "core", equipment: "rings", cue: "Feet in rings, pike hips up keeping legs straight." },
+  { id: "ring-lsit-tucked", name: "Ring L-sit (tucked)", muscle_group: "core", equipment: "rings", cue: "Knees tucked to chest — easier lever than full L-sit." },
   { id: "ring-lsit", name: "Ring L-sit", muscle_group: "core", equipment: "rings", cue: "Press rings down, legs straight out in front." },
+  { id: "ring-front-lever-tuck", name: "Tuck front lever", muscle_group: "core", equipment: "rings", cue: "Knees tucked tight, body horizontal, hollow the chest." },
   { id: "db-weighted-situp", name: "Weighted sit-up", muscle_group: "core", equipment: "dumbbell", cue: "Hold weight at chest, control the descent." },
   { id: "band-pallof-press", name: "Pallof press", muscle_group: "core", equipment: "band", cue: "Resist rotation — press straight out and back." },
 
   // ---- ruck ----
   { id: "ruck-walk", name: "Ruck walk", muscle_group: "ruck", equipment: "weighted pack", cue: "Upright posture, steady pace." },
   { id: "ruck-stairs", name: "Ruck stairs", muscle_group: "ruck", equipment: "weighted pack", cue: "Controlled pace, drive through the whole foot." },
+  { id: "ruck-lunges", name: "Ruck walking lunges", muscle_group: "ruck", equipment: "weighted pack", cue: "Pack adds load — keep the same lunge form as unweighted." },
   { id: "weighted-vest-carry", name: "Weighted vest carry", muscle_group: "ruck", equipment: "weighted vest", cue: "Steady breathing, tall posture." },
   { id: "db-farmer-carry", name: "Farmer carry", muscle_group: "ruck", equipment: "dumbbell", cue: "Shoulders back, don't let the weight pull you forward." },
   { id: "db-suitcase-carry", name: "Suitcase carry", muscle_group: "ruck", equipment: "dumbbell", cue: "Resist leaning away from the loaded side." },
@@ -482,7 +513,7 @@ Keep it realistic: 3-4 training days per week, a deload roughly every 4-6 weeks.
 
 async function generateTodayWorkout(program) {
   const recentNames = (state.logs || []).slice(-15).map(l => l.exercise).join(", ");
-  const availableList = exercises.map(e => `${e.name} (${e.muscle_group})`).join("; ");
+  const availableList = exercises.map(e => `${e.name} (${e.muscle_group}, ${e.equipment || "bodyweight"})`).join("; ");
   const levels = state.progressLevels;
   const system = `You pick specific exercises from a provided library to fill a day's
 muscle-group slots, prioritizing variety from recent sessions while keeping the
