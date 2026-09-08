@@ -160,6 +160,7 @@
 
     <div class="card">
       <h2>Today's workout</h2>
+      <div id="recoveryCautionNote"></div>
       <div id="todayWorkout" class="empty">Pick an active program first.</div>
       <button class="primary" id="genWorkoutBtn" style="margin-top:10px;" disabled>Generate today's workout</button>
       <button class="secondary" id="startSessionBtn" style="margin-top:8px; width:100%;" disabled>Start guided session</button>
@@ -896,6 +897,7 @@ async function generateTodayWorkout(program, dayIndex = 0) {
   const { phase, weekNumber } = currentPhaseFor(program);
   const isDeload = phase?.deload_weeks?.includes(weekNumber);
   const day = phase?.days?.[dayIndex] || phase?.days?.[0];
+  const recoveryCaution = isLosingTooFast();
   const system = `You pick specific exercises from a provided library to fill a day's
 muscle-group slots, prioritizing variety from recent sessions while keeping the
 muscle group correct so progression still counts. You also scale difficulty to a
@@ -913,6 +915,7 @@ where there's no natural antagonist pairing, or when today's slots don't split
 evenly). Don't force a pairing where the muscle groups don't logically complement
 each other, and don't superset more than two exercises together.
 ${isDeload ? "This is a DELOAD week for this phase — reduce sets and/or reps by roughly 30-40% across all exercises." : ""}
+${recoveryCaution ? "RECOVERY CAUTION: recent weight loss is outpacing the target rate, a sign recovery capacity may be compromised. Favor holding at the current level's difficulty rather than the hardest variant available for that level, and avoid adding extra intensity techniques (drop sets, extra tempo/pause) this session." : ""}
 Respond with ONLY valid JSON.`;
   const prompt = `Available exercises: ${availableList}.
 Recently used (avoid repeating if a same-muscle-group alternative exists): ${recentNames || "none yet"}.
@@ -936,6 +939,10 @@ function renderTodayWorkout(workout) {
   currentWorkout = workout;
   const box = document.getElementById("todayWorkout");
   const sessionBtn = document.getElementById("startSessionBtn");
+  const cautionEl = document.getElementById("recoveryCautionNote");
+  cautionEl.innerHTML = isLosingTooFast()
+    ? `<div class="meta" style="color:var(--gold); margin-bottom:8px;">Recovery caution: weight loss is outpacing target pace — holding progression steady, no intensity increases this week.</div>`
+    : "";
   if (!workout) {
     box.innerHTML = '<div class="empty">Pick an active program first.</div>';
     sessionBtn.disabled = true;
@@ -1063,7 +1070,16 @@ function parseRepRange(repsStr) {
   return { min: nums[0], max: nums[nums.length - 1] };
 }
 
+// True when the weight-trend pace check says you're losing faster than the
+// recomp target (0.5-0.75%/week) — a recovery-capacity warning sign, not
+// something to reward with a harder program.
+function isLosingTooFast() {
+  const suggestion = computeMacroSuggestion();
+  return !!(suggestion && suggestion.deltaCalories > 0);
+}
+
 function applyWorkoutResults(results) {
+  const holdProgression = isLosingTooFast();
   const byGroup = {};
   results.forEach(r => {
     const mg = r.exercise.muscle_group;
@@ -1074,7 +1090,7 @@ function applyWorkoutResults(results) {
     const cur = state.progressLevels[mg] || 1;
     if (outcomes.includes("missed")) {
       state.progressLevels[mg] = Math.max(1, cur - 1);
-    } else if (outcomes.every(o => o === "max")) {
+    } else if (outcomes.every(o => o === "max") && !holdProgression) {
       state.progressLevels[mg] = Math.min(5, cur + 1);
     }
   });
