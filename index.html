@@ -71,6 +71,9 @@
   .result-chip.active[data-result="max"]{background:var(--accent); border-color:var(--accent);}
   .result-chip.active[data-result="hold"]{background:var(--surface-2); border-color:var(--text-muted); color:var(--text);}
   .result-chip.active[data-result="missed"]{background:var(--danger); border-color:var(--danger);}
+  .swap-regression{border-color:var(--slate); color:var(--slate);}
+  .swap-same{border-color:var(--text-muted);}
+  .swap-progression{border-color:var(--gold); color:var(--gold);}
   button.primary{
     background:var(--accent); color:#fff; border:none; border-radius:var(--radius);
     padding:12px 16px; font-size:15px; font-weight:600; cursor:pointer; width:100%;
@@ -583,6 +586,52 @@ const BUILTIN_EXERCISES = [
   { id: "db-suitcase-carry", name: "Suitcase carry", muscle_group: "ruck", equipment: "dumbbell", cue: "Resist leaning away from the loaded side." },
 ];
 
+// Approximate difficulty level (1-5) per exercise, based on the progression
+// ladder each muscle group was authored as. Used only client-side to group
+// the swap picker into regressions/same-level/progressions — not stored in D1.
+const EXERCISE_LEVEL_MAP = {
+  // push
+  "wall-pushup": 1, "incline-pushup-high": 1, "incline-pushup": 2, "knee-pushup": 2,
+  "pushup": 3, "diamond-pushup": 3, "decline-pushup": 3, "archer-pushup": 4,
+  "pseudo-planche-pushup": 4, "one-arm-pushup-assisted": 4, "pike-pushup": 3,
+  "decline-pike-pushup": 4, "wall-handstand-hold": 4, "handstand-pushup": 5,
+  "ring-pushup-easy": 2, "ring-pushup": 3, "ring-archer-pushup": 4, "ring-typewriter-pushup": 5,
+  "ring-dip-supported": 2, "ring-dip": 3, "ring-dip-weighted": 5,
+  "db-floor-press": 3, "db-overhead-press": 3, "push-board-press": 3,
+  // pull
+  "dead-hang": 1, "active-hang": 1, "scap-pull": 2, "band-assisted-pullup": 2,
+  "negative-pullup": 2, "pullup": 3, "chinup": 3, "archer-pullup": 4,
+  "typewriter-pullup": 5, "one-arm-pullup-assisted": 4, "ring-row-easy": 2,
+  "ring-row": 3, "ring-row-feet-elevated": 4, "ring-pullup-assisted": 3,
+  "ring-pullup": 4, "ring-archer-pullup": 5, "inverted-row": 3, "band-pull-apart": 1,
+  "db-single-arm-row": 3, "db-renegade-row": 4, "weighted-pullup": 4,
+  // legs
+  "wall-sit": 1, "box-squat-high": 2, "bodyweight-squat": 3, "split-squat": 3,
+  "bulgarian-split-squat": 4, "shrimp-squat": 5, "ring-assisted-pistol": 3,
+  "box-pistol": 4, "pistol-squat": 5, "jump-squat": 3, "db-goblet-squat": 3,
+  "db-lunge": 3, "db-step-up": 3, "db-weighted-pistol": 5,
+  // hinge
+  "glute-bridge": 1, "single-leg-glute-bridge": 2, "hip-thrust-bw": 2,
+  "single-leg-rdl": 3, "good-morning-bw": 3, "nordic-curl-banded": 3,
+  "nordic-curl": 5, "db-rdl": 3, "db-deadlift": 3, "db-swing": 4,
+  // core
+  "dead-bug": 1, "hollow-hold-tucked": 2, "hollow-hold": 3, "plank": 3,
+  "plank-shoulder-tap": 3, "side-plank": 3, "hanging-knee-raise": 3,
+  "hanging-leg-raise": 4, "toes-to-bar": 5, "ring-plank": 3, "ring-pike": 4,
+  "ring-lsit-tucked": 3, "ring-lsit": 5, "ring-front-lever-tuck": 5,
+  "db-weighted-situp": 3, "band-pallof-press": 2,
+  // ruck
+  "ruck-walk": 2, "ruck-stairs": 3, "ruck-lunges": 3, "weighted-vest-carry": 2,
+  "db-farmer-carry": 3, "db-suitcase-carry": 3,
+};
+
+function levelOf(exerciseIdOrName) {
+  // accepts either a library id or falls back to matching by name
+  if (EXERCISE_LEVEL_MAP[exerciseIdOrName] !== undefined) return EXERCISE_LEVEL_MAP[exerciseIdOrName];
+  const match = exercises.find(x => x.name === exerciseIdOrName || x.id === exerciseIdOrName);
+  return match ? (EXERCISE_LEVEL_MAP[match.id] ?? 3) : 3;
+}
+
 async function loadExercises() {
   if (WORKER_URL) {
     try {
@@ -984,6 +1033,17 @@ function renderTodayWorkout(workout) {
   sessionBtn.textContent = "Start guided session";
 
   function exerciseCardHtml(e, i) {
+    const currentLevel = levelOf(e.name);
+    const alternates = exercises.filter(x => x.muscle_group === e.muscle_group && x.name !== e.name);
+    const regressions = alternates.filter(x => levelOf(x.name) < currentLevel);
+    const sameLevel = alternates.filter(x => levelOf(x.name) === currentLevel);
+    const progressions = alternates.filter(x => levelOf(x.name) > currentLevel);
+    const chipHtml = (x, cls) => `<div class="chip ${cls}" data-swap-pick="${i}" data-swap-name="${x.name.replace(/"/g,'&quot;')}">${x.name}</div>`;
+    const bucketHtml = (label, list, cls) => list.length ? `
+      <div class="meta" style="margin-top:8px; margin-bottom:4px;">${label}</div>
+      <div class="row">${list.map(x => chipHtml(x, cls)).join("")}</div>
+    ` : "";
+
     return `
       <div class="list-item" data-ex-index="${i}" style="flex-direction:column; align-items:stretch; border-bottom:none;">
         <div style="display:flex; justify-content:space-between;">
@@ -994,12 +1054,11 @@ function renderTodayWorkout(workout) {
           <button class="danger-link" style="color:var(--accent);" data-swap-open="${i}">Swap</button>
         </div>
         <div class="swap-panel hidden" data-swap-panel="${i}" style="margin-top:8px;">
-          <div class="meta" style="margin-bottom:6px;">No equipment for this one? Pick a same-muscle-group swap:</div>
-          <div class="row">
-            ${exercises.filter(x => x.muscle_group === e.muscle_group && x.name !== e.name).map(x =>
-              `<div class="chip" data-swap-pick="${i}" data-swap-name="${x.name.replace(/"/g,'&quot;')}">${x.name}</div>`
-            ).join("") || '<div class="empty">No alternates in your library for this muscle group yet.</div>'}
-          </div>
+          <div class="meta">No equipment for this one? Pick a swap — grouped by easier/harder:</div>
+          ${bucketHtml("↓ Regressions (easier)", regressions, "swap-regression")}
+          ${bucketHtml("= Same level", sameLevel, "swap-same")}
+          ${bucketHtml("↑ Progressions (harder)", progressions, "swap-progression")}
+          ${!alternates.length ? '<div class="empty" style="margin-top:6px;">No alternates in your library for this muscle group yet.</div>' : ""}
         </div>
         <div class="row" style="margin-top:8px;">
           <div class="chip result-chip" data-ex="${i}" data-result="max">Hit max reps</div>
