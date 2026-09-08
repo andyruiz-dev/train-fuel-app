@@ -1,0 +1,11 @@
+name = "train-fuel"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "train-fuel-db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+# Secret — do NOT put the key here. Set it with:
+#   wrangler secret put ANTHROPIC_API_KEY
