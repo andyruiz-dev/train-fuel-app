@@ -205,22 +205,6 @@
       </div>
     </div>
     <div class="card">
-      <h2>Log measured food</h2>
-      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
-        Already know the exact numbers (off a label or scale)? Enter them directly.
-      </p>
-      <input type="text" id="manualName" placeholder="Food name" style="margin-bottom:8px;">
-      <div class="row">
-        <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="manualCalories"></div>
-        <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="manualProtein"></div>
-      </div>
-      <div class="row" style="margin-top:8px;">
-        <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="manualCarbs"></div>
-        <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="manualFat"></div>
-      </div>
-      <button class="secondary" id="saveManualBtn" style="margin-top:10px; width:100%;">Add to log</button>
-    </div>
-    <div class="card">
       <h2>Today's log</h2>
       <div id="foodLogList" class="empty">Nothing logged yet today.</div>
     </div>
@@ -1330,21 +1314,6 @@ document.getElementById("saveScanBtn").addEventListener("click", () => {
   ["scanName", "scanCalories", "scanProtein", "scanCarbs", "scanFat"].forEach(id => document.getElementById(id).value = "");
   document.getElementById("foodScanReview").classList.add("hidden");
   document.getElementById("foodScanStatus").style.display = "none";
-});
-
-// -- manual measured entry --
-document.getElementById("saveManualBtn").addEventListener("click", () => {
-  const name = document.getElementById("manualName").value.trim();
-  if (!name) { alert("Enter a food name."); return; }
-  addFoodEntry({
-    name,
-    calories: parseInt(document.getElementById("manualCalories").value, 10) || 0,
-    protein: parseInt(document.getElementById("manualProtein").value, 10) || 0,
-    carbs: parseInt(document.getElementById("manualCarbs").value, 10) || 0,
-    fat: parseInt(document.getElementById("manualFat").value, 10) || 0,
-    source: "manual",
-  });
-  ["manualName", "manualCalories", "manualProtein", "manualCarbs", "manualFat"].forEach(id => document.getElementById(id).value = "");
 });
 
 // -- macro targets (Settings) --
