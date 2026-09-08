@@ -174,6 +174,55 @@
     </div>
   </section>
 
+  <!-- FOOD -->
+  <section id="tab-food" class="tab-panel hidden">
+    <div class="card">
+      <h2>Today's macros</h2>
+      <div id="macroSummary"></div>
+    </div>
+    <div class="card">
+      <h2>Scan a photo</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+        AI estimates food and macros from the photo — review and adjust before saving.
+      </p>
+      <div class="file-drop" id="foodPhotoDrop">Tap to take or choose a photo</div>
+      <input type="file" id="foodPhotoInput" accept="image/*" capture="environment" style="display:none;">
+      <div id="foodScanStatus" class="empty" style="display:none; margin-top:8px;"></div>
+      <div id="foodScanReview" class="hidden" style="margin-top:10px;">
+        <input type="text" id="scanName" placeholder="Food name" style="margin-bottom:8px;">
+        <div class="row">
+          <input type="text" inputmode="numeric" id="scanCalories" placeholder="Calories" style="flex:1;">
+          <input type="text" inputmode="numeric" id="scanProtein" placeholder="Protein (g)" style="flex:1;">
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <input type="text" inputmode="numeric" id="scanCarbs" placeholder="Carbs (g)" style="flex:1;">
+          <input type="text" inputmode="numeric" id="scanFat" placeholder="Fat (g)" style="flex:1;">
+        </div>
+        <button class="primary" id="saveScanBtn" style="margin-top:10px;">Add to log</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Log measured food</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+        Already know the exact numbers (off a label or scale)? Enter them directly.
+      </p>
+      <input type="text" id="manualName" placeholder="Food name" style="margin-bottom:8px;">
+      <div class="row">
+        <input type="text" inputmode="numeric" id="manualCalories" placeholder="Calories" style="flex:1;">
+        <input type="text" inputmode="numeric" id="manualProtein" placeholder="Protein (g)" style="flex:1;">
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <input type="text" inputmode="numeric" id="manualCarbs" placeholder="Carbs (g)" style="flex:1;">
+        <input type="text" inputmode="numeric" id="manualFat" placeholder="Fat (g)" style="flex:1;">
+      </div>
+      <button class="secondary" id="saveManualBtn" style="margin-top:10px; width:100%;">Add to log</button>
+    </div>
+    <div class="card">
+      <h2>Today's log</h2>
+      <div id="foodLogList" class="empty">Nothing logged yet today.</div>
+    </div>
+  </section>
+
   <!-- PROGRAMS -->
   <section id="tab-programs" class="tab-panel hidden">
     <div class="card">
@@ -282,12 +331,25 @@
       </p>
       <div id="startingLevelSettings"></div>
     </div>
+    <div class="card">
+      <h2>Daily macro targets</h2>
+      <div class="row">
+        <input type="text" inputmode="numeric" id="targetCalories" placeholder="Calories" style="flex:1;">
+        <input type="text" inputmode="numeric" id="targetProtein" placeholder="Protein (g)" style="flex:1;">
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <input type="text" inputmode="numeric" id="targetCarbs" placeholder="Carbs (g)" style="flex:1;">
+        <input type="text" inputmode="numeric" id="targetFat" placeholder="Fat (g)" style="flex:1;">
+      </div>
+      <button class="secondary" id="saveTargetsBtn" style="margin-top:10px;">Save targets</button>
+    </div>
   </section>
 
 </main>
 
 <nav class="tabs">
   <button class="tab-btn active" data-tab="today"><span class="tab-icon">▤</span>Today</button>
+  <button class="tab-btn" data-tab="food"><span class="tab-icon">◍</span>Food</button>
   <button class="tab-btn" data-tab="programs"><span class="tab-icon">▦</span>Programs</button>
   <button class="tab-btn" data-tab="library"><span class="tab-icon">▥</span>Library</button>
   <button class="tab-btn" data-tab="progress"><span class="tab-icon">▲</span>Progress</button>
@@ -338,8 +400,9 @@ const LS_KEY = "tf_state_v1";
 const LS_WORKER_URL_KEY = "tf_worker_url";
 
 let WORKER_URL = localStorage.getItem(LS_WORKER_URL_KEY) || "";
-let state = { settings: { startingLevels: { push: "intermediate", pull: "intermediate", legs: "intermediate", hinge: "intermediate", core: "intermediate", ruck: "intermediate" } },
-  measurements: [], logs: [], cardioLogs: [], activeProgramId: null, weekAdjustment: 0,
+let state = { settings: { startingLevels: { push: "intermediate", pull: "intermediate", legs: "intermediate", hinge: "intermediate", core: "intermediate", ruck: "intermediate" },
+  macroTargets: { calories: 2300, protein: 150, carbs: 200, fat: 70 } },
+  measurements: [], logs: [], cardioLogs: [], foodLogs: [], activeProgramId: null, weekAdjustment: 0,
   progressLevels: { push: 1, pull: 1, legs: 1, hinge: 1, core: 1, ruck: 1 } };
 let exercises = [];
 let programs = [];
@@ -383,6 +446,8 @@ async function loadState() {
     state.settings.startingLevels = { push: "intermediate", pull: "intermediate", legs: "intermediate", hinge: "intermediate", core: "intermediate", ruck: "intermediate" };
   }
   if (!state.cardioLogs) state.cardioLogs = [];
+  if (!state.foodLogs) state.foodLogs = [];
+  if (!state.settings.macroTargets) state.settings.macroTargets = { calories: 2300, protein: 150, carbs: 200, fat: 70 };
 }
 
 function saveStateLocal() {
@@ -1071,6 +1136,154 @@ function renderRecentCardio() {
   `).join("");
 }
 
+// ---- food log ----
+function todaysFoodLogs() {
+  const todayStr = new Date().toDateString();
+  return (state.foodLogs || []).filter(f => new Date(f.date).toDateString() === todayStr);
+}
+
+function macroBar(label, value, target) {
+  const pct = target ? Math.min(100, Math.round((value / target) * 100)) : 0;
+  return `
+    <div style="margin-top:8px;">
+      <div class="meta" style="display:flex; justify-content:space-between;">
+        <span>${label}</span><span>${value} / ${target || "?"}</span>
+      </div>
+      <div style="background:var(--surface-2); border-radius:2px; height:6px; margin-top:4px; overflow:hidden;">
+        <div style="background:var(--accent); height:100%; width:${pct}%;"></div>
+      </div>
+    </div>`;
+}
+
+function renderMacroSummary() {
+  const el = document.getElementById("macroSummary");
+  const today = todaysFoodLogs();
+  const totals = today.reduce((acc, f) => ({
+    calories: acc.calories + (f.calories || 0),
+    protein: acc.protein + (f.protein || 0),
+    carbs: acc.carbs + (f.carbs || 0),
+    fat: acc.fat + (f.fat || 0),
+  }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+  const t = state.settings.macroTargets || {};
+  el.innerHTML =
+    macroBar("Calories", totals.calories, t.calories) +
+    macroBar("Protein (g)", totals.protein, t.protein) +
+    macroBar("Carbs (g)", totals.carbs, t.carbs) +
+    macroBar("Fat (g)", totals.fat, t.fat);
+}
+
+function renderFoodLogList() {
+  const el = document.getElementById("foodLogList");
+  const today = todaysFoodLogs();
+  if (!today.length) { el.innerHTML = '<div class="empty">Nothing logged yet today.</div>'; return; }
+  el.innerHTML = today.map((f, i) => {
+    const realIndex = state.foodLogs.indexOf(f);
+    return `
+      <div class="list-item">
+        <div>
+          <div class="name">${f.name}</div>
+          <div class="meta">${f.calories} cal · ${f.protein}p · ${f.carbs}c · ${f.fat}f</div>
+        </div>
+        <button class="danger-link" data-del-food="${realIndex}">Delete</button>
+      </div>`;
+  }).join("");
+}
+
+document.getElementById("foodLogList").addEventListener("click", (e) => {
+  const idx = e.target.dataset.delFood;
+  if (idx === undefined) return;
+  state.foodLogs.splice(parseInt(idx, 10), 1);
+  persist();
+  renderMacroSummary();
+  renderFoodLogList();
+});
+
+function addFoodEntry(entry) {
+  state.foodLogs.push({ date: new Date().toISOString(), ...entry });
+  persist();
+  renderMacroSummary();
+  renderFoodLogList();
+}
+
+// -- photo scan --
+document.getElementById("foodPhotoDrop").addEventListener("click", () => document.getElementById("foodPhotoInput").click());
+document.getElementById("foodPhotoInput").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById("foodScanStatus");
+  statusEl.style.display = "block";
+  statusEl.textContent = "Analyzing photo…";
+  document.getElementById("foodScanReview").classList.add("hidden");
+  try {
+    const base64 = await new Promise((res, rej) => {
+      const reader = new FileReader();
+      reader.onload = () => res(reader.result.split(",")[1]);
+      reader.onerror = rej;
+      reader.readAsDataURL(file);
+    });
+    const data = await apiFetch("/api/food-scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: { media_type: file.type, data: base64 } }),
+    });
+    const text = data.content?.[0]?.text || "{}";
+    const est = extractJson(text);
+    document.getElementById("scanName").value = est.name || "";
+    document.getElementById("scanCalories").value = est.calories || "";
+    document.getElementById("scanProtein").value = est.protein || "";
+    document.getElementById("scanCarbs").value = est.carbs || "";
+    document.getElementById("scanFat").value = est.fat || "";
+    document.getElementById("foodScanReview").classList.remove("hidden");
+    statusEl.textContent = "Review the estimate below, then add it.";
+  } catch (err) {
+    statusEl.textContent = "Scan failed: " + err.message;
+  }
+});
+
+document.getElementById("saveScanBtn").addEventListener("click", () => {
+  const name = document.getElementById("scanName").value.trim();
+  if (!name) { alert("Enter a food name."); return; }
+  addFoodEntry({
+    name,
+    calories: parseInt(document.getElementById("scanCalories").value, 10) || 0,
+    protein: parseInt(document.getElementById("scanProtein").value, 10) || 0,
+    carbs: parseInt(document.getElementById("scanCarbs").value, 10) || 0,
+    fat: parseInt(document.getElementById("scanFat").value, 10) || 0,
+    source: "photo",
+  });
+  ["scanName", "scanCalories", "scanProtein", "scanCarbs", "scanFat"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("foodScanReview").classList.add("hidden");
+  document.getElementById("foodScanStatus").style.display = "none";
+});
+
+// -- manual measured entry --
+document.getElementById("saveManualBtn").addEventListener("click", () => {
+  const name = document.getElementById("manualName").value.trim();
+  if (!name) { alert("Enter a food name."); return; }
+  addFoodEntry({
+    name,
+    calories: parseInt(document.getElementById("manualCalories").value, 10) || 0,
+    protein: parseInt(document.getElementById("manualProtein").value, 10) || 0,
+    carbs: parseInt(document.getElementById("manualCarbs").value, 10) || 0,
+    fat: parseInt(document.getElementById("manualFat").value, 10) || 0,
+    source: "manual",
+  });
+  ["manualName", "manualCalories", "manualProtein", "manualCarbs", "manualFat"].forEach(id => document.getElementById(id).value = "");
+});
+
+// -- macro targets (Settings) --
+document.getElementById("saveTargetsBtn").addEventListener("click", () => {
+  state.settings.macroTargets = {
+    calories: parseInt(document.getElementById("targetCalories").value, 10) || 0,
+    protein: parseInt(document.getElementById("targetProtein").value, 10) || 0,
+    carbs: parseInt(document.getElementById("targetCarbs").value, 10) || 0,
+    fat: parseInt(document.getElementById("targetFat").value, 10) || 0,
+  };
+  persist();
+  renderMacroSummary();
+  alert("Targets saved.");
+});
+
 function renderProgressCharts() {
   const measurements = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
   renderLineChart("weightChart", measurements.map(m => ({ label: m.date.slice(5), value: m.weight })), { yLabel: "lb" });
@@ -1530,7 +1743,14 @@ async function init() {
   renderProgressCharts();
   renderRecentCardio();
   renderStartingLevelSettings();
+  renderMacroSummary();
+  renderFoodLogList();
   if (state.settings?.startDate) document.getElementById("startDateInput").value = state.settings.startDate;
+  const t = state.settings.macroTargets || {};
+  document.getElementById("targetCalories").value = t.calories || "";
+  document.getElementById("targetProtein").value = t.protein || "";
+  document.getElementById("targetCarbs").value = t.carbs || "";
+  document.getElementById("targetFat").value = t.fat || "";
 }
 init();
 

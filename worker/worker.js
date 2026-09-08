@@ -16,6 +16,7 @@
  *   DELETE /api/programs/:id     -> remove one program
  *   POST /api/generate           -> proxy to Claude: generate a program OR a single workout
  *   POST /api/import             -> proxy to Claude: parse uploaded PDF/JPEG program files
+ *   POST /api/food-scan          -> proxy to Claude vision: estimate macros from a food photo
  */
 
 const CORS = {
@@ -159,6 +160,27 @@ export default {
           model: "claude-sonnet-4-6",
           max_tokens: 16000,
           messages: [{ role: "user", content }],
+        });
+        const data = await resp.json();
+        return json(data, resp.status);
+      }
+
+      // ---- food photo scan ----
+      if (path === "/api/food-scan" && request.method === "POST") {
+        const { image } = await request.json();
+        const resp = await callClaude(env, {
+          model: "claude-sonnet-4-6",
+          max_tokens: 500,
+          messages: [{
+            role: "user",
+            content: [
+              { type: "image", source: { type: "base64", media_type: image.media_type, data: image.data } },
+              { type: "text", text: `Identify the food or meal in this photo and estimate its nutrition
+based on the visible portion size. Respond with ONLY valid JSON, no prose:
+{"name": "string", "calories": 000, "protein": 00, "carbs": 00, "fat": 00}
+Protein/carbs/fat are grams, whole numbers, best estimate for the portion shown.` },
+            ],
+          }],
         });
         const data = await resp.json();
         return json(data, resp.status);
