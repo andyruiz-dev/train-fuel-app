@@ -674,6 +674,54 @@ function renderProgramPreview(program) {
   `).join("");
 }
 
+// Compares actual weight trend from logged measurements against a target
+// recomp pace (0.5-0.75% bodyweight/week). Suggests a calorie nudge — from
+// carbs only — rather than changing anything automatically.
+function computeMacroSuggestion() {
+  const ms = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+  if (ms.length < 2) return null;
+  const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
+  const recent = ms.filter(m => new Date(m.date).getTime() >= cutoff);
+  const windowSet = recent.length >= 2 ? recent : ms.slice(-2);
+  if (windowSet.length < 2) return null;
+
+  const first = windowSet[0], last = windowSet[windowSet.length - 1];
+  const days = (new Date(last.date) - new Date(first.date)) / (24 * 60 * 60 * 1000);
+  if (days < 5) return null; // not enough spread to trust a rate yet
+
+  const pctChangeTotal = ((last.weight - first.weight) / first.weight) * 100;
+  const pctPerWeek = pctChangeTotal * (7 / days);
+  const targetMin = -0.75, targetMax = -0.5; // % per week, negative = loss
+
+  const t = state.settings.macroTargets || {};
+  if (pctPerWeek > targetMax) {
+    // losing slower than target (or gaining) — trim calories
+    return {
+      message: `Losing about ${Math.abs(pctPerWeek).toFixed(2)}%/week — slower than the ${Math.abs(targetMax)}-${Math.abs(targetMin)}% target range. Suggest trimming ~125 cal (from carbs).`,
+      deltaCalories: -125,
+    };
+  }
+  if (pctPerWeek < targetMin) {
+    // losing faster than target — likely muscle loss risk, add calories back
+    return {
+      message: `Losing about ${Math.abs(pctPerWeek).toFixed(2)}%/week — faster than the ${Math.abs(targetMax)}-${Math.abs(targetMin)}% target range, which risks muscle loss. Suggest adding ~125 cal back (to carbs).`,
+      deltaCalories: 125,
+    };
+  }
+  return { message: `On pace at ${Math.abs(pctPerWeek).toFixed(2)}%/week — right in the ${Math.abs(targetMax)}-${Math.abs(targetMin)}% recomp target range. No change suggested.`, deltaCalories: 0 };
+}
+
+function applyMacroSuggestion(delta) {
+  const t = state.settings.macroTargets;
+  t.calories = Math.max(0, (t.calories || 0) + delta);
+  t.carbs = Math.max(0, (t.carbs || 0) + Math.round(delta / 4));
+  persist();
+  renderMacroSummary();
+  renderWeeklyReview();
+  document.getElementById("targetCalories").value = t.calories;
+  document.getElementById("targetCarbs").value = t.carbs;
+}
+
 function renderWeeklyReview() {
   const el = document.getElementById("weeklyReview");
   const program = programs.find(p => p.id === state.activeProgramId);
@@ -691,16 +739,26 @@ function renderWeeklyReview() {
   const counts = { max: 0, hold: 0, missed: 0 };
   recentLogs.forEach(l => { if (counts[l.result] !== undefined) counts[l.result]++; });
 
+  const suggestion = computeMacroSuggestion();
+
   el.innerHTML = `
     <div class="meta">Week ${weekNumber} · ${phaseLabel}${deloadNote}</div>
     <div class="meta" style="margin-top:6px;">Last 7 days: ${recentLogs.length} exercises logged
     (${counts.max} hit max, ${counts.hold} as prescribed, ${counts.missed} missed)</div>
+    ${suggestion ? `
+      <div class="meta" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">${suggestion.message}</div>
+      ${suggestion.deltaCalories !== 0 ? `<button class="secondary" id="applyMacroSuggestionBtn" style="margin-top:8px; width:100%;">Apply suggestion</button>` : ""}
+    ` : `<div class="meta" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">Log at least two weigh-ins about a week apart to get a calorie-pace suggestion here.</div>`}
     <div class="row" style="margin-top:10px;">
       <button class="secondary" id="repeatWeekBtn" style="flex:1;">Repeat this week</button>
       <button class="secondary" id="advanceWeekBtn" style="flex:1;">Advance a week</button>
     </div>
     ${state.weekAdjustment ? `<button class="danger-link" id="resetWeekBtn" style="margin-top:6px;">Reset to actual date (currently offset ${state.weekAdjustment > 0 ? "+" : ""}${state.weekAdjustment})</button>` : ""}
   `;
+
+  if (suggestion && suggestion.deltaCalories !== 0) {
+    document.getElementById("applyMacroSuggestionBtn").addEventListener("click", () => applyMacroSuggestion(suggestion.deltaCalories));
+  }
 
   document.getElementById("repeatWeekBtn").addEventListener("click", () => {
     state.weekAdjustment = (state.weekAdjustment || 0) - 1;
