@@ -157,7 +157,7 @@ export default {
         content.push({ type: "text", text: instructions });
         const resp = await callClaude(env, {
           model: "claude-sonnet-4-6",
-          max_tokens: 4000,
+          max_tokens: 16000,
           messages: [{ role: "user", content }],
         });
         const data = await resp.json();

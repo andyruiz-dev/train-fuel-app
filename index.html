@@ -492,7 +492,7 @@ Keep it realistic: 3-4 training days per week, a deload roughly every 4-6 weeks.
   const data = await apiFetch("/api/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ system, prompt, max_tokens: 8000 }),
+    body: JSON.stringify({ system, prompt, max_tokens: 16000 }),
   });
   const text = data.content?.[0]?.text || "{}";
   const structure = extractJson(text);
