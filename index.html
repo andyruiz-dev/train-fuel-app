@@ -251,6 +251,15 @@
       <h2>Program start date</h2>
       <input type="date" id="startDateInput">
     </div>
+    <div class="card">
+      <h2>Starting level per movement pattern</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+        Sets where a fresh, never-trained muscle group begins (beginner/intermediate/advanced).
+        Once you've logged a workout for a group, this no longer touches it — auto-progression
+        from your rep ranges takes over from there.
+      </p>
+      <div id="startingLevelSettings"></div>
+    </div>
   </section>
 
 </main>
@@ -307,7 +316,8 @@ const LS_KEY = "tf_state_v1";
 const LS_WORKER_URL_KEY = "tf_worker_url";
 
 let WORKER_URL = localStorage.getItem(LS_WORKER_URL_KEY) || "";
-let state = { settings: {}, measurements: [], logs: [], activeProgramId: null, weekAdjustment: 0,
+let state = { settings: { startingLevels: { push: "intermediate", pull: "intermediate", legs: "intermediate", hinge: "intermediate", core: "intermediate", ruck: "intermediate" } },
+  measurements: [], logs: [], activeProgramId: null, weekAdjustment: 0,
   progressLevels: { push: 1, pull: 1, legs: 1, hinge: 1, core: 1, ruck: 1 } };
 let exercises = [];
 let programs = [];
@@ -346,6 +356,10 @@ async function loadState() {
     state.progressLevels = { push: 1, pull: 1, legs: 1, hinge: 1, core: 1, ruck: 1 };
   }
   if (typeof state.weekAdjustment !== "number") state.weekAdjustment = 0;
+  if (!state.settings) state.settings = {};
+  if (!state.settings.startingLevels) {
+    state.settings.startingLevels = { push: "intermediate", pull: "intermediate", legs: "intermediate", hinge: "intermediate", core: "intermediate", ruck: "intermediate" };
+  }
 }
 
 function saveStateLocal() {
@@ -1283,7 +1297,7 @@ document.getElementById("programList").addEventListener("click", async (e) => {
   }
   if (useId) {
     state.activeProgramId = useId;
-    persist();
+    applyStartingLevelsIfUntrained();
     renderActiveProgramInfo();
   }
   if (delId) {
@@ -1369,6 +1383,46 @@ document.getElementById("startDateInput").addEventListener("change", (e) => {
   persist();
 });
 
+// ---- starting level per movement pattern ----
+const STARTING_LEVEL_MAP = { beginner: 1, intermediate: 3, advanced: 5 };
+const MUSCLE_GROUPS = ["push", "pull", "legs", "hinge", "core", "ruck"];
+
+function renderStartingLevelSettings() {
+  const el = document.getElementById("startingLevelSettings");
+  el.innerHTML = MUSCLE_GROUPS.map(mg => `
+    <div style="margin-top:10px;">
+      <div class="meta" style="text-transform:capitalize; margin-bottom:4px;">${mg}</div>
+      <div class="row">
+        ${["beginner", "intermediate", "advanced"].map(lvl => `
+          <div class="chip ${state.settings.startingLevels[mg] === lvl ? "active" : ""}" data-start-mg="${mg}" data-start-lvl="${lvl}">${lvl.charAt(0).toUpperCase() + lvl.slice(1)}</div>
+        `).join("")}
+      </div>
+    </div>
+  `).join("");
+}
+
+document.getElementById("startingLevelSettings").addEventListener("click", (e) => {
+  const chip = e.target.closest("[data-start-mg]");
+  if (!chip) return;
+  const mg = chip.dataset.startMg, lvl = chip.dataset.startLvl;
+  state.settings.startingLevels[mg] = lvl;
+  persist();
+  renderStartingLevelSettings();
+});
+
+// Applies the calibrated starting level to any muscle group that has never
+// been logged yet — protects already-earned progress on groups you've trained.
+function applyStartingLevelsIfUntrained() {
+  const trainedGroups = new Set((state.logs || []).map(l => l.muscle_group));
+  MUSCLE_GROUPS.forEach(mg => {
+    if (!trainedGroups.has(mg)) {
+      const lvl = state.settings.startingLevels?.[mg] || "intermediate";
+      state.progressLevels[mg] = STARTING_LEVEL_MAP[lvl];
+    }
+  });
+  persist();
+}
+
 // ---- init ----
 async function init() {
   await loadState();
@@ -1377,6 +1431,7 @@ async function init() {
   renderExercises();
   renderPrograms();
   renderProgressCharts();
+  renderStartingLevelSettings();
   if (state.settings?.startDate) document.getElementById("startDateInput").value = state.settings.startDate;
 }
 init();
