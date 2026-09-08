@@ -1386,12 +1386,14 @@ document.getElementById("foodPhotoDrop").addEventListener("click", () => documen
 // first — plenty of detail survives for a food ID/macro estimate at 1200px.
 function resizeImageFile(file, maxDim = 1200, quality = 0.8) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Couldn't read the photo file."));
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onerror = () => reject(new Error("Couldn't decode the photo."));
-      img.onload = () => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Couldn't decode the photo."));
+    };
+    img.onload = () => {
+      try {
         let { width, height } = img;
         if (width > maxDim || height > maxDim) {
           if (width > height) { height = Math.round(height * maxDim / width); width = maxDim; }
@@ -1403,10 +1405,13 @@ function resizeImageFile(file, maxDim = 1200, quality = 0.8) {
         canvas.getContext("2d").drawImage(img, 0, 0, width, height);
         const dataUrl = canvas.toDataURL("image/jpeg", quality);
         resolve({ base64: dataUrl.split(",")[1], media_type: "image/jpeg" });
-      };
-      img.src = e.target.result;
+      } catch (err) {
+        reject(err);
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
     };
-    reader.readAsDataURL(file);
+    img.src = objectUrl;
   });
 }
 
