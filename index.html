@@ -475,18 +475,36 @@ function renderPrograms() {
   const list = document.getElementById("programList");
   if (!programs.length) { list.innerHTML = '<div class="empty">None yet.</div>'; return; }
   list.innerHTML = programs.map(p => `
-    <div class="list-item">
-      <div>
-        <div class="name">${p.name}</div>
-        <div class="meta">${p.duration_weeks} weeks · ${p.source}${state.activeProgramId === p.id ? " · active" : ""}</div>
+    <div class="list-item" style="flex-direction:column; align-items:stretch;">
+      <div style="display:flex; justify-content:space-between;">
+        <div>
+          <div class="name">${p.name}</div>
+          <div class="meta">${p.duration_weeks} weeks · ${p.source}${state.activeProgramId === p.id ? " · active" : ""}</div>
+        </div>
+        <div class="row" style="gap:6px;">
+          <button class="secondary" data-preview-program="${p.id}" style="padding:6px 10px; font-size:13px;">Preview</button>
+          <button class="secondary" data-use-program="${p.id}" style="padding:6px 10px; font-size:13px;">Use</button>
+          <button class="danger-link" data-del-program="${p.id}">Delete</button>
+        </div>
       </div>
-      <div class="row" style="gap:6px;">
-        <button class="secondary" data-use-program="${p.id}" style="padding:6px 10px; font-size:13px;">Use</button>
-        <button class="danger-link" data-del-program="${p.id}">Delete</button>
-      </div>
+      <div class="preview-panel hidden" data-preview-panel="${p.id}" style="margin-top:10px;"></div>
     </div>
   `).join("");
   renderActiveProgramInfo();
+}
+
+function renderProgramPreview(program) {
+  const phases = program.structure.phases || [];
+  if (!phases.length) return '<div class="empty">No phase structure found for this program.</div>';
+  return phases.map(ph => `
+    <div style="border-top:1px solid var(--border); padding-top:8px; margin-top:8px;">
+      <div class="name">${ph.phase} · weeks ${ph.week_start}-${ph.week_end}${ph.deload_weeks?.length ? ` (deload: wk ${ph.deload_weeks.join(", ")})` : ""}</div>
+      ${(ph.days || []).map(d => `
+        <div class="meta" style="margin-top:6px;"><strong style="color:var(--text);">${d.day}</strong></div>
+        <div class="meta">${(d.slots || []).map(s => `${s.muscle_group} ${s.sets}×${s.reps}`).join(" · ")}</div>
+      `).join("")}
+    </div>
+  `).join("");
 }
 
 function renderActiveProgramInfo() {
@@ -785,8 +803,20 @@ Output ONLY valid JSON: {"name": "string", "phases": [{"phase": "string", "week_
 
 // ---- program list actions ----
 document.getElementById("programList").addEventListener("click", async (e) => {
+  const previewId = e.target.dataset.previewProgram;
   const useId = e.target.dataset.useProgram;
   const delId = e.target.dataset.delProgram;
+  if (previewId) {
+    const panel = document.querySelector(`[data-preview-panel="${previewId}"]`);
+    const isHidden = panel.classList.contains("hidden");
+    document.querySelectorAll(".preview-panel").forEach(p => p.classList.add("hidden"));
+    if (isHidden) {
+      const program = programs.find(p => p.id === previewId);
+      panel.innerHTML = renderProgramPreview(program);
+      panel.classList.remove("hidden");
+    }
+    return;
+  }
   if (useId) {
     state.activeProgramId = useId;
     persist();
