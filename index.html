@@ -1426,12 +1426,16 @@ document.getElementById("foodPhotoInput").addEventListener("change", async (e) =
     if (!WORKER_URL) throw new Error("no worker url configured");
     // Sent as raw bytes, not base64 — avoids decoding the full-resolution photo
     // in the browser at all. The Worker handles encoding server-side instead.
+    console.log("Scanning photo, type:", file.type, "size:", file.size);
     const resp = await fetch(WORKER_URL.replace(/\/$/, "") + "/api/food-scan", {
       method: "POST",
       headers: { "Content-Type": file.type || "image/jpeg" },
       body: file,
     });
-    if (!resp.ok) throw new Error("request failed: " + resp.status);
+    if (!resp.ok) {
+      const errBody = await resp.text().catch(() => "");
+      throw new Error(`${resp.status}: ${errBody.slice(0, 300)}`);
+    }
     const data = await resp.json();
     const text = data.content?.[0]?.text || "{}";
     const est = extractJson(text);
