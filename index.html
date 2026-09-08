@@ -216,6 +216,12 @@
    device — the old app only had localStorage.
    ============================================================ */
 
+function extractJson(text) {
+  // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
+  const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
+  return JSON.parse(cleaned);
+}
+
 const LS_KEY = "tf_state_v1";
 const LS_WORKER_URL_KEY = "tf_worker_url";
 
@@ -392,7 +398,7 @@ Keep it realistic: 3-4 training days per week, a deload roughly every 4-6 weeks.
     body: JSON.stringify({ system, prompt, max_tokens: 8000 }),
   });
   const text = data.content?.[0]?.text || "{}";
-  const structure = JSON.parse(text);
+  const structure = extractJson(text);
   const program = {
     id: "prog-" + Date.now(),
     name: structure.name || `${months}-month program`,
@@ -424,7 +430,7 @@ Output JSON: {"day": "string", "exercises": [{"name": "string", "muscle_group": 
     body: JSON.stringify({ system, prompt, max_tokens: 2000 }),
   });
   const text = data.content?.[0]?.text || "{}";
-  return JSON.parse(text);
+  return extractJson(text);
 }
 
 function renderTodayWorkout(workout) {
@@ -501,7 +507,7 @@ Output ONLY valid JSON: {"name": "string", "weeks": [{"week": 1, "days": [{"day"
       body: JSON.stringify({ files: encoded, instructions }),
     });
     const text = data.content?.[0]?.text || "{}";
-    const structure = JSON.parse(text);
+    const structure = extractJson(text);
     const program = {
       id: "prog-" + Date.now(),
       name: structure.name || "Imported program",
