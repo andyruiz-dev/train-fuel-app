@@ -921,14 +921,39 @@ superset_group is a letter shared by paired exercises, or null if standalone.`;
 
 let currentWorkout = null;
 
+// Checks whether today's workout shares a muscle group with the last
+// completed session, with no rest day in between (calendar-day gap <= 1).
+// Purely a heads-up — doesn't block or change anything automatically.
+function restDayCaution(workout) {
+  const logs = state.logs || [];
+  if (!logs.length || !workout) return null;
+  const sorted = logs.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+  const lastDate = new Date(sorted[0].date);
+  const lastDateStr = lastDate.toDateString();
+  const lastGroups = new Set(sorted.filter(l => new Date(l.date).toDateString() === lastDateStr).map(l => l.muscle_group));
+
+  const today = new Date();
+  const dayGap = Math.round((new Date(today.toDateString()) - new Date(lastDateStr)) / (24 * 60 * 60 * 1000));
+  if (dayGap > 1) return null; // at least one rest day already happened
+
+  const todayGroups = new Set(workout.exercises.map(e => e.muscle_group));
+  const overlap = [...todayGroups].filter(mg => lastGroups.has(mg));
+  if (!overlap.length) return null;
+
+  return `Rest day check: ${overlap.join(", ")} trained ${dayGap === 0 ? "earlier today" : "yesterday"} too — no rest day between sessions for ${overlap.length > 1 ? "these muscle groups" : "this muscle group"}. Consider resting it today or swapping to something else.`;
+}
+
 function renderTodayWorkout(workout) {
   currentWorkout = workout;
   const box = document.getElementById("todayWorkout");
   const sessionBtn = document.getElementById("startSessionBtn");
   const cautionEl = document.getElementById("recoveryCautionNote");
-  cautionEl.innerHTML = isLosingTooFast()
+  const restNote = restDayCaution(workout);
+  cautionEl.innerHTML = (isLosingTooFast()
     ? `<div class="meta" style="color:var(--gold); margin-bottom:8px;">Recovery caution: weight loss is outpacing target pace — holding progression steady, no intensity increases this week.</div>`
-    : "";
+    : "") + (restNote
+    ? `<div class="meta" style="color:var(--gold); margin-bottom:8px;">${restNote}</div>`
+    : "");
   if (!workout) {
     box.innerHTML = '<div class="empty">Pick an active program first.</div>';
     sessionBtn.disabled = true;
