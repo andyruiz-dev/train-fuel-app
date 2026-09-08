@@ -459,6 +459,15 @@ function renderTodayWorkout(workout) {
           <div class="name">${e.name}</div>
           <div class="meta">${e.muscle_group} · ${e.sets}×${e.reps} · level ${state.progressLevels[e.muscle_group] || 1}</div>
         </div>
+        <button class="danger-link" style="color:var(--accent);" data-swap-open="${i}">Swap</button>
+      </div>
+      <div class="swap-panel hidden" data-swap-panel="${i}" style="margin-top:8px;">
+        <div class="meta" style="margin-bottom:6px;">No equipment for this one? Pick a same-muscle-group swap:</div>
+        <div class="row">
+          ${exercises.filter(x => x.muscle_group === e.muscle_group && x.name !== e.name).map(x =>
+            `<div class="chip" data-swap-pick="${i}" data-swap-name="${x.name.replace(/"/g,'&quot;')}">${x.name}</div>`
+          ).join("") || '<div class="empty">No alternates in your library for this muscle group yet.</div>'}
+        </div>
       </div>
       <div class="row" style="margin-top:8px;">
         <div class="chip result-chip" data-ex="${i}" data-result="max">Hit max reps</div>
@@ -468,15 +477,57 @@ function renderTodayWorkout(workout) {
     </div>
   `).join("") + `<button class="primary" id="completeWorkoutBtn" style="margin-top:12px;">Complete workout</button>`;
 
-  document.getElementById("todayWorkout").addEventListener("click", (e) => {
+  document.getElementById("todayWorkout").addEventListener("click", async (e) => {
+    const openBtn = e.target.closest("[data-swap-open]");
+    if (openBtn) {
+      document.querySelector(`[data-swap-panel="${openBtn.dataset.swapOpen}"]`).classList.toggle("hidden");
+      return;
+    }
+    const pick = e.target.closest("[data-swap-pick]");
+    if (pick) {
+      await swapExercise(parseInt(pick.dataset.swapPick, 10), pick.dataset.swapName);
+      return;
+    }
     const chip = e.target.closest(".result-chip");
-    if (!chip) return;
-    const group = chip.parentElement;
-    group.querySelectorAll(".result-chip").forEach(c => c.classList.remove("active"));
-    chip.classList.add("active");
+    if (chip) {
+      const group = chip.parentElement;
+      group.querySelectorAll(".result-chip").forEach(c => c.classList.remove("active"));
+      chip.classList.add("active");
+    }
   });
 
   document.getElementById("completeWorkoutBtn").addEventListener("click", completeWorkout);
+}
+
+async function swapExercise(index, newName) {
+  const original = currentWorkout.exercises[index];
+  const replacement = exercises.find(x => x.name === newName);
+  const system = `You adjust sets/reps when one exercise is swapped for another so the
+training stimulus stays comparable — same approximate time-under-tension and
+relative effort for the same muscle group, even though leverage/equipment differ.
+Respond with ONLY valid JSON: {"sets": 3, "reps": "8-12"}`;
+  const prompt = `Original: ${original.name}, ${original.sets}×${original.reps}, muscle group ${original.muscle_group}.
+Replacing with: ${replacement.name} (equipment: ${replacement.equipment || "bodyweight"}).
+Give adjusted sets/reps for the replacement so effort stays comparable.`;
+  try {
+    const data = await apiFetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ system, prompt, max_tokens: 300 }),
+    });
+    const text = data.content?.[0]?.text || "{}";
+    const adj = extractJson(text);
+    currentWorkout.exercises[index] = {
+      name: replacement.name,
+      muscle_group: original.muscle_group,
+      sets: adj.sets || original.sets,
+      reps: adj.reps || original.reps,
+    };
+  } catch (err) {
+    // fall back to a straight swap with the original sets/reps if the adjustment call fails
+    currentWorkout.exercises[index] = { name: replacement.name, muscle_group: original.muscle_group, sets: original.sets, reps: original.reps };
+  }
+  renderTodayWorkout(currentWorkout);
 }
 
 function completeWorkout() {
