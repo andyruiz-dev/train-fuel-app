@@ -724,10 +724,12 @@ document.getElementById("uploadInput").addEventListener("change", async (e) => {
     })));
     statusEl.textContent = "Parsing with AI…";
     const instructions = `Extract the structured training program from these file(s).
-Compress it into PHASES rather than writing out every individual week — identify
-the distinct blocks/phases (e.g. foundation, build, peak) and the day/slot
-template each phase uses, noting which weeks within each phase are deload weeks.
-This keeps the output compact even for a long program.
+Determine the program's actual total duration from what's in the document itself
+— don't assume any particular length (e.g. exactly a year); read the real number
+of weeks/phases as written. Compress it into PHASES rather than writing out every
+individual week — identify the distinct blocks/phases (e.g. foundation, build,
+peak) and the day/slot template each phase uses, noting which weeks within each
+phase are deload weeks. This keeps the output compact even for a long program.
 Output ONLY valid JSON: {"name": "string", "phases": [{"phase": "string", "week_start": 1, "week_end": 8, "deload_weeks": [4], "days": [{"day": "string", "slots": [{"muscle_group": "push|pull|legs|hinge|core|ruck", "sets": 3, "reps": "8-12"}]}]}]}`;
     const data = await apiFetch("/api/import", {
       method: "POST",
