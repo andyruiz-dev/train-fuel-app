@@ -6,21 +6,23 @@
 <title>Train &amp; Fuel</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png">
-<meta name="theme-color" content="#0F6E63">
+<meta name="theme-color" content="#15170F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --accent:#0F6E63;
-    --accent-dark:#0B4F47;
-    --rust:#A8501E;
-    --bg:#EEEDE7;
-    --surface:#FBFAF7;
-    --border:#D9D6CC;
-    --text:#1C1C19;
-    --text-muted:#6E6C63;
-    --danger:#A8501E;
+    --accent:#2FBFA6;
+    --accent-dark:#1B8674;
+    --gold:#C79A45;
+    --slate:#7A8783;
+    --bg:#15170F;
+    --surface:#20231C;
+    --surface-2:#2A2E24;
+    --border:#3A3F33;
+    --text:#EDEAE0;
+    --text-muted:#9B9C8E;
+    --danger:#C4622E;
     --radius:4px;
     --font-display:'Oswald', -apple-system, sans-serif;
     --font-mono:'Roboto Mono', ui-monospace, monospace;
@@ -44,8 +46,8 @@
     background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent);
     border-radius:var(--radius); padding:16px; margin-bottom:14px;
   }
-  #tab-programs .card{border-left-color:var(--rust);}
-  #tab-library .card{border-left-color:var(--text-muted);}
+  #tab-programs .card{border-left-color:var(--gold);}
+  #tab-library .card{border-left-color:var(--slate);}
   #tab-progress .card{border-left-color:var(--accent-dark);}
   .card h2{
     font-family:var(--font-display); font-size:16px; font-weight:600; margin:0 0 10px;
@@ -58,6 +60,9 @@
   }
   .chip.active{background:var(--accent); border-color:var(--accent); color:#fff;}
   .result-chip{font-size:12px; padding:6px 10px; font-family:var(--font-mono);}
+  .result-chip.active[data-result="max"]{background:var(--accent); border-color:var(--accent);}
+  .result-chip.active[data-result="hold"]{background:var(--surface-2); border-color:var(--text-muted); color:var(--text);}
+  .result-chip.active[data-result="missed"]{background:var(--danger); border-color:var(--danger);}
   button.primary{
     background:var(--accent); color:#fff; border:none; border-radius:var(--radius);
     padding:12px 16px; font-size:15px; font-weight:600; cursor:pointer; width:100%;
@@ -97,7 +102,7 @@
   .hidden{display:none !important;}
   .status-dot{
     display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px;
-    background:var(--rust);
+    background:var(--danger);
   }
   .status-dot.ok{background:var(--accent);}
   .file-drop{
@@ -697,6 +702,14 @@ assisted), 3 = the standard/base version, 4-5 = harder progressions (e.g. archer
 or one-arm variants, added instability or load). Set the reps field's top end to
 match the level: level 1-2 top of range ~8, level 3 ~10-12, level 4-5 ~12-15 or
 note added difficulty (tempo, pause, unilateral) instead of just more reps.
+Pair exercises into supersets whenever it genuinely makes sense — classically
+antagonist muscle groups worked back-to-back with minimal rest between them
+(push+pull is the standard pairing; e.g. ring push-up paired with ring row).
+Give paired exercises the same superset_group letter (e.g. "A"); leave
+superset_group null for anything that stands alone (e.g. legs, core, ruck days
+where there's no natural antagonist pairing, or when today's slots don't split
+evenly). Don't force a pairing where the muscle groups don't logically complement
+each other, and don't superset more than two exercises together.
 ${isDeload ? "This is a DELOAD week for this phase — reduce sets and/or reps by roughly 30-40% across all exercises." : ""}
 Respond with ONLY valid JSON.`;
   const prompt = `Available exercises: ${availableList}.
@@ -704,7 +717,8 @@ Recently used (avoid repeating if a same-muscle-group alternative exists): ${rec
 Current level per muscle group (1-5): ${JSON.stringify(levels)}.
 Current phase: ${phase?.phase || "n/a"}, week ${weekNumber}${isDeload ? " (deload)" : ""}.
 Today's slots: ${JSON.stringify(phase?.days?.[0]?.slots || [])}.
-Output JSON: {"day": "string", "exercises": [{"name": "string", "muscle_group": "string", "sets": 3, "reps": "8-12"}]}`;
+Output JSON: {"day": "string", "exercises": [{"name": "string", "muscle_group": "string", "sets": 3, "reps": "8-12", "superset_group": "A"}]}
+superset_group is a letter shared by paired exercises, or null if standalone.`;
   const data = await apiFetch("/api/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -735,30 +749,50 @@ function renderTodayWorkout(workout) {
   }
   sessionBtn.textContent = "Start guided session";
 
-  box.innerHTML = workout.exercises.map((e, i) => `
-    <div class="list-item" style="flex-direction:column; align-items:stretch;">
-      <div style="display:flex; justify-content:space-between;">
-        <div>
-          <div class="name">${e.name}</div>
-          <div class="meta">${e.muscle_group} · ${e.sets}×${e.reps} · level ${state.progressLevels[e.muscle_group] || 1}</div>
+  function exerciseCardHtml(e, i) {
+    return `
+      <div class="list-item" data-ex-index="${i}" style="flex-direction:column; align-items:stretch; border-bottom:none;">
+        <div style="display:flex; justify-content:space-between;">
+          <div>
+            <div class="name">${e.name}</div>
+            <div class="meta">${e.muscle_group} · ${e.sets}×${e.reps} · level ${state.progressLevels[e.muscle_group] || 1}</div>
+          </div>
+          <button class="danger-link" style="color:var(--accent);" data-swap-open="${i}">Swap</button>
         </div>
-        <button class="danger-link" style="color:var(--accent);" data-swap-open="${i}">Swap</button>
-      </div>
-      <div class="swap-panel hidden" data-swap-panel="${i}" style="margin-top:8px;">
-        <div class="meta" style="margin-bottom:6px;">No equipment for this one? Pick a same-muscle-group swap:</div>
-        <div class="row">
-          ${exercises.filter(x => x.muscle_group === e.muscle_group && x.name !== e.name).map(x =>
-            `<div class="chip" data-swap-pick="${i}" data-swap-name="${x.name.replace(/"/g,'&quot;')}">${x.name}</div>`
-          ).join("") || '<div class="empty">No alternates in your library for this muscle group yet.</div>'}
+        <div class="swap-panel hidden" data-swap-panel="${i}" style="margin-top:8px;">
+          <div class="meta" style="margin-bottom:6px;">No equipment for this one? Pick a same-muscle-group swap:</div>
+          <div class="row">
+            ${exercises.filter(x => x.muscle_group === e.muscle_group && x.name !== e.name).map(x =>
+              `<div class="chip" data-swap-pick="${i}" data-swap-name="${x.name.replace(/"/g,'&quot;')}">${x.name}</div>`
+            ).join("") || '<div class="empty">No alternates in your library for this muscle group yet.</div>'}
+          </div>
         </div>
-      </div>
-      <div class="row" style="margin-top:8px;">
-        <div class="chip result-chip" data-ex="${i}" data-result="max">Hit max reps</div>
-        <div class="chip result-chip" data-ex="${i}" data-result="hold">As prescribed</div>
-        <div class="chip result-chip" data-ex="${i}" data-result="missed">Missed reps</div>
-      </div>
-    </div>
-  `).join("") + `<button class="primary" id="completeWorkoutBtn" style="margin-top:12px;">Complete workout</button>`;
+        <div class="row" style="margin-top:8px;">
+          <div class="chip result-chip" data-ex="${i}" data-result="max">Hit max reps</div>
+          <div class="chip result-chip" data-ex="${i}" data-result="hold">As prescribed</div>
+          <div class="chip result-chip" data-ex="${i}" data-result="missed">Missed reps</div>
+        </div>
+      </div>`;
+  }
+
+  // group into render units: paired supersets stay visually bracketed together,
+  // everything else renders as its own card, in original order.
+  const seenGroups = new Set();
+  const unitsHtml = workout.exercises.map((e, i) => {
+    if (e.superset_group) {
+      if (seenGroups.has(e.superset_group)) return "";
+      seenGroups.add(e.superset_group);
+      const memberIdxs = workout.exercises.map((x, xi) => ({ x, xi })).filter(({ x }) => x.superset_group === e.superset_group);
+      return `
+        <div class="card" style="border-left-color:var(--gold); margin-bottom:10px;">
+          <div class="meta" style="margin-bottom:8px;">Superset ${e.superset_group}</div>
+          ${memberIdxs.map(({ x, xi }) => exerciseCardHtml(x, xi)).join('<div style="border-top:1px dashed var(--border); margin:10px 0;"></div>')}
+        </div>`;
+    }
+    return `<div class="card" style="margin-bottom:10px;">${exerciseCardHtml(e, i)}</div>`;
+  }).join("");
+
+  box.innerHTML = unitsHtml + `<button class="primary" id="completeWorkoutBtn" style="margin-top:4px;">Complete workout</button>`;
 
   document.getElementById("todayWorkout").addEventListener("click", async (e) => {
     const openBtn = e.target.closest("[data-swap-open]");
@@ -805,10 +839,11 @@ Give adjusted sets/reps for the replacement so effort stays comparable.`;
       muscle_group: original.muscle_group,
       sets: adj.sets || original.sets,
       reps: adj.reps || original.reps,
+      superset_group: original.superset_group || null,
     };
   } catch (err) {
     // fall back to a straight swap with the original sets/reps if the adjustment call fails
-    currentWorkout.exercises[index] = { name: replacement.name, muscle_group: original.muscle_group, sets: original.sets, reps: original.reps };
+    currentWorkout.exercises[index] = { name: replacement.name, muscle_group: original.muscle_group, sets: original.sets, reps: original.reps, superset_group: original.superset_group || null };
   }
   renderTodayWorkout(currentWorkout);
 }
@@ -849,9 +884,10 @@ function applyWorkoutResults(results) {
 function completeWorkout() {
   const items = document.querySelectorAll("#todayWorkout .list-item");
   const results = [];
-  items.forEach((item, i) => {
+  items.forEach((item) => {
+    const idx = parseInt(item.dataset.exIndex, 10);
     const active = item.querySelector(".result-chip.active");
-    results.push({ exercise: currentWorkout.exercises[i], result: active ? active.dataset.result : "hold" });
+    results.push({ exercise: currentWorkout.exercises[idx], result: active ? active.dataset.result : "hold" });
   });
   applyWorkoutResults(results);
   renderTodayWorkout(currentWorkout);
@@ -955,15 +991,52 @@ function playBeep() {
   } catch (e) { /* audio not available, ignore */ }
 }
 
+// Builds a flat queue of "do this set" steps. Superset partners interleave
+// round by round (A set 1, B set 1, A set 2, B set 2, ...) with a short
+// transition between partners and a full rest only after each complete round.
+function buildSessionQueue(exs) {
+  const queue = [];
+  const seenGroups = new Set();
+  exs.forEach((e, i) => {
+    if (e.superset_group) {
+      if (seenGroups.has(e.superset_group)) return;
+      seenGroups.add(e.superset_group);
+      const members = exs.map((x, xi) => ({ ...x, exIndex: xi })).filter(x => x.superset_group === e.superset_group);
+      const maxSets = Math.max(...members.map(m => m.sets));
+      for (let round = 0; round < maxSets; round++) {
+        members.forEach((m, mi) => {
+          if (round >= m.sets) return;
+          const isLastInRound = mi === members.length - 1;
+          queue.push({
+            exIndex: m.exIndex, name: m.name, muscle_group: m.muscle_group,
+            reps: m.reps, setNum: round + 1, totalSets: m.sets,
+            restAfter: isLastInRound ? 90 : 15,
+            supersetLabel: `Superset ${e.superset_group} · ${mi + 1} of ${members.length}`,
+          });
+        });
+      }
+    } else {
+      for (let s = 0; s < e.sets; s++) {
+        queue.push({
+          exIndex: i, name: e.name, muscle_group: e.muscle_group,
+          reps: e.reps, setNum: s + 1, totalSets: e.sets,
+          restAfter: 90, supersetLabel: null,
+        });
+      }
+    }
+  });
+  return queue;
+}
+
 function startSession() {
   if (!currentWorkout) return;
   session = {
-    exIndex: 0,
-    setIndex: 0,
+    queue: buildSessionQueue(currentWorkout.exercises),
+    pos: 0,
     resting: false,
     restRemaining: 0,
     timerId: null,
-    results: currentWorkout.exercises.map(e => ({ exercise: e, setsActual: [], result: null })),
+    setsActual: {}, // exIndex -> [actual reps per set]
   };
   document.getElementById("todayWorkout").classList.add("hidden");
   document.getElementById("startSessionBtn").classList.add("hidden");
@@ -976,18 +1049,18 @@ function renderSession() {
   if (!session) { panel.classList.add("hidden"); panel.innerHTML = ""; return; }
   panel.classList.remove("hidden");
 
-  if (session.exIndex >= currentWorkout.exercises.length) {
+  if (session.pos >= session.queue.length) {
     finishSession();
     return;
   }
 
-  const ex = currentWorkout.exercises[session.exIndex];
+  const step = session.queue[session.pos];
 
   if (session.resting) {
     panel.innerHTML = `
       <div class="card">
         <h2>Rest</h2>
-        <div id="restClock" style="font-size:36px; font-weight:600; text-align:center; margin:14px 0;">${formatTime(session.restRemaining)}</div>
+        <div id="restClock" style="font-size:36px; font-weight:600; text-align:center; margin:14px 0; font-family:var(--font-mono);">${formatTime(session.restRemaining)}</div>
         <button class="secondary" id="skipRestBtn" style="width:100%;">Skip rest</button>
       </div>`;
     document.getElementById("skipRestBtn").addEventListener("click", () => {
@@ -998,11 +1071,11 @@ function renderSession() {
     return;
   }
 
-  const setNum = session.setIndex + 1;
   panel.innerHTML = `
     <div class="card">
-      <h2>${ex.name}</h2>
-      <div class="meta">${ex.muscle_group} · set ${setNum} of ${ex.sets} · target ${ex.reps} reps</div>
+      ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
+      <h2>${step.name}</h2>
+      <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${step.reps} reps</div>
       <input type="text" inputmode="numeric" id="actualRepsInput" placeholder="Actual reps completed" style="margin-top:10px;">
       <button class="primary" id="completeSetBtn" style="margin-top:10px;">Complete set</button>
       <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
@@ -1015,20 +1088,13 @@ function renderSession() {
       input.style.borderColor = "var(--danger)";
       return;
     }
-    session.results[session.exIndex].setsActual.push(val);
-    if (setNum >= ex.sets) {
-      const range = parseRepRange(ex.reps);
-      const actuals = session.results[session.exIndex].setsActual;
-      let result = "hold";
-      if (actuals.some(a => a < range.min)) result = "missed";
-      else if (actuals.every(a => a >= range.max)) result = "max";
-      session.results[session.exIndex].result = result;
-      session.exIndex++;
-      session.setIndex = 0;
+    if (!session.setsActual[step.exIndex]) session.setsActual[step.exIndex] = [];
+    session.setsActual[step.exIndex].push(val);
+    session.pos++;
+    if (session.pos >= session.queue.length) {
       renderSession();
     } else {
-      session.setIndex++;
-      startRest();
+      startRest(step.restAfter);
     }
   });
 
@@ -1042,7 +1108,7 @@ function renderSession() {
   });
 }
 
-function startRest(seconds = 90) {
+function startRest(seconds) {
   session.resting = true;
   session.restRemaining = seconds;
   renderSession();
@@ -1060,7 +1126,15 @@ function startRest(seconds = 90) {
 }
 
 function finishSession() {
-  const results = session.results.map(r => ({ exercise: r.exercise, result: r.result || "hold" }));
+  const results = currentWorkout.exercises.map((e, i) => {
+    const actuals = session.setsActual[i] || [];
+    const range = parseRepRange(e.reps);
+    let result = "hold";
+    if (!actuals.length) result = "hold";
+    else if (actuals.some(a => a < range.min)) result = "missed";
+    else if (actuals.every(a => a >= range.max)) result = "max";
+    return { exercise: e, result };
+  });
   applyWorkoutResults(results);
   session = null;
   document.getElementById("sessionPanel").classList.add("hidden");
