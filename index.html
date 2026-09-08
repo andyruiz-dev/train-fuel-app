@@ -484,15 +484,21 @@ async function generateProgram(months, focus) {
   const system = `You design structured fitness programs as pure muscle-group slot
 plans, never fixed exercise names — that lets the app swap in different exercises
 each week from the user's library while still counting the right muscle groups
-toward progression. Respond with ONLY valid JSON, no prose, no markdown fences.`;
+toward progression. Compress the program into PHASES (e.g. foundation, build,
+peak) rather than writing out every individual week — most weeks within a phase
+share the same day/slot template, so this keeps output compact even for a
+12-month program. Respond with ONLY valid JSON, no prose, no markdown fences.`;
   const prompt = `Design a ${weeks}-week program${focus ? " focused on: " + focus : ""}.
 Output JSON exactly in this shape:
-{"name": "string", "weeks": [{"week": 1, "deload": false, "days": [{"day": "string label", "slots": [{"muscle_group": "push|pull|legs|hinge|core|ruck", "sets": 3, "reps": "8-12"}]}]}]}
-Keep it realistic: 3-4 training days per week, a deload roughly every 4-6 weeks.`;
+{"name": "string", "phases": [{"phase": "string label", "week_start": 1, "week_end": 8, "deload_weeks": [4], "days": [{"day": "string label", "slots": [{"muscle_group": "push|pull|legs|hinge|core|ruck", "sets": 3, "reps": "8-12"}]}]}]}
+Use as many phases as make sense for ${weeks} weeks (roughly one phase per 4-8 weeks),
+with each phase's day/slot template reflecting that phase's focus and difficulty
+(e.g. higher reps early, lower reps + more sets later). deload_weeks lists week
+numbers WITHIN that phase's range that should be lighter.`;
   const data = await apiFetch("/api/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ system, prompt, max_tokens: 16000 }),
+    body: JSON.stringify({ system, prompt, max_tokens: 8000 }),
   });
   const text = data.content?.[0]?.text || "{}";
   const structure = extractJson(text);
@@ -511,10 +517,18 @@ Keep it realistic: 3-4 training days per week, a deload roughly every 4-6 weeks.
   return program;
 }
 
+function currentPhaseFor(program) {
+  const phases = program.structure.phases || [];
+  const startDate = state.settings?.startDate ? new Date(state.settings.startDate) : new Date();
+  const weeksElapsed = Math.floor((Date.now() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1;
+  return phases.find(p => weeksElapsed >= p.week_start && weeksElapsed <= p.week_end) || phases[0];
+}
+
 async function generateTodayWorkout(program) {
   const recentNames = (state.logs || []).slice(-15).map(l => l.exercise).join(", ");
   const availableList = exercises.map(e => `${e.name} (${e.muscle_group}, ${e.equipment || "bodyweight"})`).join("; ");
   const levels = state.progressLevels;
+  const phase = currentPhaseFor(program);
   const system = `You pick specific exercises from a provided library to fill a day's
 muscle-group slots, prioritizing variety from recent sessions while keeping the
 muscle group correct so progression still counts. You also scale difficulty to a
@@ -527,7 +541,8 @@ Respond with ONLY valid JSON.`;
   const prompt = `Available exercises: ${availableList}.
 Recently used (avoid repeating if a same-muscle-group alternative exists): ${recentNames || "none yet"}.
 Current level per muscle group (1-5): ${JSON.stringify(levels)}.
-Today's slots: ${JSON.stringify(program.structure.weeks?.[0]?.days?.[0]?.slots || [])}.
+Current phase: ${phase?.phase || "n/a"}.
+Today's slots: ${JSON.stringify(phase?.days?.[0]?.slots || [])}.
 Output JSON: {"day": "string", "exercises": [{"name": "string", "muscle_group": "string", "sets": 3, "reps": "8-12"}]}`;
   const data = await apiFetch("/api/generate", {
     method: "POST",
@@ -709,7 +724,11 @@ document.getElementById("uploadInput").addEventListener("change", async (e) => {
     })));
     statusEl.textContent = "Parsing with AI…";
     const instructions = `Extract the structured training program from these file(s).
-Output ONLY valid JSON: {"name": "string", "weeks": [{"week": 1, "days": [{"day": "string", "slots": [{"muscle_group": "push|pull|legs|hinge|core|ruck", "sets": 3, "reps": "8-12"}]}]}]}`;
+Compress it into PHASES rather than writing out every individual week — identify
+the distinct blocks/phases (e.g. foundation, build, peak) and the day/slot
+template each phase uses, noting which weeks within each phase are deload weeks.
+This keeps the output compact even for a long program.
+Output ONLY valid JSON: {"name": "string", "phases": [{"phase": "string", "week_start": 1, "week_end": 8, "deload_weeks": [4], "days": [{"day": "string", "slots": [{"muscle_group": "push|pull|legs|hinge|core|ruck", "sets": 3, "reps": "8-12"}]}]}]}`;
     const data = await apiFetch("/api/import", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -717,10 +736,11 @@ Output ONLY valid JSON: {"name": "string", "weeks": [{"week": 1, "days": [{"day"
     });
     const text = data.content?.[0]?.text || "{}";
     const structure = extractJson(text);
+    const maxWeek = Math.max(0, ...(structure.phases || []).map(p => p.week_end || 0));
     const program = {
       id: "prog-" + Date.now(),
       name: structure.name || "Imported program",
-      duration_weeks: (structure.weeks || []).length,
+      duration_weeks: maxWeek,
       source: "uploaded",
       structure,
     };
