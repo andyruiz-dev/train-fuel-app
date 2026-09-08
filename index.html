@@ -632,6 +632,19 @@ function levelOf(exerciseIdOrName) {
   return match ? (EXERCISE_LEVEL_MAP[match.id] ?? 3) : 3;
 }
 
+// Static holds — their "reps" field represents seconds to hold, not a rep count.
+const HOLD_EXERCISE_IDS = new Set([
+  "wall-sit", "dead-hang", "active-hang", "wall-handstand-hold", "plank", "side-plank",
+  "ring-plank", "ring-lsit-tucked", "ring-lsit", "ring-front-lever-tuck",
+  "hollow-hold-tucked", "hollow-hold",
+]);
+
+function isHoldExercise(exerciseIdOrName) {
+  if (HOLD_EXERCISE_IDS.has(exerciseIdOrName)) return true;
+  const match = exercises.find(x => x.name === exerciseIdOrName || x.id === exerciseIdOrName);
+  return match ? HOLD_EXERCISE_IDS.has(match.id) : false;
+}
+
 async function loadExercises() {
   if (WORKER_URL) {
     try {
@@ -941,7 +954,7 @@ function currentPhaseFor(program) {
 
 async function generateTodayWorkout(program, dayIndex = 0) {
   const recentNames = (state.logs || []).slice(-15).map(l => l.exercise).join(", ");
-  const availableList = exercises.map(e => `${e.name} (${e.muscle_group}, ${e.equipment || "bodyweight"})`).join("; ");
+  const availableList = exercises.map(e => `${e.name} (${e.muscle_group}, ${e.equipment || "bodyweight"}${isHoldExercise(e.id) ? ", ISOMETRIC HOLD" : ""})`).join("; ");
   const levels = state.progressLevels;
   const { phase, weekNumber } = currentPhaseFor(program);
   const isDeload = phase?.deload_weeks?.includes(weekNumber);
@@ -955,6 +968,9 @@ assisted), 3 = the standard/base version, 4-5 = harder progressions (e.g. archer
 or one-arm variants, added instability or load). Set the reps field's top end to
 match the level: level 1-2 top of range ~8, level 3 ~10-12, level 4-5 ~12-15 or
 note added difficulty (tempo, pause, unilateral) instead of just more reps.
+For exercises marked ISOMETRIC HOLD in the available list, the reps field means
+SECONDS to hold, not a rep count (e.g. "20-30" means hold 20-30 seconds), scaled
+to level the same way (level 1-2 shorter holds ~15-20s, level 4-5 longer ~40-60s).
 Pair exercises into supersets whenever it genuinely makes sense — classically
 antagonist muscle groups worked back-to-back with minimal rest between them
 (push+pull is the standard pairing; e.g. ring push-up paired with ring row).
@@ -1049,7 +1065,7 @@ function renderTodayWorkout(workout) {
         <div style="display:flex; justify-content:space-between;">
           <div>
             <div class="name">${e.name}</div>
-            <div class="meta">${e.muscle_group} · ${e.sets}×${e.reps} · level ${state.progressLevels[e.muscle_group] || 1}</div>
+            <div class="meta">${e.muscle_group} · ${e.sets}×${e.reps}${isHoldExercise(e.name) ? "s hold" : ""} · level ${state.progressLevels[e.muscle_group] || 1}</div>
           </div>
           <button class="danger-link" style="color:var(--accent);" data-swap-open="${i}">Swap</button>
         </div>
@@ -1365,6 +1381,35 @@ function addFoodEntry(entry) {
 
 // -- photo scan --
 document.getElementById("foodPhotoDrop").addEventListener("click", () => document.getElementById("foodPhotoInput").click());
+// Full-resolution camera photos (often 8-12+ MP) can exhaust memory when
+// converted to base64 directly, especially on Android. Downscale via canvas
+// first — plenty of detail survives for a food ID/macro estimate at 1200px.
+function resizeImageFile(file, maxDim = 1200, quality = 0.8) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Couldn't read the photo file."));
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Couldn't decode the photo."));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) { height = Math.round(height * maxDim / width); width = maxDim; }
+          else { width = Math.round(width * maxDim / height); height = maxDim; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve({ base64: dataUrl.split(",")[1], media_type: "image/jpeg" });
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 document.getElementById("foodPhotoInput").addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -1373,16 +1418,11 @@ document.getElementById("foodPhotoInput").addEventListener("change", async (e) =
   statusEl.textContent = "Analyzing photo…";
   document.getElementById("foodScanReview").classList.add("hidden");
   try {
-    const base64 = await new Promise((res, rej) => {
-      const reader = new FileReader();
-      reader.onload = () => res(reader.result.split(",")[1]);
-      reader.onerror = rej;
-      reader.readAsDataURL(file);
-    });
+    const { base64, media_type } = await resizeImageFile(file);
     const data = await apiFetch("/api/food-scan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image: { media_type: file.type, data: base64 } }),
+      body: JSON.stringify({ image: { media_type, data: base64 } }),
     });
     const text = data.content?.[0]?.text || "{}";
     const est = extractJson(text);
@@ -1524,8 +1564,9 @@ function startSession() {
     pos: 0,
     resting: false,
     restEndTime: 0,
+    holding: false,
     timerId: null,
-    setsActual: {}, // exIndex -> [actual reps per set]
+    setsActual: {}, // exIndex -> [actual reps per set, or seconds held for isometric holds]
   };
   document.getElementById("todayWorkout").classList.add("hidden");
   document.getElementById("startSessionBtn").classList.add("hidden");
@@ -1561,6 +1602,54 @@ function renderSession() {
     return;
   }
 
+  const endSessionHandler = () => {
+    document.getElementById("endSessionBtn").addEventListener("click", () => {
+      if (!confirm("End session early? Remaining exercises won't be logged.")) return;
+      session = null;
+      document.getElementById("sessionPanel").classList.add("hidden");
+      document.getElementById("todayWorkout").classList.remove("hidden");
+      document.getElementById("startSessionBtn").classList.remove("hidden");
+      document.getElementById("genWorkoutBtn").classList.remove("hidden");
+    });
+  };
+
+  if (isHoldExercise(step.name)) {
+    const range = parseRepRange(step.reps);
+    const targetSeconds = range.max || range.min || 20;
+
+    if (session.holding) {
+      const remaining = Math.max(0, Math.ceil((session.holdEndTime - Date.now()) / 1000));
+      panel.innerHTML = `
+        <div class="card">
+          ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
+          <h2>${step.name}</h2>
+          <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · holding</div>
+          <div id="holdClock" style="font-size:36px; font-weight:600; text-align:center; margin:14px 0; font-family:var(--font-mono);">${formatTime(remaining)}</div>
+          <button class="secondary" id="stopHoldBtn" style="width:100%;">Stop / let go</button>
+        </div>`;
+      document.getElementById("stopHoldBtn").addEventListener("click", () => {
+        clearInterval(session.timerId);
+        const remainingAtStop = Math.max(0, Math.ceil((session.holdEndTime - Date.now()) / 1000));
+        const held = session.holdTargetSeconds - remainingAtStop;
+        session.holding = false;
+        recordSetAndAdvance(session.holdStep, Math.max(1, held));
+      });
+      return;
+    }
+
+    panel.innerHTML = `
+      <div class="card">
+        ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
+        <h2>${step.name}</h2>
+        <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${targetSeconds}s hold</div>
+        <button class="primary" id="startHoldBtn" style="margin-top:10px;">Start hold</button>
+        <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
+      </div>`;
+    document.getElementById("startHoldBtn").addEventListener("click", () => startHold(step, targetSeconds));
+    endSessionHandler();
+    return;
+  }
+
   panel.innerHTML = `
     <div class="card">
       ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
@@ -1578,24 +1667,43 @@ function renderSession() {
       input.style.borderColor = "var(--danger)";
       return;
     }
-    if (!session.setsActual[step.exIndex]) session.setsActual[step.exIndex] = [];
-    session.setsActual[step.exIndex].push(val);
-    session.pos++;
-    if (session.pos >= session.queue.length) {
-      renderSession();
-    } else {
-      startRest(step.restAfter);
-    }
+    recordSetAndAdvance(step, val);
   });
 
-  document.getElementById("endSessionBtn").addEventListener("click", () => {
-    if (!confirm("End session early? Remaining exercises won't be logged.")) return;
-    session = null;
-    document.getElementById("sessionPanel").classList.add("hidden");
-    document.getElementById("todayWorkout").classList.remove("hidden");
-    document.getElementById("startSessionBtn").classList.remove("hidden");
-    document.getElementById("genWorkoutBtn").classList.remove("hidden");
-  });
+  endSessionHandler();
+}
+
+function recordSetAndAdvance(step, val) {
+  if (!session.setsActual[step.exIndex]) session.setsActual[step.exIndex] = [];
+  session.setsActual[step.exIndex].push(val);
+  session.pos++;
+  if (session.pos >= session.queue.length) {
+    renderSession();
+  } else {
+    startRest(step.restAfter);
+  }
+}
+
+function startHold(step, targetSeconds) {
+  session.holding = true;
+  session.holdTargetSeconds = targetSeconds;
+  session.holdStep = step;
+  session.holdEndTime = Date.now() + targetSeconds * 1000;
+  renderSession();
+  session.timerId = setInterval(tickHold, 1000);
+}
+
+function tickHold() {
+  if (!session || !session.holding) return;
+  const remaining = Math.max(0, Math.ceil((session.holdEndTime - Date.now()) / 1000));
+  const clock = document.getElementById("holdClock");
+  if (clock) clock.textContent = formatTime(remaining);
+  if (remaining <= 0) {
+    clearInterval(session.timerId);
+    playBeep();
+    session.holding = false;
+    recordSetAndAdvance(session.holdStep, session.holdTargetSeconds);
+  }
 }
 
 function startRest(seconds) {
@@ -1620,11 +1728,11 @@ function tickRest() {
 
 // setInterval throttles or pauses while the screen is locked or the tab is
 // backgrounded, so a decrementing counter would drift. Recomputing from the
-// absolute end time on return keeps the rest period accurate regardless.
+// absolute end time on return keeps rest periods and holds accurate regardless.
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible" && session && session.resting) {
-    tickRest();
-  }
+  if (document.visibilityState !== "visible" || !session) return;
+  if (session.resting) tickRest();
+  if (session.holding) tickHold();
 });
 
 function finishSession() {
@@ -1725,12 +1833,18 @@ document.getElementById("uploadInput").addEventListener("change", async (e) => {
   statusEl.style.display = "block";
   statusEl.textContent = "Reading files…";
   try {
-    const encoded = await Promise.all(files.map(f => new Promise((res, rej) => {
-      const reader = new FileReader();
-      reader.onload = () => res({ media_type: f.type, data: reader.result.split(",")[1] });
-      reader.onerror = rej;
-      reader.readAsDataURL(f);
-    })));
+    const encoded = await Promise.all(files.map(async f => {
+      if (f.type.startsWith("image/")) {
+        const { base64, media_type } = await resizeImageFile(f, 1600, 0.85); // a bit higher res since these need to be read as text
+        return { media_type, data: base64 };
+      }
+      return new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = () => res({ media_type: f.type, data: reader.result.split(",")[1] });
+        reader.onerror = rej;
+        reader.readAsDataURL(f);
+      });
+    }));
     statusEl.textContent = "Parsing with AI…";
     const instructions = `Extract the structured training program from these file(s).
 Determine the program's actual total duration from what's in the document itself
