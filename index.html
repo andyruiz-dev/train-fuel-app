@@ -360,8 +360,6 @@ async function loadState() {
   if (!state.settings.startingLevels) {
     state.settings.startingLevels = { push: "intermediate", pull: "intermediate", legs: "intermediate", hinge: "intermediate", core: "intermediate", ruck: "intermediate" };
   }
-  if (typeof state.dayIndexInWeek !== "number") state.dayIndexInWeek = -1;
-  if (typeof state.lastGeneratedWeek !== "number") state.lastGeneratedWeek = null;
 }
 
 function saveStateLocal() {
@@ -618,25 +616,25 @@ function renderWeeklyReview() {
 
   document.getElementById("repeatWeekBtn").addEventListener("click", () => {
     state.weekAdjustment = (state.weekAdjustment || 0) - 1;
-    state.todayWorkout = null;
+    state.pendingWorkout = null;
     persist();
     renderWeeklyReview();
-    if (program) autoGenerateTodayIfNeeded(program);
+    if (program) ensureWorkoutReady(program);
   });
   document.getElementById("advanceWeekBtn").addEventListener("click", () => {
     state.weekAdjustment = (state.weekAdjustment || 0) + 1;
-    state.todayWorkout = null;
+    state.pendingWorkout = null;
     persist();
     renderWeeklyReview();
-    if (program) autoGenerateTodayIfNeeded(program);
+    if (program) ensureWorkoutReady(program);
   });
   const resetBtn = document.getElementById("resetWeekBtn");
   if (resetBtn) resetBtn.addEventListener("click", () => {
     state.weekAdjustment = 0;
-    state.todayWorkout = null;
+    state.pendingWorkout = null;
     persist();
     renderWeeklyReview();
-    if (program) autoGenerateTodayIfNeeded(program);
+    if (program) ensureWorkoutReady(program);
   });
 }
 
@@ -654,29 +652,38 @@ function renderActiveProgramInfo() {
   box.innerHTML = `<div class="name">${active.name}</div><div class="meta">${active.duration_weeks} weeks · ${active.source}</div>`;
   genBtn.disabled = false;
   genBtn.textContent = "Regenerate workout";
-  autoGenerateTodayIfNeeded(active);
+  ensureWorkoutReady(active);
   renderWeeklyReview();
 }
 
-async function autoGenerateTodayIfNeeded(program) {
-  const todayStr = new Date().toISOString().slice(0, 10);
-  if (state.todayWorkout && state.todayWorkout.date === todayStr && state.todayWorkout.programId === program.id) {
-    renderTodayWorkout(state.todayWorkout.workout);
+function phaseKeyFor(program, phase) {
+  return `${program.id}:${phase?.phase}-${phase?.week_start}-${phase?.week_end}`;
+}
+
+// The "current" workout persists until you log a result for it — training
+// cadence is driven by completion, not calendar days, so rest days (or
+// skipped days) never throw the rotation out of sync.
+async function ensureWorkoutReady(program) {
+  const { phase, weekNumber } = currentPhaseFor(program);
+  const key = phaseKeyFor(program, phase);
+
+  if (state.pendingWorkout && state.pendingWorkout.programId === program.id &&
+      state.pendingWorkout.phaseKey === key && !state.pendingWorkout.completed) {
+    renderTodayWorkout(state.pendingWorkout.workout);
     return;
   }
+
   const box = document.getElementById("todayWorkout");
-  box.innerHTML = '<div class="empty">Generating today\'s workout…</div>';
+  box.innerHTML = '<div class="empty">Generating your next workout…</div>';
   try {
-    const { phase, weekNumber } = currentPhaseFor(program);
     const totalDays = (phase?.days || []).length || 1;
-    if (state.lastGeneratedWeek !== weekNumber) {
-      state.dayIndexInWeek = 0;
-    } else {
-      state.dayIndexInWeek = ((state.dayIndexInWeek ?? -1) + 1) % totalDays;
+    let nextIndex = 0;
+    if (state.pendingWorkout && state.pendingWorkout.programId === program.id &&
+        state.pendingWorkout.phaseKey === key && state.pendingWorkout.completed) {
+      nextIndex = (state.pendingWorkout.dayIndex + 1) % totalDays;
     }
-    state.lastGeneratedWeek = weekNumber;
-    const workout = await generateTodayWorkout(program, state.dayIndexInWeek);
-    state.todayWorkout = { date: todayStr, programId: program.id, workout, dayIndex: state.dayIndexInWeek };
+    const workout = await generateTodayWorkout(program, nextIndex);
+    state.pendingWorkout = { programId: program.id, phaseKey: key, dayIndex: nextIndex, workout, completed: false };
     persist();
     renderTodayWorkout(workout);
   } catch (err) {
@@ -790,8 +797,8 @@ function renderTodayWorkout(workout) {
   }
   sessionBtn.disabled = false;
 
-  if (state.todayWorkout?.completed) {
-    box.innerHTML = `<div class="empty">Workout logged for today. ${workout.exercises.map(e => e.name).join(", ")}.</div>`;
+  if (state.pendingWorkout?.completed) {
+    box.innerHTML = `<div class="empty">Workout logged: ${workout.exercises.map(e => e.name).join(", ")}. Your next workout will be ready when you come back.</div>`;
     sessionBtn.textContent = "Session already logged";
     sessionBtn.disabled = true;
     return;
@@ -931,7 +938,7 @@ function applyWorkoutResults(results) {
     state.logs.push({ date: new Date().toISOString(), exercise: r.exercise.name, muscle_group: r.exercise.muscle_group, result: r.result });
   });
 
-  if (state.todayWorkout) state.todayWorkout.completed = true;
+  if (state.pendingWorkout) state.pendingWorkout.completed = true;
   persist();
   renderProgressCharts();
 }
@@ -1208,6 +1215,10 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
     document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
     btn.classList.add("active");
     document.getElementById("tab-" + btn.dataset.tab).classList.remove("hidden");
+    if (btn.dataset.tab === "today") {
+      const active = programs.find(p => p.id === state.activeProgramId);
+      if (active) ensureWorkoutReady(active);
+    }
   });
 });
 
@@ -1328,9 +1339,12 @@ document.getElementById("genWorkoutBtn").addEventListener("click", async (e) => 
   if (!program) return;
   btn.disabled = true; btn.textContent = "Generating…";
   try {
-    const dayIndex = state.todayWorkout?.dayIndex ?? state.dayIndexInWeek ?? 0;
+    const { phase } = currentPhaseFor(program);
+    const key = phaseKeyFor(program, phase);
+    const dayIndex = (state.pendingWorkout && state.pendingWorkout.programId === program.id && state.pendingWorkout.phaseKey === key)
+      ? state.pendingWorkout.dayIndex : 0;
     const workout = await generateTodayWorkout(program, dayIndex);
-    state.todayWorkout = { date: new Date().toISOString().slice(0, 10), programId: program.id, workout, dayIndex };
+    state.pendingWorkout = { programId: program.id, phaseKey: key, dayIndex, workout, completed: false };
     persist();
     renderTodayWorkout(workout);
   } catch (err) {
