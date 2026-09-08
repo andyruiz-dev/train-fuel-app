@@ -1450,7 +1450,7 @@ function startSession() {
     queue: buildSessionQueue(currentWorkout.exercises),
     pos: 0,
     resting: false,
-    restRemaining: 0,
+    restEndTime: 0,
     timerId: null,
     setsActual: {}, // exIndex -> [actual reps per set]
   };
@@ -1473,10 +1473,11 @@ function renderSession() {
   const step = session.queue[session.pos];
 
   if (session.resting) {
+    const remaining = Math.max(0, Math.ceil((session.restEndTime - Date.now()) / 1000));
     panel.innerHTML = `
       <div class="card">
         <h2>Rest</h2>
-        <div id="restClock" style="font-size:36px; font-weight:600; text-align:center; margin:14px 0; font-family:var(--font-mono);">${formatTime(session.restRemaining)}</div>
+        <div id="restClock" style="font-size:36px; font-weight:600; text-align:center; margin:14px 0; font-family:var(--font-mono);">${formatTime(remaining)}</div>
         <button class="secondary" id="skipRestBtn" style="width:100%;">Skip rest</button>
       </div>`;
     document.getElementById("skipRestBtn").addEventListener("click", () => {
@@ -1526,20 +1527,32 @@ function renderSession() {
 
 function startRest(seconds) {
   session.resting = true;
-  session.restRemaining = seconds;
+  session.restEndTime = Date.now() + seconds * 1000;
   renderSession();
-  session.timerId = setInterval(() => {
-    session.restRemaining--;
-    const clock = document.getElementById("restClock");
-    if (clock) clock.textContent = formatTime(session.restRemaining);
-    if (session.restRemaining <= 0) {
-      clearInterval(session.timerId);
-      playBeep();
-      session.resting = false;
-      renderSession();
-    }
-  }, 1000);
+  session.timerId = setInterval(tickRest, 1000);
 }
+
+function tickRest() {
+  if (!session || !session.resting) return;
+  const remaining = Math.max(0, Math.ceil((session.restEndTime - Date.now()) / 1000));
+  const clock = document.getElementById("restClock");
+  if (clock) clock.textContent = formatTime(remaining);
+  if (remaining <= 0) {
+    clearInterval(session.timerId);
+    playBeep();
+    session.resting = false;
+    renderSession();
+  }
+}
+
+// setInterval throttles or pauses while the screen is locked or the tab is
+// backgrounded, so a decrementing counter would drift. Recomputing from the
+// absolute end time on return keeps the rest period accurate regardless.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && session && session.resting) {
+    tickRest();
+  }
+});
 
 function finishSession() {
   const results = currentWorkout.exercises.map((e, i) => {
