@@ -107,6 +107,13 @@
       <h2>Today's workout</h2>
       <div id="todayWorkout" class="empty">Pick an active program first.</div>
       <button class="primary" id="genWorkoutBtn" style="margin-top:10px;" disabled>Generate today's workout</button>
+      <button class="secondary" id="startSessionBtn" style="margin-top:8px; width:100%;" disabled>Start guided session</button>
+    </div>
+    <div id="sessionPanel" class="hidden"></div>
+
+    <div class="card">
+      <h2>Weekly review</h2>
+      <div id="weeklyReview"></div>
     </div>
   </section>
 
@@ -161,10 +168,20 @@
   <!-- PROGRESS -->
   <section id="tab-progress" class="tab-panel hidden">
     <div class="card">
-      <h2>Progress</h2>
-      <div class="empty">Charts land in the next pass — weight trend, volume/week, and program-adherence
-      will read from the same durable state this scaffold already saves, so no data migration
-      will be needed when they're added.</div>
+      <h2>Log a measurement</h2>
+      <div class="row">
+        <input type="text" inputmode="decimal" id="weightInput" placeholder="Weight (lbs)" style="flex:1;">
+        <input type="date" id="measurementDateInput" style="flex:1;">
+      </div>
+      <button class="secondary" id="logWeightBtn" style="margin-top:10px;">Log weight</button>
+    </div>
+    <div class="card">
+      <h2>Weight trend</h2>
+      <div id="weightChart" class="empty">Log a few measurements to see a trend.</div>
+    </div>
+    <div class="card">
+      <h2>Weekly volume</h2>
+      <div id="volumeChart" class="empty">Complete a few workouts to see volume per week.</div>
     </div>
   </section>
 
@@ -251,7 +268,7 @@ const LS_KEY = "tf_state_v1";
 const LS_WORKER_URL_KEY = "tf_worker_url";
 
 let WORKER_URL = localStorage.getItem(LS_WORKER_URL_KEY) || "";
-let state = { settings: {}, measurements: [], logs: [], activeProgramId: null,
+let state = { settings: {}, measurements: [], logs: [], activeProgramId: null, weekAdjustment: 0,
   progressLevels: { push: 1, pull: 1, legs: 1, hinge: 1, core: 1, ruck: 1 } };
 let exercises = [];
 let programs = [];
@@ -289,6 +306,7 @@ async function loadState() {
   if (!state.progressLevels) {
     state.progressLevels = { push: 1, pull: 1, legs: 1, hinge: 1, core: 1, ruck: 1 };
   }
+  if (typeof state.weekAdjustment !== "number") state.weekAdjustment = 0;
 }
 
 function saveStateLocal() {
@@ -507,6 +525,58 @@ function renderProgramPreview(program) {
   `).join("");
 }
 
+function renderWeeklyReview() {
+  const el = document.getElementById("weeklyReview");
+  const program = programs.find(p => p.id === state.activeProgramId);
+  const weekNumber = computeWeekNumber();
+  let phaseLabel = "no active program";
+  let deloadNote = "";
+  if (program) {
+    const { phase } = currentPhaseFor(program);
+    phaseLabel = phase?.phase || "n/a";
+    if (phase?.deload_weeks?.includes(weekNumber)) deloadNote = " · deload week";
+  }
+
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const recentLogs = (state.logs || []).filter(l => new Date(l.date).getTime() >= weekAgo);
+  const counts = { max: 0, hold: 0, missed: 0 };
+  recentLogs.forEach(l => { if (counts[l.result] !== undefined) counts[l.result]++; });
+
+  el.innerHTML = `
+    <div class="meta">Week ${weekNumber} · ${phaseLabel}${deloadNote}</div>
+    <div class="meta" style="margin-top:6px;">Last 7 days: ${recentLogs.length} exercises logged
+    (${counts.max} hit max, ${counts.hold} as prescribed, ${counts.missed} missed)</div>
+    <div class="row" style="margin-top:10px;">
+      <button class="secondary" id="repeatWeekBtn" style="flex:1;">Repeat this week</button>
+      <button class="secondary" id="advanceWeekBtn" style="flex:1;">Advance a week</button>
+    </div>
+    ${state.weekAdjustment ? `<button class="danger-link" id="resetWeekBtn" style="margin-top:6px;">Reset to actual date (currently offset ${state.weekAdjustment > 0 ? "+" : ""}${state.weekAdjustment})</button>` : ""}
+  `;
+
+  document.getElementById("repeatWeekBtn").addEventListener("click", () => {
+    state.weekAdjustment = (state.weekAdjustment || 0) - 1;
+    state.todayWorkout = null;
+    persist();
+    renderWeeklyReview();
+    if (program) autoGenerateTodayIfNeeded(program);
+  });
+  document.getElementById("advanceWeekBtn").addEventListener("click", () => {
+    state.weekAdjustment = (state.weekAdjustment || 0) + 1;
+    state.todayWorkout = null;
+    persist();
+    renderWeeklyReview();
+    if (program) autoGenerateTodayIfNeeded(program);
+  });
+  const resetBtn = document.getElementById("resetWeekBtn");
+  if (resetBtn) resetBtn.addEventListener("click", () => {
+    state.weekAdjustment = 0;
+    state.todayWorkout = null;
+    persist();
+    renderWeeklyReview();
+    if (program) autoGenerateTodayIfNeeded(program);
+  });
+}
+
 function renderActiveProgramInfo() {
   const box = document.getElementById("activeProgramInfo");
   const active = programs.find(p => p.id === state.activeProgramId);
@@ -515,12 +585,14 @@ function renderActiveProgramInfo() {
     box.innerHTML = '<div class="empty">No active program yet. Set one up in the Programs tab.</div>';
     genBtn.disabled = true;
     document.getElementById("todayWorkout").innerHTML = '<div class="empty">Pick an active program first.</div>';
+    renderWeeklyReview();
     return;
   }
   box.innerHTML = `<div class="name">${active.name}</div><div class="meta">${active.duration_weeks} weeks · ${active.source}</div>`;
   genBtn.disabled = false;
   genBtn.textContent = "Regenerate workout";
   autoGenerateTodayIfNeeded(active);
+  renderWeeklyReview();
 }
 
 async function autoGenerateTodayIfNeeded(program) {
@@ -580,18 +652,25 @@ numbers WITHIN that phase's range that should be lighter.`;
   return program;
 }
 
+function computeWeekNumber() {
+  const startDate = state.settings?.startDate ? new Date(state.settings.startDate) : new Date();
+  const raw = Math.floor((Date.now() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1;
+  return Math.max(1, raw + (state.weekAdjustment || 0));
+}
+
 function currentPhaseFor(program) {
   const phases = program.structure.phases || [];
-  const startDate = state.settings?.startDate ? new Date(state.settings.startDate) : new Date();
-  const weeksElapsed = Math.floor((Date.now() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1;
-  return phases.find(p => weeksElapsed >= p.week_start && weeksElapsed <= p.week_end) || phases[0];
+  const weekNumber = computeWeekNumber();
+  const phase = phases.find(p => weekNumber >= p.week_start && weekNumber <= p.week_end) || phases[phases.length - 1] || phases[0];
+  return { phase, weekNumber };
 }
 
 async function generateTodayWorkout(program) {
   const recentNames = (state.logs || []).slice(-15).map(l => l.exercise).join(", ");
   const availableList = exercises.map(e => `${e.name} (${e.muscle_group}, ${e.equipment || "bodyweight"})`).join("; ");
   const levels = state.progressLevels;
-  const phase = currentPhaseFor(program);
+  const { phase, weekNumber } = currentPhaseFor(program);
+  const isDeload = phase?.deload_weeks?.includes(weekNumber);
   const system = `You pick specific exercises from a provided library to fill a day's
 muscle-group slots, prioritizing variety from recent sessions while keeping the
 muscle group correct so progression still counts. You also scale difficulty to a
@@ -600,11 +679,12 @@ assisted), 3 = the standard/base version, 4-5 = harder progressions (e.g. archer
 or one-arm variants, added instability or load). Set the reps field's top end to
 match the level: level 1-2 top of range ~8, level 3 ~10-12, level 4-5 ~12-15 or
 note added difficulty (tempo, pause, unilateral) instead of just more reps.
+${isDeload ? "This is a DELOAD week for this phase — reduce sets and/or reps by roughly 30-40% across all exercises." : ""}
 Respond with ONLY valid JSON.`;
   const prompt = `Available exercises: ${availableList}.
 Recently used (avoid repeating if a same-muscle-group alternative exists): ${recentNames || "none yet"}.
 Current level per muscle group (1-5): ${JSON.stringify(levels)}.
-Current phase: ${phase?.phase || "n/a"}.
+Current phase: ${phase?.phase || "n/a"}, week ${weekNumber}${isDeload ? " (deload)" : ""}.
 Today's slots: ${JSON.stringify(phase?.days?.[0]?.slots || [])}.
 Output JSON: {"day": "string", "exercises": [{"name": "string", "muscle_group": "string", "sets": 3, "reps": "8-12"}]}`;
   const data = await apiFetch("/api/generate", {
@@ -621,7 +701,22 @@ let currentWorkout = null;
 function renderTodayWorkout(workout) {
   currentWorkout = workout;
   const box = document.getElementById("todayWorkout");
-  if (!workout) { box.innerHTML = '<div class="empty">Pick an active program first.</div>'; return; }
+  const sessionBtn = document.getElementById("startSessionBtn");
+  if (!workout) {
+    box.innerHTML = '<div class="empty">Pick an active program first.</div>';
+    sessionBtn.disabled = true;
+    return;
+  }
+  sessionBtn.disabled = false;
+
+  if (state.todayWorkout?.completed) {
+    box.innerHTML = `<div class="empty">Workout logged for today. ${workout.exercises.map(e => e.name).join(", ")}.</div>`;
+    sessionBtn.textContent = "Session already logged";
+    sessionBtn.disabled = true;
+    return;
+  }
+  sessionBtn.textContent = "Start guided session";
+
   box.innerHTML = workout.exercises.map((e, i) => `
     <div class="list-item" style="flex-direction:column; align-items:stretch;">
       <div style="display:flex; justify-content:space-between;">
@@ -700,15 +795,14 @@ Give adjusted sets/reps for the replacement so effort stays comparable.`;
   renderTodayWorkout(currentWorkout);
 }
 
-function completeWorkout() {
-  const items = document.querySelectorAll("#todayWorkout .list-item");
-  const results = [];
-  items.forEach((item, i) => {
-    const active = item.querySelector(".result-chip.active");
-    results.push({ exercise: currentWorkout.exercises[i], result: active ? active.dataset.result : "hold" });
-  });
+function parseRepRange(repsStr) {
+  const nums = (String(repsStr).match(/\d+/g) || []).map(Number);
+  if (!nums.length) return { min: 0, max: 0 };
+  if (nums.length === 1) return { min: nums[0], max: nums[0] };
+  return { min: nums[0], max: nums[nums.length - 1] };
+}
 
-  // update per-muscle-group levels: any missed -> down; all max -> up; else hold
+function applyWorkoutResults(results) {
   const byGroup = {};
   results.forEach(r => {
     const mg = r.exercise.muscle_group;
@@ -729,11 +823,238 @@ function completeWorkout() {
     state.logs.push({ date: new Date().toISOString(), exercise: r.exercise.name, muscle_group: r.exercise.muscle_group, result: r.result });
   });
 
+  if (state.todayWorkout) state.todayWorkout.completed = true;
   persist();
+  renderProgressCharts();
+}
+
+function completeWorkout() {
+  const items = document.querySelectorAll("#todayWorkout .list-item");
+  const results = [];
+  items.forEach((item, i) => {
+    const active = item.querySelector(".result-chip.active");
+    results.push({ exercise: currentWorkout.exercises[i], result: active ? active.dataset.result : "hold" });
+  });
+  applyWorkoutResults(results);
+  renderTodayWorkout(currentWorkout);
   alert("Logged. Levels updated where you hit or missed the rep range.");
 }
 
-// ---- tabs ----
+// ---- progress charts ----
+function renderLineChart(containerId, points, { yLabel = "" } = {}) {
+  const el = document.getElementById(containerId);
+  if (!points.length) { el.innerHTML = '<div class="empty">Not enough data yet.</div>'; return; }
+  const w = 300, h = 140, pad = 24;
+  const values = points.map(p => p.value);
+  const min = Math.min(...values), max = Math.max(...values);
+  const range = max - min || 1;
+  const stepX = points.length > 1 ? (w - pad * 2) / (points.length - 1) : 0;
+  const coords = points.map((p, i) => {
+    const x = pad + i * stepX;
+    const y = h - pad - ((p.value - min) / range) * (h - pad * 2);
+    return { x, y, label: p.label, value: p.value };
+  });
+  const pathD = coords.map((c, i) => `${i === 0 ? "M" : "L"}${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(" ");
+  const dots = coords.map(c => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3" fill="#0F6E63"/>`).join("");
+  const firstLabel = coords[0]?.label || "";
+  const lastLabel = coords[coords.length - 1]?.label || "";
+  el.innerHTML = `
+    <svg width="100%" viewBox="0 0 ${w} ${h + 20}" style="overflow:visible;">
+      <path d="${pathD}" fill="none" stroke="#0F6E63" stroke-width="2"/>
+      ${dots}
+      <text x="${pad}" y="${h + 16}" font-size="11" fill="#6B6A63">${firstLabel}</text>
+      <text x="${w - pad}" y="${h + 16}" font-size="11" fill="#6B6A63" text-anchor="end">${lastLabel}</text>
+      <text x="${pad}" y="14" font-size="11" fill="#6B6A63">${max.toFixed(0)}${yLabel}</text>
+      <text x="${pad}" y="${h - pad + 4}" font-size="11" fill="#6B6A63">${min.toFixed(0)}${yLabel}</text>
+    </svg>`;
+}
+
+function renderBarChart(containerId, bars) {
+  const el = document.getElementById(containerId);
+  if (!bars.length) { el.innerHTML = '<div class="empty">Not enough data yet.</div>'; return; }
+  const w = 300, h = 140, pad = 24;
+  const max = Math.max(...bars.map(b => b.value), 1);
+  const barW = (w - pad * 2) / bars.length - 6;
+  const barsSvg = bars.map((b, i) => {
+    const x = pad + i * ((w - pad * 2) / bars.length);
+    const barH = (b.value / max) * (h - pad * 2 - 10);
+    const y = h - pad - barH;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${barH.toFixed(1)}" fill="#0F6E63" rx="2"/>
+            <text x="${(x + barW / 2).toFixed(1)}" y="${h + 4}" font-size="10" fill="#6B6A63" text-anchor="middle">${b.label}</text>`;
+  }).join("");
+  el.innerHTML = `<svg width="100%" viewBox="0 0 ${w} ${h + 16}" style="overflow:visible;">${barsSvg}</svg>`;
+}
+
+function isoWeekLabel(date) {
+  const d = new Date(date);
+  const onejan = new Date(d.getFullYear(), 0, 1);
+  const week = Math.ceil((((d - onejan) / 86400000) + onejan.getDay() + 1) / 7);
+  return `W${week}`;
+}
+
+function renderProgressCharts() {
+  const measurements = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+  renderLineChart("weightChart", measurements.map(m => ({ label: m.date.slice(5), value: m.weight })), { yLabel: "lb" });
+
+  const logs = state.logs || [];
+  const byWeek = {};
+  logs.forEach(l => {
+    const wk = isoWeekLabel(l.date);
+    byWeek[wk] = (byWeek[wk] || 0) + 1;
+  });
+  const weekLabels = Object.keys(byWeek).slice(-10);
+  renderBarChart("volumeChart", weekLabels.map(wk => ({ label: wk, value: byWeek[wk] })));
+}
+
+document.getElementById("logWeightBtn").addEventListener("click", () => {
+  const weight = parseFloat(document.getElementById("weightInput").value);
+  const date = document.getElementById("measurementDateInput").value || new Date().toISOString().slice(0, 10);
+  if (isNaN(weight)) { alert("Enter a weight first."); return; }
+  state.measurements = state.measurements || [];
+  state.measurements = state.measurements.filter(m => m.date !== date);
+  state.measurements.push({ date, weight });
+  persist();
+  document.getElementById("weightInput").value = "";
+  renderProgressCharts();
+});
+document.getElementById("measurementDateInput").value = new Date().toISOString().slice(0, 10);
+// ---- guided session ----
+let session = null;
+
+function formatTime(s) {
+  const m = Math.floor(s / 60), sec = s % 60;
+  return `${m}:${sec.toString().padStart(2, "0")}`;
+}
+
+function playBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    osc.frequency.value = 880;
+    osc.connect(ctx.destination);
+    osc.start();
+    setTimeout(() => { osc.stop(); ctx.close(); }, 300);
+  } catch (e) { /* audio not available, ignore */ }
+}
+
+function startSession() {
+  if (!currentWorkout) return;
+  session = {
+    exIndex: 0,
+    setIndex: 0,
+    resting: false,
+    restRemaining: 0,
+    timerId: null,
+    results: currentWorkout.exercises.map(e => ({ exercise: e, setsActual: [], result: null })),
+  };
+  document.getElementById("todayWorkout").classList.add("hidden");
+  document.getElementById("startSessionBtn").classList.add("hidden");
+  document.getElementById("genWorkoutBtn").classList.add("hidden");
+  renderSession();
+}
+
+function renderSession() {
+  const panel = document.getElementById("sessionPanel");
+  if (!session) { panel.classList.add("hidden"); panel.innerHTML = ""; return; }
+  panel.classList.remove("hidden");
+
+  if (session.exIndex >= currentWorkout.exercises.length) {
+    finishSession();
+    return;
+  }
+
+  const ex = currentWorkout.exercises[session.exIndex];
+
+  if (session.resting) {
+    panel.innerHTML = `
+      <div class="card">
+        <h2>Rest</h2>
+        <div id="restClock" style="font-size:36px; font-weight:600; text-align:center; margin:14px 0;">${formatTime(session.restRemaining)}</div>
+        <button class="secondary" id="skipRestBtn" style="width:100%;">Skip rest</button>
+      </div>`;
+    document.getElementById("skipRestBtn").addEventListener("click", () => {
+      clearInterval(session.timerId);
+      session.resting = false;
+      renderSession();
+    });
+    return;
+  }
+
+  const setNum = session.setIndex + 1;
+  panel.innerHTML = `
+    <div class="card">
+      <h2>${ex.name}</h2>
+      <div class="meta">${ex.muscle_group} · set ${setNum} of ${ex.sets} · target ${ex.reps} reps</div>
+      <input type="text" inputmode="numeric" id="actualRepsInput" placeholder="Actual reps completed" style="margin-top:10px;">
+      <button class="primary" id="completeSetBtn" style="margin-top:10px;">Complete set</button>
+      <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
+    </div>`;
+
+  document.getElementById("completeSetBtn").addEventListener("click", () => {
+    const input = document.getElementById("actualRepsInput");
+    const val = parseInt(input.value, 10);
+    if (isNaN(val)) {
+      input.style.borderColor = "var(--danger)";
+      return;
+    }
+    session.results[session.exIndex].setsActual.push(val);
+    if (setNum >= ex.sets) {
+      const range = parseRepRange(ex.reps);
+      const actuals = session.results[session.exIndex].setsActual;
+      let result = "hold";
+      if (actuals.some(a => a < range.min)) result = "missed";
+      else if (actuals.every(a => a >= range.max)) result = "max";
+      session.results[session.exIndex].result = result;
+      session.exIndex++;
+      session.setIndex = 0;
+      renderSession();
+    } else {
+      session.setIndex++;
+      startRest();
+    }
+  });
+
+  document.getElementById("endSessionBtn").addEventListener("click", () => {
+    if (!confirm("End session early? Remaining exercises won't be logged.")) return;
+    session = null;
+    document.getElementById("sessionPanel").classList.add("hidden");
+    document.getElementById("todayWorkout").classList.remove("hidden");
+    document.getElementById("startSessionBtn").classList.remove("hidden");
+    document.getElementById("genWorkoutBtn").classList.remove("hidden");
+  });
+}
+
+function startRest(seconds = 90) {
+  session.resting = true;
+  session.restRemaining = seconds;
+  renderSession();
+  session.timerId = setInterval(() => {
+    session.restRemaining--;
+    const clock = document.getElementById("restClock");
+    if (clock) clock.textContent = formatTime(session.restRemaining);
+    if (session.restRemaining <= 0) {
+      clearInterval(session.timerId);
+      playBeep();
+      session.resting = false;
+      renderSession();
+    }
+  }, 1000);
+}
+
+function finishSession() {
+  const results = session.results.map(r => ({ exercise: r.exercise, result: r.result || "hold" }));
+  applyWorkoutResults(results);
+  session = null;
+  document.getElementById("sessionPanel").classList.add("hidden");
+  document.getElementById("todayWorkout").classList.remove("hidden");
+  document.getElementById("startSessionBtn").classList.remove("hidden");
+  document.getElementById("genWorkoutBtn").classList.remove("hidden");
+  renderTodayWorkout(currentWorkout);
+  alert("Session complete. Logged and levels updated automatically from your actual reps.");
+}
+
+document.getElementById("startSessionBtn").addEventListener("click", startSession);
+
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
@@ -933,6 +1254,7 @@ async function init() {
   await loadPrograms();
   renderExercises();
   renderPrograms();
+  renderProgressCharts();
   if (state.settings?.startDate) document.getElementById("startDateInput").value = state.settings.startDate;
 }
 init();
