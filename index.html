@@ -360,6 +360,8 @@ async function loadState() {
   if (!state.settings.startingLevels) {
     state.settings.startingLevels = { push: "intermediate", pull: "intermediate", legs: "intermediate", hinge: "intermediate", core: "intermediate", ruck: "intermediate" };
   }
+  if (typeof state.dayIndexInWeek !== "number") state.dayIndexInWeek = -1;
+  if (typeof state.lastGeneratedWeek !== "number") state.lastGeneratedWeek = null;
 }
 
 function saveStateLocal() {
@@ -665,8 +667,16 @@ async function autoGenerateTodayIfNeeded(program) {
   const box = document.getElementById("todayWorkout");
   box.innerHTML = '<div class="empty">Generating today\'s workout…</div>';
   try {
-    const workout = await generateTodayWorkout(program);
-    state.todayWorkout = { date: todayStr, programId: program.id, workout };
+    const { phase, weekNumber } = currentPhaseFor(program);
+    const totalDays = (phase?.days || []).length || 1;
+    if (state.lastGeneratedWeek !== weekNumber) {
+      state.dayIndexInWeek = 0;
+    } else {
+      state.dayIndexInWeek = ((state.dayIndexInWeek ?? -1) + 1) % totalDays;
+    }
+    state.lastGeneratedWeek = weekNumber;
+    const workout = await generateTodayWorkout(program, state.dayIndexInWeek);
+    state.todayWorkout = { date: todayStr, programId: program.id, workout, dayIndex: state.dayIndexInWeek };
     persist();
     renderTodayWorkout(workout);
   } catch (err) {
@@ -726,12 +736,13 @@ function currentPhaseFor(program) {
   return { phase, weekNumber };
 }
 
-async function generateTodayWorkout(program) {
+async function generateTodayWorkout(program, dayIndex = 0) {
   const recentNames = (state.logs || []).slice(-15).map(l => l.exercise).join(", ");
   const availableList = exercises.map(e => `${e.name} (${e.muscle_group}, ${e.equipment || "bodyweight"})`).join("; ");
   const levels = state.progressLevels;
   const { phase, weekNumber } = currentPhaseFor(program);
   const isDeload = phase?.deload_weeks?.includes(weekNumber);
+  const day = phase?.days?.[dayIndex] || phase?.days?.[0];
   const system = `You pick specific exercises from a provided library to fill a day's
 muscle-group slots, prioritizing variety from recent sessions while keeping the
 muscle group correct so progression still counts. You also scale difficulty to a
@@ -754,7 +765,7 @@ Respond with ONLY valid JSON.`;
 Recently used (avoid repeating if a same-muscle-group alternative exists): ${recentNames || "none yet"}.
 Current level per muscle group (1-5): ${JSON.stringify(levels)}.
 Current phase: ${phase?.phase || "n/a"}, week ${weekNumber}${isDeload ? " (deload)" : ""}.
-Today's slots: ${JSON.stringify(phase?.days?.[0]?.slots || [])}.
+Today's day: "${day?.day || "n/a"}", slots: ${JSON.stringify(day?.slots || [])}.
 Output JSON: {"day": "string", "exercises": [{"name": "string", "muscle_group": "string", "sets": 3, "reps": "8-12", "superset_group": "A"}]}
 superset_group is a letter shared by paired exercises, or null if standalone.`;
   const data = await apiFetch("/api/generate", {
@@ -1317,8 +1328,9 @@ document.getElementById("genWorkoutBtn").addEventListener("click", async (e) => 
   if (!program) return;
   btn.disabled = true; btn.textContent = "Generating…";
   try {
-    const workout = await generateTodayWorkout(program);
-    state.todayWorkout = { date: new Date().toISOString().slice(0, 10), programId: program.id, workout };
+    const dayIndex = state.todayWorkout?.dayIndex ?? state.dayIndexInWeek ?? 0;
+    const workout = await generateTodayWorkout(program, dayIndex);
+    state.todayWorkout = { date: new Date().toISOString().slice(0, 10), programId: program.id, workout, dayIndex };
     persist();
     renderTodayWorkout(workout);
   } catch (err) {
