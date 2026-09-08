@@ -108,7 +108,7 @@
     color:var(--text-muted); cursor:pointer; font-family:var(--font-display); letter-spacing:0.3px;
   }
   nav.tabs button.active{color:var(--accent); font-weight:600;}
-  .tab-icon{display:block; font-size:18px; margin-bottom:2px;}
+  .tab-icon{display:block; margin:0 auto 2px; width:20px; height:20px;}
   .hidden{display:none !important;}
   .status-dot{
     display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px;
@@ -351,10 +351,10 @@
 </main>
 
 <nav class="tabs">
-  <button class="tab-btn active" data-tab="today"><span class="tab-icon">●</span>Today</button>
-  <button class="tab-btn" data-tab="food"><span class="tab-icon">◎</span>Food</button>
-  <button class="tab-btn" data-tab="progress"><span class="tab-icon">▲</span>Progress</button>
-  <button class="tab-btn" data-tab="programs"><span class="tab-icon">☰</span>Programs</button>
+  <button class="tab-btn active" data-tab="today"><svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>Today</button>
+  <button class="tab-btn" data-tab="food"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>Food</button>
+  <button class="tab-btn" data-tab="progress"><svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,4 21,20 3,20"/></svg>Progress</button>
+  <button class="tab-btn" data-tab="programs"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>Programs</button>
 </nav>
 
 <script>
