@@ -1585,8 +1585,11 @@ function finishSession() {
 
 document.getElementById("startSessionBtn").addEventListener("click", startSession);
 
+let lastActiveTab = "today";
+
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
+    lastActiveTab = btn.dataset.tab;
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
     document.getElementById("profileBtn").classList.remove("active");
     document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
@@ -1600,9 +1603,16 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
 });
 
 document.getElementById("profileBtn").addEventListener("click", () => {
+  const profileBtn = document.getElementById("profileBtn");
+  if (profileBtn.classList.contains("active")) {
+    // already in Settings — pressing again exits back to whichever tab was open before
+    const targetBtn = document.querySelector(`.tab-btn[data-tab="${lastActiveTab}"]`);
+    if (targetBtn) targetBtn.click();
+    return;
+  }
   document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
   document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
-  document.getElementById("profileBtn").classList.add("active");
+  profileBtn.classList.add("active");
   document.getElementById("tab-settings").classList.remove("hidden");
 });
 
