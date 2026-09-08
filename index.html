@@ -82,6 +82,8 @@
     width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:2px;
     font-size:14px; background:var(--surface); color:var(--text);
   }
+  .field{flex:1;}
+  .field-label{font-family:var(--font-mono); font-size:11px; color:var(--text-muted); margin-bottom:4px;}
   .list-item{
     display:flex; justify-content:space-between; align-items:center;
     padding:10px 0; border-bottom:1px solid var(--border);
@@ -192,12 +194,12 @@
       <div id="foodScanReview" class="hidden" style="margin-top:10px;">
         <input type="text" id="scanName" placeholder="Food name" style="margin-bottom:8px;">
         <div class="row">
-          <input type="text" inputmode="numeric" id="scanCalories" placeholder="Calories" style="flex:1;">
-          <input type="text" inputmode="numeric" id="scanProtein" placeholder="Protein (g)" style="flex:1;">
+          <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="scanCalories"></div>
+          <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="scanProtein"></div>
         </div>
         <div class="row" style="margin-top:8px;">
-          <input type="text" inputmode="numeric" id="scanCarbs" placeholder="Carbs (g)" style="flex:1;">
-          <input type="text" inputmode="numeric" id="scanFat" placeholder="Fat (g)" style="flex:1;">
+          <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="scanCarbs"></div>
+          <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="scanFat"></div>
         </div>
         <button class="primary" id="saveScanBtn" style="margin-top:10px;">Add to log</button>
       </div>
@@ -209,12 +211,12 @@
       </p>
       <input type="text" id="manualName" placeholder="Food name" style="margin-bottom:8px;">
       <div class="row">
-        <input type="text" inputmode="numeric" id="manualCalories" placeholder="Calories" style="flex:1;">
-        <input type="text" inputmode="numeric" id="manualProtein" placeholder="Protein (g)" style="flex:1;">
+        <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="manualCalories"></div>
+        <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="manualProtein"></div>
       </div>
       <div class="row" style="margin-top:8px;">
-        <input type="text" inputmode="numeric" id="manualCarbs" placeholder="Carbs (g)" style="flex:1;">
-        <input type="text" inputmode="numeric" id="manualFat" placeholder="Fat (g)" style="flex:1;">
+        <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="manualCarbs"></div>
+        <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="manualFat"></div>
       </div>
       <button class="secondary" id="saveManualBtn" style="margin-top:10px; width:100%;">Add to log</button>
     </div>
@@ -335,12 +337,12 @@
     <div class="card">
       <h2>Daily macro targets</h2>
       <div class="row">
-        <input type="text" inputmode="numeric" id="targetCalories" placeholder="Calories" style="flex:1;">
-        <input type="text" inputmode="numeric" id="targetProtein" placeholder="Protein (g)" style="flex:1;">
+        <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="targetCalories" placeholder="2300"></div>
+        <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="targetProtein" placeholder="175"></div>
       </div>
       <div class="row" style="margin-top:8px;">
-        <input type="text" inputmode="numeric" id="targetCarbs" placeholder="Carbs (g)" style="flex:1;">
-        <input type="text" inputmode="numeric" id="targetFat" placeholder="Fat (g)" style="flex:1;">
+        <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="targetCarbs" placeholder="255"></div>
+        <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="targetFat" placeholder="65"></div>
       </div>
       <button class="secondary" id="saveTargetsBtn" style="margin-top:10px;">Save targets</button>
     </div>
