@@ -15,7 +15,7 @@
     --accent:#2FBFA6;
     --accent-dark:#1B8674;
     --gold:#C79A45;
-    --slate:#7A8783;
+    --slate:#9B6FB0;
     --bg:#15170F;
     --surface:#20231C;
     --surface-2:#2A2E24;
@@ -53,7 +53,7 @@
     font-family:var(--font-display); font-size:16px; font-weight:600; margin:0 0 10px;
     letter-spacing:0.2px;
   }
-  .row{display:flex; gap:8px; flex-wrap:wrap;}
+  .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
   .chip{
     border:1px solid var(--border); background:var(--surface); color:var(--text);
     padding:8px 14px; border-radius:2px; font-size:14px; cursor:pointer; user-select:none;
@@ -109,6 +109,20 @@
     border:1px dashed var(--border); border-radius:var(--radius); padding:20px;
     text-align:center; color:var(--text-muted); font-size:13px; cursor:pointer;
   }
+  summary::-webkit-details-marker{display:none;}
+  summary{cursor:pointer;}
+  details.exercise-group{border-bottom:1px solid var(--border); padding:10px 0;}
+  details.exercise-group:last-child{border-bottom:none;}
+  details.exercise-group summary{
+    font-family:var(--font-display); font-size:15px; font-weight:500;
+    letter-spacing:0.2px; list-style:none; display:flex; justify-content:space-between;
+    align-items:center; text-transform:capitalize;
+  }
+  details.exercise-group summary::after{
+    content:"+"; color:var(--slate); font-size:18px; font-family:var(--font-mono);
+  }
+  details.exercise-group[open] summary::after{content:"−";}
+  details.exercise-group .list-item:first-child{padding-top:10px;}
 </style>
 </head>
 <body>
@@ -135,8 +149,10 @@
     <div id="sessionPanel" class="hidden"></div>
 
     <div class="card">
-      <h2>Weekly review</h2>
-      <div id="weeklyReview"></div>
+      <details>
+        <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Weekly review</summary>
+        <div id="weeklyReview" style="margin-top:10px;"></div>
+      </details>
     </div>
   </section>
 
@@ -492,14 +508,26 @@ function renderExercises(filterText = "", muscleGroup = "all") {
     return matchesText && matchesMg;
   });
   if (!filtered.length) { list.innerHTML = '<div class="empty">No matches.</div>'; return; }
-  list.innerHTML = filtered.map(e => `
-    <div class="list-item">
-      <div>
-        <div class="name">${e.name}</div>
-        <div class="meta">${e.muscle_group} · ${e.equipment || "bodyweight"}${e.source === "builtin" ? "" : " · " + e.source}</div>
+
+  const groups = {};
+  filtered.forEach(e => { (groups[e.muscle_group] ||= []).push(e); });
+  const isFiltering = !!filterText || muscleGroup !== "all";
+
+  list.innerHTML = Object.entries(groups).map(([mg, items]) => `
+    <details class="exercise-group" ${isFiltering ? "open" : ""}>
+      <summary>${mg} <span class="meta" style="display:inline;">(${items.length})</span></summary>
+      <div style="padding-top:4px;">
+        ${items.map(e => `
+          <div class="list-item">
+            <div>
+              <div class="name">${e.name}</div>
+              <div class="meta">${e.equipment || "bodyweight"}${e.source === "builtin" ? "" : " · " + e.source}</div>
+            </div>
+            ${e.source !== "builtin" ? `<button class="danger-link" data-del-ex="${e.id}">Delete</button>` : ""}
+          </div>
+        `).join("")}
       </div>
-      ${e.source !== "builtin" ? `<button class="danger-link" data-del-ex="${e.id}">Delete</button>` : ""}
-    </div>
+    </details>
   `).join("");
 }
 
@@ -810,6 +838,12 @@ function renderTodayWorkout(workout) {
       const group = chip.parentElement;
       group.querySelectorAll(".result-chip").forEach(c => c.classList.remove("active"));
       chip.classList.add("active");
+      const itemEl = chip.closest(".list-item");
+      group.querySelectorAll(".result-chip").forEach(c => { if (c !== chip) c.style.display = "none"; });
+      const swapBtn = itemEl.querySelector("[data-swap-open]");
+      if (swapBtn) swapBtn.style.display = "none";
+      const swapPanelEl = itemEl.querySelector(".swap-panel");
+      if (swapPanelEl) swapPanelEl.classList.add("hidden");
     }
   });
 
