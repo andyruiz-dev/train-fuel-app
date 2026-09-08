@@ -514,10 +514,31 @@ function renderActiveProgramInfo() {
   if (!active) {
     box.innerHTML = '<div class="empty">No active program yet. Set one up in the Programs tab.</div>';
     genBtn.disabled = true;
+    document.getElementById("todayWorkout").innerHTML = '<div class="empty">Pick an active program first.</div>';
     return;
   }
   box.innerHTML = `<div class="name">${active.name}</div><div class="meta">${active.duration_weeks} weeks · ${active.source}</div>`;
   genBtn.disabled = false;
+  genBtn.textContent = "Regenerate workout";
+  autoGenerateTodayIfNeeded(active);
+}
+
+async function autoGenerateTodayIfNeeded(program) {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  if (state.todayWorkout && state.todayWorkout.date === todayStr && state.todayWorkout.programId === program.id) {
+    renderTodayWorkout(state.todayWorkout.workout);
+    return;
+  }
+  const box = document.getElementById("todayWorkout");
+  box.innerHTML = '<div class="empty">Generating today\'s workout…</div>';
+  try {
+    const workout = await generateTodayWorkout(program);
+    state.todayWorkout = { date: todayStr, programId: program.id, workout };
+    persist();
+    renderTodayWorkout(workout);
+  } catch (err) {
+    box.innerHTML = `<div class="empty">Couldn't auto-generate (${err.message}). Use the button below to retry.</div>`;
+  }
 }
 
 // ---- AI generation ----
@@ -840,11 +861,13 @@ document.getElementById("genWorkoutBtn").addEventListener("click", async (e) => 
   btn.disabled = true; btn.textContent = "Generating…";
   try {
     const workout = await generateTodayWorkout(program);
+    state.todayWorkout = { date: new Date().toISOString().slice(0, 10), programId: program.id, workout };
+    persist();
     renderTodayWorkout(workout);
   } catch (err) {
     alert("Couldn't generate a workout: " + err.message);
   } finally {
-    btn.disabled = false; btn.textContent = "Generate today's workout";
+    btn.disabled = false; btn.textContent = "Regenerate workout";
   }
 });
 
