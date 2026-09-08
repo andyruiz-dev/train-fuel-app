@@ -55,7 +55,7 @@
     border-radius:var(--radius); padding:16px; margin-bottom:14px;
   }
   #tab-programs .card{border-left-color:var(--gold);}
-  #tab-library .card{border-left-color:var(--slate);}
+  #subtab-library .card{border-left-color:var(--slate);}
   #tab-progress .card{border-left-color:var(--accent-dark);}
   .card h2{
     font-family:var(--font-display); font-size:16px; font-weight:600; margin:0 0 10px;
@@ -220,51 +220,57 @@
     </div>
   </section>
 
-  <!-- PROGRAMS -->
+  <!-- PROGRAMS (with Library merged in as a sub-section) -->
   <section id="tab-programs" class="tab-panel hidden">
-    <div class="card">
-      <h2>Generate a new program</h2>
-      <div class="row" id="durationChips">
-        <div class="chip" data-months="1">1 month</div>
-        <div class="chip" data-months="3">3 months</div>
-        <div class="chip active" data-months="6">6 months</div>
-        <div class="chip" data-months="9">9 months</div>
-        <div class="chip" data-months="12">12 months</div>
-      </div>
-      <div style="margin-top:12px;">
-        <input type="text" id="programFocus" placeholder="Focus, e.g. rings + rucking, upper body strength">
-      </div>
-      <button class="primary" id="generateProgramBtn" style="margin-top:12px;">Generate program</button>
+    <div class="row" id="programsSubNav" style="margin-bottom:14px;">
+      <div class="chip active" data-subtab="my-programs">My programs</div>
+      <div class="chip" data-subtab="library">Exercise library</div>
     </div>
 
-    <div class="card">
-      <h2>Upload a program</h2>
-      <div class="file-drop" id="uploadDrop">Tap to choose PDF or photo files of an existing program</div>
-      <input type="file" id="uploadInput" accept=".pdf,image/*" multiple style="display:none;">
-      <div id="uploadStatus" class="empty" style="margin-top:8px; display:none;"></div>
-    </div>
-
-    <div class="card">
-      <h2>Saved programs</h2>
-      <div id="programList" class="empty">None yet.</div>
-    </div>
-  </section>
-
-  <!-- LIBRARY -->
-  <section id="tab-library" class="tab-panel hidden">
-    <div class="card">
-      <h2>Exercise library</h2>
-      <input type="text" id="exerciseSearch" placeholder="Search exercises…">
-      <div class="row" id="muscleFilterChips" style="margin-top:10px;">
-        <div class="chip active" data-mg="all">All</div>
-        <div class="chip" data-mg="push">Push</div>
-        <div class="chip" data-mg="pull">Pull</div>
-        <div class="chip" data-mg="legs">Legs</div>
-        <div class="chip" data-mg="hinge">Hinge</div>
-        <div class="chip" data-mg="core">Core</div>
-        <div class="chip" data-mg="ruck">Ruck</div>
+    <div id="subtab-my-programs">
+      <div class="card">
+        <h2>Generate a new program</h2>
+        <div class="row" id="durationChips">
+          <div class="chip" data-months="1">1 month</div>
+          <div class="chip" data-months="3">3 months</div>
+          <div class="chip active" data-months="6">6 months</div>
+          <div class="chip" data-months="9">9 months</div>
+          <div class="chip" data-months="12">12 months</div>
+        </div>
+        <div style="margin-top:12px;">
+          <input type="text" id="programFocus" placeholder="Focus, e.g. rings + rucking, upper body strength">
+        </div>
+        <button class="primary" id="generateProgramBtn" style="margin-top:12px;">Generate program</button>
       </div>
-      <div id="exerciseList" style="margin-top:12px;" class="empty">Loading…</div>
+
+      <div class="card">
+        <h2>Upload a program</h2>
+        <div class="file-drop" id="uploadDrop">Tap to choose PDF or photo files of an existing program</div>
+        <input type="file" id="uploadInput" accept=".pdf,image/*" multiple style="display:none;">
+        <div id="uploadStatus" class="empty" style="margin-top:8px; display:none;"></div>
+      </div>
+
+      <div class="card">
+        <h2>Saved programs</h2>
+        <div id="programList" class="empty">None yet.</div>
+      </div>
+    </div>
+
+    <div id="subtab-library" class="hidden">
+      <div class="card">
+        <h2>Exercise library</h2>
+        <input type="text" id="exerciseSearch" placeholder="Search exercises…">
+        <div class="row" id="muscleFilterChips" style="margin-top:10px;">
+          <div class="chip active" data-mg="all">All</div>
+          <div class="chip" data-mg="push">Push</div>
+          <div class="chip" data-mg="pull">Pull</div>
+          <div class="chip" data-mg="legs">Legs</div>
+          <div class="chip" data-mg="hinge">Hinge</div>
+          <div class="chip" data-mg="core">Core</div>
+          <div class="chip" data-mg="ruck">Ruck</div>
+        </div>
+        <div id="exerciseList" style="margin-top:12px;" class="empty">Loading…</div>
+      </div>
     </div>
   </section>
 
@@ -349,7 +355,6 @@
   <button class="tab-btn" data-tab="food"><span class="tab-icon">◍</span>Food</button>
   <button class="tab-btn" data-tab="progress"><span class="tab-icon">▲</span>Progress</button>
   <button class="tab-btn" data-tab="programs"><span class="tab-icon">▤</span>Programs</button>
-  <button class="tab-btn" data-tab="library"><span class="tab-icon">▦</span>Library</button>
 </nav>
 
 <script>
@@ -1584,6 +1589,15 @@ function finishSession() {
 }
 
 document.getElementById("startSessionBtn").addEventListener("click", startSession);
+
+document.getElementById("programsSubNav").addEventListener("click", (e) => {
+  const chip = e.target.closest("[data-subtab]");
+  if (!chip) return;
+  document.querySelectorAll("#programsSubNav .chip").forEach(c => c.classList.remove("active"));
+  chip.classList.add("active");
+  document.getElementById("subtab-my-programs").classList.toggle("hidden", chip.dataset.subtab !== "my-programs");
+  document.getElementById("subtab-library").classList.toggle("hidden", chip.dataset.subtab !== "library");
+});
 
 let lastActiveTab = "today";
 
