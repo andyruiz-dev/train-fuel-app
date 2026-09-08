@@ -40,7 +40,8 @@
     font-family:var(--font-display); font-size:26px; font-weight:600; margin:0;
     letter-spacing:0.3px; color:var(--text);
   }
-  header .sub{font-family:var(--font-mono); font-size:11px; color:var(--text-muted); margin-top:4px;}
+  header .sub{font-family:var(--font-mono); font-size:11px; color:var(--text-muted); margin-top:4px; display:flex; align-items:center; white-space:nowrap; overflow:hidden;}
+  #headerProgramName{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:70%;}
   main{padding:0 16px 24px; max-width:640px; margin:0 auto;}
   .card{
     background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent);
@@ -129,7 +130,7 @@
 
 <header>
   <h1>Train &amp; Fuel</h1>
-  <div class="sub"><span id="syncDot" class="status-dot"></span><span id="syncLabel">connecting…</span></div>
+  <div class="sub"><span id="headerProgramName">No active program</span> · <span id="syncDot" class="status-dot"></span><span id="syncLabel">connecting…</span></div>
 </header>
 
 <main>
@@ -157,10 +158,6 @@
       <div id="recentCardio" style="margin-top:10px;"></div>
     </div>
 
-    <div class="card">
-      <h2>Active program</h2>
-      <div id="activeProgramInfo" class="empty">No active program yet. Set one up in the Programs tab.</div>
-    </div>
     <div class="card">
       <h2>Today's workout</h2>
       <div id="todayWorkout" class="empty">Pick an active program first.</div>
@@ -665,17 +662,17 @@ function renderWeeklyReview() {
 }
 
 function renderActiveProgramInfo() {
-  const box = document.getElementById("activeProgramInfo");
+  const headerName = document.getElementById("headerProgramName");
   const active = programs.find(p => p.id === state.activeProgramId);
   const genBtn = document.getElementById("genWorkoutBtn");
   if (!active) {
-    box.innerHTML = '<div class="empty">No active program yet. Set one up in the Programs tab.</div>';
+    headerName.textContent = "No active program";
     genBtn.disabled = true;
     document.getElementById("todayWorkout").innerHTML = '<div class="empty">Pick an active program first.</div>';
     renderWeeklyReview();
     return;
   }
-  box.innerHTML = `<div class="name">${active.name}</div><div class="meta">${active.duration_weeks} weeks · ${active.source}</div>`;
+  headerName.textContent = active.name;
   genBtn.disabled = false;
   genBtn.textContent = "Regenerate workout";
   ensureWorkoutReady(active);
