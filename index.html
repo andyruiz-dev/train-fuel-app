@@ -220,7 +220,31 @@
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
   const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
-  return JSON.parse(cleaned);
+  try {
+    return JSON.parse(cleaned);
+  } catch (err) {
+    // Likely truncated mid-array (hit max_tokens). Try to salvage complete
+    // top-level array entries (e.g. finished "phases") instead of failing outright.
+    const repaired = repairTruncatedJson(cleaned);
+    if (repaired) return repaired;
+    throw err;
+  }
+}
+
+function repairTruncatedJson(text) {
+  // Find the last complete "},\n" or "}\n" boundary inside the first array
+  // in the text, then close arrays/braces to make it valid. Best-effort only.
+  const arrayStart = text.indexOf("[");
+  if (arrayStart === -1) return null;
+  let lastCompleteObjEnd = -1;
+  let depth = 0;
+  for (let i = arrayStart; i < text.length; i++) {
+    if (text[i] === "{") depth++;
+    if (text[i] === "}") { depth--; if (depth === 0) lastCompleteObjEnd = i; }
+  }
+  if (lastCompleteObjEnd === -1) return null;
+  const salvaged = text.slice(0, lastCompleteObjEnd + 1) + "]}";
+  try { return JSON.parse(salvaged); } catch (e) { return null; }
 }
 
 const LS_KEY = "tf_state_v1";
