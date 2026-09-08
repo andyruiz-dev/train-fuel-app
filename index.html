@@ -35,6 +35,7 @@
   header{
     padding:22px 16px 14px; position:sticky; top:0; background:var(--bg); z-index:5;
     border-bottom:2px solid var(--text);
+    display:flex; justify-content:space-between; align-items:flex-start;
   }
   header h1{
     font-family:var(--font-display); font-size:26px; font-weight:600; margin:0;
@@ -42,6 +43,12 @@
   }
   header .sub{font-family:var(--font-mono); font-size:11px; color:var(--text-muted); margin-top:4px; display:flex; align-items:center; white-space:nowrap; overflow:hidden;}
   #headerProgramName{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:70%;}
+  #profileBtn{
+    background:none; border:1px solid var(--border); border-radius:50%;
+    width:36px; height:36px; font-size:16px; color:var(--text-muted);
+    cursor:pointer; flex-shrink:0; margin-left:12px;
+  }
+  #profileBtn.active{border-color:var(--accent); color:var(--accent);}
   main{padding:0 16px 24px; max-width:640px; margin:0 auto;}
   .card{
     background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent);
@@ -131,8 +138,11 @@
 <body>
 
 <header>
-  <h1>Train &amp; Fuel</h1>
-  <div class="sub"><span id="headerProgramName">No active program</span> · <span id="syncDot" class="status-dot"></span><span id="syncLabel">connecting…</span></div>
+  <div>
+    <h1>Train &amp; Fuel</h1>
+    <div class="sub"><span id="headerProgramName">No active program</span> · <span id="syncDot" class="status-dot"></span><span id="syncLabel">connecting…</span></div>
+  </div>
+  <button id="profileBtn" aria-label="Settings">⚙</button>
 </header>
 
 <main>
@@ -340,7 +350,6 @@
   <button class="tab-btn" data-tab="progress"><span class="tab-icon">▲</span>Progress</button>
   <button class="tab-btn" data-tab="programs"><span class="tab-icon">▤</span>Programs</button>
   <button class="tab-btn" data-tab="library"><span class="tab-icon">▦</span>Library</button>
-  <button class="tab-btn" data-tab="settings"><span class="tab-icon">⚙</span>Settings</button>
 </nav>
 
 <script>
@@ -1579,6 +1588,7 @@ document.getElementById("startSessionBtn").addEventListener("click", startSessio
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.getElementById("profileBtn").classList.remove("active");
     document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
     btn.classList.add("active");
     document.getElementById("tab-" + btn.dataset.tab).classList.remove("hidden");
@@ -1587,6 +1597,13 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
       if (active) ensureWorkoutReady(active);
     }
   });
+});
+
+document.getElementById("profileBtn").addEventListener("click", () => {
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
+  document.getElementById("profileBtn").classList.add("active");
+  document.getElementById("tab-settings").classList.remove("hidden");
 });
 
 // ---- duration chips ----
