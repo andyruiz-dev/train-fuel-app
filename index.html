@@ -1423,12 +1423,16 @@ document.getElementById("foodPhotoInput").addEventListener("change", async (e) =
   statusEl.textContent = "Analyzing photo…";
   document.getElementById("foodScanReview").classList.add("hidden");
   try {
-    const { base64, media_type } = await resizeImageFile(file);
-    const data = await apiFetch("/api/food-scan", {
+    if (!WORKER_URL) throw new Error("no worker url configured");
+    // Sent as raw bytes, not base64 — avoids decoding the full-resolution photo
+    // in the browser at all. The Worker handles encoding server-side instead.
+    const resp = await fetch(WORKER_URL.replace(/\/$/, "") + "/api/food-scan", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image: { media_type, data: base64 } }),
+      headers: { "Content-Type": file.type || "image/jpeg" },
+      body: file,
     });
+    if (!resp.ok) throw new Error("request failed: " + resp.status);
+    const data = await resp.json();
     const text = data.content?.[0]?.text || "{}";
     const est = extractJson(text);
     document.getElementById("scanName").value = est.name || "";

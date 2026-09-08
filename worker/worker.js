@@ -32,6 +32,17 @@ function json(data, status = 200) {
   });
 }
 
+// Chunked to avoid stack overflow from String.fromCharCode.apply on large arrays.
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
 async function callClaude(env, body) {
   const resp = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -167,14 +178,16 @@ export default {
 
       // ---- food photo scan ----
       if (path === "/api/food-scan" && request.method === "POST") {
-        const { image } = await request.json();
+        const mediaType = request.headers.get("Content-Type") || "image/jpeg";
+        const buffer = await request.arrayBuffer();
+        const base64 = arrayBufferToBase64(buffer);
         const resp = await callClaude(env, {
           model: "claude-sonnet-4-6",
           max_tokens: 500,
           messages: [{
             role: "user",
             content: [
-              { type: "image", source: { type: "base64", media_type: image.media_type, data: image.data } },
+              { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
               { type: "text", text: `Identify the food or meal in this photo and estimate its nutrition
 based on the visible portion size. Respond with ONLY valid JSON, no prose:
 {"name": "string", "calories": 000, "protein": 00, "carbs": 00, "fat": 00}
