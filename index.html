@@ -149,6 +149,27 @@
     <div id="sessionPanel" class="hidden"></div>
 
     <div class="card">
+      <h2>Cross-training</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+        Log a walk or ruck any day — doesn't touch your program's rotation, just tracked
+        alongside it for your own record and the Progress charts.
+      </p>
+      <div class="row">
+        <div class="chip" id="logWalkChip">Log a walk</div>
+        <div class="chip" id="logRuckChip">Log a ruck</div>
+      </div>
+      <div id="cardioForm" class="hidden" style="margin-top:10px;">
+        <div class="row">
+          <input type="text" inputmode="decimal" id="cardioDistance" placeholder="Distance (mi)" style="flex:1;">
+          <input type="text" inputmode="numeric" id="cardioDuration" placeholder="Duration (min)" style="flex:1;">
+        </div>
+        <input type="text" inputmode="numeric" id="cardioWeight" placeholder="Weight carried (lbs)" style="margin-top:8px; display:none;">
+        <button class="secondary" id="saveCardioBtn" style="margin-top:8px; width:100%;">Save</button>
+      </div>
+      <div id="recentCardio" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card">
       <details>
         <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Weekly review</summary>
         <div id="weeklyReview" style="margin-top:10px;"></div>
@@ -221,6 +242,10 @@
     <div class="card">
       <h2>Weekly volume</h2>
       <div id="volumeChart" class="empty">Complete a few workouts to see volume per week.</div>
+    </div>
+    <div class="card">
+      <h2>Weekly walk/ruck minutes</h2>
+      <div id="cardioChart" class="empty">Log a walk or ruck to see this fill in.</div>
     </div>
   </section>
 
@@ -317,7 +342,7 @@ const LS_WORKER_URL_KEY = "tf_worker_url";
 
 let WORKER_URL = localStorage.getItem(LS_WORKER_URL_KEY) || "";
 let state = { settings: { startingLevels: { push: "intermediate", pull: "intermediate", legs: "intermediate", hinge: "intermediate", core: "intermediate", ruck: "intermediate" } },
-  measurements: [], logs: [], activeProgramId: null, weekAdjustment: 0,
+  measurements: [], logs: [], cardioLogs: [], activeProgramId: null, weekAdjustment: 0,
   progressLevels: { push: 1, pull: 1, legs: 1, hinge: 1, core: 1, ruck: 1 } };
 let exercises = [];
 let programs = [];
@@ -360,6 +385,7 @@ async function loadState() {
   if (!state.settings.startingLevels) {
     state.settings.startingLevels = { push: "intermediate", pull: "intermediate", legs: "intermediate", hinge: "intermediate", core: "intermediate", ruck: "intermediate" };
   }
+  if (!state.cardioLogs) state.cardioLogs = [];
 }
 
 function saveStateLocal() {
@@ -1008,6 +1034,46 @@ function isoWeekLabel(date) {
   return `W${week}`;
 }
 
+// ---- cross-training (walks/rucks, independent of the workout rotation) ----
+let cardioType = null;
+
+function openCardioForm(type) {
+  cardioType = type;
+  document.getElementById("cardioForm").classList.remove("hidden");
+  document.getElementById("cardioWeight").style.display = type === "ruck" ? "block" : "none";
+  document.getElementById("cardioDistance").focus();
+}
+
+document.getElementById("logWalkChip").addEventListener("click", () => openCardioForm("walk"));
+document.getElementById("logRuckChip").addEventListener("click", () => openCardioForm("ruck"));
+
+document.getElementById("saveCardioBtn").addEventListener("click", () => {
+  const distance = parseFloat(document.getElementById("cardioDistance").value) || null;
+  const duration = parseInt(document.getElementById("cardioDuration").value, 10) || null;
+  const weight = cardioType === "ruck" ? (parseInt(document.getElementById("cardioWeight").value, 10) || null) : null;
+  if (!distance && !duration) { alert("Enter at least a distance or duration."); return; }
+  state.cardioLogs.push({ date: new Date().toISOString(), type: cardioType, distance, duration, weight });
+  persist();
+  document.getElementById("cardioForm").classList.add("hidden");
+  document.getElementById("cardioDistance").value = "";
+  document.getElementById("cardioDuration").value = "";
+  document.getElementById("cardioWeight").value = "";
+  renderRecentCardio();
+  renderProgressCharts();
+});
+
+function renderRecentCardio() {
+  const el = document.getElementById("recentCardio");
+  const recent = (state.cardioLogs || []).slice(-5).reverse();
+  if (!recent.length) { el.innerHTML = ""; return; }
+  el.innerHTML = recent.map(c => `
+    <div class="meta" style="padding:4px 0;">
+      ${new Date(c.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })} ·
+      ${c.type === "ruck" ? "Ruck" : "Walk"}${c.distance ? ` · ${c.distance}mi` : ""}${c.duration ? ` · ${c.duration}min` : ""}${c.weight ? ` · ${c.weight}lb` : ""}
+    </div>
+  `).join("");
+}
+
 function renderProgressCharts() {
   const measurements = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
   renderLineChart("weightChart", measurements.map(m => ({ label: m.date.slice(5), value: m.weight })), { yLabel: "lb" });
@@ -1020,6 +1086,14 @@ function renderProgressCharts() {
   });
   const weekLabels = Object.keys(byWeek).slice(-10);
   renderBarChart("volumeChart", weekLabels.map(wk => ({ label: wk, value: byWeek[wk] })));
+
+  const cardioByWeek = {};
+  (state.cardioLogs || []).forEach(c => {
+    const wk = isoWeekLabel(c.date);
+    cardioByWeek[wk] = (cardioByWeek[wk] || 0) + (c.duration || 0);
+  });
+  const cardioWeekLabels = Object.keys(cardioByWeek).slice(-10);
+  renderBarChart("cardioChart", cardioWeekLabels.map(wk => ({ label: wk, value: cardioByWeek[wk] })));
 }
 
 document.getElementById("logWeightBtn").addEventListener("click", () => {
@@ -1457,6 +1531,7 @@ async function init() {
   renderExercises();
   renderPrograms();
   renderProgressCharts();
+  renderRecentCardio();
   renderStartingLevelSettings();
   if (state.settings?.startDate) document.getElementById("startDateInput").value = state.settings.startDate;
 }
