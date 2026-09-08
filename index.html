@@ -1415,6 +1415,34 @@ function resizeImageFile(file, maxDim = 1200, quality = 0.8) {
   });
 }
 
+// Uses createImageBitmap (browser-native decode, more memory-efficient than
+// an <img> element) + canvas.toBlob (binary output, not a base64 string) to
+// shrink oversized camera photos before upload. Explicitly closes the bitmap
+// to free memory right away rather than waiting on GC. Falls back to the
+// original file untouched if anything here fails or isn't supported —
+// worst case, upload just proceeds at full size like before.
+async function getUploadBlob(file, maxDim = 1600, quality = 0.85) {
+  if (!("createImageBitmap" in window)) return file;
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+    let { width, height } = bitmap;
+    if (width <= maxDim && height <= maxDim) return file; // already small enough
+    if (width > height) { height = Math.round(height * maxDim / width); width = maxDim; }
+    else { width = Math.round(width * maxDim / height); height = maxDim; }
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    canvas.getContext("2d").drawImage(bitmap, 0, 0, width, height);
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", quality));
+    return blob || file;
+  } catch (err) {
+    return file;
+  } finally {
+    if (bitmap) bitmap.close();
+  }
+}
+
 document.getElementById("foodPhotoInput").addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -1424,13 +1452,12 @@ document.getElementById("foodPhotoInput").addEventListener("change", async (e) =
   document.getElementById("foodScanReview").classList.add("hidden");
   try {
     if (!WORKER_URL) throw new Error("no worker url configured");
-    // Sent as raw bytes, not base64 — avoids decoding the full-resolution photo
-    // in the browser at all. The Worker handles encoding server-side instead.
-    console.log("Scanning photo, type:", file.type, "size:", file.size);
+    const uploadBlob = await getUploadBlob(file);
+    console.log("Scanning photo, original:", file.size, "upload size:", uploadBlob.size);
     const resp = await fetch(WORKER_URL.replace(/\/$/, "") + "/api/food-scan", {
       method: "POST",
-      headers: { "Content-Type": file.type || "image/jpeg" },
-      body: file,
+      headers: { "Content-Type": uploadBlob.type || file.type || "image/jpeg" },
+      body: uploadBlob,
     });
     if (!resp.ok) {
       const errBody = await resp.text().catch(() => "");
