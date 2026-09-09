@@ -1354,15 +1354,11 @@ function renderFoodLogList() {
     const realIndex = state.foodLogs.indexOf(f);
     return `
       <div class="list-item" style="flex-direction:column; align-items:stretch; border-bottom:none;">
-        <div style="display:flex; justify-content:space-between;">
-          <div>
-            <div class="name">${f.name}</div>
-            <div class="meta">${f.calories} cal · ${f.protein}p · ${f.carbs}c · ${f.fat}f</div>
-          </div>
-          <div class="row" style="gap:6px;">
-            <button class="danger-link" style="color:var(--accent);" data-edit-food="${realIndex}">Edit</button>
-            <button class="danger-link" data-del-food="${realIndex}">Delete</button>
-          </div>
+        <div class="name">${f.name}</div>
+        <div class="meta">${f.calories} cal · ${f.protein}p · ${f.carbs}c · ${f.fat}f</div>
+        <div class="row" style="margin-top:8px;">
+          <button class="danger-link" style="color:var(--accent);" data-edit-food="${realIndex}">Edit</button>
+          <button class="danger-link" style="margin-left:auto;" data-del-food="${realIndex}">Delete</button>
         </div>
         <div class="hidden" data-edit-panel="${realIndex}" style="margin-top:8px;">
           <input type="text" data-field="name" value="${f.name.replace(/"/g,'&quot;')}" placeholder="Food name" style="margin-bottom:8px;">
