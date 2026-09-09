@@ -1353,17 +1353,60 @@ function renderFoodLogList() {
   el.innerHTML = today.map((f, i) => {
     const realIndex = state.foodLogs.indexOf(f);
     return `
-      <div class="list-item">
-        <div>
-          <div class="name">${f.name}</div>
-          <div class="meta">${f.calories} cal · ${f.protein}p · ${f.carbs}c · ${f.fat}f</div>
+      <div class="list-item" style="flex-direction:column; align-items:stretch; border-bottom:none;">
+        <div style="display:flex; justify-content:space-between;">
+          <div>
+            <div class="name">${f.name}</div>
+            <div class="meta">${f.calories} cal · ${f.protein}p · ${f.carbs}c · ${f.fat}f</div>
+          </div>
+          <div class="row" style="gap:6px;">
+            <button class="danger-link" style="color:var(--accent);" data-edit-food="${realIndex}">Edit</button>
+            <button class="danger-link" data-del-food="${realIndex}">Delete</button>
+          </div>
         </div>
-        <button class="danger-link" data-del-food="${realIndex}">Delete</button>
+        <div class="hidden" data-edit-panel="${realIndex}" style="margin-top:8px;">
+          <input type="text" data-field="name" value="${f.name.replace(/"/g,'&quot;')}" placeholder="Food name" style="margin-bottom:8px;">
+          <div class="row">
+            <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" data-field="calories" value="${f.calories}"></div>
+            <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" data-field="protein" value="${f.protein}"></div>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" data-field="carbs" value="${f.carbs}"></div>
+            <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" data-field="fat" value="${f.fat}"></div>
+          </div>
+          <button class="primary" data-save-food="${realIndex}" style="margin-top:10px;">Save changes</button>
+        </div>
       </div>`;
   }).join("");
 }
 
 document.getElementById("foodLogList").addEventListener("click", (e) => {
+  const editIdx = e.target.dataset.editFood;
+  if (editIdx !== undefined) {
+    document.querySelectorAll("[data-edit-panel]").forEach(p => {
+      if (p.dataset.editPanel !== editIdx) p.classList.add("hidden");
+    });
+    document.querySelector(`[data-edit-panel="${editIdx}"]`).classList.toggle("hidden");
+    return;
+  }
+  const saveIdx = e.target.dataset.saveFood;
+  if (saveIdx !== undefined) {
+    const panel = document.querySelector(`[data-edit-panel="${saveIdx}"]`);
+    const idx = parseInt(saveIdx, 10);
+    const getVal = (field) => panel.querySelector(`[data-field="${field}"]`).value;
+    state.foodLogs[idx] = {
+      ...state.foodLogs[idx],
+      name: getVal("name").trim() || state.foodLogs[idx].name,
+      calories: parseInt(getVal("calories"), 10) || 0,
+      protein: parseInt(getVal("protein"), 10) || 0,
+      carbs: parseInt(getVal("carbs"), 10) || 0,
+      fat: parseInt(getVal("fat"), 10) || 0,
+    };
+    persist();
+    renderMacroSummary();
+    renderFoodLogList();
+    return;
+  }
   const idx = e.target.dataset.delFood;
   if (idx === undefined) return;
   state.foodLogs.splice(parseInt(idx, 10), 1);
