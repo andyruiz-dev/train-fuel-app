@@ -1027,25 +1027,34 @@ function renderTodayWorkout(workout) {
   const box = document.getElementById("todayWorkout");
   const sessionBtn = document.getElementById("startSessionBtn");
   const cautionEl = document.getElementById("recoveryCautionNote");
-  const restNote = restDayCaution(workout);
-  cautionEl.innerHTML = (isLosingTooFast()
-    ? `<div class="meta" style="color:var(--gold); margin-bottom:8px;">Recovery caution: weight loss is outpacing target pace — holding progression steady, no intensity increases this week.</div>`
-    : "") + (restNote
-    ? `<div class="meta" style="color:var(--gold); margin-bottom:8px;">${restNote}</div>`
-    : "");
   if (!workout) {
+    cautionEl.innerHTML = "";
     box.innerHTML = '<div class="empty">Pick an active program first.</div>';
     sessionBtn.disabled = true;
     return;
   }
   sessionBtn.disabled = false;
 
+  const genBtn = document.getElementById("genWorkoutBtn");
   if (state.pendingWorkout?.completed) {
+    cautionEl.innerHTML = ""; // nothing to caution about — this session is already done
     box.innerHTML = `<div class="empty">Workout logged: ${workout.exercises.map(e => e.name).join(", ")}. Your next workout will be ready when you come back.</div>`;
     sessionBtn.textContent = "Session already logged";
     sessionBtn.disabled = true;
+    genBtn.classList.add("hidden");
     return;
   }
+
+  // Only compute these for a workout you haven't done yet — checking a just-
+  // completed session against its own logs would always trivially "conflict".
+  const restNote = restDayCaution(workout);
+  cautionEl.innerHTML = (isLosingTooFast()
+    ? `<div class="meta" style="color:var(--gold); margin-bottom:8px;">Recovery caution: weight loss is outpacing target pace — holding progression steady, no intensity increases this week.</div>`
+    : "") + (restNote
+    ? `<div class="meta" style="color:var(--gold); margin-bottom:8px;">${restNote}</div>`
+    : "");
+
+  genBtn.classList.remove("hidden");
   sessionBtn.textContent = "Start guided session";
 
   function exerciseCardHtml(e, i) {
