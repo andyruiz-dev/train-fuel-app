@@ -687,6 +687,7 @@ function renderExercises(filterText = "", muscleGroup = "all") {
             <div>
               <div class="name">${e.name}</div>
               <div class="meta">${e.equipment || "bodyweight"}${e.source === "builtin" ? "" : " · " + e.source}</div>
+              ${howToHtml("lib-" + e.id, e.name, e.cue)}
             </div>
             ${e.source !== "builtin" ? `<button class="danger-link" data-del-ex="${e.id}">Delete</button>` : ""}
           </div>
@@ -1058,32 +1059,19 @@ function renderTodayWorkout(workout) {
   sessionBtn.textContent = "Start guided session";
 
   function exerciseCardHtml(e, i) {
-    const currentLevel = levelOf(e.name);
-    const alternates = exercises.filter(x => x.muscle_group === e.muscle_group && x.name !== e.name);
-    const regressions = alternates.filter(x => levelOf(x.name) < currentLevel);
-    const sameLevel = alternates.filter(x => levelOf(x.name) === currentLevel);
-    const progressions = alternates.filter(x => levelOf(x.name) > currentLevel);
-    const chipHtml = (x, cls) => `<div class="chip ${cls}" data-swap-pick="${i}" data-swap-name="${x.name.replace(/"/g,'&quot;')}">${x.name}</div>`;
-    const bucketHtml = (label, list, cls) => list.length ? `
-      <div class="meta" style="margin-top:8px; margin-bottom:4px;">${label}</div>
-      <div class="row">${list.map(x => chipHtml(x, cls)).join("")}</div>
-    ` : "";
-
     return `
       <div class="list-item" data-ex-index="${i}" style="flex-direction:column; align-items:stretch; border-bottom:none;">
         <div style="display:flex; justify-content:space-between;">
           <div>
             <div class="name">${e.name}</div>
             <div class="meta">${e.muscle_group} · ${e.sets}×${e.reps}${isHoldExercise(e.name) ? "s hold" : ""} · level ${state.progressLevels[e.muscle_group] || 1}</div>
+            ${howToHtml("today-" + i, e.name, exercises.find(x => x.name === e.name)?.cue)}
           </div>
           <button class="danger-link" style="color:var(--accent);" data-swap-open="${i}">Swap</button>
         </div>
         <div class="swap-panel hidden" data-swap-panel="${i}" style="margin-top:8px;">
           <div class="meta">No equipment for this one? Pick a swap — grouped by easier/harder:</div>
-          ${bucketHtml("↓ Regressions (easier)", regressions, "swap-regression")}
-          ${bucketHtml("= Same level", sameLevel, "swap-same")}
-          ${bucketHtml("↑ Progressions (harder)", progressions, "swap-progression")}
-          ${!alternates.length ? '<div class="empty" style="margin-top:6px;">No alternates in your library for this muscle group yet.</div>' : ""}
+          ${swapAlternatesHtml(e, i)}
         </div>
         <div class="row" style="margin-top:8px;">
           <div class="chip result-chip" data-ex="${i}" data-result="max">Hit max reps</div>
@@ -1113,6 +1101,11 @@ function renderTodayWorkout(workout) {
   box.innerHTML = unitsHtml + `<button class="primary" id="completeWorkoutBtn" style="margin-top:4px;">Complete workout</button>`;
 
   document.getElementById("todayWorkout").addEventListener("click", async (e) => {
+    const howtoBtn = e.target.closest("[data-howto-open]");
+    if (howtoBtn) {
+      document.querySelector(`[data-howto-panel="${howtoBtn.dataset.howtoOpen}"]`)?.classList.toggle("hidden");
+      return;
+    }
     const openBtn = e.target.closest("[data-swap-open]");
     if (openBtn) {
       document.querySelector(`[data-swap-panel="${openBtn.dataset.swapOpen}"]`).classList.toggle("hidden");
@@ -1140,9 +1133,35 @@ function renderTodayWorkout(workout) {
   document.getElementById("completeWorkoutBtn").addEventListener("click", completeWorkout);
 }
 
-async function swapExercise(index, newName) {
-  const original = currentWorkout.exercises[index];
-  const replacement = exercises.find(x => x.name === newName);
+function howToHtml(uid, name, cue) {
+  const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(name + " exercise proper form tutorial")}`;
+  return `
+    <button class="danger-link" style="color:var(--text-muted); font-size:12px; margin-top:6px;" data-howto-open="${uid}">How to ▾</button>
+    <div class="hidden" data-howto-panel="${uid}" style="margin-top:4px;">
+      ${cue ? `<div class="meta">${cue}</div>` : ""}
+      <a href="${ytUrl}" target="_blank" rel="noopener" class="meta" style="color:var(--accent); display:inline-block; margin-top:4px;">Watch a demo ↗</a>
+    </div>`;
+}
+
+
+
+function swapAlternatesHtml(currentExercise, uidPrefix) {
+  const currentLevel = levelOf(currentExercise.name);
+  const alternates = exercises.filter(x => x.muscle_group === currentExercise.muscle_group && x.name !== currentExercise.name);
+  const regressions = alternates.filter(x => levelOf(x.name) < currentLevel);
+  const sameLevel = alternates.filter(x => levelOf(x.name) === currentLevel);
+  const progressions = alternates.filter(x => levelOf(x.name) > currentLevel);
+  const chip = (x, cls) => `<div class="chip ${cls}" data-swap-pick="${uidPrefix}" data-swap-name="${x.name.replace(/"/g,'&quot;')}">${x.name}</div>`;
+  const bucket = (label, list, cls) => list.length ? `
+    <div class="meta" style="margin-top:8px; margin-bottom:4px;">${label}</div>
+    <div class="row">${list.map(x => chip(x, cls)).join("")}</div>
+  ` : "";
+  if (!alternates.length) return '<div class="empty" style="margin-top:6px;">No alternates in your library for this muscle group yet.</div>';
+  return bucket("↓ Regressions (easier)", regressions, "swap-regression") +
+         bucket("= Same level", sameLevel, "swap-same") +
+         bucket("↑ Progressions (harder)", progressions, "swap-progression");
+}
+async function computeSwapAdjustment(original, replacement) {
   const system = `You adjust sets/reps when one exercise is swapped for another so the
 training stimulus stays comparable — same approximate time-under-tension and
 relative effort for the same muscle group, even though leverage/equipment differ.
@@ -1158,7 +1177,7 @@ Give adjusted sets/reps for the replacement so effort stays comparable.`;
     });
     const text = data.content?.[0]?.text || "{}";
     const adj = extractJson(text);
-    currentWorkout.exercises[index] = {
+    return {
       name: replacement.name,
       muscle_group: original.muscle_group,
       sets: adj.sets || original.sets,
@@ -1166,9 +1185,14 @@ Give adjusted sets/reps for the replacement so effort stays comparable.`;
       superset_group: original.superset_group || null,
     };
   } catch (err) {
-    // fall back to a straight swap with the original sets/reps if the adjustment call fails
-    currentWorkout.exercises[index] = { name: replacement.name, muscle_group: original.muscle_group, sets: original.sets, reps: original.reps, superset_group: original.superset_group || null };
+    return { name: replacement.name, muscle_group: original.muscle_group, sets: original.sets, reps: original.reps, superset_group: original.superset_group || null };
   }
+}
+
+async function swapExercise(index, newName) {
+  const original = currentWorkout.exercises[index];
+  const replacement = exercises.find(x => x.name === newName);
+  currentWorkout.exercises[index] = await computeSwapAdjustment(original, replacement);
   renderTodayWorkout(currentWorkout);
 }
 
@@ -1730,9 +1754,22 @@ function renderSession() {
         ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
         <h2>${step.name}</h2>
         <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${targetSeconds}s hold</div>
+        <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
+        <div class="hidden" id="sessionSwapPanel" style="margin-top:8px;">
+          <div class="meta">Pick a swap — grouped by easier/harder:</div>
+          ${swapAlternatesHtml(currentWorkout.exercises[step.exIndex], step.exIndex)}
+        </div>
         <button class="primary" id="startHoldBtn" style="margin-top:10px;">Start hold</button>
         <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
       </div>`;
+    document.getElementById("sessionSwapOpenBtn").addEventListener("click", () => {
+      document.getElementById("sessionSwapPanel").classList.toggle("hidden");
+    });
+    document.getElementById("sessionSwapPanel").addEventListener("click", async (e) => {
+      const pick = e.target.closest("[data-swap-pick]");
+      if (!pick) return;
+      await sessionSwapExercise(parseInt(pick.dataset.swapPick, 10), pick.dataset.swapName);
+    });
     document.getElementById("startHoldBtn").addEventListener("click", () => startHold(step, targetSeconds));
     endSessionHandler();
     return;
@@ -1743,11 +1780,24 @@ function renderSession() {
       ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
       <h2>${step.name}</h2>
       <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${step.reps} reps</div>
+      <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
+      <div class="hidden" id="sessionSwapPanel" style="margin-top:8px;">
+        <div class="meta">Pick a swap — grouped by easier/harder:</div>
+        ${swapAlternatesHtml(currentWorkout.exercises[step.exIndex], step.exIndex)}
+      </div>
       <input type="text" inputmode="numeric" id="actualRepsInput" placeholder="Actual reps completed" style="margin-top:10px;">
       <button class="primary" id="completeSetBtn" style="margin-top:10px;">Complete set</button>
       <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
     </div>`;
 
+  document.getElementById("sessionSwapOpenBtn").addEventListener("click", () => {
+    document.getElementById("sessionSwapPanel").classList.toggle("hidden");
+  });
+  document.getElementById("sessionSwapPanel").addEventListener("click", async (e) => {
+    const pick = e.target.closest("[data-swap-pick]");
+    if (!pick) return;
+    await sessionSwapExercise(parseInt(pick.dataset.swapPick, 10), pick.dataset.swapName);
+  });
   document.getElementById("completeSetBtn").addEventListener("click", () => {
     const input = document.getElementById("actualRepsInput");
     const val = parseInt(input.value, 10);
@@ -1759,6 +1809,22 @@ function renderSession() {
   });
 
   endSessionHandler();
+}
+
+async function sessionSwapExercise(exIndex, newName) {
+  const original = currentWorkout.exercises[exIndex];
+  const replacement = exercises.find(x => x.name === newName);
+  const adjusted = await computeSwapAdjustment(original, replacement);
+  currentWorkout.exercises[exIndex] = adjusted;
+  // Propagate the swap to any not-yet-done sets of this exercise still queued.
+  for (let p = session.pos; p < session.queue.length; p++) {
+    if (session.queue[p].exIndex === exIndex) {
+      session.queue[p].name = adjusted.name;
+      session.queue[p].reps = adjusted.reps;
+      session.queue[p].muscle_group = adjusted.muscle_group;
+    }
+  }
+  renderSession();
 }
 
 function recordSetAndAdvance(step, val) {
@@ -2035,6 +2101,11 @@ document.getElementById("muscleFilterChips").addEventListener("click", (e) => {
   renderExercises(document.getElementById("exerciseSearch").value, currentMg);
 });
 document.getElementById("exerciseList").addEventListener("click", async (e) => {
+  const howtoBtn = e.target.closest("[data-howto-open]");
+  if (howtoBtn) {
+    document.querySelector(`[data-howto-panel="${howtoBtn.dataset.howtoOpen}"]`)?.classList.toggle("hidden");
+    return;
+  }
   const id = e.target.dataset.delEx;
   if (!id) return;
   if (!confirm("Remove this exercise from the library?")) return;
