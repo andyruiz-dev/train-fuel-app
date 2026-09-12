@@ -612,6 +612,27 @@ const BUILTIN_EXERCISES = [
   { id: "windshield-wipers", name: "Windshield wipers", muscle_group: "core", equipment: "bodyweight", cue: "Control the rotation both ways, shoulders stay flat." },
   { id: "ring-ab-rollout", name: "Ring ab rollout", muscle_group: "core", equipment: "rings", cue: "Hollow position throughout, don't let the hips sag." },
   { id: "dragon-flag", name: "Dragon flag", muscle_group: "core", equipment: "bodyweight", cue: "Only shoulders touch the bench, body stays a rigid straight line." },
+
+  // ---- push: more skill/explosive variety ----
+  { id: "elbow-lever", name: "Elbow lever", muscle_group: "core", equipment: "bodyweight", cue: "Elbows tucked into hip crease, lean forward until feet lift." },
+  { id: "plyo-pushup", name: "Plyo push-up", muscle_group: "push", equipment: "bodyweight", cue: "Explode hands off the floor, land soft with bent elbows." },
+  { id: "clapping-pushup", name: "Clapping push-up", muscle_group: "push", equipment: "bodyweight", cue: "Full extension before the clap, absorb the landing." },
+  { id: "one-arm-pushup", name: "One-arm push-up", muscle_group: "push", equipment: "bodyweight", cue: "Feet wide for a base, resist rotating the torso." },
+  { id: "handstand-walk", name: "Handstand walk", muscle_group: "push", equipment: "bodyweight", cue: "Small steps, look at the floor, ribs stacked over hips." },
+
+  // ---- pull: human flag line + one-arm pull-up line ----
+  { id: "band-assisted-human-flag", name: "Band-assisted human flag", muscle_group: "pull", equipment: "band", cue: "Top arm pushes, bottom arm pulls, band takes most of the load." },
+  { id: "tuck-human-flag", name: "Tuck human flag", muscle_group: "pull", equipment: "bar", cue: "Knees tucked tight, hips close to the pole, brace the obliques hard." },
+  { id: "one-arm-pullup-negative", name: "One-arm pull-up negative", muscle_group: "pull", equipment: "bar", cue: "Assist up with the other hand, lower on one arm as slow as possible." },
+  { id: "one-arm-pullup", name: "One-arm pull-up", muscle_group: "pull", equipment: "bar", cue: "Start dead hang, avoid swinging into the pull." },
+
+  // ---- legs & core: dynamic/explosive for variety in short sessions ----
+  { id: "broad-jump", name: "Broad jump", muscle_group: "legs", equipment: "bodyweight", cue: "Swing arms for momentum, land soft and stick it." },
+  { id: "jumping-lunge", name: "Jumping lunge", muscle_group: "legs", equipment: "bodyweight", cue: "Switch legs mid-air, land with control each side." },
+  { id: "burpee", name: "Burpee", muscle_group: "legs", equipment: "bodyweight", cue: "Chest to floor, explosive jump up, steady pace beats sloppy speed." },
+  { id: "mountain-climbers", name: "Mountain climbers", muscle_group: "core", equipment: "bodyweight", cue: "Hips stay low and level, drive knees in with control." },
+  { id: "bear-crawl", name: "Bear crawl", muscle_group: "core", equipment: "bodyweight", cue: "Knees hover just off the floor, opposite hand/foot move together." },
+  { id: "inchworm", name: "Inchworm", muscle_group: "core", equipment: "bodyweight", cue: "Walk hands out to a plank, walk feet up to hands, keep legs as straight as you can." },
 ];
 
 // Approximate difficulty level (1-5) per exercise, based on the progression
@@ -662,6 +683,12 @@ const EXERCISE_LEVEL_MAP = {
   // new: core
   "superman": 1, "reverse-plank": 2, "copenhagen-plank": 4,
   "windshield-wipers": 4, "ring-ab-rollout": 4, "dragon-flag": 5,
+  // new: skill/explosive variety
+  "elbow-lever": 4, "plyo-pushup": 4, "clapping-pushup": 4, "one-arm-pushup": 5,
+  "handstand-walk": 5, "band-assisted-human-flag": 4, "tuck-human-flag": 5,
+  "one-arm-pullup-negative": 5, "one-arm-pullup": 5,
+  "broad-jump": 3, "jumping-lunge": 4, "burpee": 2,
+  "mountain-climbers": 2, "bear-crawl": 2, "inchworm": 1,
 };
 
 function levelOf(exerciseIdOrName) {
@@ -677,7 +704,8 @@ const HOLD_EXERCISE_IDS = new Set([
   "ring-plank", "ring-lsit-tucked", "ring-lsit", "ring-front-lever-tuck",
   "hollow-hold-tucked", "hollow-hold",
   "parallel-bar-support-hold", "planche-lean", "tuck-planche", "tuck-back-lever",
-  "reverse-plank", "copenhagen-plank",
+  "reverse-plank", "copenhagen-plank", "elbow-lever", "tuck-human-flag",
+  "band-assisted-human-flag",
 ]);
 
 function isHoldExercise(exerciseIdOrName) {
