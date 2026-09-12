@@ -1256,10 +1256,10 @@ function swapAlternatesHtml(currentExercise, uidPrefix) {
     <div class="row">${list.map(x => chip(x, cls)).join("")}</div>
   ` : "";
   if (!alternates.length) return '<div class="empty" style="margin-top:6px;">No alternates in your library for this muscle group yet.</div>';
-  return bucket("↓ Regressions (easier)", regressions, "swap-regression") +
+  return `<div class="hidden" data-swap-info-panel="${uidPrefix}" style="margin-bottom:8px; padding-bottom:8px; border-bottom:1px dashed var(--border);"></div>` +
+         bucket("↓ Regressions (easier)", regressions, "swap-regression") +
          bucket("= Same level", sameLevel, "swap-same") +
-         bucket("↑ Progressions (harder)", progressions, "swap-progression") +
-         `<div class="hidden" data-swap-info-panel="${uidPrefix}" style="margin-top:8px;"></div>`;
+         bucket("↑ Progressions (harder)", progressions, "swap-progression");
 }
 
 function handleSwapInfoClick(e) {
@@ -1273,6 +1273,7 @@ function handleSwapInfoClick(e) {
       <div class="meta" style="margin-bottom:4px;"><strong style="color:var(--text);">${name}</strong>${cue ? ": " + cue : ""}</div>
       <a href="${buildYoutubeUrl(name)}" target="_blank" rel="noopener" class="meta" style="color:var(--accent); display:inline-block;">Watch a demo ↗</a>`;
     panel.classList.remove("hidden");
+    panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
   return true;
 }
