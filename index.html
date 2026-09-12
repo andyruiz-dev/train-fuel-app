@@ -484,6 +484,26 @@ function persist() {
   saveStateRemote();
 }
 
+// Bypasses the debounce entirely — for actions immediately followed by
+// something that might trigger a quick refresh (like a swap), where losing
+// the 800ms window could mean the change never reaches D1 before reload
+// silently overwrites local state with an older remote copy.
+async function persistNow() {
+  saveStateLocal();
+  clearTimeout(saveTimer);
+  if (!WORKER_URL) return;
+  try {
+    await apiFetch("/api/state", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(state),
+    });
+    setSync(true, "synced");
+  } catch (e) {
+    setSync(false, "offline — will retry");
+  }
+}
+
 // ---- exercise library ----
 const BUILTIN_EXERCISES = [
   // ---- push: wall -> incline -> floor -> rings ----
@@ -1319,7 +1339,7 @@ async function swapExercise(index, newName) {
   const replacement = exercises.find(x => x.name === newName);
   currentWorkout.exercises[index] = await computeSwapAdjustment(original, replacement);
   if (state.pendingWorkout) state.pendingWorkout.workout = currentWorkout;
-  persist();
+  await persistNow();
   renderTodayWorkout(currentWorkout);
 }
 
@@ -1961,7 +1981,7 @@ async function sessionSwapExercise(exIndex, newName) {
     }
   }
   if (state.pendingWorkout) state.pendingWorkout.workout = currentWorkout;
-  persist();
+  await persistNow();
   renderSession();
 }
 
