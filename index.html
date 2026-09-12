@@ -584,6 +584,34 @@ const BUILTIN_EXERCISES = [
   { id: "weighted-vest-carry", name: "Weighted vest carry", muscle_group: "ruck", equipment: "weighted vest", cue: "Steady breathing, tall posture." },
   { id: "db-farmer-carry", name: "Farmer carry", muscle_group: "ruck", equipment: "dumbbell", cue: "Shoulders back, don't let the weight pull you forward." },
   { id: "db-suitcase-carry", name: "Suitcase carry", muscle_group: "ruck", equipment: "dumbbell", cue: "Resist leaning away from the loaded side." },
+
+  // ---- push: dip line + planche line (gaps found vs r/bodyweightfitness RR + Fitloop) ----
+  { id: "parallel-bar-support-hold", name: "Parallel bar support hold", muscle_group: "push", equipment: "parallel bars", cue: "Arms locked, shoulders depressed away from ears." },
+  { id: "bench-dip", name: "Bench dip", muscle_group: "push", equipment: "bodyweight", cue: "Elbows track back, don't flare, lower under control." },
+  { id: "bar-negative-dip", name: "Negative dip", muscle_group: "push", equipment: "parallel bars", cue: "Jump or step to the top, lower for a slow 4-5 count." },
+  { id: "parallel-bar-dip", name: "Parallel bar dip", muscle_group: "push", equipment: "parallel bars", cue: "More stable than rings — good stepping stone to ring dips." },
+  { id: "planche-lean", name: "Planche lean", muscle_group: "push", equipment: "bodyweight", cue: "Hands by hips, shift shoulders past hands, keep arms locked." },
+  { id: "tuck-planche", name: "Tuck planche", muscle_group: "push", equipment: "bodyweight", cue: "Knees tucked tight to chest, feet off floor, hips level with shoulders." },
+
+  // ---- pull: row variety, muscle-up line, back lever ----
+  { id: "archer-row", name: "Archer row", muscle_group: "pull", equipment: "rings", cue: "Pull toward one hand, other arm stays long and straight." },
+  { id: "skin-the-cat", name: "Skin the cat", muscle_group: "pull", equipment: "rings", cue: "Slow and controlled through the shoulders, stop if it pinches." },
+  { id: "muscle-up-negative", name: "Muscle-up negative", muscle_group: "pull", equipment: "rings", cue: "Start at the top, lower through the transition as slowly as possible." },
+  { id: "muscle-up", name: "Muscle-up", muscle_group: "pull", equipment: "rings", cue: "Pull high and fast, roll over the transition, avoid kipping early on." },
+  { id: "tuck-back-lever", name: "Tuck back lever", muscle_group: "pull", equipment: "rings", cue: "Knees tucked, body inverted and horizontal, control the entry and exit." },
+
+  // ---- legs: calf work was missing entirely, plus cossack squat ----
+  { id: "calf-raise", name: "Calf raise", muscle_group: "legs", equipment: "bodyweight", cue: "Full range, pause at the top, control the descent." },
+  { id: "cossack-squat", name: "Cossack squat", muscle_group: "legs", equipment: "bodyweight", cue: "Shift weight fully to one side, other leg stays straight." },
+  { id: "single-leg-calf-raise", name: "Single-leg calf raise", muscle_group: "legs", equipment: "bodyweight", cue: "Use a wall for balance only, not assistance." },
+
+  // ---- core: more skill-line variety ----
+  { id: "superman", name: "Superman", muscle_group: "core", equipment: "bodyweight", cue: "Lift chest and legs together, squeeze glutes, don't yank the neck." },
+  { id: "reverse-plank", name: "Reverse plank", muscle_group: "core", equipment: "bodyweight", cue: "Hips up, squeeze glutes, fingers pointed toward feet." },
+  { id: "copenhagen-plank", name: "Copenhagen plank", muscle_group: "core", equipment: "bodyweight", cue: "Top foot on a bench/couch edge, hips lifted and level." },
+  { id: "windshield-wipers", name: "Windshield wipers", muscle_group: "core", equipment: "bodyweight", cue: "Control the rotation both ways, shoulders stay flat." },
+  { id: "ring-ab-rollout", name: "Ring ab rollout", muscle_group: "core", equipment: "rings", cue: "Hollow position throughout, don't let the hips sag." },
+  { id: "dragon-flag", name: "Dragon flag", muscle_group: "core", equipment: "bodyweight", cue: "Only shoulders touch the bench, body stays a rigid straight line." },
 ];
 
 // Approximate difficulty level (1-5) per exercise, based on the progression
@@ -623,6 +651,17 @@ const EXERCISE_LEVEL_MAP = {
   // ruck
   "ruck-walk": 2, "ruck-stairs": 3, "ruck-lunges": 3, "weighted-vest-carry": 2,
   "db-farmer-carry": 3, "db-suitcase-carry": 3,
+  // new: dip/planche line
+  "parallel-bar-support-hold": 1, "bench-dip": 2, "bar-negative-dip": 2,
+  "parallel-bar-dip": 3, "planche-lean": 3, "tuck-planche": 5,
+  // new: rows/muscle-up/back lever
+  "archer-row": 4, "skin-the-cat": 3, "muscle-up-negative": 4, "muscle-up": 5,
+  "tuck-back-lever": 5,
+  // new: legs
+  "calf-raise": 1, "cossack-squat": 3, "single-leg-calf-raise": 3,
+  // new: core
+  "superman": 1, "reverse-plank": 2, "copenhagen-plank": 4,
+  "windshield-wipers": 4, "ring-ab-rollout": 4, "dragon-flag": 5,
 };
 
 function levelOf(exerciseIdOrName) {
@@ -637,6 +676,8 @@ const HOLD_EXERCISE_IDS = new Set([
   "wall-sit", "dead-hang", "active-hang", "wall-handstand-hold", "plank", "side-plank",
   "ring-plank", "ring-lsit-tucked", "ring-lsit", "ring-front-lever-tuck",
   "hollow-hold-tucked", "hollow-hold",
+  "parallel-bar-support-hold", "planche-lean", "tuck-planche", "tuck-back-lever",
+  "reverse-plank", "copenhagen-plank",
 ]);
 
 function isHoldExercise(exerciseIdOrName) {
