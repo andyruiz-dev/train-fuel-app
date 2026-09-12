@@ -1193,40 +1193,44 @@ function renderTodayWorkout(workout) {
   }).join("");
 
   box.innerHTML = unitsHtml + `<button class="primary" id="completeWorkoutBtn" style="margin-top:4px;">Complete workout</button>`;
-
-  document.getElementById("todayWorkout").addEventListener("click", async (e) => {
-    const howtoBtn = e.target.closest("[data-howto-open]");
-    if (howtoBtn) {
-      document.querySelector(`[data-howto-panel="${howtoBtn.dataset.howtoOpen}"]`)?.classList.toggle("hidden");
-      return;
-    }
-    if (handleSwapInfoClick(e)) return;
-    const openBtn = e.target.closest("[data-swap-open]");
-    if (openBtn) {
-      document.querySelector(`[data-swap-panel="${openBtn.dataset.swapOpen}"]`).classList.toggle("hidden");
-      return;
-    }
-    const pick = e.target.closest("[data-swap-pick]");
-    if (pick) {
-      await swapExercise(parseInt(pick.dataset.swapPick, 10), pick.dataset.swapName);
-      return;
-    }
-    const chip = e.target.closest(".result-chip");
-    if (chip) {
-      const group = chip.parentElement;
-      group.querySelectorAll(".result-chip").forEach(c => c.classList.remove("active"));
-      chip.classList.add("active");
-      const itemEl = chip.closest(".list-item");
-      group.querySelectorAll(".result-chip").forEach(c => { if (c !== chip) c.style.display = "none"; });
-      const swapBtn = itemEl.querySelector("[data-swap-open]");
-      if (swapBtn) swapBtn.style.display = "none";
-      const swapPanelEl = itemEl.querySelector(".swap-panel");
-      if (swapPanelEl) swapPanelEl.classList.add("hidden");
-    }
-  });
-
   document.getElementById("completeWorkoutBtn").addEventListener("click", completeWorkout);
 }
+
+// Attached once, not inside renderTodayWorkout — that function runs on every
+// swap/regenerate/result-selection, and re-attaching here each time caused
+// duplicate listeners to pile up on this persistent container, making
+// toggle-based actions (opening a swap panel) appear to silently do nothing
+// since multiple listeners would open-then-immediately-close it per click.
+document.getElementById("todayWorkout").addEventListener("click", async (e) => {
+  const howtoBtn = e.target.closest("[data-howto-open]");
+  if (howtoBtn) {
+    document.querySelector(`[data-howto-panel="${howtoBtn.dataset.howtoOpen}"]`)?.classList.toggle("hidden");
+    return;
+  }
+  if (handleSwapInfoClick(e)) return;
+  const openBtn = e.target.closest("[data-swap-open]");
+  if (openBtn) {
+    document.querySelector(`[data-swap-panel="${openBtn.dataset.swapOpen}"]`).classList.toggle("hidden");
+    return;
+  }
+  const pick = e.target.closest("[data-swap-pick]");
+  if (pick) {
+    await swapExercise(parseInt(pick.dataset.swapPick, 10), pick.dataset.swapName);
+    return;
+  }
+  const chip = e.target.closest(".result-chip");
+  if (chip) {
+    const group = chip.parentElement;
+    group.querySelectorAll(".result-chip").forEach(c => c.classList.remove("active"));
+    chip.classList.add("active");
+    const itemEl = chip.closest(".list-item");
+    group.querySelectorAll(".result-chip").forEach(c => { if (c !== chip) c.style.display = "none"; });
+    const swapBtn = itemEl.querySelector("[data-swap-open]");
+    if (swapBtn) swapBtn.style.display = "none";
+    const swapPanelEl = itemEl.querySelector(".swap-panel");
+    if (swapPanelEl) swapPanelEl.classList.add("hidden");
+  }
+});
 
 function howToHtml(uid, name, cue) {
   const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(name + " exercise proper form tutorial")}`;
@@ -1314,6 +1318,8 @@ async function swapExercise(index, newName) {
   const original = currentWorkout.exercises[index];
   const replacement = exercises.find(x => x.name === newName);
   currentWorkout.exercises[index] = await computeSwapAdjustment(original, replacement);
+  if (state.pendingWorkout) state.pendingWorkout.workout = currentWorkout;
+  persist();
   renderTodayWorkout(currentWorkout);
 }
 
@@ -1954,6 +1960,8 @@ async function sessionSwapExercise(exIndex, newName) {
       session.queue[p].muscle_group = adjusted.muscle_group;
     }
   }
+  if (state.pendingWorkout) state.pendingWorkout.workout = currentWorkout;
+  persist();
   renderSession();
 }
 
