@@ -586,10 +586,10 @@ const BUILTIN_EXERCISES = [
   { id: "db-suitcase-carry", name: "Suitcase carry", muscle_group: "ruck", equipment: "dumbbell", cue: "Resist leaning away from the loaded side." },
 
   // ---- push: dip line + planche line (gaps found vs r/bodyweightfitness RR + Fitloop) ----
-  { id: "parallel-bar-support-hold", name: "Parallel bar support hold", muscle_group: "push", equipment: "parallel bars", cue: "Arms locked, shoulders depressed away from ears." },
+  { id: "parallel-bar-support-hold", name: "Parallel bar support hold", muscle_group: "push", equipment: "bar or rings", cue: "Arms locked, shoulders depressed away from ears." },
   { id: "bench-dip", name: "Bench dip", muscle_group: "push", equipment: "bodyweight", cue: "Elbows track back, don't flare, lower under control." },
-  { id: "bar-negative-dip", name: "Negative dip", muscle_group: "push", equipment: "parallel bars", cue: "Jump or step to the top, lower for a slow 4-5 count." },
-  { id: "parallel-bar-dip", name: "Parallel bar dip", muscle_group: "push", equipment: "parallel bars", cue: "More stable than rings — good stepping stone to ring dips." },
+  { id: "bar-negative-dip", name: "Negative dip", muscle_group: "push", equipment: "bar or rings", cue: "Jump or step to the top, lower for a slow 4-5 count." },
+  { id: "parallel-bar-dip", name: "Parallel bar dip", muscle_group: "push", equipment: "bar or rings", cue: "More stable on a fixed bar than rings — same movement either way." },
   { id: "planche-lean", name: "Planche lean", muscle_group: "push", equipment: "bodyweight", cue: "Hands by hips, shift shoulders past hands, keep arms locked." },
   { id: "tuck-planche", name: "Tuck planche", muscle_group: "push", equipment: "bodyweight", cue: "Knees tucked tight to chest, feet off floor, hips level with shoulders." },
 
@@ -690,16 +690,22 @@ async function loadExercises() {
   if (WORKER_URL) {
     try {
       exercises = await apiFetch("/api/exercises", { method: "GET" });
-      const existingIds = new Set(exercises.map(e => e.id));
-      const missing = BUILTIN_EXERCISES.filter(e => !existingIds.has(e.id));
-      for (const ex of missing) {
+      const existingById = new Map(exercises.map(e => [e.id, e]));
+      const toSync = BUILTIN_EXERCISES.filter(e => {
+        const existing = existingById.get(e.id);
+        if (!existing) return true; // missing entirely
+        // also re-sync if a field has drifted from the current library definition
+        return existing.name !== e.name || existing.muscle_group !== e.muscle_group ||
+               existing.equipment !== e.equipment || existing.cue !== e.cue;
+      });
+      for (const ex of toSync) {
         await apiFetch("/api/exercises", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...ex, source: "builtin" }),
         });
       }
-      if (missing.length) exercises = await apiFetch("/api/exercises", { method: "GET" });
+      if (toSync.length) exercises = await apiFetch("/api/exercises", { method: "GET" });
       return;
     } catch (e) { /* fall through to local */ }
   }
