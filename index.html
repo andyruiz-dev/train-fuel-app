@@ -1196,6 +1196,7 @@ function renderTodayWorkout(workout) {
       document.querySelector(`[data-howto-panel="${howtoBtn.dataset.howtoOpen}"]`)?.classList.toggle("hidden");
       return;
     }
+    if (handleSwapInfoClick(e)) return;
     const openBtn = e.target.closest("[data-swap-open]");
     if (openBtn) {
       document.querySelector(`[data-swap-panel="${openBtn.dataset.swapOpen}"]`).classList.toggle("hidden");
@@ -1235,13 +1236,21 @@ function howToHtml(uid, name, cue) {
 
 
 
+function buildYoutubeUrl(name) {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(name + " exercise proper form tutorial")}`;
+}
+
 function swapAlternatesHtml(currentExercise, uidPrefix) {
   const currentLevel = levelOf(currentExercise.name);
   const alternates = exercises.filter(x => x.muscle_group === currentExercise.muscle_group && x.name !== currentExercise.name);
   const regressions = alternates.filter(x => levelOf(x.name) < currentLevel);
   const sameLevel = alternates.filter(x => levelOf(x.name) === currentLevel);
   const progressions = alternates.filter(x => levelOf(x.name) > currentLevel);
-  const chip = (x, cls) => `<div class="chip ${cls}" data-swap-pick="${uidPrefix}" data-swap-name="${x.name.replace(/"/g,'&quot;')}">${x.name}</div>`;
+  const chip = (x, cls) => `
+    <span style="display:inline-flex; align-items:center; gap:2px;">
+      <span class="chip ${cls}" data-swap-pick="${uidPrefix}" data-swap-name="${x.name.replace(/"/g,'&quot;')}">${x.name}</span>
+      <button class="danger-link" style="padding:2px 4px; font-size:12px; color:var(--text-muted);" data-swap-info-btn="${uidPrefix}" data-info-name="${x.name.replace(/"/g,'&quot;')}" data-info-cue="${(x.cue||"").replace(/"/g,'&quot;')}">ⓘ</button>
+    </span>`;
   const bucket = (label, list, cls) => list.length ? `
     <div class="meta" style="margin-top:8px; margin-bottom:4px;">${label}</div>
     <div class="row">${list.map(x => chip(x, cls)).join("")}</div>
@@ -1249,8 +1258,25 @@ function swapAlternatesHtml(currentExercise, uidPrefix) {
   if (!alternates.length) return '<div class="empty" style="margin-top:6px;">No alternates in your library for this muscle group yet.</div>';
   return bucket("↓ Regressions (easier)", regressions, "swap-regression") +
          bucket("= Same level", sameLevel, "swap-same") +
-         bucket("↑ Progressions (harder)", progressions, "swap-progression");
+         bucket("↑ Progressions (harder)", progressions, "swap-progression") +
+         `<div class="hidden" data-swap-info-panel="${uidPrefix}" style="margin-top:8px;"></div>`;
 }
+
+function handleSwapInfoClick(e) {
+  const infoBtn = e.target.closest("[data-swap-info-btn]");
+  if (!infoBtn) return false;
+  const panel = document.querySelector(`[data-swap-info-panel="${infoBtn.dataset.swapInfoBtn}"]`);
+  if (panel) {
+    const name = infoBtn.dataset.infoName;
+    const cue = infoBtn.dataset.infoCue;
+    panel.innerHTML = `
+      <div class="meta" style="margin-bottom:4px;"><strong style="color:var(--text);">${name}</strong>${cue ? ": " + cue : ""}</div>
+      <a href="${buildYoutubeUrl(name)}" target="_blank" rel="noopener" class="meta" style="color:var(--accent); display:inline-block;">Watch a demo ↗</a>`;
+    panel.classList.remove("hidden");
+  }
+  return true;
+}
+
 async function computeSwapAdjustment(original, replacement) {
   const system = `You adjust sets/reps when one exercise is swapped for another so the
 training stimulus stays comparable — same approximate time-under-tension and
@@ -1863,6 +1889,7 @@ function renderSession() {
       document.getElementById("sessionSwapPanel").classList.toggle("hidden");
     });
     document.getElementById("sessionSwapPanel").addEventListener("click", async (e) => {
+      if (handleSwapInfoClick(e)) return;
       const pick = e.target.closest("[data-swap-pick]");
       if (!pick) return;
       await sessionSwapExercise(parseInt(pick.dataset.swapPick, 10), pick.dataset.swapName);
@@ -1891,6 +1918,7 @@ function renderSession() {
     document.getElementById("sessionSwapPanel").classList.toggle("hidden");
   });
   document.getElementById("sessionSwapPanel").addEventListener("click", async (e) => {
+    if (handleSwapInfoClick(e)) return;
     const pick = e.target.closest("[data-swap-pick]");
     if (!pick) return;
     await sessionSwapExercise(parseInt(pick.dataset.swapPick, 10), pick.dataset.swapName);
