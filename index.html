@@ -403,7 +403,11 @@ function repairTruncatedJson(text) {
 const LS_KEY = "tf_state_v1";
 const LS_WORKER_URL_KEY = "tf_worker_url";
 
-let WORKER_URL = localStorage.getItem(LS_WORKER_URL_KEY) || "";
+// Baked in as a default so clearing site data / cache never disconnects the
+// app from its data — this is a fixed endpoint for this app, not something
+// that changes. Settings can still override it if it's ever redeployed elsewhere.
+const DEFAULT_WORKER_URL = "https://train-fuel.andy-p-ruiz.workers.dev";
+let WORKER_URL = localStorage.getItem(LS_WORKER_URL_KEY) || DEFAULT_WORKER_URL;
 let state = { settings: { startingLevels: { push: "intermediate", pull: "intermediate", legs: "intermediate", hinge: "intermediate", core: "intermediate", ruck: "intermediate" },
   macroTargets: { calories: 2300, protein: 150, carbs: 200, fat: 70 } },
   measurements: [], logs: [], cardioLogs: [], foodLogs: [], activeProgramId: null, weekAdjustment: 0,
