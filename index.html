@@ -633,6 +633,18 @@ const BUILTIN_EXERCISES = [
   { id: "mountain-climbers", name: "Mountain climbers", muscle_group: "core", equipment: "bodyweight", cue: "Hips stay low and level, drive knees in with control." },
   { id: "bear-crawl", name: "Bear crawl", muscle_group: "core", equipment: "bodyweight", cue: "Knees hover just off the floor, opposite hand/foot move together." },
   { id: "inchworm", name: "Inchworm", muscle_group: "core", equipment: "bodyweight", cue: "Walk hands out to a plank, walk feet up to hands, keep legs as straight as you can." },
+
+  // ---- hinge: bridge progression — a well-established category we had zero coverage of ----
+  { id: "wall-bridge", name: "Wall bridge", muscle_group: "hinge", equipment: "bodyweight", cue: "Walk hands down the wall toward the floor, breathe normally throughout." },
+  { id: "wheel-bridge", name: "Wheel bridge", muscle_group: "hinge", equipment: "bodyweight", cue: "Push through palms and feet, aim for an even upside-down U shape." },
+  { id: "full-bridge", name: "Full bridge", muscle_group: "hinge", equipment: "bodyweight", cue: "From standing, lean back with control until both palms touch down." },
+  { id: "stand-to-stand-bridge", name: "Stand-to-stand bridge", muscle_group: "hinge", equipment: "bodyweight", cue: "Only attempt once full bridges are solid — lean back to a bridge, then push back up to standing." },
+
+  // ---- core: rotational work ----
+  { id: "standing-twist", name: "Standing twist", muscle_group: "core", equipment: "bodyweight", cue: "Rotate from the torso, keep hips facing forward." },
+
+  // ---- pull: ring skill ----
+  { id: "ring-pullover", name: "Ring pullover", muscle_group: "pull", equipment: "rings", cue: "From a hang, pull and rotate up into a support position — go slow." },
 ];
 
 // Approximate difficulty level (1-5) per exercise, based on the progression
@@ -689,6 +701,8 @@ const EXERCISE_LEVEL_MAP = {
   "one-arm-pullup-negative": 5, "one-arm-pullup": 5,
   "broad-jump": 3, "jumping-lunge": 4, "burpee": 2,
   "mountain-climbers": 2, "bear-crawl": 2, "inchworm": 1,
+  "wall-bridge": 1, "wheel-bridge": 3, "full-bridge": 4, "stand-to-stand-bridge": 5,
+  "standing-twist": 1, "ring-pullover": 4,
 };
 
 function levelOf(exerciseIdOrName) {
@@ -705,7 +719,7 @@ const HOLD_EXERCISE_IDS = new Set([
   "hollow-hold-tucked", "hollow-hold",
   "parallel-bar-support-hold", "planche-lean", "tuck-planche", "tuck-back-lever",
   "reverse-plank", "copenhagen-plank", "elbow-lever", "tuck-human-flag",
-  "band-assisted-human-flag",
+  "band-assisted-human-flag", "wheel-bridge", "full-bridge",
 ]);
 
 function isHoldExercise(exerciseIdOrName) {
