@@ -888,11 +888,11 @@ function computeMacroSuggestion() {
   return { message: `On pace at ${Math.abs(pctPerWeek).toFixed(2)}%/week — right in the ${Math.abs(targetMax)}-${Math.abs(targetMin)}% recomp target range. No change suggested.`, deltaCalories: 0 };
 }
 
-function applyMacroSuggestion(delta) {
+async function applyMacroSuggestion(delta) {
   const t = state.settings.macroTargets;
   t.calories = Math.max(0, (t.calories || 0) + delta);
   t.carbs = Math.max(0, (t.carbs || 0) + Math.round(delta / 4));
-  persist();
+  await persistNow();
   renderMacroSummary();
   renderWeeklyReview();
   document.getElementById("targetCalories").value = t.calories;
@@ -937,25 +937,25 @@ function renderWeeklyReview() {
     document.getElementById("applyMacroSuggestionBtn").addEventListener("click", () => applyMacroSuggestion(suggestion.deltaCalories));
   }
 
-  document.getElementById("repeatWeekBtn").addEventListener("click", () => {
+  document.getElementById("repeatWeekBtn").addEventListener("click", async () => {
     state.weekAdjustment = (state.weekAdjustment || 0) - 1;
     state.pendingWorkout = null;
-    persist();
+    await persistNow();
     renderWeeklyReview();
     if (program) ensureWorkoutReady(program);
   });
-  document.getElementById("advanceWeekBtn").addEventListener("click", () => {
+  document.getElementById("advanceWeekBtn").addEventListener("click", async () => {
     state.weekAdjustment = (state.weekAdjustment || 0) + 1;
     state.pendingWorkout = null;
-    persist();
+    await persistNow();
     renderWeeklyReview();
     if (program) ensureWorkoutReady(program);
   });
   const resetBtn = document.getElementById("resetWeekBtn");
-  if (resetBtn) resetBtn.addEventListener("click", () => {
+  if (resetBtn) resetBtn.addEventListener("click", async () => {
     state.weekAdjustment = 0;
     state.pendingWorkout = null;
-    persist();
+    await persistNow();
     renderWeeklyReview();
     if (program) ensureWorkoutReady(program);
   });
@@ -1007,7 +1007,7 @@ async function ensureWorkoutReady(program) {
     }
     const workout = await generateTodayWorkout(program, nextIndex);
     state.pendingWorkout = { programId: program.id, phaseKey: key, dayIndex: nextIndex, workout, completed: false };
-    persist();
+    await persistNow();
     renderTodayWorkout(workout);
   } catch (err) {
     box.innerHTML = `<div class="empty">Couldn't auto-generate (${err.message}). Use the button below to retry.</div>`;
@@ -1358,7 +1358,7 @@ function isLosingTooFast() {
   return !!(suggestion && suggestion.deltaCalories > 0);
 }
 
-function applyWorkoutResults(results) {
+async function applyWorkoutResults(results) {
   const holdProgression = isLosingTooFast();
   const byGroup = {};
   results.forEach(r => {
@@ -1381,11 +1381,11 @@ function applyWorkoutResults(results) {
   });
 
   if (state.pendingWorkout) state.pendingWorkout.completed = true;
-  persist();
+  await persistNow();
   renderProgressCharts();
 }
 
-function completeWorkout() {
+async function completeWorkout() {
   const items = document.querySelectorAll("#todayWorkout .list-item");
   const results = [];
   items.forEach((item) => {
@@ -1393,7 +1393,7 @@ function completeWorkout() {
     const active = item.querySelector(".result-chip.active");
     results.push({ exercise: currentWorkout.exercises[idx], result: active ? active.dataset.result : "hold" });
   });
-  applyWorkoutResults(results);
+  await applyWorkoutResults(results);
   renderTodayWorkout(currentWorkout);
   alert("Logged. Levels updated where you hit or missed the rep range.");
 }
@@ -1464,13 +1464,13 @@ function openCardioForm(type) {
 document.getElementById("logWalkChip").addEventListener("click", () => openCardioForm("walk"));
 document.getElementById("logRuckChip").addEventListener("click", () => openCardioForm("ruck"));
 
-document.getElementById("saveCardioBtn").addEventListener("click", () => {
+document.getElementById("saveCardioBtn").addEventListener("click", async () => {
   const distance = parseFloat(document.getElementById("cardioDistance").value) || null;
   const duration = parseInt(document.getElementById("cardioDuration").value, 10) || null;
   const weight = cardioType === "ruck" ? (parseInt(document.getElementById("cardioWeight").value, 10) || null) : null;
   if (!distance && !duration) { alert("Enter at least a distance or duration."); return; }
   state.cardioLogs.push({ date: new Date().toISOString(), type: cardioType, distance, duration, weight });
-  persist();
+  await persistNow();
   document.getElementById("cardioForm").classList.add("hidden");
   document.getElementById("cardioDistance").value = "";
   document.getElementById("cardioDuration").value = "";
@@ -1557,7 +1557,7 @@ function renderFoodLogList() {
   }).join("");
 }
 
-document.getElementById("foodLogList").addEventListener("click", (e) => {
+document.getElementById("foodLogList").addEventListener("click", async (e) => {
   const editIdx = e.target.dataset.editFood;
   if (editIdx !== undefined) {
     document.querySelectorAll("[data-edit-panel]").forEach(p => {
@@ -1579,7 +1579,7 @@ document.getElementById("foodLogList").addEventListener("click", (e) => {
       carbs: parseInt(getVal("carbs"), 10) || 0,
       fat: parseInt(getVal("fat"), 10) || 0,
     };
-    persist();
+    await persistNow();
     renderMacroSummary();
     renderFoodLogList();
     return;
@@ -1587,14 +1587,14 @@ document.getElementById("foodLogList").addEventListener("click", (e) => {
   const idx = e.target.dataset.delFood;
   if (idx === undefined) return;
   state.foodLogs.splice(parseInt(idx, 10), 1);
-  persist();
+  await persistNow();
   renderMacroSummary();
   renderFoodLogList();
 });
 
-function addFoodEntry(entry) {
+async function addFoodEntry(entry) {
   state.foodLogs.push({ date: new Date().toISOString(), ...entry });
-  persist();
+  await persistNow();
   renderMacroSummary();
   renderFoodLogList();
 }
@@ -1698,10 +1698,10 @@ document.getElementById("foodPhotoInput").addEventListener("change", async (e) =
   }
 });
 
-document.getElementById("saveScanBtn").addEventListener("click", () => {
+document.getElementById("saveScanBtn").addEventListener("click", async () => {
   const name = document.getElementById("scanName").value.trim();
   if (!name) { alert("Enter a food name."); return; }
-  addFoodEntry({
+  await addFoodEntry({
     name,
     calories: parseInt(document.getElementById("scanCalories").value, 10) || 0,
     protein: parseInt(document.getElementById("scanProtein").value, 10) || 0,
@@ -1715,14 +1715,14 @@ document.getElementById("saveScanBtn").addEventListener("click", () => {
 });
 
 // -- macro targets (Settings) --
-document.getElementById("saveTargetsBtn").addEventListener("click", () => {
+document.getElementById("saveTargetsBtn").addEventListener("click", async () => {
   state.settings.macroTargets = {
     calories: parseInt(document.getElementById("targetCalories").value, 10) || 0,
     protein: parseInt(document.getElementById("targetProtein").value, 10) || 0,
     carbs: parseInt(document.getElementById("targetCarbs").value, 10) || 0,
     fat: parseInt(document.getElementById("targetFat").value, 10) || 0,
   };
-  persist();
+  await persistNow();
   renderMacroSummary();
   alert("Targets saved.");
 });
@@ -1755,14 +1755,14 @@ function renderProgressCharts() {
   renderBarChart("cardioChart", cardioWeekLabels.map(wk => ({ label: wk, value: cardioByWeek[wk] })));
 }
 
-document.getElementById("logWeightBtn").addEventListener("click", () => {
+document.getElementById("logWeightBtn").addEventListener("click", async () => {
   const weight = parseFloat(document.getElementById("weightInput").value);
   const date = document.getElementById("measurementDateInput").value || new Date().toISOString().slice(0, 10);
   if (isNaN(weight)) { alert("Enter a weight first."); return; }
   state.measurements = state.measurements || [];
   state.measurements = state.measurements.filter(m => m.date !== date);
   state.measurements.push({ date, weight });
-  persist();
+  await persistNow();
   document.getElementById("weightInput").value = "";
   renderProgressCharts();
 });
@@ -2047,7 +2047,7 @@ document.addEventListener("visibilitychange", () => {
   if (session.holding) tickHold();
 });
 
-function finishSession() {
+async function finishSession() {
   const results = currentWorkout.exercises.map((e, i) => {
     const actuals = session.setsActual[i] || [];
     const range = parseRepRange(e.reps);
@@ -2057,7 +2057,7 @@ function finishSession() {
     else if (actuals.every(a => a >= range.max)) result = "max";
     return { exercise: e, result };
   });
-  applyWorkoutResults(results);
+  await applyWorkoutResults(results);
   session = null;
   document.getElementById("sessionPanel").classList.add("hidden");
   document.getElementById("todayWorkout").classList.remove("hidden");
@@ -2212,7 +2212,7 @@ document.getElementById("programList").addEventListener("click", async (e) => {
   }
   if (useId) {
     state.activeProgramId = useId;
-    applyStartingLevelsIfUntrained();
+    await applyStartingLevelsIfUntrained();
     renderActiveProgramInfo();
   }
   if (delId) {
@@ -2221,7 +2221,7 @@ document.getElementById("programList").addEventListener("click", async (e) => {
     if (state.activeProgramId === delId) state.activeProgramId = null;
     await loadPrograms();
     renderPrograms();
-    persist();
+    await persistNow();
   }
 });
 
@@ -2239,7 +2239,7 @@ document.getElementById("genWorkoutBtn").addEventListener("click", async (e) => 
     const avoidNames = state.pendingWorkout?.workout?.exercises?.map(ex => ex.name) || [];
     const workout = await generateTodayWorkout(program, dayIndex, avoidNames);
     state.pendingWorkout = { programId: program.id, phaseKey: key, dayIndex, workout, completed: false };
-    persist();
+    await persistNow();
     renderTodayWorkout(workout);
   } catch (err) {
     alert("Couldn't generate a workout: " + err.message);
@@ -2297,15 +2297,15 @@ document.getElementById("importInput").addEventListener("change", (e) => {
   reader.onload = async () => {
     const parsed = JSON.parse(reader.result);
     state = parsed.state || state;
-    persist();
-    alert("Backup restored to local cache. Save your Worker URL to also push it to the cloud.");
+    await persistNow();
+    alert("Backup restored and synced.");
   };
   reader.readAsText(file);
 });
 
-document.getElementById("startDateInput").addEventListener("change", (e) => {
+document.getElementById("startDateInput").addEventListener("change", async (e) => {
   state.settings.startDate = e.target.value;
-  persist();
+  await persistNow();
 });
 
 // ---- starting level per movement pattern ----
@@ -2326,18 +2326,18 @@ function renderStartingLevelSettings() {
   `).join("");
 }
 
-document.getElementById("startingLevelSettings").addEventListener("click", (e) => {
+document.getElementById("startingLevelSettings").addEventListener("click", async (e) => {
   const chip = e.target.closest("[data-start-mg]");
   if (!chip) return;
   const mg = chip.dataset.startMg, lvl = chip.dataset.startLvl;
   state.settings.startingLevels[mg] = lvl;
-  persist();
+  await persistNow();
   renderStartingLevelSettings();
 });
 
 // Applies the calibrated starting level to any muscle group that has never
 // been logged yet — protects already-earned progress on groups you've trained.
-function applyStartingLevelsIfUntrained() {
+async function applyStartingLevelsIfUntrained() {
   const trainedGroups = new Set((state.logs || []).map(l => l.muscle_group));
   MUSCLE_GROUPS.forEach(mg => {
     if (!trainedGroups.has(mg)) {
@@ -2345,7 +2345,7 @@ function applyStartingLevelsIfUntrained() {
       state.progressLevels[mg] = STARTING_LEVEL_MAP[lvl];
     }
   });
-  persist();
+  await persistNow();
 }
 
 // ---- init ----
