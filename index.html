@@ -292,8 +292,8 @@
       <div id="weightChart" class="empty">Log a few measurements to see a trend.</div>
     </div>
     <div class="card">
-      <h2>Weekly volume</h2>
-      <div id="volumeChart" class="empty">Complete a few workouts to see volume per week.</div>
+      <h2>Weekly workouts</h2>
+      <div id="volumeChart" class="empty">Complete a few workouts to see your frequency per week.</div>
     </div>
     <div class="card">
       <h2>Weekly walk/ruck minutes</h2>
@@ -1586,9 +1586,15 @@ function renderProgressCharts() {
 
   const logs = state.logs || [];
   const byWeek = {};
+  const seenDaysByWeek = {};
   logs.forEach(l => {
     const wk = isoWeekLabel(l.date);
-    byWeek[wk] = (byWeek[wk] || 0) + 1;
+    const dayStr = new Date(l.date).toDateString();
+    if (!seenDaysByWeek[wk]) seenDaysByWeek[wk] = new Set();
+    if (!seenDaysByWeek[wk].has(dayStr)) {
+      seenDaysByWeek[wk].add(dayStr);
+      byWeek[wk] = (byWeek[wk] || 0) + 1;
+    }
   });
   const weekLabels = Object.keys(byWeek).slice(-10);
   renderBarChart("volumeChart", weekLabels.map(wk => ({ label: wk, value: byWeek[wk] })));
