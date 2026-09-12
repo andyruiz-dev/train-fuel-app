@@ -1042,8 +1042,9 @@ function currentPhaseFor(program) {
   return { phase, weekNumber };
 }
 
-async function generateTodayWorkout(program, dayIndex = 0) {
-  const recentNames = (state.logs || []).slice(-15).map(l => l.exercise).join(", ");
+async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
+  const recentFromHistory = (state.logs || []).slice(-15).map(l => l.exercise);
+  const recentNames = [...new Set([...avoidNames, ...recentFromHistory])].join(", ");
   const availableList = exercises.map(e => `${e.name} (${e.muscle_group}, ${e.equipment || "bodyweight"}${isHoldExercise(e.id) ? ", ISOMETRIC HOLD" : ""})`).join("; ");
   const levels = state.progressLevels;
   const { phase, weekNumber } = currentPhaseFor(program);
@@ -2174,7 +2175,8 @@ document.getElementById("genWorkoutBtn").addEventListener("click", async (e) => 
     const key = phaseKeyFor(program, phase);
     const dayIndex = (state.pendingWorkout && state.pendingWorkout.programId === program.id && state.pendingWorkout.phaseKey === key)
       ? state.pendingWorkout.dayIndex : 0;
-    const workout = await generateTodayWorkout(program, dayIndex);
+    const avoidNames = state.pendingWorkout?.workout?.exercises?.map(ex => ex.name) || [];
+    const workout = await generateTodayWorkout(program, dayIndex, avoidNames);
     state.pendingWorkout = { programId: program.id, phaseKey: key, dayIndex, workout, completed: false };
     persist();
     renderTodayWorkout(workout);
