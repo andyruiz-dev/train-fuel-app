@@ -178,11 +178,13 @@
     </div>
 
     <div class="card">
-      <h2>Today's workout</h2>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 style="margin:0;">Today's workout</h2>
+        <button id="genWorkoutBtn" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; padding:4px 0;" disabled>Regenerate</button>
+      </div>
       <div id="recoveryCautionNote"></div>
       <div id="todayWorkout" class="empty">Pick an active program first.</div>
-      <button class="primary" id="genWorkoutBtn" style="margin-top:10px;" disabled>Generate today's workout</button>
-      <button class="secondary" id="startSessionBtn" style="margin-top:8px; width:100%;" disabled>Start guided session</button>
+      <button class="primary" id="startSessionBtn" style="margin-top:10px; width:100%;" disabled>Start guided session</button>
     </div>
     <div id="sessionPanel" class="hidden"></div>
 
@@ -978,7 +980,7 @@ function renderActiveProgramInfo() {
   }
   headerName.textContent = active.name;
   genBtn.disabled = false;
-  genBtn.textContent = "Regenerate workout";
+  genBtn.textContent = "Regenerate";
   ensureWorkoutReady(active);
   renderWeeklyReview();
 }
@@ -1247,7 +1249,7 @@ function renderTodayWorkout(workout) {
       </div>
     </details>`;
 
-  box.innerHTML = warmupHtml + workoutHtml + cooldownHtml + `<button class="primary" id="completeWorkoutBtn" style="margin-top:10px;">Complete workout</button>`;
+  box.innerHTML = warmupHtml + workoutHtml + cooldownHtml + `<button class="secondary" id="completeWorkoutBtn" style="margin-top:10px; width:100%;">Complete workout</button>`;
   document.getElementById("completeWorkoutBtn").addEventListener("click", completeWorkout);
 }
 
@@ -2315,7 +2317,7 @@ document.getElementById("genWorkoutBtn").addEventListener("click", async (e) => 
   } catch (err) {
     alert("Couldn't generate a workout: " + err.message);
   } finally {
-    btn.disabled = false; btn.textContent = "Regenerate workout";
+    btn.disabled = false; btn.textContent = "Regenerate";
   }
 });
 
