@@ -22,7 +22,7 @@
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, X-Food-Note",
 };
 
 function json(data, status = 200) {
@@ -179,6 +179,8 @@ export default {
       // ---- food photo scan ----
       if (path === "/api/food-scan" && request.method === "POST") {
         const mediaType = request.headers.get("Content-Type") || "image/jpeg";
+        let note = "";
+        try { note = decodeURIComponent(request.headers.get("X-Food-Note") || ""); } catch (e) { /* ignore bad encoding */ }
         const buffer = await request.arrayBuffer();
         const base64 = arrayBufferToBase64(buffer);
         const resp = await callClaude(env, {
@@ -189,7 +191,9 @@ export default {
             content: [
               { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
               { type: "text", text: `Identify the food or meal in this photo and estimate its nutrition
-based on the visible portion size. Respond with ONLY valid JSON, no prose:
+based on the visible portion size.${note ? ` The user added this note — trust it over what
+the photo alone suggests, since photos can be ambiguous or misleading: "${note}"` : ""}
+Respond with ONLY valid JSON, no prose:
 {"name": "string", "calories": 000, "protein": 00, "carbs": 00, "fat": 00}
 Protein/carbs/fat are grams, whole numbers, best estimate for the portion shown.` },
             ],

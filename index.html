@@ -213,6 +213,7 @@
       <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
         AI estimates food and macros from the photo — review and adjust before saving.
       </p>
+      <input type="text" id="scanNote" placeholder="Optional note (e.g. 'turkey not chicken', 'half portion')" style="margin-bottom:10px;">
       <div class="file-drop" id="foodPhotoDrop">Tap to take or choose a photo</div>
       <input type="file" id="foodPhotoInput" accept="image/*" capture="environment" style="display:none;">
       <div id="foodScanStatus" class="empty" style="display:none; margin-top:8px;"></div>
@@ -234,8 +235,11 @@
       </div>
     </div>
     <div class="card">
-      <h2>Today's log</h2>
-      <div id="foodLogList" class="empty">Nothing logged yet today.</div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 style="margin:0;">Food log</h2>
+        <input type="date" id="foodLogDate" style="width:auto; padding:6px 8px; font-size:13px;">
+      </div>
+      <div id="foodLogList" class="empty" style="margin-top:8px;">Nothing logged yet today.</div>
     </div>
   </section>
 
@@ -1619,6 +1623,11 @@ function todaysFoodLogs() {
   return (state.foodLogs || []).filter(f => new Date(f.date).toDateString() === todayStr);
 }
 
+function foodLogsForDate(dateStr) {
+  const targetStr = new Date(dateStr + "T00:00:00").toDateString();
+  return (state.foodLogs || []).filter(f => new Date(f.date).toDateString() === targetStr);
+}
+
 function macroBar(label, value, target) {
   const pct = target ? Math.min(100, Math.round((value / target) * 100)) : 0;
   return `
@@ -1660,9 +1669,11 @@ function renderMacroSummary() {
 
 function renderFoodLogList() {
   const el = document.getElementById("foodLogList");
-  const today = todaysFoodLogs();
-  if (!today.length) { el.innerHTML = '<div class="empty">Nothing logged yet today.</div>'; return; }
-  el.innerHTML = today.map((f, i) => {
+  const dateInput = document.getElementById("foodLogDate");
+  const selectedDate = dateInput.value || new Date().toISOString().slice(0, 10);
+  const dayLogs = foodLogsForDate(selectedDate);
+  if (!dayLogs.length) { el.innerHTML = '<div class="empty">Nothing logged for this day.</div>'; return; }
+  el.innerHTML = dayLogs.map((f, i) => {
     const realIndex = state.foodLogs.indexOf(f);
     return `
       <div class="list-item" style="flex-direction:column; align-items:stretch; border-bottom:none;">
@@ -1687,6 +1698,8 @@ function renderFoodLogList() {
       </div>`;
   }).join("");
 }
+
+document.getElementById("foodLogDate").addEventListener("change", renderFoodLogList);
 
 document.getElementById("foodLogList").addEventListener("click", async (e) => {
   const editIdx = e.target.dataset.editFood;
@@ -1816,9 +1829,13 @@ document.getElementById("foodPhotoInput").addEventListener("change", async (e) =
     if (!WORKER_URL) throw new Error("no worker url configured");
     const uploadBlob = await getUploadBlob(file);
     console.log("Scanning photo, original:", file.size, "upload size:", uploadBlob.size);
+    const note = document.getElementById("scanNote").value.trim();
     const resp = await fetch(WORKER_URL.replace(/\/$/, "") + "/api/food-scan", {
       method: "POST",
-      headers: { "Content-Type": uploadBlob.type || file.type || "image/jpeg" },
+      headers: {
+        "Content-Type": uploadBlob.type || file.type || "image/jpeg",
+        "X-Food-Note": encodeURIComponent(note),
+      },
       body: uploadBlob,
     });
     if (!resp.ok) {
@@ -1836,6 +1853,7 @@ document.getElementById("foodPhotoInput").addEventListener("change", async (e) =
     document.getElementById("scanCarbs").value = est.carbs || "";
     document.getElementById("scanFat").value = est.fat || "";
     document.getElementById("foodScanReview").classList.remove("hidden");
+    document.getElementById("scanNote").value = "";
     statusEl.textContent = "Review the estimate below, then add it.";
   } catch (err) {
     statusEl.textContent = "Scan failed: " + err.message;
@@ -2505,6 +2523,7 @@ async function init() {
   renderStartingLevelSettings();
   renderMacroSummary();
   renderQuickProteinChips();
+  document.getElementById("foodLogDate").value = new Date().toISOString().slice(0, 10);
   renderFoodLogList();
   if (state.settings?.startDate) document.getElementById("startDateInput").value = state.settings.startDate;
   const t = state.settings.macroTargets || {};
