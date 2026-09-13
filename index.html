@@ -153,24 +153,28 @@
   <!-- TODAY -->
   <section id="tab-today" class="tab-panel">
     <div class="card">
-      <h2>Cross-training</h2>
-      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
-        Log a walk or ruck any day — doesn't touch your program's rotation, just tracked
-        alongside it for your own record and the Progress charts.
-      </p>
-      <div class="row">
-        <div class="chip" id="logWalkChip">Log a walk</div>
-        <div class="chip" id="logRuckChip">Log a ruck</div>
-      </div>
-      <div id="cardioForm" class="hidden" style="margin-top:10px;">
-        <div class="row">
-          <input type="text" inputmode="decimal" id="cardioDistance" placeholder="Distance (mi)" style="flex:1;">
-          <input type="text" inputmode="numeric" id="cardioDuration" placeholder="Duration (min)" style="flex:1;">
+      <details class="exercise-group">
+        <summary>Cross-training</summary>
+        <div style="padding-top:6px;">
+          <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+            Log a walk or ruck any day — doesn't touch your program's rotation, just tracked
+            alongside it for your own record and the Progress charts.
+          </p>
+          <div class="row">
+            <div class="chip" id="logWalkChip">Log a walk</div>
+            <div class="chip" id="logRuckChip">Log a ruck</div>
+          </div>
+          <div id="cardioForm" class="hidden" style="margin-top:10px;">
+            <div class="row">
+              <input type="text" inputmode="decimal" id="cardioDistance" placeholder="Distance (mi)" style="flex:1;">
+              <input type="text" inputmode="numeric" id="cardioDuration" placeholder="Duration (min)" style="flex:1;">
+            </div>
+            <input type="text" inputmode="numeric" id="cardioWeight" placeholder="Weight carried (lbs)" style="margin-top:8px; display:none;">
+            <button class="secondary" id="saveCardioBtn" style="margin-top:8px; width:100%;">Save</button>
+          </div>
+          <div id="recentCardio" style="margin-top:10px;"></div>
         </div>
-        <input type="text" inputmode="numeric" id="cardioWeight" placeholder="Weight carried (lbs)" style="margin-top:8px; display:none;">
-        <button class="secondary" id="saveCardioBtn" style="margin-top:8px; width:100%;">Save</button>
-      </div>
-      <div id="recentCardio" style="margin-top:10px;"></div>
+      </details>
     </div>
 
     <div class="card">
