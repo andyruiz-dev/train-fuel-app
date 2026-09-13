@@ -2,7 +2,7 @@
 // and skipWaiting + clients.claim mean a refresh (not a hard-refresh) is
 // enough to pick up a new version — this fixes the old app's "must clear
 // cache after every push" problem.
-const CACHE_VERSION = "tf-v1";
+const CACHE_VERSION = "tf-v2";
 const SHELL_FILES = ["./", "./index.html", "./manifest.json"];
 
 self.addEventListener("install", (event) => {
@@ -27,8 +27,12 @@ self.addEventListener("fetch", (event) => {
   if (url.pathname.startsWith("/api/")) return;
 
   // Network-first for the app shell, falling back to cache offline.
+  // cache: "reload" forces this past the browser's own HTTP cache too —
+  // "network-first" at the service-worker level doesn't by itself mean the
+  // underlying fetch() bypasses ordinary HTTP caching, which is what let
+  // GitHub Pages' CDN keep serving a stale copy for a while after a push.
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: "reload" })
       .then((resp) => {
         const copy = resp.clone();
         caches.open(CACHE_VERSION).then((cache) => cache.put(event.request, copy));
