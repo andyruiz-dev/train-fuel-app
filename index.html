@@ -1227,14 +1227,14 @@ function renderTodayWorkout(workout) {
     <details class="exercise-group" style="margin-bottom:10px;">
       <summary>Warmup (~3-4 min)</summary>
       <div style="padding-top:6px;">
-        ${workout.warmup.map(w => `<div class="list-item"><div><div class="name">${w.name}</div><div class="meta">${w.detail || ""}</div></div></div>`).join("")}
+        ${workout.warmup.map((w, i) => `<div class="list-item"><div><div class="name">${w.name}</div><div class="meta">${w.detail || ""}</div></div><button class="danger-link" style="color:var(--accent);" data-warmcool-swap="warmup:${i}">Swap</button></div>`).join("")}
       </div>
     </details>` : "";
   const cooldownHtml = (workout.cooldown && workout.cooldown.length) ? `
     <details class="exercise-group" style="margin-top:10px;">
       <summary>Cool-down (~2 min)</summary>
       <div style="padding-top:6px;">
-        ${workout.cooldown.map(c => `<div class="list-item"><div><div class="name">${c.name}</div><div class="meta">${c.detail || ""}</div></div></div>`).join("")}
+        ${workout.cooldown.map((c, i) => `<div class="list-item"><div><div class="name">${c.name}</div><div class="meta">${c.detail || ""}</div></div><button class="danger-link" style="color:var(--accent);" data-warmcool-swap="cooldown:${i}">Swap</button></div>`).join("")}
       </div>
     </details>` : "";
 
@@ -1256,6 +1256,12 @@ function renderTodayWorkout(workout) {
 // toggle-based actions (opening a swap panel) appear to silently do nothing
 // since multiple listeners would open-then-immediately-close it per click.
 document.getElementById("todayWorkout").addEventListener("click", async (e) => {
+  const warmcoolBtn = e.target.closest("[data-warmcool-swap]");
+  if (warmcoolBtn) {
+    const [type, idx] = warmcoolBtn.dataset.warmcoolSwap.split(":");
+    await swapWarmupCooldownItem(type, parseInt(idx, 10));
+    return;
+  }
   const howtoBtn = e.target.closest("[data-howto-open]");
   if (howtoBtn) {
     document.querySelector(`[data-howto-panel="${howtoBtn.dataset.howtoOpen}"]`)?.classList.toggle("hidden");
@@ -1366,6 +1372,34 @@ Give adjusted sets/reps for the replacement so effort stays comparable.`;
   } catch (err) {
     return { name: replacement.name, muscle_group: original.muscle_group, sets: original.sets, reps: original.reps, superset_group: original.superset_group || null };
   }
+}
+
+async function swapWarmupCooldownItem(type, idx) {
+  const list = currentWorkout[type];
+  if (!list || !list[idx]) return;
+  const original = list[idx];
+  const muscleGroups = [...new Set(currentWorkout.exercises.map(e => e.muscle_group))].join(", ");
+  const isWarmup = type === "warmup";
+  const system = `You suggest a single alternative ${isWarmup ? "dynamic warmup movement" : "static cool-down stretch"}
+for the given muscle groups — something different from the one being replaced, still quick
+(under a minute) and needing no special equipment. Respond with ONLY valid JSON:
+{"name": "string", "detail": "string, e.g. ${isWarmup ? "30s each side" : "hold 20s"}"}`;
+  const prompt = `Muscle groups today: ${muscleGroups}. Replacing: "${original.name}" (${original.detail || ""}).`;
+  try {
+    const data = await apiFetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ system, prompt, max_tokens: 200 }),
+    });
+    const text = data.content?.[0]?.text || "{}";
+    currentWorkout[type][idx] = extractJson(text);
+  } catch (err) {
+    alert("Couldn't get an alternative: " + err.message);
+    return;
+  }
+  if (state.pendingWorkout) state.pendingWorkout.workout = currentWorkout;
+  await persistNow();
+  renderTodayWorkout(currentWorkout);
 }
 
 async function swapExercise(index, newName) {
