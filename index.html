@@ -198,7 +198,15 @@
   <section id="tab-food" class="tab-panel hidden">
     <div class="card">
       <h2>Today's macros</h2>
+      <div id="proteinRemaining" style="text-align:center; margin-bottom:12px;"></div>
       <div id="macroSummary"></div>
+    </div>
+    <div class="card">
+      <h2>Quick-add protein</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+        Low-prep staples for closing the gap — tap to log instantly.
+      </p>
+      <div class="row" id="quickProteinChips"></div>
     </div>
     <div class="card">
       <h2>Scan a photo</h2>
@@ -1562,7 +1570,31 @@ function renderRecentCardio() {
   `).join("");
 }
 
-// ---- food log ----
+// ---- quick-add protein staples ----
+const QUICK_PROTEIN_FOODS = [
+  { name: "Greek yogurt (1 cup)", calories: 150, protein: 20, carbs: 8, fat: 4 },
+  { name: "Cottage cheese (1 cup)", calories: 180, protein: 25, carbs: 8, fat: 5 },
+  { name: "Canned tuna (1 can)", calories: 120, protein: 30, carbs: 0, fat: 1 },
+  { name: "2 hard-boiled eggs", calories: 140, protein: 12, carbs: 1, fat: 10 },
+  { name: "Whey protein shake", calories: 120, protein: 25, carbs: 3, fat: 2 },
+  { name: "Chicken breast (4oz)", calories: 165, protein: 35, carbs: 0, fat: 4 },
+];
+
+function renderQuickProteinChips() {
+  const el = document.getElementById("quickProteinChips");
+  el.innerHTML = QUICK_PROTEIN_FOODS.map((f, i) =>
+    `<div class="chip" data-quick-protein="${i}">${f.name} · ${f.protein}g</div>`
+  ).join("");
+}
+
+document.getElementById("quickProteinChips").addEventListener("click", async (e) => {
+  const chip = e.target.closest("[data-quick-protein]");
+  if (!chip) return;
+  const food = QUICK_PROTEIN_FOODS[parseInt(chip.dataset.quickProtein, 10)];
+  await addFoodEntry({ ...food, source: "quick" });
+});
+
+
 function todaysFoodLogs() {
   const todayStr = new Date().toDateString();
   return (state.foodLogs || []).filter(f => new Date(f.date).toDateString() === todayStr);
@@ -1583,6 +1615,7 @@ function macroBar(label, value, target) {
 
 function renderMacroSummary() {
   const el = document.getElementById("macroSummary");
+  const proteinEl = document.getElementById("proteinRemaining");
   const today = todaysFoodLogs();
   const totals = today.reduce((acc, f) => ({
     calories: acc.calories + (f.calories || 0),
@@ -1591,6 +1624,14 @@ function renderMacroSummary() {
     fat: acc.fat + (f.fat || 0),
   }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
   const t = state.settings.macroTargets || {};
+
+  const proteinLeft = Math.max(0, (t.protein || 0) - totals.protein);
+  if (proteinEl) {
+    proteinEl.innerHTML = proteinLeft > 0
+      ? `<div style="font-family:var(--font-mono); font-size:32px; font-weight:600; color:var(--accent);">${proteinLeft}g</div><div class="meta">protein left today</div>`
+      : `<div style="font-family:var(--font-mono); font-size:32px; font-weight:600; color:var(--accent);">✓</div><div class="meta">protein target hit today</div>`;
+  }
+
   el.innerHTML =
     macroBar("Calories", totals.calories, t.calories) +
     macroBar("Protein (g)", totals.protein, t.protein) +
@@ -2430,6 +2471,7 @@ async function init() {
   renderRecentCardio();
   renderStartingLevelSettings();
   renderMacroSummary();
+  renderQuickProteinChips();
   renderFoodLogList();
   if (state.settings?.startDate) document.getElementById("startDateInput").value = state.settings.startDate;
   const t = state.settings.macroTargets || {};
