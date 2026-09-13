@@ -1584,9 +1584,24 @@ const QUICK_PROTEIN_FOODS = [
   { name: "Chicken breast (4oz)", calories: 165, protein: 35, carbs: 0, fat: 4 },
 ];
 
+let resolvedQuickProteinFoods = QUICK_PROTEIN_FOODS;
+
+function findRecentLoggedFood(keywords) {
+  const logs = (state.foodLogs || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+  const match = logs.find(f => keywords.some(k => (f.name || "").toLowerCase().includes(k)));
+  return match ? { name: match.name, calories: match.calories, protein: match.protein, carbs: match.carbs, fat: match.fat } : null;
+}
+
 function renderQuickProteinChips() {
   const el = document.getElementById("quickProteinChips");
-  el.innerHTML = QUICK_PROTEIN_FOODS.map((f, i) =>
+  const barMatch = findRecentLoggedFood(["protein bar"]);
+  const shakeMatch = findRecentLoggedFood(["protein shake", "whey", "protein powder"]);
+  resolvedQuickProteinFoods = QUICK_PROTEIN_FOODS.map(f => {
+    if (f.name === "Protein bar" && barMatch) return barMatch;
+    if (f.name === "Whey protein shake" && shakeMatch) return shakeMatch;
+    return f;
+  });
+  el.innerHTML = resolvedQuickProteinFoods.map((f, i) =>
     `<div class="chip" data-quick-protein="${i}">${f.name} · ${f.protein}g</div>`
   ).join("");
 }
@@ -1594,7 +1609,7 @@ function renderQuickProteinChips() {
 document.getElementById("quickProteinChips").addEventListener("click", async (e) => {
   const chip = e.target.closest("[data-quick-protein]");
   if (!chip) return;
-  const food = QUICK_PROTEIN_FOODS[parseInt(chip.dataset.quickProtein, 10)];
+  const food = resolvedQuickProteinFoods[parseInt(chip.dataset.quickProtein, 10)];
   await addFoodEntry({ ...food, source: "quick" });
 });
 
@@ -1713,6 +1728,7 @@ async function addFoodEntry(entry) {
   await persistNow();
   renderMacroSummary();
   renderFoodLogList();
+  renderQuickProteinChips();
 }
 
 // -- photo scan --
