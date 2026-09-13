@@ -1096,13 +1096,20 @@ evenly). Don't force a pairing where the muscle groups don't logically complemen
 each other, and don't superset more than two exercises together.
 ${isDeload ? "This is a DELOAD week for this phase — reduce sets and/or reps by roughly 30-40% across all exercises." : ""}
 ${recoveryCaution ? "RECOVERY CAUTION: recent weight loss is outpacing the target rate, a sign recovery capacity may be compromised. Favor holding at the current level's difficulty rather than the hardest variant available for that level, and avoid adding extra intensity techniques (drop sets, extra tempo/pause) this session." : ""}
+Also include a short warmup and cool-down, both targeted to the SPECIFIC muscle
+groups in today's slots (not generic) — e.g. a push day warms up
+shoulders/chest/triceps, a legs day warms up hips/knees. Warmup: 2-3 brief
+dynamic movements (~3-4 minutes total). Cool-down: 1-2 static stretches for the
+muscles just worked (~2 minutes total). Keep both simple, no equipment needed
+beyond what's already available, and genuinely quick — this is a 20-25 minute
+session overall.
 Respond with ONLY valid JSON.`;
   const prompt = `Available exercises: ${availableList}.
 Recently used (avoid repeating if a same-muscle-group alternative exists): ${recentNames || "none yet"}.
 Current level per muscle group (1-5): ${JSON.stringify(levels)}.
 Current phase: ${phase?.phase || "n/a"}, week ${weekNumber}${isDeload ? " (deload)" : ""}.
 Today's day: "${day?.day || "n/a"}", slots: ${JSON.stringify(day?.slots || [])}.
-Output JSON: {"day": "string", "exercises": [{"name": "string", "muscle_group": "string", "sets": 3, "reps": "8-12", "superset_group": "A"}]}
+Output JSON: {"day": "string", "warmup": [{"name": "string", "detail": "string, e.g. 30s each side"}], "exercises": [{"name": "string", "muscle_group": "string", "sets": 3, "reps": "8-12", "superset_group": "A"}], "cooldown": [{"name": "string", "detail": "string, e.g. hold 20s"}]}
 superset_group is a letter shared by paired exercises, or null if standalone.`;
   const data = await apiFetch("/api/generate", {
     method: "POST",
@@ -1212,7 +1219,22 @@ function renderTodayWorkout(workout) {
     return `<div class="card" style="margin-bottom:10px;">${exerciseCardHtml(e, i)}</div>`;
   }).join("");
 
-  box.innerHTML = unitsHtml + `<button class="primary" id="completeWorkoutBtn" style="margin-top:4px;">Complete workout</button>`;
+  const warmupHtml = (workout.warmup && workout.warmup.length) ? `
+    <details class="exercise-group" style="margin-bottom:10px;">
+      <summary>Warmup (~3-4 min)</summary>
+      <div style="padding-top:6px;">
+        ${workout.warmup.map(w => `<div class="list-item"><div><div class="name">${w.name}</div><div class="meta">${w.detail || ""}</div></div></div>`).join("")}
+      </div>
+    </details>` : "";
+  const cooldownHtml = (workout.cooldown && workout.cooldown.length) ? `
+    <details class="exercise-group" style="margin-top:10px;">
+      <summary>Cool-down (~2 min)</summary>
+      <div style="padding-top:6px;">
+        ${workout.cooldown.map(c => `<div class="list-item"><div><div class="name">${c.name}</div><div class="meta">${c.detail || ""}</div></div></div>`).join("")}
+      </div>
+    </details>` : "";
+
+  box.innerHTML = warmupHtml + unitsHtml + cooldownHtml + `<button class="primary" id="completeWorkoutBtn" style="margin-top:10px;">Complete workout</button>`;
   document.getElementById("completeWorkoutBtn").addEventListener("click", completeWorkout);
 }
 
