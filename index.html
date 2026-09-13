@@ -353,7 +353,7 @@
       <h2>Daily macro targets</h2>
       <div class="row">
         <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="targetCalories" placeholder="2300"></div>
-        <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="targetProtein" placeholder="175"></div>
+        <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="targetProtein" placeholder="160"></div>
       </div>
       <div class="row" style="margin-top:8px;">
         <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="targetCarbs" placeholder="255"></div>
@@ -421,7 +421,7 @@ const LS_WORKER_URL_KEY = "tf_worker_url";
 const DEFAULT_WORKER_URL = "https://train-fuel.andy-p-ruiz.workers.dev";
 let WORKER_URL = localStorage.getItem(LS_WORKER_URL_KEY) || DEFAULT_WORKER_URL;
 let state = { settings: { startingLevels: { push: "intermediate", pull: "intermediate", legs: "intermediate", hinge: "intermediate", core: "intermediate", ruck: "intermediate" },
-  macroTargets: { calories: 2300, protein: 150, carbs: 200, fat: 70 } },
+  macroTargets: { calories: 2300, protein: 160, carbs: 200, fat: 70 } },
   measurements: [], logs: [], cardioLogs: [], foodLogs: [], activeProgramId: null, weekAdjustment: 0,
   progressLevels: { push: 1, pull: 1, legs: 1, hinge: 1, core: 1, ruck: 1 } };
 let exercises = [];
@@ -467,7 +467,7 @@ async function loadState() {
   }
   if (!state.cardioLogs) state.cardioLogs = [];
   if (!state.foodLogs) state.foodLogs = [];
-  if (!state.settings.macroTargets) state.settings.macroTargets = { calories: 2300, protein: 150, carbs: 200, fat: 70 };
+  if (!state.settings.macroTargets) state.settings.macroTargets = { calories: 2300, protein: 160, carbs: 200, fat: 70 };
 }
 
 function saveStateLocal() {
