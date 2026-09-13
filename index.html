@@ -218,6 +218,10 @@
       <div id="foodScanStatus" class="empty" style="display:none; margin-top:8px;"></div>
       <div id="foodScanReview" class="hidden" style="margin-top:10px;">
         <input type="text" id="scanName" placeholder="Food name" style="margin-bottom:8px;">
+        <div class="field" style="margin-bottom:8px;">
+          <div class="field-label">Servings (scales the estimate below)</div>
+          <input type="text" inputmode="decimal" id="scanServings" value="1">
+        </div>
         <div class="row">
           <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="scanCalories"></div>
           <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="scanProtein"></div>
@@ -1574,7 +1578,7 @@ function renderRecentCardio() {
 const QUICK_PROTEIN_FOODS = [
   { name: "Greek yogurt (1 cup)", calories: 150, protein: 20, carbs: 8, fat: 4 },
   { name: "Cottage cheese (1 cup)", calories: 180, protein: 25, carbs: 8, fat: 5 },
-  { name: "Canned tuna (1 can)", calories: 120, protein: 30, carbs: 0, fat: 1 },
+  { name: "Protein bar", calories: 200, protein: 20, carbs: 22, fat: 7 },
   { name: "2 hard-boiled eggs", calories: 140, protein: 12, carbs: 1, fat: 10 },
   { name: "Whey protein shake", calories: 120, protein: 25, carbs: 3, fat: 2 },
   { name: "Chicken breast (4oz)", calories: 165, protein: 35, carbs: 0, fat: 4 },
@@ -1712,6 +1716,16 @@ async function addFoodEntry(entry) {
 }
 
 // -- photo scan --
+let scanBaseValues = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+
+document.getElementById("scanServings").addEventListener("input", (e) => {
+  const servings = parseFloat(e.target.value) || 0;
+  document.getElementById("scanCalories").value = Math.round(scanBaseValues.calories * servings);
+  document.getElementById("scanProtein").value = Math.round(scanBaseValues.protein * servings);
+  document.getElementById("scanCarbs").value = Math.round(scanBaseValues.carbs * servings);
+  document.getElementById("scanFat").value = Math.round(scanBaseValues.fat * servings);
+});
+
 document.getElementById("foodPhotoDrop").addEventListener("click", () => document.getElementById("foodPhotoInput").click());
 // Full-resolution camera photos (often 8-12+ MP) can exhaust memory when
 // converted to base64 directly, especially on Android. Downscale via canvas
@@ -1798,7 +1812,9 @@ document.getElementById("foodPhotoInput").addEventListener("change", async (e) =
     const data = await resp.json();
     const text = data.content?.[0]?.text || "{}";
     const est = extractJson(text);
+    scanBaseValues = { calories: est.calories || 0, protein: est.protein || 0, carbs: est.carbs || 0, fat: est.fat || 0 };
     document.getElementById("scanName").value = est.name || "";
+    document.getElementById("scanServings").value = "1";
     document.getElementById("scanCalories").value = est.calories || "";
     document.getElementById("scanProtein").value = est.protein || "";
     document.getElementById("scanCarbs").value = est.carbs || "";
@@ -1822,6 +1838,7 @@ document.getElementById("saveScanBtn").addEventListener("click", async () => {
     source: "photo",
   });
   ["scanName", "scanCalories", "scanProtein", "scanCarbs", "scanFat"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("scanServings").value = "1";
   document.getElementById("foodScanReview").classList.add("hidden");
   document.getElementById("foodScanStatus").style.display = "none";
 });
