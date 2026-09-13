@@ -1234,7 +1234,15 @@ function renderTodayWorkout(workout) {
       </div>
     </details>` : "";
 
-  box.innerHTML = warmupHtml + unitsHtml + cooldownHtml + `<button class="primary" id="completeWorkoutBtn" style="margin-top:10px;">Complete workout</button>`;
+  const workoutHtml = `
+    <details class="exercise-group">
+      <summary>Today's exercises</summary>
+      <div style="padding-top:6px;">
+        ${unitsHtml}
+      </div>
+    </details>`;
+
+  box.innerHTML = warmupHtml + workoutHtml + cooldownHtml + `<button class="primary" id="completeWorkoutBtn" style="margin-top:10px;">Complete workout</button>`;
   document.getElementById("completeWorkoutBtn").addEventListener("click", completeWorkout);
 }
 
