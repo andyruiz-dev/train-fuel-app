@@ -175,10 +175,8 @@
           <div id="recentCardio" style="margin-top:10px;"></div>
         </div>
       </details>
-    </div>
 
-    <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
         <h2 style="margin:0;">Today's workout</h2>
         <button id="genWorkoutBtn" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; padding:4px 0;" disabled>Regenerate</button>
       </div>
@@ -1249,7 +1247,7 @@ function renderTodayWorkout(workout) {
       </div>
     </details>`;
 
-  box.innerHTML = warmupHtml + workoutHtml + cooldownHtml + `<button class="secondary" id="completeWorkoutBtn" style="margin-top:10px; width:100%;">Complete workout</button>`;
+  box.innerHTML = warmupHtml + workoutHtml + cooldownHtml + `<button id="completeWorkoutBtn" style="background:none; border:none; color:var(--accent); font-size:13px; cursor:pointer; padding:10px 0; display:block;">Complete workout without guided session ▸</button>`;
   document.getElementById("completeWorkoutBtn").addEventListener("click", completeWorkout);
 }
 
