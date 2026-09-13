@@ -1104,9 +1104,10 @@ Also include a short warmup and cool-down, both targeted to the SPECIFIC muscle
 groups in today's slots (not generic) — e.g. a push day warms up
 shoulders/chest/triceps, a legs day warms up hips/knees. Warmup: 2-3 brief
 dynamic movements (~3-4 minutes total). Cool-down: 1-2 static stretches for the
-muscles just worked (~2 minutes total). Keep both simple, no equipment needed
-beyond what's already available, and genuinely quick — this is a 20-25 minute
-session overall.
+muscles just worked (~2 minutes total). BODYWEIGHT ONLY, no exceptions — never
+suggest anything requiring rings, a bar, or any equipment, even if the main
+workout uses it, since warmup/cool-down need to work anywhere including while
+traveling. Genuinely quick — this is a 20-25 minute session overall.
 Respond with ONLY valid JSON.`;
   const prompt = `Available exercises: ${availableList}.
 Recently used (avoid repeating if a same-muscle-group alternative exists): ${recentNames || "none yet"}.
@@ -1381,8 +1382,10 @@ async function swapWarmupCooldownItem(type, idx) {
   const muscleGroups = [...new Set(currentWorkout.exercises.map(e => e.muscle_group))].join(", ");
   const isWarmup = type === "warmup";
   const system = `You suggest a single alternative ${isWarmup ? "dynamic warmup movement" : "static cool-down stretch"}
-for the given muscle groups — something different from the one being replaced, still quick
-(under a minute) and needing no special equipment. Respond with ONLY valid JSON:
+for the given muscle groups — something different from the one being replaced.
+BODYWEIGHT ONLY, no exceptions — never suggest anything requiring rings, a bar,
+or any equipment, so this works anywhere including while traveling. Keep it
+quick (under a minute). Respond with ONLY valid JSON:
 {"name": "string", "detail": "string, e.g. ${isWarmup ? "30s each side" : "hold 20s"}"}`;
   const prompt = `Muscle groups today: ${muscleGroups}. Replacing: "${original.name}" (${original.detail || ""}).`;
   try {
