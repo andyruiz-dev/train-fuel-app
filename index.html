@@ -2057,6 +2057,7 @@ function buildSessionQueue(exs) {
 function startSession() {
   if (!currentWorkout) return;
   session = {
+    phase: (currentWorkout.warmup && currentWorkout.warmup.length) ? "warmup" : "main",
     queue: buildSessionQueue(currentWorkout.exercises),
     pos: 0,
     resting: false,
@@ -2071,13 +2072,63 @@ function startSession() {
   renderSession();
 }
 
+function renderWarmupCooldownStep(phase) {
+  const panel = document.getElementById("sessionPanel");
+  const items = currentWorkout[phase] || [];
+  const isWarmup = phase === "warmup";
+  panel.innerHTML = `
+    <div class="card">
+      <h2>${isWarmup ? "Warmup" : "Cool-down"}</h2>
+      ${items.map((it, i) => `
+        <div class="list-item">
+          <div><div class="name">${it.name}</div><div class="meta">${it.detail || ""}</div></div>
+          <button class="danger-link" style="color:var(--accent);" data-warmcool-swap="${phase}:${i}">Swap</button>
+        </div>`).join("")}
+      <button class="primary" id="warmCoolContinueBtn" style="margin-top:10px; width:100%;">${isWarmup ? "Start workout" : "Finish session"}</button>
+      <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
+    </div>`;
+  panel.querySelectorAll("[data-warmcool-swap]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const [type, idx] = btn.dataset.warmcoolSwap.split(":");
+      await swapWarmupCooldownItem(type, parseInt(idx, 10));
+      renderWarmupCooldownStep(phase);
+    });
+  });
+  document.getElementById("warmCoolContinueBtn").addEventListener("click", () => {
+    if (isWarmup) {
+      session.phase = "main";
+      renderSession();
+    } else {
+      finishSession();
+    }
+  });
+  document.getElementById("endSessionBtn").addEventListener("click", () => {
+    if (!confirm("End session early? Remaining exercises won't be logged.")) return;
+    session = null;
+    document.getElementById("sessionPanel").classList.add("hidden");
+    document.getElementById("todayWorkout").classList.remove("hidden");
+    document.getElementById("startSessionBtn").classList.remove("hidden");
+    document.getElementById("genWorkoutBtn").classList.remove("hidden");
+  });
+}
+
 function renderSession() {
   const panel = document.getElementById("sessionPanel");
   if (!session) { panel.classList.add("hidden"); panel.innerHTML = ""; return; }
   panel.classList.remove("hidden");
 
+  if (session.phase === "warmup" || session.phase === "cooldown") {
+    renderWarmupCooldownStep(session.phase);
+    return;
+  }
+
   if (session.pos >= session.queue.length) {
-    finishSession();
+    if (currentWorkout.cooldown && currentWorkout.cooldown.length) {
+      session.phase = "cooldown";
+      renderSession();
+    } else {
+      finishSession();
+    }
     return;
   }
 
