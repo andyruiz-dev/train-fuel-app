@@ -282,30 +282,42 @@
 
     <div id="subtab-my-programs">
       <div class="card">
-        <h2>Generate a new program</h2>
-        <div class="row" id="durationChips">
-          <div class="chip" data-months="1">1 month</div>
-          <div class="chip" data-months="3">3 months</div>
-          <div class="chip active" data-months="6">6 months</div>
-          <div class="chip" data-months="9">9 months</div>
-          <div class="chip" data-months="12">12 months</div>
-        </div>
-        <div style="margin-top:12px;">
-          <input type="text" id="programFocus" placeholder="Focus, e.g. rings + rucking, upper body strength">
-        </div>
-        <button class="primary" id="generateProgramBtn" style="margin-top:12px;">Generate program</button>
+        <details class="exercise-group">
+          <summary>Generate a new program</summary>
+          <div style="padding-top:6px;">
+            <div class="row" id="durationChips">
+              <div class="chip" data-months="1">1 month</div>
+              <div class="chip" data-months="3">3 months</div>
+              <div class="chip active" data-months="6">6 months</div>
+              <div class="chip" data-months="9">9 months</div>
+              <div class="chip" data-months="12">12 months</div>
+            </div>
+            <div style="margin-top:12px;">
+              <input type="text" id="programFocus" placeholder="Focus, e.g. rings + rucking, upper body strength">
+            </div>
+            <button class="primary" id="generateProgramBtn" style="margin-top:12px;">Generate program</button>
+          </div>
+        </details>
       </div>
 
       <div class="card">
-        <h2>Upload a program</h2>
-        <div class="file-drop" id="uploadDrop">Tap to choose PDF or photo files of an existing program</div>
-        <input type="file" id="uploadInput" accept=".pdf,image/*" multiple style="display:none;">
-        <div id="uploadStatus" class="empty" style="margin-top:8px; display:none;"></div>
+        <details class="exercise-group">
+          <summary>Upload a program</summary>
+          <div style="padding-top:6px;">
+            <div class="file-drop" id="uploadDrop">Tap to choose PDF or photo files of an existing program</div>
+            <input type="file" id="uploadInput" accept=".pdf,image/*" multiple style="display:none;">
+            <div id="uploadStatus" class="empty" style="margin-top:8px; display:none;"></div>
+          </div>
+        </details>
       </div>
 
       <div class="card">
-        <h2>Saved programs</h2>
-        <div id="programList" class="empty">None yet.</div>
+        <details class="exercise-group">
+          <summary>Saved programs</summary>
+          <div style="padding-top:6px;">
+            <div id="programList" class="empty">None yet.</div>
+          </div>
+        </details>
       </div>
     </div>
 
