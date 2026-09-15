@@ -197,9 +197,13 @@
   <!-- FOOD -->
   <section id="tab-food" class="tab-panel hidden">
     <div class="card">
-      <h2>Today's macros</h2>
-      <div id="proteinRemaining" style="text-align:center; margin-bottom:12px;"></div>
-      <div id="macroSummary"></div>
+      <details class="exercise-group">
+        <summary>Today's macros</summary>
+        <div style="padding-top:6px;">
+          <div id="proteinRemaining" style="text-align:center; margin-bottom:12px;"></div>
+          <div id="macroSummary"></div>
+        </div>
+      </details>
     </div>
     <div class="card">
       <details class="exercise-group">
@@ -259,11 +263,13 @@
       </div>
     </div>
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h2 style="margin:0;">Food log</h2>
-        <input type="date" id="foodLogDate" style="width:auto; padding:6px 8px; font-size:13px;">
-      </div>
-      <div id="foodLogList" class="empty" style="margin-top:8px;">Nothing logged for this day.</div>
+      <details class="exercise-group">
+        <summary>Food log</summary>
+        <div style="padding-top:6px;">
+          <input type="date" id="foodLogDate" style="margin-bottom:8px;">
+          <div id="foodLogList" class="empty">Nothing logged for this day.</div>
+        </div>
+      </details>
     </div>
   </section>
 
