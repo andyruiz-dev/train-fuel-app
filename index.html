@@ -202,27 +202,35 @@
       <div id="macroSummary"></div>
     </div>
     <div class="card">
-      <h2>Quick-add protein</h2>
-      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
-        Low-prep staples for closing the gap — tap to log instantly.
-      </p>
-      <div class="row" id="quickProteinChips"></div>
+      <details class="exercise-group">
+        <summary>Quick-add protein</summary>
+        <div style="padding-top:6px;">
+          <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+            Low-prep staples for closing the gap — tap to log instantly.
+          </p>
+          <div class="row" id="quickProteinChips"></div>
+        </div>
+      </details>
     </div>
     <div class="card">
-      <h2>Log known macros</h2>
-      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
-        Already know the exact numbers off a label or scale? Skip the photo.
-      </p>
-      <input type="text" id="manualName" placeholder="Food name" style="margin-bottom:8px;">
-      <div class="row">
-        <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="manualCalories"></div>
-        <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="manualProtein"></div>
-      </div>
-      <div class="row" style="margin-top:8px;">
-        <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="manualCarbs"></div>
-        <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="manualFat"></div>
-      </div>
-      <button class="secondary" id="saveManualBtn" style="margin-top:10px; width:100%;">Add to log</button>
+      <details class="exercise-group">
+        <summary>Log known macros</summary>
+        <div style="padding-top:6px;">
+          <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+            Already know the exact numbers off a label or scale? Skip the photo.
+          </p>
+          <input type="text" id="manualName" placeholder="Food name" style="margin-bottom:8px;">
+          <div class="row">
+            <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="manualCalories"></div>
+            <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="manualProtein"></div>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="manualCarbs"></div>
+            <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="manualFat"></div>
+          </div>
+          <button class="primary" id="saveManualBtn" style="margin-top:10px; width:100%;">Add to log</button>
+        </div>
+      </details>
     </div>
     <div class="card">
       <h2>Scan a photo</h2>
@@ -255,7 +263,7 @@
         <h2 style="margin:0;">Food log</h2>
         <input type="date" id="foodLogDate" style="width:auto; padding:6px 8px; font-size:13px;">
       </div>
-      <div id="foodLogList" class="empty" style="margin-top:8px;">Nothing logged yet today.</div>
+      <div id="foodLogList" class="empty" style="margin-top:8px;">Nothing logged for this day.</div>
     </div>
   </section>
 
@@ -1634,6 +1642,17 @@ document.getElementById("quickProteinChips").addEventListener("click", async (e)
 });
 
 
+// toISOString() returns the UTC date, but todaysFoodLogs/foodLogsForDate filter
+// using toDateString() (local time) — in US timezones during evening hours,
+// the UTC date is already "tomorrow", so defaulting date inputs to the UTC
+// date caused today's entries to appear missing. Always use local date instead.
+function localDateStr(d = new Date()) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function todaysFoodLogs() {
   const todayStr = new Date().toDateString();
   return (state.foodLogs || []).filter(f => new Date(f.date).toDateString() === todayStr);
@@ -1686,7 +1705,7 @@ function renderMacroSummary() {
 function renderFoodLogList() {
   const el = document.getElementById("foodLogList");
   const dateInput = document.getElementById("foodLogDate");
-  const selectedDate = dateInput.value || new Date().toISOString().slice(0, 10);
+  const selectedDate = dateInput.value || localDateStr();
   const dayLogs = foodLogsForDate(selectedDate);
   if (!dayLogs.length) { el.innerHTML = '<div class="empty">Nothing logged for this day.</div>'; return; }
   el.innerHTML = dayLogs.map((f, i) => {
@@ -1951,7 +1970,7 @@ function renderProgressCharts() {
 
 document.getElementById("logWeightBtn").addEventListener("click", async () => {
   const weight = parseFloat(document.getElementById("weightInput").value);
-  const date = document.getElementById("measurementDateInput").value || new Date().toISOString().slice(0, 10);
+  const date = document.getElementById("measurementDateInput").value || localDateStr();
   if (isNaN(weight)) { alert("Enter a weight first."); return; }
   state.measurements = state.measurements || [];
   state.measurements = state.measurements.filter(m => m.date !== date);
@@ -1960,7 +1979,7 @@ document.getElementById("logWeightBtn").addEventListener("click", async () => {
   document.getElementById("weightInput").value = "";
   renderProgressCharts();
 });
-document.getElementById("measurementDateInput").value = new Date().toISOString().slice(0, 10);
+document.getElementById("measurementDateInput").value = localDateStr();
 // ---- guided session ----
 let session = null;
 
@@ -2554,7 +2573,7 @@ async function init() {
   renderStartingLevelSettings();
   renderMacroSummary();
   renderQuickProteinChips();
-  document.getElementById("foodLogDate").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("foodLogDate").value = localDateStr();
   renderFoodLogList();
   if (state.settings?.startDate) document.getElementById("startDateInput").value = state.settings.startDate;
   const t = state.settings.macroTargets || {};
