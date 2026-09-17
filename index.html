@@ -350,15 +350,7 @@
       <button class="secondary" id="logWeightBtn" style="margin-top:10px;">Log weight</button>
       <div id="weightCheckInPanel" class="hidden" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
         <div class="meta" id="weightCheckInMessage" style="margin-bottom:8px;"></div>
-        <div class="row" id="weightCheckInChips">
-          <div class="chip" data-reason="Traveling">Traveling</div>
-          <div class="chip" data-reason="Poor sleep">Poor sleep</div>
-          <div class="chip" data-reason="Missed workout">Missed workout</div>
-          <div class="chip" data-reason="Missed cross-training">Missed cross-training</div>
-          <div class="chip" data-reason="Didn't track food">Didn't track food</div>
-          <div class="chip" data-reason="Alcohol">Alcohol</div>
-          <div class="chip" data-reason="Stress">Stress</div>
-        </div>
+        <div class="row" id="weightCheckInChips"></div>
         <div class="row" style="margin-top:10px;">
           <button class="secondary" id="weightCheckInSaveBtn" style="flex:1;">Save</button>
           <button class="danger-link" id="weightCheckInSkipBtn" style="flex:1;">Skip</button>
@@ -984,7 +976,11 @@ const REASON_SUGGESTIONS = {
   "Missed cross-training": "A short walk still counts, even if it's not the full planned distance.",
   "Didn't track food": "Logging roughly (Quick-add/manual entry) beats not logging at all on your busiest days.",
   "Alcohol": "Alcohol adds calories and can affect sleep/recovery quality on top of that.",
-  "Stress": "Stress affects both appetite and water retention — a bump here isn't necessarily fat gain.",
+  "Stress": "Stress affects both appetite and water retention — a change here isn't necessarily fat gained or lost.",
+  "Illness": "Weight loss from being sick isn't the kind of progress to chase — let this one reset once you're recovered.",
+  "Dehydration/low water intake": "A large drop from dehydration is water, not fat — rehydrating usually reverses it within a day or two.",
+  "Big workout": "A very demanding session can shift water short-term — this should settle back within a few days.",
+  "Didn't eat much": "Under-eating occasionally happens, but consistently skipping meals can work against the muscle-building side of this.",
 };
 
 function computeWeightCheckInSummary() {
@@ -2034,6 +2030,16 @@ function renderProgressCharts() {
 let pendingCheckInMeasurementIdx = null;
 const activeCheckInReasons = new Set();
 
+const INCREASE_REASONS = ["Traveling", "Poor sleep", "Missed workout", "Missed cross-training", "Didn't track food", "Alcohol", "Stress"];
+const DECREASE_REASONS = ["Illness", "Dehydration/low water intake", "Big workout", "Didn't eat much", "Traveling", "Stress"];
+
+function renderCheckInChips(direction) {
+  const reasons = direction === "up" ? INCREASE_REASONS : DECREASE_REASONS;
+  document.getElementById("weightCheckInChips").innerHTML = reasons.map(r =>
+    `<div class="chip" data-reason="${r}">${r}</div>`
+  ).join("");
+}
+
 document.getElementById("logWeightBtn").addEventListener("click", async () => {
   const weight = parseFloat(document.getElementById("weightInput").value);
   const date = document.getElementById("measurementDateInput").value || localDateStr();
@@ -2051,12 +2057,22 @@ document.getElementById("logWeightBtn").addEventListener("click", async () => {
   document.getElementById("weightInput").value = "";
   renderProgressCharts();
 
+  let direction = null;
   if (prior && weight > prior.weight) {
+    direction = "up"; // any increase at all — the goal is loss, so worth a look every time
+  } else if (prior && weight < prior.weight) {
+    const pctDrop = ((prior.weight - weight) / prior.weight) * 100;
+    if (pctDrop >= 1.5) direction = "down"; // only flag decreases large enough to look unusual
+  }
+
+  if (direction) {
     pendingCheckInMeasurementIdx = state.measurements.findIndex(m => m.date === date);
     activeCheckInReasons.clear();
-    document.querySelectorAll("#weightCheckInChips .chip").forEach(c => c.classList.remove("active"));
-    document.getElementById("weightCheckInMessage").textContent =
-      `Up ${(weight - prior.weight).toFixed(1)}lb since your last entry (${prior.weight}lb). What happened? (optional, pick any that apply)`;
+    renderCheckInChips(direction);
+    const diff = Math.abs(weight - prior.weight).toFixed(1);
+    document.getElementById("weightCheckInMessage").textContent = direction === "up"
+      ? `Up ${diff}lb since your last entry (${prior.weight}lb). What happened? (optional, pick any that apply)`
+      : `Down ${diff}lb since your last entry (${prior.weight}lb) — that's a bigger drop than usual. Anything unusual? (optional)`;
     document.getElementById("weightCheckInPanel").classList.remove("hidden");
   } else {
     document.getElementById("weightCheckInPanel").classList.add("hidden");
