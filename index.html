@@ -369,6 +369,14 @@
       <h2>Weekly walk/ruck minutes</h2>
       <div id="cardioChart" class="empty">Log a walk or ruck to see this fill in.</div>
     </div>
+    <div class="card">
+      <h2>Recurring patterns</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+        Reasons that have come up more than once across your weigh-in history — one-off mentions
+        don't count as a pattern yet.
+      </p>
+      <div id="reasonPatterns" class="empty">Not enough repeated reasons yet to spot a pattern.</div>
+    </div>
   </section>
 
   <!-- SETTINGS -->
@@ -991,6 +999,39 @@ function computeWeightCheckInSummary() {
   recent.forEach(m => m.reasons.forEach(r => { counts[r] = (counts[r] || 0) + 1; }));
   const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
   return sorted.map(([reason, count]) => ({ reason, count, suggestion: REASON_SUGGESTIONS[reason] || "" }));
+}
+
+// Long-term view across ALL history, not just this week — a reason only
+// counts as a "pattern" once it's shown up more than once, so a single
+// one-off mention doesn't get over-weighted.
+function computeReasonPatterns() {
+  const all = (state.measurements || []).filter(m => m.reasons && m.reasons.length);
+  if (!all.length) return null;
+  const byReason = {};
+  all.forEach(m => {
+    const dir = m.checkInDirection === "down" ? "down" : "up";
+    m.reasons.forEach(r => {
+      if (!byReason[r]) byReason[r] = { up: 0, down: 0 };
+      byReason[r][dir]++;
+    });
+  });
+  const patterns = Object.entries(byReason)
+    .map(([reason, counts]) => ({ reason, ...counts, total: counts.up + counts.down }))
+    .filter(p => p.total >= 2)
+    .sort((a, b) => b.total - a.total);
+  return patterns.length ? patterns : null;
+}
+
+function renderReasonPatterns() {
+  const el = document.getElementById("reasonPatterns");
+  const patterns = computeReasonPatterns();
+  if (!patterns) { el.innerHTML = '<div class="empty">Not enough repeated reasons yet to spot a pattern.</div>'; return; }
+  el.innerHTML = patterns.map(p => {
+    const parts = [];
+    if (p.up) parts.push(`${p.up}× upticks`);
+    if (p.down) parts.push(`${p.down}× big drops`);
+    return `<div class="list-item"><div><div class="name">${p.reason}</div><div class="meta">${parts.join(" · ")}</div></div></div>`;
+  }).join("");
 }
 
 function renderWeeklyReview() {
@@ -2002,6 +2043,7 @@ document.getElementById("saveTargetsBtn").addEventListener("click", async () => 
 function renderProgressCharts() {
   const measurements = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
   renderLineChart("weightChart", measurements.map(m => ({ label: m.date.slice(5), value: m.weight })), { yLabel: "lb" });
+  renderReasonPatterns();
 
   const logs = state.logs || [];
   const byWeek = {};
@@ -2028,6 +2070,7 @@ function renderProgressCharts() {
 }
 
 let pendingCheckInMeasurementIdx = null;
+let pendingCheckInDirection = null;
 const activeCheckInReasons = new Set();
 
 const INCREASE_REASONS = ["Traveling", "Poor sleep", "Missed workout", "Missed cross-training", "Didn't track food", "Alcohol", "Stress"];
@@ -2067,6 +2110,7 @@ document.getElementById("logWeightBtn").addEventListener("click", async () => {
 
   if (direction) {
     pendingCheckInMeasurementIdx = state.measurements.findIndex(m => m.date === date);
+    pendingCheckInDirection = direction;
     activeCheckInReasons.clear();
     renderCheckInChips(direction);
     const diff = Math.abs(weight - prior.weight).toFixed(1);
@@ -2091,7 +2135,10 @@ document.getElementById("weightCheckInChips").addEventListener("click", (e) => {
 document.getElementById("weightCheckInSaveBtn").addEventListener("click", async () => {
   if (pendingCheckInMeasurementIdx !== null && state.measurements[pendingCheckInMeasurementIdx]) {
     state.measurements[pendingCheckInMeasurementIdx].reasons = [...activeCheckInReasons];
+    state.measurements[pendingCheckInMeasurementIdx].checkInDirection = pendingCheckInDirection;
     await persistNow();
+    renderReasonPatterns();
+    renderWeeklyReview();
   }
   document.getElementById("weightCheckInPanel").classList.add("hidden");
 });
