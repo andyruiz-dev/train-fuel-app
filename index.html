@@ -1931,20 +1931,42 @@ function resizeImageFile(file, maxDim = 1200, quality = 0.8) {
 // to free memory right away rather than waiting on GC. Falls back to the
 // original file untouched if anything here fails or isn't supported —
 // worst case, upload just proceeds at full size like before.
-async function getUploadBlob(file, maxDim = 1600, quality = 0.85) {
-  if (!("createImageBitmap" in window)) return file;
+async function getUploadBlob(file, maxDim = 1400, quality = 0.8, maxBytes = 3 * 1024 * 1024) {
+  if (!("createImageBitmap" in window)) return file; // no support, send raw as before
+  if (file.size <= maxBytes) return file; // already small enough in actual bytes, skip processing
+
   let bitmap;
   try {
     bitmap = await createImageBitmap(file);
     let { width, height } = bitmap;
-    if (width <= maxDim && height <= maxDim) return file; // already small enough
-    if (width > height) { height = Math.round(height * maxDim / width); width = maxDim; }
-    else { width = Math.round(width * maxDim / height); height = maxDim; }
+    if (width > maxDim || height > maxDim) {
+      if (width > height) { height = Math.round(height * maxDim / width); width = maxDim; }
+      else { width = Math.round(width * maxDim / height); height = maxDim; }
+    }
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
     canvas.getContext("2d").drawImage(bitmap, 0, 0, width, height);
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", quality));
+
+    // Iteratively drop quality until under the byte cap — guarantees a safe
+    // upload size regardless of source resolution/detail level.
+    let q = quality;
+    let blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", q));
+    let attempts = 0;
+    while (blob && blob.size > maxBytes && attempts < 5) {
+      q = Math.max(0.35, q - 0.15);
+      blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", q));
+      attempts++;
+    }
+    // Quality alone wasn't enough (very high detail/large source) — shrink dimensions too.
+    if (blob && blob.size > maxBytes) {
+      const smallerW = Math.round(width * 0.7);
+      const smallerH = Math.round(height * 0.7);
+      canvas.width = smallerW;
+      canvas.height = smallerH;
+      canvas.getContext("2d").drawImage(bitmap, 0, 0, smallerW, smallerH);
+      blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.6));
+    }
     return blob || file;
   } catch (err) {
     return file;
