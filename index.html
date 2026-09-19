@@ -1960,6 +1960,7 @@ function renderFoodLogList() {
         <div class="name">${f.name}</div>
         <div class="meta">${f.calories} cal · ${f.protein}p · ${f.carbs}c · ${f.fat}f</div>
         <div class="row" style="margin-top:8px;">
+          <button class="danger-link" style="color:var(--accent);" data-repeat-food="${realIndex}">+1 serving</button>
           <button class="danger-link" style="color:var(--accent);" data-edit-food="${realIndex}">Edit</button>
           <button class="danger-link" style="margin-left:auto;" data-del-food="${realIndex}">Delete</button>
         </div>
@@ -1982,6 +1983,21 @@ function renderFoodLogList() {
 document.getElementById("foodLogDate").addEventListener("change", renderFoodLogList);
 
 document.getElementById("foodLogList").addEventListener("click", async (e) => {
+  const repeatIdx = e.target.dataset.repeatFood;
+  if (repeatIdx !== undefined) {
+    const original = state.foodLogs[parseInt(repeatIdx, 10)];
+    if (original) {
+      await addFoodEntry({
+        name: original.name,
+        calories: original.calories,
+        protein: original.protein,
+        carbs: original.carbs,
+        fat: original.fat,
+        source: original.source,
+      });
+    }
+    return;
+  }
   const editIdx = e.target.dataset.editFood;
   if (editIdx !== undefined) {
     document.querySelectorAll("[data-edit-panel]").forEach(p => {
