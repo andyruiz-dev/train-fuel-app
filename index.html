@@ -152,6 +152,8 @@
 
   <!-- TODAY -->
   <section id="tab-today" class="tab-panel">
+    <div id="celebrationBanner" class="hidden"></div>
+
     <div class="card">
       <details class="exercise-group">
         <summary>Cross-training</summary>
@@ -342,6 +344,10 @@
   <!-- PROGRESS -->
   <section id="tab-progress" class="tab-panel hidden">
     <div class="card">
+      <h2>Your journey so far</h2>
+      <div id="journeyStats"></div>
+    </div>
+    <div class="card">
       <h2>Log a measurement</h2>
       <div class="row">
         <input type="text" inputmode="decimal" id="weightInput" placeholder="Weight (lbs)" style="flex:1;">
@@ -489,7 +495,8 @@ let WORKER_URL = localStorage.getItem(LS_WORKER_URL_KEY) || DEFAULT_WORKER_URL;
 let state = { settings: { startingLevels: { push: "intermediate", pull: "intermediate", legs: "intermediate", hinge: "intermediate", core: "intermediate", ruck: "intermediate" },
   macroTargets: { calories: 2300, protein: 160, carbs: 200, fat: 70 } },
   measurements: [], logs: [], cardioLogs: [], foodLogs: [], activeProgramId: null, weekAdjustment: 0,
-  progressLevels: { push: 1, pull: 1, legs: 1, hinge: 1, core: 1, ruck: 1 } };
+  progressLevels: { push: 1, pull: 1, legs: 1, hinge: 1, core: 1, ruck: 1 },
+  milestonesSeen: { weightLbs: [], workoutDays: [] }, celebrations: [] };
 let exercises = [];
 let programs = [];
 let saveTimer = null;
@@ -533,6 +540,8 @@ async function loadState() {
   }
   if (!state.cardioLogs) state.cardioLogs = [];
   if (!state.foodLogs) state.foodLogs = [];
+  if (!state.milestonesSeen) state.milestonesSeen = { weightLbs: [], workoutDays: [] };
+  if (!state.celebrations) state.celebrations = [];
   if (!state.settings.macroTargets) state.settings.macroTargets = { calories: 2300, protein: 160, carbs: 200, fat: 70 };
 }
 
@@ -990,6 +999,97 @@ const REASON_SUGGESTIONS = {
   "Big workout": "A very demanding session can shift water short-term — this should settle back within a few days.",
   "Didn't eat much": "Under-eating occasionally happens, but consistently skipping meals can work against the muscle-building side of this.",
 };
+
+// ---- streaks, journey stats, and celebrations ----
+function computeStreaks() {
+  const activeDays = new Set();
+  (state.logs || []).forEach(l => activeDays.add(new Date(l.date).toDateString()));
+  (state.cardioLogs || []).forEach(c => activeDays.add(new Date(c.date).toDateString()));
+  if (!activeDays.size) return { current: 0, longest: 0 };
+
+  let d = new Date();
+  if (!activeDays.has(d.toDateString())) d.setDate(d.getDate() - 1); // today not logged yet — check from yesterday
+  let current = 0;
+  while (activeDays.has(d.toDateString())) {
+    current++;
+    d.setDate(d.getDate() - 1);
+  }
+
+  const sortedDays = [...activeDays].map(s => new Date(s)).sort((a, b) => a - b);
+  let longest = 0, run = 0, prev = null;
+  sortedDays.forEach(day => {
+    if (prev && Math.round((day - prev) / 86400000) === 1) run++;
+    else run = 1;
+    longest = Math.max(longest, run);
+    prev = day;
+  });
+  return { current, longest: Math.max(longest, current) };
+}
+
+function computeJourneyStats() {
+  const totalWorkoutDays = new Set((state.logs || []).map(l => new Date(l.date).toDateString())).size;
+  const totalCardioSessions = (state.cardioLogs || []).length;
+  const totalCardioDistance = (state.cardioLogs || []).reduce((sum, c) => sum + (c.distance || 0), 0);
+  const totalCardioMinutes = (state.cardioLogs || []).reduce((sum, c) => sum + (c.duration || 0), 0);
+  const measurements = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+  const weightChange = measurements.length >= 2 ? (measurements[measurements.length - 1].weight - measurements[0].weight) : null;
+  const firstDate = measurements[0]?.date || null;
+  const streaks = computeStreaks();
+  return { totalWorkoutDays, totalCardioSessions, totalCardioDistance, totalCardioMinutes, weightChange, firstDate, ...streaks };
+}
+
+function pushCelebration(msg) {
+  state.celebrations = state.celebrations || [];
+  state.celebrations.push(msg);
+}
+
+// Called after a workout logs — checks for level-ups and workout-count milestones.
+function checkWorkoutMilestones(oldLevels) {
+  MUSCLE_GROUPS.forEach(mg => {
+    if ((state.progressLevels[mg] || 1) > (oldLevels[mg] || 1)) {
+      pushCelebration(`${mg.charAt(0).toUpperCase() + mg.slice(1)} leveled up to ${state.progressLevels[mg]}!`);
+    }
+  });
+  const totalWorkoutDays = new Set((state.logs || []).map(l => new Date(l.date).toDateString())).size;
+  const workoutMilestones = [10, 25, 50, 100, 150, 200, 250, 300, 365];
+  workoutMilestones.forEach(m => {
+    if (totalWorkoutDays >= m && !state.milestonesSeen.workoutDays.includes(m)) {
+      state.milestonesSeen.workoutDays.push(m);
+      pushCelebration(`${m} workout days logged — real consistency.`);
+    }
+  });
+}
+
+// Called after logging weight — checks for total-loss milestones from your first entry.
+function checkWeightMilestones() {
+  const measurements = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+  if (measurements.length < 2) return;
+  const totalLoss = measurements[0].weight - measurements[measurements.length - 1].weight;
+  const weightMilestones = [5, 10, 15, 20, 25, 30, 40, 50];
+  weightMilestones.forEach(m => {
+    if (totalLoss >= m && !state.milestonesSeen.weightLbs.includes(m)) {
+      state.milestonesSeen.weightLbs.push(m);
+      pushCelebration(`${m}lb down since you started — keep going.`);
+    }
+  });
+}
+
+function renderCelebrations() {
+  const el = document.getElementById("celebrationBanner");
+  if (!el) return;
+  if (!state.celebrations || !state.celebrations.length) { el.classList.add("hidden"); return; }
+  el.classList.remove("hidden");
+  el.innerHTML = `
+    <div class="card" style="border-left-color:var(--gold);">
+      ${state.celebrations.map(c => `<div class="meta" style="color:var(--text); margin-bottom:4px;">🎉 ${c}</div>`).join("")}
+      <button class="danger-link" id="dismissCelebrationsBtn" style="margin-top:4px;">Dismiss</button>
+    </div>`;
+  document.getElementById("dismissCelebrationsBtn").addEventListener("click", async () => {
+    state.celebrations = [];
+    await persistNow();
+    renderCelebrations();
+  });
+}
 
 function computeWeightCheckInSummary() {
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
@@ -1571,6 +1671,7 @@ function isLosingTooFast() {
 
 async function applyWorkoutResults(results) {
   const holdProgression = isLosingTooFast();
+  const oldLevels = { ...state.progressLevels };
   const byGroup = {};
   results.forEach(r => {
     const mg = r.exercise.muscle_group;
@@ -1591,9 +1692,12 @@ async function applyWorkoutResults(results) {
     state.logs.push({ date: new Date().toISOString(), exercise: r.exercise.name, muscle_group: r.exercise.muscle_group, result: r.result });
   });
 
+  checkWorkoutMilestones(oldLevels);
+
   if (state.pendingWorkout) state.pendingWorkout.completed = true;
   await persistNow();
   renderProgressCharts();
+  renderCelebrations();
 }
 
 async function completeWorkout() {
@@ -2062,7 +2166,25 @@ document.getElementById("saveTargetsBtn").addEventListener("click", async () => 
   alert("Targets saved.");
 });
 
+function renderJourneyStats() {
+  const el = document.getElementById("journeyStats");
+  if (!el) return;
+  const s = computeJourneyStats();
+  const rows = [];
+  rows.push(`<div class="list-item"><div class="name">Current streak</div><div class="meta">${s.current} day${s.current === 1 ? "" : "s"}${s.longest > s.current ? ` (best: ${s.longest})` : ""}</div></div>`);
+  rows.push(`<div class="list-item"><div class="name">Workouts logged</div><div class="meta">${s.totalWorkoutDays}</div></div>`);
+  if (s.totalCardioSessions) {
+    rows.push(`<div class="list-item"><div class="name">Walks/rucks logged</div><div class="meta">${s.totalCardioSessions} sessions · ${s.totalCardioDistance.toFixed(1)}mi · ${s.totalCardioMinutes}min</div></div>`);
+  }
+  if (s.weightChange !== null) {
+    const dir = s.weightChange < 0 ? "down" : s.weightChange > 0 ? "up" : "unchanged";
+    rows.push(`<div class="list-item"><div class="name">Weight since you started</div><div class="meta">${Math.abs(s.weightChange).toFixed(1)}lb ${dir}${s.firstDate ? ` (since ${s.firstDate})` : ""}</div></div>`);
+  }
+  el.innerHTML = rows.join("");
+}
+
 function renderProgressCharts() {
+  renderJourneyStats();
   const measurements = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
   renderLineChart("weightChart", measurements.map(m => ({ label: m.date.slice(5), value: m.weight })), { yLabel: "lb" });
   renderReasonPatterns();
@@ -2118,9 +2240,11 @@ document.getElementById("logWeightBtn").addEventListener("click", async () => {
 
   state.measurements = state.measurements.filter(m => m.date !== date);
   state.measurements.push({ date, weight });
+  checkWeightMilestones();
   await persistNow();
   document.getElementById("weightInput").value = "";
   renderProgressCharts();
+  renderCelebrations();
 
   let direction = null;
   if (prior && weight > prior.weight) {
@@ -2809,6 +2933,7 @@ async function init() {
   await loadPrograms();
   renderExercises();
   renderPrograms();
+  renderCelebrations();
   renderProgressCharts();
   renderRecentCardio();
   renderStartingLevelSettings();
