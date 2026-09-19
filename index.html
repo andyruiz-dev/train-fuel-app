@@ -186,6 +186,7 @@
       <div id="recoveryCautionNote"></div>
       <div id="todayWorkout" class="empty">Pick an active program first.</div>
       <button class="primary" id="startSessionBtn" style="margin-top:10px; width:100%;" disabled>Start guided session</button>
+      <button class="secondary" id="minimumDayBtn" style="margin-top:8px; width:100%;" disabled>Not feeling it? Do the minimum</button>
     </div>
     <div id="sessionPanel" class="hidden"></div>
 
@@ -1429,14 +1430,17 @@ function renderTodayWorkout(workout) {
   currentWorkout = workout;
   const box = document.getElementById("todayWorkout");
   const sessionBtn = document.getElementById("startSessionBtn");
+  const minDayBtn = document.getElementById("minimumDayBtn");
   const cautionEl = document.getElementById("recoveryCautionNote");
   if (!workout) {
     cautionEl.innerHTML = "";
     box.innerHTML = '<div class="empty">Pick an active program first.</div>';
     sessionBtn.disabled = true;
+    minDayBtn.disabled = true;
     return;
   }
   sessionBtn.disabled = false;
+  minDayBtn.disabled = false;
 
   const genBtn = document.getElementById("genWorkoutBtn");
   if (state.pendingWorkout?.completed) {
@@ -1444,6 +1448,7 @@ function renderTodayWorkout(workout) {
     box.innerHTML = `<div class="empty">Workout logged: ${workout.exercises.map(e => e.name).join(", ")}. Your next workout will be ready when you come back.</div>`;
     sessionBtn.textContent = "Session already logged";
     sessionBtn.disabled = true;
+    minDayBtn.disabled = true;
     genBtn.classList.add("hidden");
     return;
   }
@@ -2397,11 +2402,94 @@ function startSession() {
     holding: false,
     timerId: null,
     setsActual: {}, // exIndex -> [actual reps per set, or seconds held for isometric holds]
+    minimalMode: false,
+    checkpointAt: null,
   };
   document.getElementById("todayWorkout").classList.add("hidden");
   document.getElementById("startSessionBtn").classList.add("hidden");
+  document.getElementById("minimumDayBtn").classList.add("hidden");
   document.getElementById("genWorkoutBtn").classList.add("hidden");
   renderSession();
+}
+
+// A deliberately tiny entry point for days when starting at all is the real
+// barrier — just the first exercise (or superset pair), then a checkpoint
+// asking whether to continue into the full workout or stop there. Skips
+// warmup entirely to keep the barrier as low as possible.
+function startMinimumDay() {
+  if (!currentWorkout) return;
+  const fullQueue = buildSessionQueue(currentWorkout.exercises);
+  const firstExIndex = fullQueue[0]?.exIndex;
+  const firstGroup = currentWorkout.exercises[firstExIndex]?.superset_group;
+  const initialExIndexes = new Set(
+    currentWorkout.exercises
+      .map((e, i) => ({ e, i }))
+      .filter(({ e, i }) => firstGroup ? e.superset_group === firstGroup : i === firstExIndex)
+      .map(({ i }) => i)
+  );
+  const checkpointIdx = fullQueue.findIndex(step => !initialExIndexes.has(step.exIndex));
+  session = {
+    phase: "main", // skip warmup — lowest possible barrier to just starting
+    queue: fullQueue,
+    pos: 0,
+    resting: false,
+    restEndTime: 0,
+    holding: false,
+    timerId: null,
+    setsActual: {},
+    minimalMode: true,
+    checkpointAt: checkpointIdx === -1 ? null : checkpointIdx,
+  };
+  document.getElementById("todayWorkout").classList.add("hidden");
+  document.getElementById("startSessionBtn").classList.add("hidden");
+  document.getElementById("minimumDayBtn").classList.add("hidden");
+  document.getElementById("genWorkoutBtn").classList.add("hidden");
+  renderSession();
+}
+
+function renderMinimumDayCheckpoint() {
+  const panel = document.getElementById("sessionPanel");
+  panel.innerHTML = `
+    <div class="card">
+      <h2>Nice — that's today's minimum done</h2>
+      <div class="meta">Feeling good? Your call either way.</div>
+      <button class="primary" id="continueFullBtn" style="margin-top:10px; width:100%;">Continue to full workout</button>
+      <button class="secondary" id="stopHereBtn" style="margin-top:8px; width:100%;">Stop here for today</button>
+    </div>`;
+  document.getElementById("continueFullBtn").addEventListener("click", () => {
+    session.minimalMode = false;
+    session.checkpointAt = null;
+    if (session.pos >= session.queue.length) {
+      renderSession();
+    } else {
+      const lastStep = session.queue[session.pos - 1];
+      startRest(lastStep.restAfter);
+    }
+  });
+  document.getElementById("stopHereBtn").addEventListener("click", finishSessionPartial);
+}
+
+async function finishSessionPartial() {
+  const results = currentWorkout.exercises
+    .map((e, i) => ({ e, i }))
+    .filter(({ i }) => session.setsActual[i] && session.setsActual[i].length)
+    .map(({ e, i }) => {
+      const actuals = session.setsActual[i];
+      const range = parseRepRange(e.reps);
+      let result = "hold";
+      if (actuals.some(a => a < range.min)) result = "missed";
+      else if (actuals.every(a => a >= range.max)) result = "max";
+      return { exercise: e, result };
+    });
+  await applyWorkoutResults(results);
+  session = null;
+  document.getElementById("sessionPanel").classList.add("hidden");
+  document.getElementById("todayWorkout").classList.remove("hidden");
+  document.getElementById("startSessionBtn").classList.remove("hidden");
+  document.getElementById("minimumDayBtn").classList.remove("hidden");
+  document.getElementById("genWorkoutBtn").classList.remove("hidden");
+  renderTodayWorkout(currentWorkout);
+  alert("Logged what you did today — that counts. Full workout waits for next time.");
 }
 
 function renderWarmupCooldownStep(phase) {
@@ -2440,6 +2528,7 @@ function renderWarmupCooldownStep(phase) {
     document.getElementById("sessionPanel").classList.add("hidden");
     document.getElementById("todayWorkout").classList.remove("hidden");
     document.getElementById("startSessionBtn").classList.remove("hidden");
+    document.getElementById("minimumDayBtn").classList.remove("hidden");
     document.getElementById("genWorkoutBtn").classList.remove("hidden");
   });
 }
@@ -2489,6 +2578,7 @@ function renderSession() {
       document.getElementById("sessionPanel").classList.add("hidden");
       document.getElementById("todayWorkout").classList.remove("hidden");
       document.getElementById("startSessionBtn").classList.remove("hidden");
+      document.getElementById("minimumDayBtn").classList.remove("hidden");
       document.getElementById("genWorkoutBtn").classList.remove("hidden");
     });
   };
@@ -2603,6 +2693,10 @@ function recordSetAndAdvance(step, val) {
   if (!session.setsActual[step.exIndex]) session.setsActual[step.exIndex] = [];
   session.setsActual[step.exIndex].push(val);
   session.pos++;
+  if (session.minimalMode && session.checkpointAt !== null && session.pos === session.checkpointAt) {
+    renderMinimumDayCheckpoint();
+    return;
+  }
   if (session.pos >= session.queue.length) {
     renderSession();
   } else {
@@ -2676,12 +2770,14 @@ async function finishSession() {
   document.getElementById("sessionPanel").classList.add("hidden");
   document.getElementById("todayWorkout").classList.remove("hidden");
   document.getElementById("startSessionBtn").classList.remove("hidden");
+  document.getElementById("minimumDayBtn").classList.remove("hidden");
   document.getElementById("genWorkoutBtn").classList.remove("hidden");
   renderTodayWorkout(currentWorkout);
   alert("Session complete. Logged and levels updated automatically from your actual reps.");
 }
 
 document.getElementById("startSessionBtn").addEventListener("click", startSession);
+document.getElementById("minimumDayBtn").addEventListener("click", startMinimumDay);
 
 document.getElementById("programsSubNav").addEventListener("click", (e) => {
   const chip = e.target.closest("[data-subtab]");
