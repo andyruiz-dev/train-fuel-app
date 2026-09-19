@@ -152,6 +152,7 @@
 
   <!-- TODAY -->
   <section id="tab-today" class="tab-panel">
+    <div id="welcomeBackBanner" class="hidden"></div>
     <div id="celebrationBanner" class="hidden"></div>
 
     <div class="card">
@@ -542,6 +543,7 @@ async function loadState() {
   if (!state.foodLogs) state.foodLogs = [];
   if (!state.milestonesSeen) state.milestonesSeen = { weightLbs: [], workoutDays: [] };
   if (!state.celebrations) state.celebrations = [];
+  if (typeof state.welcomeBackDismissedDate !== "string") state.welcomeBackDismissedDate = "";
   if (!state.settings.macroTargets) state.settings.macroTargets = { calories: 2300, protein: 160, carbs: 200, fat: 70 };
 }
 
@@ -1000,6 +1002,39 @@ const REASON_SUGGESTIONS = {
   "Didn't eat much": "Under-eating occasionally happens, but consistently skipping meals can work against the muscle-building side of this.",
 };
 
+function computeDaysSinceLastActivity() {
+  const dates = [];
+  (state.logs || []).forEach(l => dates.push(new Date(l.date)));
+  (state.cardioLogs || []).forEach(c => dates.push(new Date(c.date)));
+  if (!dates.length) return null;
+  const mostRecent = new Date(Math.max(...dates.map(d => d.getTime())));
+  const today = new Date();
+  const gap = Math.floor((new Date(today.toDateString()) - new Date(mostRecent.toDateString())) / (24 * 60 * 60 * 1000));
+  return gap;
+}
+
+function renderWelcomeBackBanner() {
+  const el = document.getElementById("welcomeBackBanner");
+  if (!el) return;
+  const gap = computeDaysSinceLastActivity();
+  const today = localDateStr();
+  if (gap === null || gap < 3 || state.welcomeBackDismissedDate === today) {
+    el.classList.add("hidden");
+    return;
+  }
+  el.classList.remove("hidden");
+  el.innerHTML = `
+    <div class="card">
+      <div class="meta" style="color:var(--text);">Welcome back — it's been ${gap} days. Nothing's changed or been lost; your program picked up right where you left off.</div>
+      <button class="danger-link" id="dismissWelcomeBackBtn" style="margin-top:6px;">Dismiss</button>
+    </div>`;
+  document.getElementById("dismissWelcomeBackBtn").addEventListener("click", async () => {
+    state.welcomeBackDismissedDate = today;
+    await persistNow();
+    renderWelcomeBackBanner();
+  });
+}
+
 // ---- streaks, journey stats, and celebrations ----
 function computeStreaks() {
   const activeDays = new Set();
@@ -1206,6 +1241,7 @@ function renderWeeklyReview() {
 }
 
 function renderActiveProgramInfo() {
+  renderWelcomeBackBanner();
   const headerName = document.getElementById("headerProgramName");
   const active = programs.find(p => p.id === state.activeProgramId);
   const genBtn = document.getElementById("genWorkoutBtn");
