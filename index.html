@@ -2148,13 +2148,23 @@ document.getElementById("foodPhotoInput").addEventListener("change", async (e) =
     const uploadBlob = await getUploadBlob(file);
     console.log("Scanning photo, original:", file.size, "upload size:", uploadBlob.size);
     const note = document.getElementById("scanNote").value.trim();
+    // Encoding happens here, not in the Worker — the blob is already small
+    // (resized above) so this is fast and memory-safe, and it avoids the
+    // Worker's 10ms free-tier CPU budget, which a server-side base64 loop
+    // over even a couple MB can exceed on larger photos.
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(uploadBlob);
+    });
     const resp = await fetch(WORKER_URL.replace(/\/$/, "") + "/api/food-scan", {
       method: "POST",
-      headers: {
-        "Content-Type": uploadBlob.type || file.type || "image/jpeg",
-        "X-Food-Note": encodeURIComponent(note),
-      },
-      body: uploadBlob,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        image: { media_type: uploadBlob.type || file.type || "image/jpeg", data: base64 },
+        note,
+      }),
     });
     if (!resp.ok) {
       const errBody = await resp.text().catch(() => "");

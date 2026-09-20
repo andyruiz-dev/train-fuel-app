@@ -22,7 +22,7 @@
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, X-Food-Note",
+  "Access-Control-Allow-Headers": "Content-Type",
 };
 
 function json(data, status = 200) {
@@ -30,17 +30,6 @@ function json(data, status = 200) {
     status,
     headers: { "Content-Type": "application/json", ...CORS },
   });
-}
-
-// Chunked to avoid stack overflow from String.fromCharCode.apply on large arrays.
-function arrayBufferToBase64(buffer) {
-  const bytes = new Uint8Array(buffer);
-  let binary = "";
-  const chunkSize = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
-  }
-  return btoa(binary);
 }
 
 async function callClaude(env, body) {
@@ -178,18 +167,14 @@ export default {
 
       // ---- food photo scan ----
       if (path === "/api/food-scan" && request.method === "POST") {
-        const mediaType = request.headers.get("Content-Type") || "image/jpeg";
-        let note = "";
-        try { note = decodeURIComponent(request.headers.get("X-Food-Note") || ""); } catch (e) { /* ignore bad encoding */ }
-        const buffer = await request.arrayBuffer();
-        const base64 = arrayBufferToBase64(buffer);
+        const { image, note } = await request.json();
         const resp = await callClaude(env, {
           model: "claude-sonnet-4-6",
           max_tokens: 500,
           messages: [{
             role: "user",
             content: [
-              { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
+              { type: "image", source: { type: "base64", media_type: image.media_type, data: image.data } },
               { type: "text", text: `Identify the food or meal in this photo and estimate its nutrition
 based on the visible portion size.${note ? ` The user added this note — trust it over what
 the photo alone suggests, since photos can be ambiguous or misleading: "${note}"` : ""}
