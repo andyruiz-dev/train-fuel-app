@@ -814,6 +814,14 @@ const BUILTIN_EXERCISES = [
   { id: "side-lunge-stretch", name: "Side lunge stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Sink into one side, other leg stays straight, feel the inner thigh." },
   { id: "bird-dog", name: "Bird dog", muscle_group: "mobility", equipment: "bodyweight", cue: "Opposite arm and leg extend together, hips stay level, brief hold each side." },
   { id: "thoracic-extension-chair", name: "Thoracic extension over a chair", muscle_group: "mobility", equipment: "bodyweight", cue: "Upper back over the chair edge, hands behind head, extend gently." },
+
+  // ---- from the Kavadlo brothers' (Al & Danny) well-documented progressions —
+  // real gaps confirmed against their published exercise lists ----
+  { id: "archer-pushup", name: "Archer push-up", muscle_group: "push", equipment: "bodyweight", cue: "Shift weight to one arm, the other stays straight and slides out to the side." },
+  { id: "archer-pullup", name: "Archer pull-up", muscle_group: "pull", equipment: "bar", cue: "Pull mostly with one arm, the other stays extended out to the side." },
+  { id: "toes-to-bar", name: "Toes to bar", muscle_group: "core", equipment: "bar", cue: "Straight legs the whole way, touch toes to the bar, lower with control." },
+  { id: "archer-squat", name: "Archer squat", muscle_group: "legs", equipment: "bodyweight", cue: "Shift weight to one leg, the other extends straight out to the side." },
+  { id: "hover-lunge", name: "Hover lunge", muscle_group: "legs", equipment: "bodyweight", cue: "Pause just above the floor at the bottom of the lunge before driving back up." },
 ];
 
 // Approximate difficulty level (1-5) per exercise, based on the progression
@@ -872,6 +880,8 @@ const EXERCISE_LEVEL_MAP = {
   "mountain-climbers": 2, "bear-crawl": 2, "inchworm": 1,
   "wall-bridge": 1, "wheel-bridge": 3, "full-bridge": 4, "stand-to-stand-bridge": 5,
   "standing-twist": 1, "ring-pullover": 4,
+  "archer-pushup": 4, "archer-pullup": 4, "toes-to-bar": 4,
+  "archer-squat": 3, "hover-lunge": 3,
 };
 
 function levelOf(exerciseIdOrName) {
