@@ -822,6 +822,8 @@ const BUILTIN_EXERCISES = [
   { id: "toes-to-bar", name: "Toes to bar", muscle_group: "core", equipment: "bar", cue: "Straight legs the whole way, touch toes to the bar, lower with control." },
   { id: "archer-squat", name: "Archer squat", muscle_group: "legs", equipment: "bodyweight", cue: "Shift weight to one leg, the other extends straight out to the side." },
   { id: "hover-lunge", name: "Hover lunge", muscle_group: "legs", equipment: "bodyweight", cue: "Pause just above the floor at the bottom of the lunge before driving back up." },
+  { id: "l-sit-pullup", name: "L-sit pull-up", muscle_group: "pull", equipment: "bar", cue: "Hold the L-sit position throughout the entire pull, don't let the legs drop." },
+  { id: "l-sit-archer-pullup", name: "L-sit archer pull-up", muscle_group: "pull", equipment: "bar", cue: "Archer pull-up while maintaining the L-sit the whole way — very advanced." },
 ];
 
 // Approximate difficulty level (1-5) per exercise, based on the progression
@@ -881,7 +883,7 @@ const EXERCISE_LEVEL_MAP = {
   "wall-bridge": 1, "wheel-bridge": 3, "full-bridge": 4, "stand-to-stand-bridge": 5,
   "standing-twist": 1, "ring-pullover": 4,
   "archer-pushup": 4, "archer-pullup": 4, "toes-to-bar": 4,
-  "archer-squat": 3, "hover-lunge": 3,
+  "archer-squat": 3, "hover-lunge": 3, "l-sit-pullup": 4, "l-sit-archer-pullup": 5,
 };
 
 function levelOf(exerciseIdOrName) {
@@ -1477,6 +1479,13 @@ mobility library items are already bodyweight-only, so this works anywhere
 including while traveling. Genuinely quick — this is a 20-25 minute session
 overall.
 Mobility library: ${mobilityList}
+If a slot below includes an exercise_name, that's what the person's original
+program specifically prescribed — use that exact exercise if it appears in
+the available list, rather than substituting a different one for that muscle
+group. Only pick something else for that slot if the named exercise is
+clearly mismatched for their current level (e.g. an untrained beginner facing
+an advanced-only name) — then fall back to a same-muscle-group alternative
+from the available list instead.
 Respond with ONLY valid JSON.`;
   const prompt = `Available exercises: ${availableList}.
 Recently used (avoid repeating if a same-muscle-group alternative exists): ${recentNames || "none yet"}.
@@ -2995,7 +3004,12 @@ of weeks/phases as written. Compress it into PHASES rather than writing out ever
 individual week — identify the distinct blocks/phases (e.g. foundation, build,
 peak) and the day/slot template each phase uses, noting which weeks within each
 phase are deload weeks. This keeps the output compact even for a long program.
-Output ONLY valid JSON: {"name": "string", "phases": [{"phase": "string", "week_start": 1, "week_end": 8, "deload_weeks": [4], "days": [{"day": "string", "slots": [{"muscle_group": "push|pull|legs|hinge|core|ruck", "sets": 3, "reps": "8-12"}]}]}]}`;
+For each slot, also capture the SPECIFIC exercise name the document actually
+names for it (e.g. "Archer pull-up", not just "pull") — this is what the
+person's original program prescribed, and it should be preserved and used
+later, not replaced with something generic. Use exercise_name: null only if
+the document genuinely doesn't specify one and leaves it open.
+Output ONLY valid JSON: {"name": "string", "phases": [{"phase": "string", "week_start": 1, "week_end": 8, "deload_weeks": [4], "days": [{"day": "string", "slots": [{"muscle_group": "push|pull|legs|hinge|core|ruck", "sets": 3, "reps": "8-12", "exercise_name": "string or null"}]}]}]}`;
     const data = await apiFetch("/api/import", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -3003,6 +3017,44 @@ Output ONLY valid JSON: {"name": "string", "phases": [{"phase": "string", "week_
     });
     const text = data.content?.[0]?.text || "{}";
     const structure = extractJson(text);
+
+    // Reconcile named exercises against the library — anything the document
+    // specified that we don't already have gets added as a custom entry, so
+    // generation can actually use what the original program prescribed
+    // instead of silently falling back to a same-muscle-group substitute.
+    const namedExercises = new Map(); // name (lowercased) -> { name, muscle_group }
+    (structure.phases || []).forEach(phase => {
+      (phase.days || []).forEach(day => {
+        (day.slots || []).forEach(slot => {
+          if (slot.exercise_name && slot.exercise_name.trim()) {
+            namedExercises.set(slot.exercise_name.trim().toLowerCase(), {
+              name: slot.exercise_name.trim(),
+              muscle_group: slot.muscle_group,
+            });
+          }
+        });
+      });
+    });
+    const existingNames = new Set(exercises.map(e => e.name.toLowerCase()));
+    const toCreate = [...namedExercises.values()].filter(e => !existingNames.has(e.name.toLowerCase()));
+    for (const ex of toCreate) {
+      try {
+        await apiFetch("/api/exercises", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: "imported-" + ex.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+            name: ex.name,
+            muscle_group: ex.muscle_group,
+            equipment: "bodyweight",
+            cue: "",
+            source: "imported",
+          }),
+        });
+      } catch (e) { /* skip on individual failure, don't block the whole import */ }
+    }
+    if (toCreate.length) await loadExercises();
+
     const maxWeek = Math.max(0, ...(structure.phases || []).map(p => p.week_end || 0));
     const program = {
       id: "prog-" + Date.now(),
