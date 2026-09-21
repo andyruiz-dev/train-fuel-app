@@ -337,6 +337,21 @@
           <div class="chip" data-mg="hinge">Hinge</div>
           <div class="chip" data-mg="core">Core</div>
           <div class="chip" data-mg="ruck">Ruck</div>
+          <div class="chip" data-mg="mobility">Mobility</div>
+        </div>
+        <div class="row" id="levelFilterChips" style="margin-top:8px;">
+          <div class="chip active" data-level="all">All levels</div>
+          <div class="chip" data-level="beginner">Beginner (1-2)</div>
+          <div class="chip" data-level="standard">Standard (3)</div>
+          <div class="chip" data-level="advanced">Advanced (4-5)</div>
+        </div>
+        <div class="row" id="equipmentFilterChips" style="margin-top:8px;">
+          <div class="chip active" data-equip="all">All equipment</div>
+          <div class="chip" data-equip="bodyweight">Bodyweight</div>
+          <div class="chip" data-equip="rings">Rings</div>
+          <div class="chip" data-equip="dumbbell">Dumbbell</div>
+          <div class="chip" data-equip="bar">Bar</div>
+          <div class="chip" data-equip="band">Band</div>
         </div>
         <div id="exerciseList" style="margin-top:12px;" class="empty">Loading…</div>
       </div>
@@ -759,6 +774,29 @@ const BUILTIN_EXERCISES = [
 
   // ---- pull: ring skill ----
   { id: "ring-pullover", name: "Ring pullover", muscle_group: "pull", equipment: "rings", cue: "From a hang, pull and rotate up into a support position — go slow." },
+
+  // ---- mobility/prehab/rehab: a real category we had zero of, wired into
+  // warmup/cooldown selection below. Not part of the strength progression
+  // system (no muscle-group levels) since flexibility isn't tracked the
+  // same way as calisthenics skill difficulty.
+  { id: "arm-circles", name: "Arm circles", muscle_group: "mobility", equipment: "bodyweight", cue: "Small to large circles, both directions." },
+  { id: "shoulder-dislocates-band", name: "Shoulder dislocates", muscle_group: "mobility", equipment: "band", cue: "Wide grip, straight arms, pass the band over and back slowly." },
+  { id: "wall-slides", name: "Wall slides", muscle_group: "mobility", equipment: "bodyweight", cue: "Back flat against wall, slide arms up keeping contact throughout." },
+  { id: "scapular-wall-pushup", name: "Scapular wall push-up", muscle_group: "mobility", equipment: "bodyweight", cue: "Arms straight against wall, protract and retract shoulder blades only." },
+  { id: "doorway-chest-stretch", name: "Doorway chest stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Forearm on the frame, gently lean through until you feel the stretch." },
+  { id: "thread-the-needle", name: "Thread the needle", muscle_group: "mobility", equipment: "bodyweight", cue: "From all fours, thread one arm under the other, rotate through the upper back." },
+  { id: "wrist-circles", name: "Wrist circles", muscle_group: "mobility", equipment: "bodyweight", cue: "Both directions, then shake out." },
+  { id: "wrist-flexor-stretch", name: "Wrist flexor/extensor stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Straighten the arm, gently pull fingers back, then the reverse." },
+  { id: "childs-pose-reach", name: "Child's pose reach", muscle_group: "mobility", equipment: "bodyweight", cue: "Hips back to heels, walk hands out, sink the chest." },
+  { id: "cat-cow", name: "Cat-cow", muscle_group: "mobility", equipment: "bodyweight", cue: "Arch and round the spine slowly, following the breath." },
+  { id: "hip-90-90-stretch", name: "90/90 hip stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Both legs bent at 90°, lean forward over the front shin." },
+  { id: "worlds-greatest-stretch", name: "World's greatest stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Lunge, rotate toward the front leg, reach up — full body dynamic stretch." },
+  { id: "kneeling-hip-flexor-stretch", name: "Kneeling hip flexor stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Back knee down, squeeze the glute, shift weight forward gently." },
+  { id: "ankle-circles", name: "Ankle circles", muscle_group: "mobility", equipment: "bodyweight", cue: "Both directions each foot, then point and flex." },
+  { id: "wall-ankle-mobilization", name: "Wall ankle mobilization", muscle_group: "mobility", equipment: "bodyweight", cue: "Knee toward the wall without heel lifting, rock gently." },
+  { id: "deep-squat-hold", name: "Deep squat hold", muscle_group: "mobility", equipment: "bodyweight", cue: "Heels down, chest up, elbows can press knees out gently." },
+  { id: "pigeon-pose", name: "Pigeon pose", muscle_group: "mobility", equipment: "bodyweight", cue: "Front shin angled, hips square to the floor, fold forward." },
+  { id: "standing-hamstring-stretch", name: "Standing hamstring stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Soft knee, hinge from the hips, let the head hang." },
 ];
 
 // Approximate difficulty level (1-5) per exercise, based on the progression
@@ -834,6 +872,9 @@ const HOLD_EXERCISE_IDS = new Set([
   "parallel-bar-support-hold", "planche-lean", "tuck-planche", "tuck-back-lever",
   "reverse-plank", "copenhagen-plank", "elbow-lever", "tuck-human-flag",
   "band-assisted-human-flag", "wheel-bridge", "full-bridge",
+  "doorway-chest-stretch", "wrist-flexor-stretch", "childs-pose-reach",
+  "hip-90-90-stretch", "kneeling-hip-flexor-stretch", "deep-squat-hold",
+  "pigeon-pose", "standing-hamstring-stretch",
 ]);
 
 function isHoldExercise(exerciseIdOrName) {
@@ -868,18 +909,35 @@ async function loadExercises() {
   exercises = BUILTIN_EXERCISES.map(e => ({ ...e, source: "builtin", locked: 1 }));
 }
 
-function renderExercises(filterText = "", muscleGroup = "all") {
+function levelBucket(level) {
+  if (level <= 2) return "beginner";
+  if (level === 3) return "standard";
+  return "advanced";
+}
+
+function equipmentBucket(equipment) {
+  const e = (equipment || "bodyweight").toLowerCase();
+  if (e.includes("ring")) return "rings";
+  if (e.includes("dumbbell")) return "dumbbell";
+  if (e.includes("bar") && !e.includes("bodyweight")) return "bar"; // catches "bar", "bar or rings", "parallel bars"
+  if (e.includes("band")) return "band";
+  return "bodyweight";
+}
+
+function renderExercises(filterText = "", muscleGroup = "all", levelFilter = "all", equipFilter = "all") {
   const list = document.getElementById("exerciseList");
   const filtered = exercises.filter(e => {
     const matchesText = e.name.toLowerCase().includes(filterText.toLowerCase());
     const matchesMg = muscleGroup === "all" || e.muscle_group === muscleGroup;
-    return matchesText && matchesMg;
+    const matchesLevel = levelFilter === "all" || levelBucket(levelOf(e.id)) === levelFilter;
+    const matchesEquip = equipFilter === "all" || equipmentBucket(e.equipment) === equipFilter;
+    return matchesText && matchesMg && matchesLevel && matchesEquip;
   });
   if (!filtered.length) { list.innerHTML = '<div class="empty">No matches.</div>'; return; }
 
   const groups = {};
   filtered.forEach(e => { (groups[e.muscle_group] ||= []).push(e); });
-  const isFiltering = !!filterText || muscleGroup !== "all";
+  const isFiltering = !!filterText || muscleGroup !== "all" || levelFilter !== "all" || equipFilter !== "all";
 
   list.innerHTML = Object.entries(groups).map(([mg, items]) => `
     <details class="exercise-group" ${isFiltering ? "open" : ""}>
@@ -1351,6 +1409,8 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
   const recentFromHistory = (state.logs || []).slice(-15).map(l => l.exercise);
   const recentNames = [...new Set([...avoidNames, ...recentFromHistory])].join(", ");
   const availableList = exercises.map(e => `${e.name} (${e.muscle_group}, ${e.equipment || "bodyweight"}${isHoldExercise(e.id) ? ", ISOMETRIC HOLD" : ""})`).join("; ");
+  const mobilityList = exercises.filter(e => e.muscle_group === "mobility")
+    .map(e => `${e.name}${isHoldExercise(e.id) ? " (hold)" : " (dynamic)"}`).join("; ");
   const levels = state.progressLevels;
   const { phase, weekNumber } = currentPhaseFor(program);
   const isDeload = phase?.deload_weeks?.includes(weekNumber);
@@ -1377,21 +1437,23 @@ evenly). Don't force a pairing where the muscle groups don't logically complemen
 each other, and don't superset more than two exercises together.
 ${isDeload ? "This is a DELOAD week for this phase — reduce sets and/or reps by roughly 30-40% across all exercises." : ""}
 ${recoveryCaution ? "RECOVERY CAUTION: recent weight loss is outpacing the target rate, a sign recovery capacity may be compromised. Favor holding at the current level's difficulty rather than the hardest variant available for that level, and avoid adding extra intensity techniques (drop sets, extra tempo/pause) this session." : ""}
-Also include a short warmup and cool-down, both targeted to the SPECIFIC muscle
-groups in today's slots (not generic) — e.g. a push day warms up
-shoulders/chest/triceps, a legs day warms up hips/knees. Warmup: 2-3 brief
-dynamic movements (~3-4 minutes total). Cool-down: 1-2 static stretches for the
-muscles just worked (~2 minutes total). BODYWEIGHT ONLY, no exceptions — never
-suggest anything requiring rings, a bar, or any equipment, even if the main
-workout uses it, since warmup/cool-down need to work anywhere including while
-traveling. Genuinely quick — this is a 20-25 minute session overall.
+Also include a short warmup and cool-down, selected from the mobility library
+below — not invented — targeted to the SPECIFIC muscle groups in today's slots
+(not generic): a push/pull day should lean on shoulder/wrist/thoracic items, a
+legs/hinge day should lean on hip/ankle items. Warmup: 2-3 items marked
+(dynamic) from the list (~3-4 minutes total). Cool-down: 1-2 items marked
+(hold) from the list, for the muscles just worked (~2 minutes total). All
+mobility library items are already bodyweight-only, so this works anywhere
+including while traveling. Genuinely quick — this is a 20-25 minute session
+overall.
+Mobility library: ${mobilityList}
 Respond with ONLY valid JSON.`;
   const prompt = `Available exercises: ${availableList}.
 Recently used (avoid repeating if a same-muscle-group alternative exists): ${recentNames || "none yet"}.
 Current level per muscle group (1-5): ${JSON.stringify(levels)}.
 Current phase: ${phase?.phase || "n/a"}, week ${weekNumber}${isDeload ? " (deload)" : ""}.
 Today's day: "${day?.day || "n/a"}", slots: ${JSON.stringify(day?.slots || [])}.
-Output JSON: {"day": "string", "warmup": [{"name": "string", "detail": "string, e.g. 30s each side"}], "exercises": [{"name": "string", "muscle_group": "string", "sets": 3, "reps": "8-12", "superset_group": "A"}], "cooldown": [{"name": "string", "detail": "string, e.g. hold 20s"}]}
+Output JSON: {"day": "string", "warmup": [{"name": "exact name from mobility library", "detail": "string, e.g. 30s each side"}], "exercises": [{"name": "string", "muscle_group": "string", "sets": 3, "reps": "8-12", "superset_group": "A"}], "cooldown": [{"name": "exact name from mobility library", "detail": "string, e.g. hold 20s"}]}
 superset_group is a letter shared by paired exercises, or null if standalone.`;
   const data = await apiFetch("/api/generate", {
     method: "POST",
@@ -1662,13 +1724,15 @@ async function swapWarmupCooldownItem(type, idx) {
   const original = list[idx];
   const muscleGroups = [...new Set(currentWorkout.exercises.map(e => e.muscle_group))].join(", ");
   const isWarmup = type === "warmup";
-  const system = `You suggest a single alternative ${isWarmup ? "dynamic warmup movement" : "static cool-down stretch"}
-for the given muscle groups — something different from the one being replaced.
-BODYWEIGHT ONLY, no exceptions — never suggest anything requiring rings, a bar,
-or any equipment, so this works anywhere including while traveling. Keep it
-quick (under a minute). Respond with ONLY valid JSON:
-{"name": "string", "detail": "string, e.g. ${isWarmup ? "30s each side" : "hold 20s"}"}`;
-  const prompt = `Muscle groups today: ${muscleGroups}. Replacing: "${original.name}" (${original.detail || ""}).`;
+  const mobilityList = exercises.filter(e => e.muscle_group === "mobility")
+    .map(e => `${e.name}${isHoldExercise(e.id) ? " (hold)" : " (dynamic)"}`).join("; ");
+  const system = `You pick a single alternative ${isWarmup ? "dynamic warmup movement" : "static cool-down stretch"}
+from the mobility library below — not invented — for the given muscle groups,
+something different from the one being replaced. All library items are already
+bodyweight-only. Respond with ONLY valid JSON:
+{"name": "exact name from mobility library", "detail": "string, e.g. ${isWarmup ? "30s each side" : "hold 20s"}"}`;
+  const prompt = `Mobility library: ${mobilityList}.
+Muscle groups today: ${muscleGroups}. Replacing: "${original.name}" (${original.detail || ""}).`;
   try {
     const data = await apiFetch("/api/generate", {
       method: "POST",
@@ -2986,14 +3050,32 @@ document.getElementById("genWorkoutBtn").addEventListener("click", async (e) => 
 
 // ---- library search/filter ----
 let currentMg = "all";
-document.getElementById("exerciseSearch").addEventListener("input", (e) => renderExercises(e.target.value, currentMg));
+let currentLevel = "all";
+let currentEquip = "all";
+document.getElementById("exerciseSearch").addEventListener("input", (e) => renderExercises(e.target.value, currentMg, currentLevel, currentEquip));
 document.getElementById("muscleFilterChips").addEventListener("click", (e) => {
   const chip = e.target.closest(".chip");
   if (!chip) return;
   document.querySelectorAll("#muscleFilterChips .chip").forEach(c => c.classList.remove("active"));
   chip.classList.add("active");
   currentMg = chip.dataset.mg;
-  renderExercises(document.getElementById("exerciseSearch").value, currentMg);
+  renderExercises(document.getElementById("exerciseSearch").value, currentMg, currentLevel, currentEquip);
+});
+document.getElementById("levelFilterChips").addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  document.querySelectorAll("#levelFilterChips .chip").forEach(c => c.classList.remove("active"));
+  chip.classList.add("active");
+  currentLevel = chip.dataset.level;
+  renderExercises(document.getElementById("exerciseSearch").value, currentMg, currentLevel, currentEquip);
+});
+document.getElementById("equipmentFilterChips").addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  document.querySelectorAll("#equipmentFilterChips .chip").forEach(c => c.classList.remove("active"));
+  chip.classList.add("active");
+  currentEquip = chip.dataset.equip;
+  renderExercises(document.getElementById("exerciseSearch").value, currentMg, currentLevel, currentEquip);
 });
 document.getElementById("exerciseList").addEventListener("click", async (e) => {
   const howtoBtn = e.target.closest("[data-howto-open]");
@@ -3006,7 +3088,7 @@ document.getElementById("exerciseList").addEventListener("click", async (e) => {
   if (!confirm("Remove this exercise from the library?")) return;
   await apiFetch("/api/exercises/" + id, { method: "DELETE" });
   await loadExercises();
-  renderExercises(document.getElementById("exerciseSearch").value, currentMg);
+  renderExercises(document.getElementById("exerciseSearch").value, currentMg, currentLevel, currentEquip);
 });
 
 // ---- settings ----
