@@ -797,6 +797,23 @@ const BUILTIN_EXERCISES = [
   { id: "deep-squat-hold", name: "Deep squat hold", muscle_group: "mobility", equipment: "bodyweight", cue: "Heels down, chest up, elbows can press knees out gently." },
   { id: "pigeon-pose", name: "Pigeon pose", muscle_group: "mobility", equipment: "bodyweight", cue: "Front shin angled, hips square to the floor, fold forward." },
   { id: "standing-hamstring-stretch", name: "Standing hamstring stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Soft knee, hinge from the hips, let the head hang." },
+
+  // ---- round 2: neck (desk job relevance), dedicated rotator cuff prehab
+  // (distinct from general shoulder mobility — this is injury prevention
+  // specifically for ring work), and lower-body stretches missed above ----
+  { id: "neck-circles", name: "Neck circles", muscle_group: "mobility", equipment: "bodyweight", cue: "Slow and controlled, both directions, stop if anything pinches." },
+  { id: "chin-tucks", name: "Chin tucks", muscle_group: "mobility", equipment: "bodyweight", cue: "Draw the chin straight back like making a double chin, hold briefly." },
+  { id: "neck-lateral-stretch", name: "Neck lateral stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Ear toward shoulder, light hand pressure only, never force it." },
+  { id: "prone-ytw-raise", name: "Prone Y-T-W raise", muscle_group: "mobility", equipment: "bodyweight", cue: "Face down, lift arms in a Y, then T, then W — thumbs up, squeeze the shoulder blades." },
+  { id: "band-external-rotation", name: "Band external rotation", muscle_group: "mobility", equipment: "band", cue: "Elbow pinned to your side at 90°, rotate the forearm out slowly." },
+  { id: "wall-angels", name: "Wall angels", muscle_group: "mobility", equipment: "bodyweight", cue: "Back and arms stay in contact with the wall as you slide up and down." },
+  { id: "standing-quad-stretch", name: "Standing quad stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Heel to glute, knees together, hold something for balance if needed." },
+  { id: "wall-calf-stretch", name: "Wall calf stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Back leg straight, heel down, lean into the wall." },
+  { id: "figure-4-glute-stretch", name: "Figure-4 glute stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Lying down, ankle crosses opposite knee, pull the thigh in gently." },
+  { id: "butterfly-stretch", name: "Butterfly stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Soles together, knees out, let gravity do the work — no bouncing." },
+  { id: "side-lunge-stretch", name: "Side lunge stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Sink into one side, other leg stays straight, feel the inner thigh." },
+  { id: "bird-dog", name: "Bird dog", muscle_group: "mobility", equipment: "bodyweight", cue: "Opposite arm and leg extend together, hips stay level, brief hold each side." },
+  { id: "thoracic-extension-chair", name: "Thoracic extension over a chair", muscle_group: "mobility", equipment: "bodyweight", cue: "Upper back over the chair edge, hands behind head, extend gently." },
 ];
 
 // Approximate difficulty level (1-5) per exercise, based on the progression
@@ -875,6 +892,9 @@ const HOLD_EXERCISE_IDS = new Set([
   "doorway-chest-stretch", "wrist-flexor-stretch", "childs-pose-reach",
   "hip-90-90-stretch", "kneeling-hip-flexor-stretch", "deep-squat-hold",
   "pigeon-pose", "standing-hamstring-stretch",
+  "neck-lateral-stretch", "standing-quad-stretch", "wall-calf-stretch",
+  "figure-4-glute-stretch", "butterfly-stretch", "side-lunge-stretch",
+  "thoracic-extension-chair",
 ]);
 
 function isHoldExercise(exerciseIdOrName) {
