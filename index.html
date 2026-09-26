@@ -1440,22 +1440,42 @@ function currentPhaseFor(program) {
 async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
   const recentFromHistory = (state.logs || []).slice(-15).map(l => l.exercise);
   const recentNames = [...new Set([...avoidNames, ...recentFromHistory])].join(", ");
-  const availableList = exercises.map(e => `${e.name} (${e.muscle_group}, ${e.equipment || "bodyweight"}${isHoldExercise(e.id) ? ", ISOMETRIC HOLD" : ""})`).join("; ");
+  const levels = state.progressLevels;
+  // Hard cap: never hand the AI an exercise harder than the person's current
+  // tracked level for that muscle group. Previously the full ~170-exercise
+  // library (spanning levels 1-5) was passed with only a soft "scale
+  // difficulty" instruction, which is how advanced moves like "Archer
+  // pull-up" or "Ring typewriter push-up" slipped into a level 1-2 person's
+  // workout. Progression already happens via the level-up mechanic (hitting
+  // max reps on all sets bumps progressLevels), so the AI doesn't need to
+  // reach for harder exercises on its own — filtering here is what actually
+  // enforces the level system instead of just describing it in prose.
+  const availableList = exercises
+    .filter(e => {
+      const cap = levels[e.muscle_group];
+      if (cap === undefined) return true; // untracked group (e.g. mobility) — no cap
+      return levelOf(e.id) <= cap;
+    })
+    .map(e => `${e.name} (${e.muscle_group}, ${e.equipment || "bodyweight"}${isHoldExercise(e.id) ? ", ISOMETRIC HOLD" : ""})`).join("; ");
   const mobilityList = exercises.filter(e => e.muscle_group === "mobility")
     .map(e => `${e.name}${isHoldExercise(e.id) ? " (hold)" : " (dynamic)"}`).join("; ");
-  const levels = state.progressLevels;
   const { phase, weekNumber } = currentPhaseFor(program);
   const isDeload = phase?.deload_weeks?.includes(weekNumber);
   const day = phase?.days?.[dayIndex] || phase?.days?.[0];
   const recoveryCaution = isLosingTooFast();
   const system = `You pick specific exercises from a provided library to fill a day's
 muscle-group slots, prioritizing variety from recent sessions while keeping the
-muscle group correct so progression still counts. You also scale difficulty to a
-1-5 level per muscle group: 1-2 = beginner regressions (e.g. knee push-up, band-
-assisted), 3 = the standard/base version, 4-5 = harder progressions (e.g. archer
-or one-arm variants, added instability or load). Set the reps field's top end to
-match the level: level 1-2 top of range ~8, level 3 ~10-12, level 4-5 ~12-15 or
-note added difficulty (tempo, pause, unilateral) instead of just more reps.
+muscle group correct so progression still counts. The available exercises list
+below has ALREADY been filtered to only include exercises at or below the
+person's current level for each muscle group — every exercise you see there is
+safe to pick regardless of muscle group. Do not second-guess this by favoring
+only the easiest items out of caution, but also never invent, substitute, or
+reach for a harder variant that isn't in the list, even if you think the person
+is ready for it (that's handled separately, by a level-up system, not by you).
+Set the reps field's top end to roughly match how hard a given pick is: lighter
+regressions top out around 8, standard versions around 10-12, harder variants
+around 12-15 or note added difficulty (tempo, pause, unilateral) instead of
+just more reps.
 For exercises marked ISOMETRIC HOLD in the available list, the reps field means
 SECONDS to hold, not a rep count (e.g. "20-30" means hold 20-30 seconds), scaled
 to level the same way (level 1-2 shorter holds ~15-20s, level 4-5 longer ~40-60s).
@@ -1481,11 +1501,11 @@ overall.
 Mobility library: ${mobilityList}
 If a slot below includes an exercise_name, that's what the person's original
 program specifically prescribed — use that exact exercise if it appears in
-the available list, rather than substituting a different one for that muscle
-group. Only pick something else for that slot if the named exercise is
-clearly mismatched for their current level (e.g. an untrained beginner facing
-an advanced-only name) — then fall back to a same-muscle-group alternative
-from the available list instead.
+the available list below, rather than substituting a different one for that
+muscle group. The available list is already level-filtered, so if the named
+exercise doesn't appear there it means it's too advanced for their current
+level right now — in that case just pick a same-muscle-group alternative
+from the available list instead, no need to flag it.
 Respond with ONLY valid JSON.`;
   const prompt = `Available exercises: ${availableList}.
 Recently used (avoid repeating if a same-muscle-group alternative exists): ${recentNames || "none yet"}.
