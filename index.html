@@ -439,6 +439,21 @@
       <div id="startingLevelSettings"></div>
     </div>
     <div class="card">
+      <h2>Ring strap setting (push)</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+        Independent from the level above — this tracks how horizontal your
+        ring push-ups are set to (lower number = more horizontal = harder).
+        Auto-adjusts by 0.5 after any workout that includes a ring push
+        exercise: hit max reps and it recommends one notch lower next time;
+        miss and it backs off one notch higher. Push-only — pull's path to a
+        pull-up is a different, vertical-pattern progression (dead hang →
+        negatives → band-assisted → pull-up), not row horizontality, so it's
+        handled by the level system above instead.
+      </p>
+      <div class="field"><div class="field-label">Push straps</div><input type="number" step="0.5" min="1" max="12" inputmode="decimal" id="ringStrapPush" placeholder="8.5"></div>
+      <button class="secondary" id="saveRingStrapBtn" style="margin-top:10px;">Save</button>
+    </div>
+    <div class="card">
       <h2>Daily macro targets</h2>
       <div class="row">
         <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="targetCalories" placeholder="2300"></div>
@@ -513,6 +528,14 @@ let state = { settings: { startingLevels: { push: "intermediate", pull: "interme
   macroTargets: { calories: 2300, protein: 160, carbs: 200, fat: 70 } },
   measurements: [], logs: [], cardioLogs: [], foodLogs: [], activeProgramId: null, weekAdjustment: 0,
   progressLevels: { push: 1, pull: 1, legs: 1, hinge: 1, core: 1, ruck: 1 },
+  // Per-movement-plane levels — the actual progression axis for push/pull
+  // generation now (progressLevels.push/.pull above stays in sync as the
+  // higher of the two planes, purely so existing UI that reads the flat
+  // push/pull number — the swap picker, library filter, progress charts —
+  // keeps working without every one of those call sites needing a rewrite).
+  planeLevels: { push_h: 1, push_v: 1, pull_h: 1, pull_v: 1 },
+  lastPlaneServed: { push: null, pull: null },
+  ringStrap: { push: null },
   milestonesSeen: { weightLbs: [], workoutDays: [] }, celebrations: [] };
 let exercises = [];
 let programs = [];
@@ -549,6 +572,21 @@ async function loadState() {
   }
   if (!state.progressLevels) {
     state.progressLevels = { push: 1, pull: 1, legs: 1, hinge: 1, core: 1, ruck: 1 };
+  }
+  if (!state.planeLevels) {
+    // Seed both planes from whatever the existing flat push/pull level is,
+    // so nobody's current progress looks like it reset — they'll diverge
+    // independently from here based on which plane actually gets trained.
+    state.planeLevels = {
+      push_h: state.progressLevels.push || 1, push_v: state.progressLevels.push || 1,
+      pull_h: state.progressLevels.pull || 1, pull_v: state.progressLevels.pull || 1,
+    };
+  }
+  if (!state.lastPlaneServed) {
+    state.lastPlaneServed = { push: null, pull: null };
+  }
+  if (!state.ringStrap) {
+    state.ringStrap = { push: null };
   }
   if (typeof state.weekAdjustment !== "number") state.weekAdjustment = 0;
   if (!state.settings) state.settings = {};
@@ -893,6 +931,49 @@ function levelOf(exerciseIdOrName) {
   return match ? (EXERCISE_LEVEL_MAP[match.id] ?? 3) : 3;
 }
 
+// Movement-plane classification for push/pull exercises only — "h"
+// (horizontal: push-ups/planche-line pressing, rows) vs "v" (vertical:
+// overhead/dip pressing, the dead-hang -> pull-up ladder). This is what lets
+// the day generator alternate between the two patterns instead of treating
+// e.g. a ring row and a dead hang as interchangeable just because they're
+// both tagged "pull" at some difficulty number.
+const EXERCISE_PLANE_MAP = {
+  // push - horizontal (push-up/planche line, presses away from the ground)
+  "wall-pushup": "h", "incline-pushup-high": "h", "incline-pushup": "h", "knee-pushup": "h",
+  "pushup": "h", "diamond-pushup": "h", "decline-pushup": "h", "archer-pushup": "h",
+  "pseudo-planche-pushup": "h", "one-arm-pushup-assisted": "h", "ring-pushup-easy": "h",
+  "ring-pushup": "h", "ring-archer-pushup": "h", "ring-typewriter-pushup": "h",
+  "db-floor-press": "h", "push-board-press": "h", "planche-lean": "h", "tuck-planche": "h",
+  "plyo-pushup": "h", "clapping-pushup": "h", "one-arm-pushup": "h", "elbow-lever": "h",
+  // push - vertical (overhead press / dip line, presses along the body's long axis)
+  "pike-pushup": "v", "decline-pike-pushup": "v", "wall-handstand-hold": "v", "handstand-pushup": "v",
+  "ring-dip-supported": "v", "ring-dip": "v", "ring-dip-weighted": "v", "db-overhead-press": "v",
+  "parallel-bar-support-hold": "v", "bench-dip": "v", "bar-negative-dip": "v", "parallel-bar-dip": "v",
+  "handstand-walk": "v",
+  // pull - horizontal (rows)
+  "ring-row-easy": "h", "ring-row": "h", "ring-row-feet-elevated": "h", "inverted-row": "h",
+  "band-pull-apart": "h", "db-single-arm-row": "h", "db-renegade-row": "h", "archer-row": "h",
+  "tuck-back-lever": "h", "ring-pullover": "h",
+  // pull - vertical (the actual pull-up ladder)
+  "dead-hang": "v", "active-hang": "v", "scap-pull": "v", "band-assisted-pullup": "v",
+  "negative-pullup": "v", "pullup": "v", "chinup": "v", "archer-pullup": "v",
+  "typewriter-pullup": "v", "one-arm-pullup-assisted": "v", "ring-pullup-assisted": "v",
+  "ring-pullup": "v", "ring-archer-pullup": "v", "weighted-pullup": "v", "skin-the-cat": "v",
+  "muscle-up-negative": "v", "muscle-up": "v", "one-arm-pullup-negative": "v", "one-arm-pullup": "v",
+  "l-sit-pullup": "v", "l-sit-archer-pullup": "v",
+};
+
+// Defaults for any push/pull exercise not explicitly classified above (e.g.
+// a future addition): horizontal push and vertical pull are each the more
+// classic/common version of their group, so that's the safer fallback.
+function planeOf(exerciseIdOrName, muscleGroup) {
+  if (EXERCISE_PLANE_MAP[exerciseIdOrName] !== undefined) return EXERCISE_PLANE_MAP[exerciseIdOrName];
+  const match = exercises.find(x => x.name === exerciseIdOrName || x.id === exerciseIdOrName);
+  if (match && EXERCISE_PLANE_MAP[match.id] !== undefined) return EXERCISE_PLANE_MAP[match.id];
+  const mg = muscleGroup || match?.muscle_group;
+  return mg === "pull" ? "v" : "h";
+}
+
 // Static holds — their "reps" field represents seconds to hold, not a rep count.
 const HOLD_EXERCISE_IDS = new Set([
   "wall-sit", "dead-hang", "active-hang", "wall-handstand-hold", "plank", "side-plank",
@@ -913,6 +994,31 @@ function isHoldExercise(exerciseIdOrName) {
   if (HOLD_EXERCISE_IDS.has(exerciseIdOrName)) return true;
   const match = exercises.find(x => x.name === exerciseIdOrName || x.id === exerciseIdOrName);
   return match ? HOLD_EXERCISE_IDS.has(match.id) : false;
+}
+
+// "level X (horizontal)" for a push/pull exercise — the plane-specific
+// level plus which plane it's from, so it's visible which of the two
+// independent tracks a given exercise's difficulty is measured against.
+// Falls back to the flat level for every other muscle group.
+function levelLabelFor(e) {
+  if (e.muscle_group !== "push" && e.muscle_group !== "pull") {
+    return `level ${state.progressLevels?.[e.muscle_group] || 1}`;
+  }
+  const plane = planeOf(e.name, e.muscle_group);
+  const lvl = state.planeLevels?.[`${e.muscle_group}_${plane}`] || 1;
+  return `level ${lvl} (${plane === "h" ? "horizontal" : "vertical"})`;
+}
+
+// " · straps: 8.5" appended to a ring push exercise's meta line — the
+// separate, continuous progression axis tracked in Settings, push only
+// (see the note in applyWorkoutResults for why pull doesn't use this).
+function ringStrapNoteFor(e) {
+  if (e.muscle_group !== "push") return "";
+  const libEx = exercises.find(x => x.name === e.name);
+  if (!libEx || libEx.equipment !== "rings") return "";
+  const val = state.ringStrap?.push;
+  if (val == null) return "";
+  return ` · straps: ${val}`;
 }
 
 async function loadExercises() {
@@ -1171,7 +1277,12 @@ function pushCelebration(msg) {
 
 // Called after a workout logs — checks for level-ups and workout-count milestones.
 function checkWorkoutMilestones(oldLevels) {
-  MUSCLE_GROUPS.forEach(mg => {
+  // Iterate whatever groups actually exist in progressLevels (push, pull,
+  // legs, hinge, core, ruck) rather than a fixed list — push/pull still live
+  // here too (kept in sync as the max of their h/v plane levels), so this
+  // must not be scoped down to the 4-item flat-only MUSCLE_GROUPS used by
+  // the Starting Level Settings UI further down.
+  Object.keys(state.progressLevels || {}).forEach(mg => {
     if ((state.progressLevels[mg] || 1) > (oldLevels[mg] || 1)) {
       pushCelebration(`${mg.charAt(0).toUpperCase() + mg.slice(1)} leveled up to ${state.progressLevels[mg]}!`);
     }
@@ -1441,22 +1552,66 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
   const recentFromHistory = (state.logs || []).slice(-15).map(l => l.exercise);
   const recentNames = [...new Set([...avoidNames, ...recentFromHistory])].join(", ");
   const levels = state.progressLevels;
+  const planeLevels = state.planeLevels || { push_h: 1, push_v: 1, pull_h: 1, pull_v: 1 };
+  // Alternate which movement plane gets served for push/pull each time this
+  // runs — a dead hang and a ring row are different movement patterns even
+  // though both are "pull", so treating them as interchangeable meant one
+  // pattern (usually the vertical, pull-up-specific one) could quietly get
+  // starved. "h" first when nothing's been served yet.
+  const planeFor = {
+    push: state.lastPlaneServed?.push === "h" ? "v" : "h",
+    pull: state.lastPlaneServed?.pull === "h" ? "v" : "h",
+  };
   // Hard cap: never hand the AI an exercise harder than the person's current
-  // tracked level for that muscle group. Previously the full ~170-exercise
-  // library (spanning levels 1-5) was passed with only a soft "scale
-  // difficulty" instruction, which is how advanced moves like "Archer
-  // pull-up" or "Ring typewriter push-up" slipped into a level 1-2 person's
-  // workout. Progression already happens via the level-up mechanic (hitting
-  // max reps on all sets bumps progressLevels), so the AI doesn't need to
-  // reach for harder exercises on its own — filtering here is what actually
-  // enforces the level system instead of just describing it in prose.
-  const availableList = exercises
-    .filter(e => {
-      const cap = levels[e.muscle_group];
-      if (cap === undefined) return true; // untracked group (e.g. mobility) — no cap
-      return levelOf(e.id) <= cap;
-    })
-    .map(e => `${e.name} (${e.muscle_group}, ${e.equipment || "bodyweight"}${isHoldExercise(e.id) ? ", ISOMETRIC HOLD" : ""})`).join("; ");
+  // tracked level. For push/pull this is now the PLANE-specific level (and
+  // restricted to today's chosen plane) rather than one flat push/pull
+  // number — previously the full ~170-exercise library (spanning levels
+  // 1-5, and for push/pull, both horizontal and vertical patterns mixed
+  // together) was passed with only a soft "scale difficulty" instruction,
+  // which is how advanced moves like "Archer pull-up" or "Ring typewriter
+  // push-up" slipped into a level 1-2 person's workout. Progression already
+  // happens via the level-up mechanic (hitting max reps on all sets bumps
+  // the level), so the AI doesn't need to reach for harder exercises or a
+  // different plane on its own — filtering here is what actually enforces
+  // it instead of just describing it in prose.
+  let planeFilteredPush = [], planeFilteredPull = [];
+  const availableExercises = exercises.filter(e => {
+    if (e.muscle_group === "push" || e.muscle_group === "pull") {
+      const plane = planeOf(e.id, e.muscle_group);
+      if (plane !== planeFor[e.muscle_group]) return false;
+      const cap = planeLevels[`${e.muscle_group}_${plane}`] ?? 1;
+      const ok = levelOf(e.id) <= cap;
+      if (ok) (e.muscle_group === "push" ? planeFilteredPush : planeFilteredPull).push(e);
+      return ok;
+    }
+    const cap = levels[e.muscle_group];
+    if (cap === undefined) return true; // untracked group (e.g. mobility) — no cap
+    return levelOf(e.id) <= cap;
+  });
+  // Safety net: if today's chosen plane somehow has zero eligible exercises
+  // at the person's level (shouldn't normally happen — every plane has a
+  // level-1 option — but equipment gaps in a custom/imported library could
+  // create one), fall back to the OTHER plane for that group rather than
+  // handing the AI an empty push or pull slot.
+  ["push", "pull"].forEach(mg => {
+    const has = mg === "push" ? planeFilteredPush.length : planeFilteredPull.length;
+    if (has > 0) return;
+    const fallbackPlane = planeFor[mg] === "h" ? "v" : "h";
+    planeFor[mg] = fallbackPlane;
+    exercises.forEach(e => {
+      if (e.muscle_group !== mg) return;
+      const plane = planeOf(e.id, e.muscle_group);
+      if (plane !== fallbackPlane) return;
+      const cap = planeLevels[`${mg}_${plane}`] ?? 1;
+      if (levelOf(e.id) <= cap) availableExercises.push(e);
+    });
+  });
+  const availableList = availableExercises
+    .map(e => {
+      const planeTag = (e.muscle_group === "push" || e.muscle_group === "pull")
+        ? `, ${planeOf(e.id, e.muscle_group) === "h" ? "horizontal" : "vertical"}` : "";
+      return `${e.name} (${e.muscle_group}${planeTag}, ${e.equipment || "bodyweight"}${isHoldExercise(e.id) ? ", ISOMETRIC HOLD" : ""})`;
+    }).join("; ");
   const mobilityList = exercises.filter(e => e.muscle_group === "mobility")
     .map(e => `${e.name}${isHoldExercise(e.id) ? " (hold)" : " (dynamic)"}`).join("; ");
   const { phase, weekNumber } = currentPhaseFor(program);
@@ -1472,6 +1627,14 @@ safe to pick regardless of muscle group. Do not second-guess this by favoring
 only the easiest items out of caution, but also never invent, substitute, or
 reach for a harder variant that isn't in the list, even if you think the person
 is ready for it (that's handled separately, by a level-up system, not by you).
+Push and pull exercises are also tagged "horizontal" or "vertical" in the
+list — that's the movement plane (horizontal = push-up/row pattern, vertical
+= overhead-press/dip or dead-hang/pull-up pattern), and the list has ALREADY
+been restricted to just one plane per group for today, alternating session to
+session so both patterns get trained over time instead of one being
+neglected. Every push item and every pull item shown is the same plane, so a
+push+pull superset pairing will naturally stay plane-matched too — you don't
+need to reason about plane balance yourself, just pick from what's given.
 Set the reps field's top end to roughly match how hard a given pick is: lighter
 regressions top out around 8, standard versions around 10-12, harder variants
 around 12-15 or note added difficulty (tempo, pause, unilateral) instead of
@@ -1510,6 +1673,7 @@ Respond with ONLY valid JSON.`;
   const prompt = `Available exercises: ${availableList}.
 Recently used (avoid repeating if a same-muscle-group alternative exists): ${recentNames || "none yet"}.
 Current level per muscle group (1-5): ${JSON.stringify(levels)}.
+Today's push/pull plane focus: ${JSON.stringify(planeFor)}.
 Current phase: ${phase?.phase || "n/a"}, week ${weekNumber}${isDeload ? " (deload)" : ""}.
 Today's day: "${day?.day || "n/a"}", slots: ${JSON.stringify(day?.slots || [])}.
 Output JSON: {"day": "string", "warmup": [{"name": "exact name from mobility library", "detail": "string, e.g. 30s each side"}], "exercises": [{"name": "string", "muscle_group": "string", "sets": 3, "reps": "8-12", "superset_group": "A"}], "cooldown": [{"name": "exact name from mobility library", "detail": "string, e.g. hold 20s"}]}
@@ -1587,12 +1751,13 @@ function renderTodayWorkout(workout) {
   sessionBtn.textContent = "Start guided session";
 
   function exerciseCardHtml(e, i) {
+    const strapNote = ringStrapNoteFor(e);
     return `
       <div class="list-item" data-ex-index="${i}" style="flex-direction:column; align-items:stretch; border-bottom:none;">
         <div style="display:flex; justify-content:space-between;">
           <div>
             <div class="name">${e.name}</div>
-            <div class="meta">${e.muscle_group} · ${e.sets}×${e.reps}${isHoldExercise(e.name) ? "s hold" : ""} · level ${state.progressLevels[e.muscle_group] || 1}</div>
+            <div class="meta">${e.muscle_group} · ${e.sets}×${e.reps}${isHoldExercise(e.name) ? "s hold" : ""} · ${levelLabelFor(e)}${strapNote}</div>
             ${howToHtml("today-" + i, e.name, exercises.find(x => x.name === e.name)?.cue)}
           </div>
           <button class="danger-link" style="color:var(--accent);" data-swap-open="${i}">Swap</button>
@@ -1852,9 +2017,15 @@ async function applyWorkoutResults(results) {
 
   const holdProgression = isLosingTooFast();
   const oldLevels = { ...state.progressLevels };
+  state.planeLevels = state.planeLevels || { push_h: 1, push_v: 1, pull_h: 1, pull_v: 1 };
+  state.lastPlaneServed = state.lastPlaneServed || { push: null, pull: null };
+
+  // legs/hinge/core/ruck keep the simple flat level. push/pull are handled
+  // separately below, per-plane, instead of as one flat number.
   const byGroup = {};
   results.forEach(r => {
     const mg = r.exercise.muscle_group;
+    if (mg === "push" || mg === "pull") return;
     if (!byGroup[mg]) byGroup[mg] = [];
     byGroup[mg].push(r.result);
   });
@@ -1864,6 +2035,65 @@ async function applyWorkoutResults(results) {
       state.progressLevels[mg] = Math.max(1, cur - 1);
     } else if (outcomes.every(o => o === "max") && !holdProgression) {
       state.progressLevels[mg] = Math.min(5, cur + 1);
+    }
+  });
+
+  // Push/pull: level up/down per movement plane (horizontal vs vertical)
+  // instead of one flat number for the whole muscle group — this is what
+  // stops e.g. hitting max reps on a ring row from also silently advancing
+  // the vertical pull-up ladder it has nothing to do with. Also records
+  // which plane was actually trained, so next generation alternates to the
+  // other one.
+  const byPlaneGroup = {};
+  results.forEach(r => {
+    const mg = r.exercise.muscle_group;
+    if (mg !== "push" && mg !== "pull") return;
+    const plane = planeOf(r.exercise.name, mg);
+    const key = `${mg}_${plane}`;
+    if (!byPlaneGroup[key]) byPlaneGroup[key] = { mg, plane, outcomes: [] };
+    byPlaneGroup[key].outcomes.push(r.result);
+  });
+  Object.values(byPlaneGroup).forEach(({ mg, plane, outcomes }) => {
+    const key = `${mg}_${plane}`;
+    const cur = state.planeLevels[key] || 1;
+    if (outcomes.includes("missed")) {
+      state.planeLevels[key] = Math.max(1, cur - 1);
+    } else if (outcomes.every(o => o === "max") && !holdProgression) {
+      state.planeLevels[key] = Math.min(5, cur + 1);
+    }
+    // Keep the flat push/pull number in sync as the higher of its two
+    // planes, purely so other UI that still reads it (swap picker, library
+    // filter, progress charts) keeps behaving sensibly without a rewrite.
+    state.progressLevels[mg] = Math.max(state.planeLevels[`${mg}_h`] || 1, state.planeLevels[`${mg}_v`] || 1);
+    state.lastPlaneServed[mg] = plane;
+  });
+
+  // Ring strap setting — a separate, continuous axis from the level above,
+  // push only (lower number = more horizontal = harder). Pull deliberately
+  // does NOT use ring-row horizontality as its progression axis: research
+  // (GMB's pull-up guide, the r/bodyweightfitness recommended routine) both
+  // treat "more horizontal row" as a different movement pattern from a
+  // vertical pull-up that doesn't directly transfer — the real bridge to a
+  // pull-up is the vertical-specific ladder (dead hang -> negatives ->
+  // band-assisted -> pull-up), which the existing level system already
+  // reflects via EXERCISE_LEVEL_MAP. So only push gets adjusted here.
+  state.ringStrap = state.ringStrap || { push: null };
+  const ringByGroup = {};
+  results.forEach(r => {
+    const mg = r.exercise.muscle_group;
+    if (mg !== "push") return;
+    const libEx = exercises.find(x => x.name === r.exercise.name);
+    if (!libEx || libEx.equipment !== "rings") return;
+    if (!ringByGroup[mg]) ringByGroup[mg] = [];
+    ringByGroup[mg].push(r.result);
+  });
+  Object.entries(ringByGroup).forEach(([mg, outcomes]) => {
+    const cur = state.ringStrap[mg];
+    if (cur == null) return; // not set yet — nothing to adjust from
+    if (outcomes.includes("missed")) {
+      state.ringStrap[mg] = Math.min(12, cur + 0.5);
+    } else if (outcomes.every(o => o === "max") && !holdProgression) {
+      state.ringStrap[mg] = Math.max(1, cur - 0.5);
     }
   });
 
@@ -2359,6 +2589,15 @@ document.getElementById("saveManualBtn").addEventListener("click", async () => {
   ["manualName", "manualCalories", "manualProtein", "manualCarbs", "manualFat"].forEach(id => document.getElementById(id).value = "");
 });
 
+// -- ring strap setting (Settings) --
+document.getElementById("saveRingStrapBtn").addEventListener("click", async () => {
+  const clamp = (v) => v === "" || v == null || isNaN(v) ? null : Math.min(12, Math.max(1, Math.round(parseFloat(v) * 2) / 2));
+  state.ringStrap = state.ringStrap || {};
+  state.ringStrap.push = clamp(document.getElementById("ringStrapPush").value);
+  await persistNow();
+  alert("Ring strap setting saved.");
+});
+
 // -- macro targets (Settings) --
 document.getElementById("saveTargetsBtn").addEventListener("click", async () => {
   state.settings.macroTargets = {
@@ -2758,7 +2997,7 @@ function renderSession() {
         <div class="card">
           ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
           <h2>${step.name}</h2>
-          <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · holding</div>
+          <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · holding${ringStrapNoteFor(step)}</div>
           <div id="holdClock" style="font-size:36px; font-weight:600; text-align:center; margin:14px 0; font-family:var(--font-mono);">${formatTime(remaining)}</div>
           <button class="secondary" id="stopHoldBtn" style="width:100%;">Stop / let go</button>
         </div>`;
@@ -2776,7 +3015,7 @@ function renderSession() {
       <div class="card">
         ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
         <h2>${step.name}</h2>
-        <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${targetSeconds}s hold</div>
+        <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${targetSeconds}s hold${ringStrapNoteFor(step)}</div>
         <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
         <div class="hidden" id="sessionSwapPanel" style="margin-top:8px;">
           <div class="meta">Pick a swap — grouped by easier/harder:</div>
@@ -2803,7 +3042,7 @@ function renderSession() {
     <div class="card">
       ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
       <h2>${step.name}</h2>
-      <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${step.reps} reps</div>
+      <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${step.reps} reps${ringStrapNoteFor(step)}</div>
       <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
       <div class="hidden" id="sessionSwapPanel" style="margin-top:8px;">
         <div class="meta">Pick a swap — grouped by easier/harder:</div>
@@ -3246,20 +3485,25 @@ document.getElementById("startDateInput").addEventListener("change", async (e) =
 
 // ---- starting level per movement pattern ----
 const STARTING_LEVEL_MAP = { beginner: 1, intermediate: 3, advanced: 5 };
-const MUSCLE_GROUPS = ["push", "pull", "legs", "hinge", "core", "ruck"];
+const MUSCLE_GROUPS = ["legs", "hinge", "core", "ruck"];
+// push/pull are calibrated per plane now, not as one flat group — see the
+// movement-plane split in generateTodayWorkout/applyWorkoutResults.
+const PLANE_GROUPS = ["push_h", "push_v", "pull_h", "pull_v"];
+const PLANE_GROUP_LABELS = { push_h: "Push (horizontal)", push_v: "Push (vertical)", pull_h: "Pull (horizontal)", pull_v: "Pull (vertical)" };
 
 function renderStartingLevelSettings() {
   const el = document.getElementById("startingLevelSettings");
-  el.innerHTML = MUSCLE_GROUPS.map(mg => `
+  const rowHtml = (key, label) => `
     <div style="margin-top:10px;">
-      <div class="meta" style="text-transform:capitalize; margin-bottom:4px;">${mg}</div>
+      <div class="meta" style="margin-bottom:4px;">${label}</div>
       <div class="row">
         ${["beginner", "intermediate", "advanced"].map(lvl => `
-          <div class="chip ${state.settings.startingLevels[mg] === lvl ? "active" : ""}" data-start-mg="${mg}" data-start-lvl="${lvl}">${lvl.charAt(0).toUpperCase() + lvl.slice(1)}</div>
+          <div class="chip ${state.settings.startingLevels[key] === lvl ? "active" : ""}" data-start-mg="${key}" data-start-lvl="${lvl}">${lvl.charAt(0).toUpperCase() + lvl.slice(1)}</div>
         `).join("")}
       </div>
-    </div>
-  `).join("");
+    </div>`;
+  el.innerHTML = PLANE_GROUPS.map(key => rowHtml(key, PLANE_GROUP_LABELS[key])).join("")
+    + MUSCLE_GROUPS.map(mg => rowHtml(mg, mg.charAt(0).toUpperCase() + mg.slice(1))).join("");
 }
 
 document.getElementById("startingLevelSettings").addEventListener("click", async (e) => {
@@ -3271,16 +3515,32 @@ document.getElementById("startingLevelSettings").addEventListener("click", async
   renderStartingLevelSettings();
 });
 
-// Applies the calibrated starting level to any muscle group that has never
-// been logged yet — protects already-earned progress on groups you've trained.
+// Applies the calibrated starting level to any muscle group/plane that has
+// never actually been logged yet — protects already-earned progress on
+// anything you've trained. For push/pull this checks per PLANE (have you
+// ever logged a horizontal push specifically?), not just the muscle group,
+// since a never-touched vertical pattern should still be calibratable even
+// after you've logged plenty of horizontal work.
 async function applyStartingLevelsIfUntrained() {
   const trainedGroups = new Set((state.logs || []).map(l => l.muscle_group));
+  const trainedPlaneGroups = new Set((state.logs || [])
+    .filter(l => l.muscle_group === "push" || l.muscle_group === "pull")
+    .map(l => `${l.muscle_group}_${planeOf(l.exercise, l.muscle_group)}`));
   MUSCLE_GROUPS.forEach(mg => {
     if (!trainedGroups.has(mg)) {
       const lvl = state.settings.startingLevels?.[mg] || "intermediate";
       state.progressLevels[mg] = STARTING_LEVEL_MAP[lvl];
     }
   });
+  state.planeLevels = state.planeLevels || { push_h: 1, push_v: 1, pull_h: 1, pull_v: 1 };
+  PLANE_GROUPS.forEach(key => {
+    if (!trainedPlaneGroups.has(key)) {
+      const lvl = state.settings.startingLevels?.[key] || "intermediate";
+      state.planeLevels[key] = STARTING_LEVEL_MAP[lvl];
+    }
+  });
+  state.progressLevels.push = Math.max(state.planeLevels.push_h, state.planeLevels.push_v);
+  state.progressLevels.pull = Math.max(state.planeLevels.pull_h, state.planeLevels.pull_v);
   await persistNow();
 }
 
@@ -3300,6 +3560,7 @@ async function init() {
   document.getElementById("foodLogDate").value = localDateStr();
   renderFoodLogList();
   if (state.settings?.startDate) document.getElementById("startDateInput").value = state.settings.startDate;
+  document.getElementById("ringStrapPush").value = state.ringStrap?.push ?? "";
   const t = state.settings.macroTargets || {};
   document.getElementById("targetCalories").value = t.calories || "";
   document.getElementById("targetProtein").value = t.protein || "";
