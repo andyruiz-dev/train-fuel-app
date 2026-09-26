@@ -1,0 +1,3300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Train &amp; Fuel</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#15170F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent:#2FBFA6;
+    --accent-dark:#1B8674;
+    --gold:#C79A45;
+    --slate:#9B6FB0;
+    --bg:#15170F;
+    --surface:#20231C;
+    --surface-2:#2A2E24;
+    --border:#3A3F33;
+    --text:#EDEAE0;
+    --text-muted:#9B9C8E;
+    --danger:#C4622E;
+    --radius:4px;
+    --font-display:'Oswald', -apple-system, sans-serif;
+    --font-mono:'Roboto Mono', ui-monospace, monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text); padding-bottom:72px;
+  }
+  header{
+    padding:22px 16px 14px; position:sticky; top:0; background:var(--bg); z-index:5;
+    border-bottom:2px solid var(--text);
+    display:flex; justify-content:space-between; align-items:flex-start;
+  }
+  header h1{
+    font-family:var(--font-display); font-size:26px; font-weight:600; margin:0;
+    letter-spacing:0.3px; color:var(--text);
+  }
+  header .sub{font-family:var(--font-mono); font-size:11px; color:var(--text-muted); margin-top:4px; display:flex; align-items:center; white-space:nowrap; overflow:hidden;}
+  #headerProgramName{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:70%;}
+  #profileBtn{
+    background:none; border:1px solid var(--border); border-radius:50%;
+    width:36px; height:36px; font-size:16px; color:var(--text-muted);
+    cursor:pointer; flex-shrink:0; margin-left:12px;
+  }
+  #profileBtn.active{border-color:var(--accent); color:var(--accent);}
+  main{padding:0 16px 24px; max-width:640px; margin:0 auto;}
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent);
+    border-radius:var(--radius); padding:16px; margin-bottom:14px;
+  }
+  #tab-programs .card{border-left-color:var(--gold);}
+  #subtab-library .card{border-left-color:var(--slate);}
+  #tab-progress .card{border-left-color:var(--accent-dark);}
+  .card h2{
+    font-family:var(--font-display); font-size:16px; font-weight:600; margin:0 0 10px;
+    letter-spacing:0.2px;
+  }
+  .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .chip{
+    border:1px solid var(--border); background:var(--surface); color:var(--text);
+    padding:8px 14px; border-radius:2px; font-size:14px; cursor:pointer; user-select:none;
+  }
+  .chip.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .result-chip{font-size:12px; padding:6px 10px; font-family:var(--font-mono);}
+  .result-chip.active[data-result="max"]{background:var(--accent); border-color:var(--accent);}
+  .result-chip.active[data-result="hold"]{background:var(--surface-2); border-color:var(--text-muted); color:var(--text);}
+  .result-chip.active[data-result="missed"]{background:var(--danger); border-color:var(--danger);}
+  .swap-regression{border-color:var(--slate); color:var(--slate);}
+  .swap-same{border-color:var(--text-muted);}
+  .swap-progression{border-color:var(--gold); color:var(--gold);}
+  button.primary{
+    background:var(--accent); color:#fff; border:none; border-radius:var(--radius);
+    padding:12px 16px; font-size:15px; font-weight:600; cursor:pointer; width:100%;
+    font-family:var(--font-display); letter-spacing:0.3px;
+  }
+  button.primary:disabled{opacity:.5; cursor:default;}
+  button.secondary{
+    background:transparent; color:var(--accent); border:1px solid var(--accent);
+    border-radius:var(--radius); padding:10px 14px; font-size:14px; cursor:pointer;
+    font-family:var(--font-display); letter-spacing:0.3px;
+  }
+  button.danger-link{
+    background:none; border:none; color:var(--danger); font-size:13px; cursor:pointer; padding:4px 0;
+  }
+  input[type=text], input[type=date]{
+    width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:2px;
+    font-size:14px; background:var(--surface); color:var(--text);
+  }
+  .field{flex:1;}
+  .field-label{font-family:var(--font-mono); font-size:11px; color:var(--text-muted); margin-bottom:4px;}
+  .list-item{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 0; border-bottom:1px solid var(--border);
+  }
+  .list-item:last-child{border-bottom:none;}
+  .list-item .name{font-size:14px; font-weight:500;}
+  .list-item .meta{font-size:12px; color:var(--text-muted); font-family:var(--font-mono);}
+  .empty{color:var(--text-muted); font-size:14px; padding:8px 0;}
+  nav.tabs{
+    position:fixed; bottom:0; left:0; right:0; background:var(--surface);
+    border-top:2px solid var(--text); display:flex; z-index:10;
+  }
+  nav.tabs button{
+    flex:1; background:none; border:none; padding:10px 4px 8px; font-size:11px;
+    color:var(--text-muted); cursor:pointer; font-family:var(--font-display); letter-spacing:0.3px;
+  }
+  nav.tabs button.active{color:var(--accent); font-weight:600;}
+  .tab-icon{display:block; margin:0 auto 2px; width:20px; height:20px;}
+  .hidden{display:none !important;}
+  .status-dot{
+    display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px;
+    background:var(--danger);
+  }
+  .status-dot.ok{background:var(--accent);}
+  .file-drop{
+    border:1px dashed var(--border); border-radius:var(--radius); padding:20px;
+    text-align:center; color:var(--text-muted); font-size:13px; cursor:pointer;
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary{cursor:pointer;}
+  details.exercise-group{border-bottom:1px solid var(--border); padding:10px 0;}
+  details.exercise-group:last-child{border-bottom:none;}
+  details.exercise-group summary{
+    font-family:var(--font-display); font-size:15px; font-weight:500;
+    letter-spacing:0.2px; list-style:none; display:flex; justify-content:space-between;
+    align-items:center; text-transform:capitalize;
+  }
+  details.exercise-group summary::after{
+    content:"+"; color:var(--slate); font-size:18px; font-family:var(--font-mono);
+  }
+  details.exercise-group[open] summary::after{content:"−";}
+  details.exercise-group .list-item:first-child{padding-top:10px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Train &amp; Fuel</h1>
+    <div class="sub"><span id="headerProgramName">No active program</span> · <span id="syncDot" class="status-dot"></span><span id="syncLabel">connecting…</span></div>
+  </div>
+  <button id="profileBtn" aria-label="Settings">⚙</button>
+</header>
+
+<main>
+
+  <!-- TODAY -->
+  <section id="tab-today" class="tab-panel">
+    <div id="welcomeBackBanner" class="hidden"></div>
+    <div id="celebrationBanner" class="hidden"></div>
+
+    <div class="card">
+      <details class="exercise-group">
+        <summary>Cross-training</summary>
+        <div style="padding-top:6px;">
+          <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+            Log a walk or ruck any day — doesn't touch your program's rotation, just tracked
+            alongside it for your own record and the Progress charts.
+          </p>
+          <div class="row">
+            <div class="chip" id="logWalkChip">Log a walk</div>
+            <div class="chip" id="logRuckChip">Log a ruck</div>
+          </div>
+          <div id="cardioForm" class="hidden" style="margin-top:10px;">
+            <div class="row">
+              <input type="text" inputmode="decimal" id="cardioDistance" placeholder="Distance (mi)" style="flex:1;">
+              <input type="text" inputmode="numeric" id="cardioDuration" placeholder="Duration (min)" style="flex:1;">
+            </div>
+            <input type="text" inputmode="numeric" id="cardioWeight" placeholder="Weight carried (lbs)" style="margin-top:8px; display:none;">
+            <button class="secondary" id="saveCardioBtn" style="margin-top:8px; width:100%;">Save</button>
+          </div>
+          <div id="recentCardio" style="margin-top:10px;"></div>
+        </div>
+      </details>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+        <h2 style="margin:0;">Today's workout</h2>
+        <button id="genWorkoutBtn" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; padding:4px 0;" disabled>Regenerate</button>
+      </div>
+      <div id="recoveryCautionNote"></div>
+      <div id="todayWorkout" class="empty">Pick an active program first.</div>
+      <button class="primary" id="startSessionBtn" style="margin-top:10px; width:100%;" disabled>Start guided session</button>
+      <button class="secondary" id="minimumDayBtn" style="margin-top:8px; width:100%;" disabled>Not feeling it? Do the minimum</button>
+    </div>
+    <div id="sessionPanel" class="hidden"></div>
+
+    <div class="card">
+      <details>
+        <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Weekly review</summary>
+        <div id="weeklyReview" style="margin-top:10px;"></div>
+      </details>
+    </div>
+  </section>
+
+  <!-- FOOD -->
+  <section id="tab-food" class="tab-panel hidden">
+    <div class="card">
+      <details class="exercise-group">
+        <summary>Today's macros</summary>
+        <div style="padding-top:6px;">
+          <div id="proteinRemaining" style="text-align:center; margin-bottom:12px;"></div>
+          <div id="macroSummary"></div>
+        </div>
+      </details>
+    </div>
+    <div class="card">
+      <details class="exercise-group">
+        <summary>Quick-add protein</summary>
+        <div style="padding-top:6px;">
+          <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+            Low-prep staples for closing the gap — tap to log instantly.
+          </p>
+          <div class="row" id="quickProteinChips"></div>
+        </div>
+      </details>
+    </div>
+    <div class="card">
+      <details class="exercise-group">
+        <summary>Log known macros</summary>
+        <div style="padding-top:6px;">
+          <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+            Already know the exact numbers off a label or scale? Skip the photo.
+          </p>
+          <input type="text" id="manualName" placeholder="Food name" style="margin-bottom:8px;">
+          <div class="row">
+            <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="manualCalories"></div>
+            <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="manualProtein"></div>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="manualCarbs"></div>
+            <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="manualFat"></div>
+          </div>
+          <button class="primary" id="saveManualBtn" style="margin-top:10px; width:100%;">Add to log</button>
+        </div>
+      </details>
+    </div>
+    <div class="card">
+      <h2>Scan a photo</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+        AI estimates food and macros from the photo — review and adjust before saving.
+      </p>
+      <input type="text" id="scanNote" placeholder="Optional note (e.g. 'turkey not chicken', 'half portion')" style="margin-bottom:10px;">
+      <div class="file-drop" id="foodPhotoDrop">Tap to take or choose a photo</div>
+      <input type="file" id="foodPhotoInput" accept="image/*" capture="environment" style="display:none;">
+      <div id="foodScanStatus" class="empty" style="display:none; margin-top:8px;"></div>
+      <div id="foodScanReview" class="hidden" style="margin-top:10px;">
+        <input type="text" id="scanName" placeholder="Food name" style="margin-bottom:8px;">
+        <div class="field" style="margin-bottom:8px;">
+          <div class="field-label">Servings (scales the estimate below)</div>
+          <input type="text" inputmode="decimal" id="scanServings" value="1">
+        </div>
+        <div class="row">
+          <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="scanCalories"></div>
+          <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="scanProtein"></div>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="scanCarbs"></div>
+          <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="scanFat"></div>
+        </div>
+        <button class="primary" id="saveScanBtn" style="margin-top:10px;">Add to log</button>
+      </div>
+    </div>
+    <div class="card">
+      <details class="exercise-group">
+        <summary>Food log</summary>
+        <div style="padding-top:6px;">
+          <input type="date" id="foodLogDate" style="margin-bottom:8px;">
+          <div id="foodLogList" class="empty">Nothing logged for this day.</div>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- PROGRAMS (with Library merged in as a sub-section) -->
+  <section id="tab-programs" class="tab-panel hidden">
+    <div class="row" id="programsSubNav" style="margin-bottom:14px;">
+      <div class="chip active" data-subtab="my-programs">My programs</div>
+      <div class="chip" data-subtab="library">Exercise library</div>
+    </div>
+
+    <div id="subtab-my-programs">
+      <div class="card">
+        <details class="exercise-group">
+          <summary>Generate a new program</summary>
+          <div style="padding-top:6px;">
+            <div class="row" id="durationChips">
+              <div class="chip" data-months="1">1 month</div>
+              <div class="chip" data-months="3">3 months</div>
+              <div class="chip active" data-months="6">6 months</div>
+              <div class="chip" data-months="9">9 months</div>
+              <div class="chip" data-months="12">12 months</div>
+            </div>
+            <div style="margin-top:12px;">
+              <input type="text" id="programFocus" placeholder="Focus, e.g. rings + rucking, upper body strength">
+            </div>
+            <button class="primary" id="generateProgramBtn" style="margin-top:12px;">Generate program</button>
+          </div>
+        </details>
+      </div>
+
+      <div class="card">
+        <details class="exercise-group">
+          <summary>Upload a program</summary>
+          <div style="padding-top:6px;">
+            <div class="file-drop" id="uploadDrop">Tap to choose PDF or photo files of an existing program</div>
+            <input type="file" id="uploadInput" accept=".pdf,image/*" multiple style="display:none;">
+            <div id="uploadStatus" class="empty" style="margin-top:8px; display:none;"></div>
+          </div>
+        </details>
+      </div>
+
+      <div class="card">
+        <details class="exercise-group">
+          <summary>Saved programs</summary>
+          <div style="padding-top:6px;">
+            <div id="programList" class="empty">None yet.</div>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div id="subtab-library" class="hidden">
+      <div class="card">
+        <h2>Exercise library</h2>
+        <input type="text" id="exerciseSearch" placeholder="Search exercises…">
+        <div class="row" id="muscleFilterChips" style="margin-top:10px;">
+          <div class="chip active" data-mg="all">All</div>
+          <div class="chip" data-mg="push">Push</div>
+          <div class="chip" data-mg="pull">Pull</div>
+          <div class="chip" data-mg="legs">Legs</div>
+          <div class="chip" data-mg="hinge">Hinge</div>
+          <div class="chip" data-mg="core">Core</div>
+          <div class="chip" data-mg="ruck">Ruck</div>
+          <div class="chip" data-mg="mobility">Mobility</div>
+        </div>
+        <div class="row" id="levelFilterChips" style="margin-top:8px;">
+          <div class="chip active" data-level="all">All levels</div>
+          <div class="chip" data-level="beginner">Beginner (1-2)</div>
+          <div class="chip" data-level="standard">Standard (3)</div>
+          <div class="chip" data-level="advanced">Advanced (4-5)</div>
+        </div>
+        <div class="row" id="equipmentFilterChips" style="margin-top:8px;">
+          <div class="chip active" data-equip="all">All equipment</div>
+          <div class="chip" data-equip="bodyweight">Bodyweight</div>
+          <div class="chip" data-equip="rings">Rings</div>
+          <div class="chip" data-equip="dumbbell">Dumbbell</div>
+          <div class="chip" data-equip="bar">Bar</div>
+          <div class="chip" data-equip="band">Band</div>
+        </div>
+        <div id="exerciseList" style="margin-top:12px;" class="empty">Loading…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROGRESS -->
+  <section id="tab-progress" class="tab-panel hidden">
+    <div class="card">
+      <h2>Your journey so far</h2>
+      <div id="journeyStats"></div>
+    </div>
+    <div class="card">
+      <h2>Log a measurement</h2>
+      <div class="row">
+        <input type="text" inputmode="decimal" id="weightInput" placeholder="Weight (lbs)" style="flex:1;">
+        <input type="date" id="measurementDateInput" style="flex:1;">
+      </div>
+      <button class="secondary" id="logWeightBtn" style="margin-top:10px;">Log weight</button>
+      <div id="weightCheckInPanel" class="hidden" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+        <div class="meta" id="weightCheckInMessage" style="margin-bottom:8px;"></div>
+        <div class="row" id="weightCheckInChips"></div>
+        <div class="row" style="margin-top:10px;">
+          <button class="secondary" id="weightCheckInSaveBtn" style="flex:1;">Save</button>
+          <button class="danger-link" id="weightCheckInSkipBtn" style="flex:1;">Skip</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Weight trend</h2>
+      <div id="weightChart" class="empty">Log a few measurements to see a trend.</div>
+    </div>
+    <div class="card">
+      <h2>Weekly workouts</h2>
+      <div id="volumeChart" class="empty">Complete a few workouts to see your frequency per week.</div>
+    </div>
+    <div class="card">
+      <h2>Weekly walk/ruck minutes</h2>
+      <div id="cardioChart" class="empty">Log a walk or ruck to see this fill in.</div>
+    </div>
+    <div class="card">
+      <h2>Recurring patterns</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+        Reasons that have come up more than once across your weigh-in history — one-off mentions
+        don't count as a pattern yet.
+      </p>
+      <div id="reasonPatterns" class="empty">Not enough repeated reasons yet to spot a pattern.</div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="tab-settings" class="tab-panel hidden">
+    <div class="card">
+      <h2>Cloud sync</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+        Worker URL — this points the app at your Cloudflare Worker + D1 database.
+        Data is saved here, not just in this browser, so it survives cache clears and
+        new devices.
+      </p>
+      <input type="text" id="workerUrlInput" placeholder="https://your-worker.workers.dev">
+      <button class="secondary" id="saveWorkerUrlBtn" style="margin-top:10px;">Save</button>
+    </div>
+    <div class="card">
+      <h2>Backup</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+        Manual export/import as a second safety net, independent of the cloud sync above.
+      </p>
+      <div class="row">
+        <button class="secondary" id="exportBtn">Export backup file</button>
+        <button class="secondary" id="importBtn">Import backup file</button>
+      </div>
+      <input type="file" id="importInput" accept="application/json" style="display:none;">
+    </div>
+    <div class="card">
+      <h2>Program start date</h2>
+      <input type="date" id="startDateInput">
+    </div>
+    <div class="card">
+      <h2>Starting level per movement pattern</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+        Sets where a fresh, never-trained muscle group begins (beginner/intermediate/advanced).
+        Once you've logged a workout for a group, this no longer touches it — auto-progression
+        from your rep ranges takes over from there.
+      </p>
+      <div id="startingLevelSettings"></div>
+    </div>
+    <div class="card">
+      <h2>Daily macro targets</h2>
+      <div class="row">
+        <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="targetCalories" placeholder="2300"></div>
+        <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="targetProtein" placeholder="160"></div>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="targetCarbs" placeholder="255"></div>
+        <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="targetFat" placeholder="65"></div>
+      </div>
+      <button class="secondary" id="saveTargetsBtn" style="margin-top:10px;">Save targets</button>
+    </div>
+  </section>
+
+</main>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="today"><svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>Today</button>
+  <button class="tab-btn" data-tab="food"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>Food</button>
+  <button class="tab-btn" data-tab="progress"><svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,4 21,20 3,20"/></svg>Progress</button>
+  <button class="tab-btn" data-tab="programs"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>Programs</button>
+</nav>
+
+<script>
+/* ============================================================
+   Train & Fuel — app shell
+   Data model: localStorage = instant cache. Worker + D1 = source
+   of truth. Every write goes to both; every load prefers the
+   Worker's copy when reachable. This is what makes history/
+   settings/imports survive a refresh, a cache clear, or a new
+   device — the old app only had localStorage.
+   ============================================================ */
+
+function extractJson(text) {
+  // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
+  const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
+  try {
+    return JSON.parse(cleaned);
+  } catch (err) {
+    // Likely truncated mid-array (hit max_tokens). Try to salvage complete
+    // top-level array entries (e.g. finished "phases") instead of failing outright.
+    const repaired = repairTruncatedJson(cleaned);
+    if (repaired) return repaired;
+    throw err;
+  }
+}
+
+function repairTruncatedJson(text) {
+  // Find the last complete "},\n" or "}\n" boundary inside the first array
+  // in the text, then close arrays/braces to make it valid. Best-effort only.
+  const arrayStart = text.indexOf("[");
+  if (arrayStart === -1) return null;
+  let lastCompleteObjEnd = -1;
+  let depth = 0;
+  for (let i = arrayStart; i < text.length; i++) {
+    if (text[i] === "{") depth++;
+    if (text[i] === "}") { depth--; if (depth === 0) lastCompleteObjEnd = i; }
+  }
+  if (lastCompleteObjEnd === -1) return null;
+  const salvaged = text.slice(0, lastCompleteObjEnd + 1) + "]}";
+  try { return JSON.parse(salvaged); } catch (e) { return null; }
+}
+
+const LS_KEY = "tf_state_v1";
+const LS_WORKER_URL_KEY = "tf_worker_url";
+
+// Baked in as a default so clearing site data / cache never disconnects the
+// app from its data — this is a fixed endpoint for this app, not something
+// that changes. Settings can still override it if it's ever redeployed elsewhere.
+const DEFAULT_WORKER_URL = "https://train-fuel.andy-p-ruiz.workers.dev";
+let WORKER_URL = localStorage.getItem(LS_WORKER_URL_KEY) || DEFAULT_WORKER_URL;
+let state = { settings: { startingLevels: { push: "intermediate", pull: "intermediate", legs: "intermediate", hinge: "intermediate", core: "intermediate", ruck: "intermediate" },
+  macroTargets: { calories: 2300, protein: 160, carbs: 200, fat: 70 } },
+  measurements: [], logs: [], cardioLogs: [], foodLogs: [], activeProgramId: null, weekAdjustment: 0,
+  progressLevels: { push: 1, pull: 1, legs: 1, hinge: 1, core: 1, ruck: 1 },
+  milestonesSeen: { weightLbs: [], workoutDays: [] }, celebrations: [] };
+let exercises = [];
+let programs = [];
+let saveTimer = null;
+
+function setSync(ok, label) {
+  document.getElementById("syncDot").classList.toggle("ok", ok);
+  document.getElementById("syncLabel").textContent = label;
+}
+
+async function apiFetch(path, opts) {
+  if (!WORKER_URL) throw new Error("no worker url configured");
+  const resp = await fetch(WORKER_URL.replace(/\/$/, "") + path, opts);
+  if (!resp.ok) throw new Error("request failed: " + resp.status);
+  return resp.json();
+}
+
+// ---- state load/save ----
+async function loadState() {
+  const cached = localStorage.getItem(LS_KEY);
+  if (cached) state = JSON.parse(cached);
+
+  if (!WORKER_URL) { setSync(false, "no worker configured — offline only"); return; }
+
+  try {
+    const remote = await apiFetch("/api/state", { method: "GET" });
+    if (remote && Object.keys(remote).length) {
+      state = remote;
+      localStorage.setItem(LS_KEY, JSON.stringify(state));
+    }
+    setSync(true, "synced");
+  } catch (e) {
+    setSync(false, "offline — using local cache");
+  }
+  if (!state.progressLevels) {
+    state.progressLevels = { push: 1, pull: 1, legs: 1, hinge: 1, core: 1, ruck: 1 };
+  }
+  if (typeof state.weekAdjustment !== "number") state.weekAdjustment = 0;
+  if (!state.settings) state.settings = {};
+  if (!state.settings.startingLevels) {
+    state.settings.startingLevels = { push: "intermediate", pull: "intermediate", legs: "intermediate", hinge: "intermediate", core: "intermediate", ruck: "intermediate" };
+  }
+  if (!state.cardioLogs) state.cardioLogs = [];
+  if (!state.foodLogs) state.foodLogs = [];
+  if (!state.milestonesSeen) state.milestonesSeen = { weightLbs: [], workoutDays: [] };
+  if (!state.celebrations) state.celebrations = [];
+  if (typeof state.welcomeBackDismissedDate !== "string") state.welcomeBackDismissedDate = "";
+  if (!state.settings.macroTargets) state.settings.macroTargets = { calories: 2300, protein: 160, carbs: 200, fat: 70 };
+}
+
+function saveStateLocal() {
+  localStorage.setItem(LS_KEY, JSON.stringify(state));
+}
+
+function saveStateRemote() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    if (!WORKER_URL) return;
+    try {
+      await apiFetch("/api/state", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(state),
+      });
+      setSync(true, "synced");
+    } catch (e) {
+      setSync(false, "offline — will retry");
+    }
+  }, 800);
+}
+
+function persist() {
+  saveStateLocal();
+  saveStateRemote();
+}
+
+// Bypasses the debounce entirely — for actions immediately followed by
+// something that might trigger a quick refresh (like a swap), where losing
+// the 800ms window could mean the change never reaches D1 before reload
+// silently overwrites local state with an older remote copy.
+async function persistNow() {
+  saveStateLocal();
+  clearTimeout(saveTimer);
+  if (!WORKER_URL) return;
+  try {
+    await apiFetch("/api/state", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(state),
+    });
+    setSync(true, "synced");
+  } catch (e) {
+    setSync(false, "offline — will retry");
+  }
+}
+
+// ---- exercise library ----
+const BUILTIN_EXERCISES = [
+  // ---- push: wall -> incline -> floor -> rings ----
+  { id: "wall-pushup", name: "Wall push-up", muscle_group: "push", equipment: "bodyweight", cue: "Hands on wall at shoulder height, straight line body." },
+  { id: "incline-pushup-high", name: "Incline push-up (high)", muscle_group: "push", equipment: "bodyweight", cue: "Hands on a counter/high surface, full range." },
+  { id: "incline-pushup", name: "Incline push-up", muscle_group: "push", equipment: "bodyweight", cue: "Hands on a bench/step, full range of motion." },
+  { id: "knee-pushup", name: "Knee push-up", muscle_group: "push", equipment: "bodyweight", cue: "Straight line knees-to-shoulders, chest to floor." },
+  { id: "pushup", name: "Push-up", muscle_group: "push", equipment: "bodyweight", cue: "Elbows ~45°, brace core, chest to floor." },
+  { id: "diamond-pushup", name: "Diamond push-up", muscle_group: "push", equipment: "bodyweight", cue: "Hands under chest, elbows track back." },
+  { id: "decline-pushup", name: "Decline push-up", muscle_group: "push", equipment: "bodyweight", cue: "Feet elevated on a chair/step, more load up top." },
+  { id: "archer-pushup", name: "Archer push-up", muscle_group: "push", equipment: "bodyweight", cue: "Shift weight to one side each rep, other arm stays long." },
+  { id: "pseudo-planche-pushup", name: "Pseudo planche push-up", muscle_group: "push", equipment: "bodyweight", cue: "Hands by hips, lean forward past your fingertips." },
+  { id: "one-arm-pushup-assisted", name: "One-arm push-up (assisted)", muscle_group: "push", equipment: "bodyweight", cue: "Other hand lightly on a ball/step for balance only." },
+  { id: "pike-pushup", name: "Pike push-up", muscle_group: "push", equipment: "bodyweight", cue: "Hips high, crown of head toward floor." },
+  { id: "decline-pike-pushup", name: "Decline pike push-up", muscle_group: "push", equipment: "bodyweight", cue: "Feet elevated, more load on shoulders." },
+  { id: "wall-handstand-hold", name: "Wall handstand hold", muscle_group: "push", equipment: "bodyweight", cue: "Chest or back to wall, brace and hold." },
+  { id: "handstand-pushup", name: "Wall handstand push-up", muscle_group: "push", equipment: "bodyweight", cue: "Chest to wall, controlled descent, press to lockout." },
+  { id: "ring-pushup-easy", name: "Ring push-up (feet forward)", muscle_group: "push", equipment: "rings", cue: "Body angled upright — easier version to learn ring stability." },
+  { id: "ring-pushup", name: "Ring push-up", muscle_group: "push", equipment: "rings", cue: "Elbows at 45°, turn rings out at lockout." },
+  { id: "ring-archer-pushup", name: "Ring archer push-up", muscle_group: "push", equipment: "rings", cue: "One ring stays high while the other descends." },
+  { id: "ring-typewriter-pushup", name: "Ring typewriter push-up", muscle_group: "push", equipment: "rings", cue: "Stay low, shift side to side without rising." },
+  { id: "ring-dip-supported", name: "Supported ring dip", muscle_group: "push", equipment: "rings", cue: "Feet on floor taking some weight, build dip control." },
+  { id: "ring-dip", name: "Ring dip", muscle_group: "push", equipment: "rings", cue: "Control the bottom, avoid shoulder roll." },
+  { id: "ring-dip-weighted", name: "Weighted ring dip", muscle_group: "push", equipment: "rings", cue: "Add load once bodyweight dips are smooth for reps." },
+  { id: "db-floor-press", name: "Dumbbell floor press", muscle_group: "push", equipment: "dumbbell", cue: "Upper arms touch floor lightly, press to lockout." },
+  { id: "db-overhead-press", name: "Dumbbell overhead press", muscle_group: "push", equipment: "dumbbell", cue: "Brace core, press straight overhead, avoid arching." },
+  { id: "push-board-press", name: "Push board press", muscle_group: "push", equipment: "push board", cue: "Full lockout, controlled tempo down." },
+
+  // ---- pull: dead hang -> bar -> rings ----
+  { id: "dead-hang", name: "Dead hang", muscle_group: "pull", equipment: "bar", cue: "Shoulders engaged, don't fully relax into the joint." },
+  { id: "active-hang", name: "Active hang", muscle_group: "pull", equipment: "bar", cue: "Pull shoulder blades down and back, hold." },
+  { id: "scap-pull", name: "Scapular pull-up", muscle_group: "pull", equipment: "bar", cue: "Pull shoulder blades down without bending elbows." },
+  { id: "band-assisted-pullup", name: "Band-assisted pull-up", muscle_group: "pull", equipment: "band", cue: "Band under knee/foot, full range each rep." },
+  { id: "negative-pullup", name: "Negative pull-up", muscle_group: "pull", equipment: "bar", cue: "Jump to top, lower for a slow 4-5 count." },
+  { id: "pullup", name: "Pull-up", muscle_group: "pull", equipment: "bar", cue: "Chin over bar, controlled descent." },
+  { id: "chinup", name: "Chin-up", muscle_group: "pull", equipment: "bar", cue: "Underhand grip, drive elbows down." },
+  { id: "archer-pullup", name: "Archer pull-up", muscle_group: "pull", equipment: "bar", cue: "Pull toward one hand, other arm stays extended." },
+  { id: "typewriter-pullup", name: "Typewriter pull-up", muscle_group: "pull", equipment: "bar", cue: "Hold at top, shift side to side without dropping." },
+  { id: "one-arm-pullup-assisted", name: "One-arm pull-up (band assisted)", muscle_group: "pull", equipment: "band", cue: "Band takes most of the load on the free side." },
+  { id: "ring-row-easy", name: "Ring row (feet forward)", muscle_group: "pull", equipment: "rings", cue: "More upright body angle — easier version." },
+  { id: "ring-row", name: "Ring row", muscle_group: "pull", equipment: "rings", cue: "Body straight, pull chest to hands." },
+  { id: "ring-row-feet-elevated", name: "Ring row (feet elevated)", muscle_group: "pull", equipment: "rings", cue: "Feet on a bench — more horizontal, more load." },
+  { id: "ring-pullup-assisted", name: "Ring pull-up (feet supported)", muscle_group: "pull", equipment: "rings", cue: "Feet lightly touching floor, build toward full ring pull-up." },
+  { id: "ring-pullup", name: "Ring pull-up", muscle_group: "pull", equipment: "rings", cue: "Rings add instability — brace through the whole pull." },
+  { id: "ring-archer-pullup", name: "Ring archer pull-up", muscle_group: "pull", equipment: "rings", cue: "Advanced — one arm dominant, other stays extended." },
+  { id: "inverted-row", name: "Inverted row", muscle_group: "pull", equipment: "bar", cue: "Body straight under a low bar, pull chest up." },
+  { id: "band-pull-apart", name: "Band pull-apart", muscle_group: "pull", equipment: "band", cue: "Squeeze shoulder blades, slow return." },
+  { id: "db-single-arm-row", name: "Single-arm dumbbell row", muscle_group: "pull", equipment: "dumbbell", cue: "Flat back, pull elbow past hip, no torso rotation." },
+  { id: "db-renegade-row", name: "Renegade row", muscle_group: "pull", equipment: "dumbbell", cue: "Plank position, minimize hip sway as you row." },
+  { id: "weighted-pullup", name: "Weighted pull-up", muscle_group: "pull", equipment: "dumbbell", cue: "Dumbbell between feet or on a belt, full range." },
+
+  // ---- legs: wall sit -> bodyweight -> pistol -> rings-assisted ----
+  { id: "wall-sit", name: "Wall sit", muscle_group: "legs", equipment: "bodyweight", cue: "Thighs parallel to floor, back flat against wall." },
+  { id: "box-squat-high", name: "Box squat (high box)", muscle_group: "legs", equipment: "bodyweight", cue: "Sit back to the box, stand tall each rep." },
+  { id: "bodyweight-squat", name: "Bodyweight squat", muscle_group: "legs", equipment: "bodyweight", cue: "Knees track toes, hips back and down." },
+  { id: "split-squat", name: "Split squat", muscle_group: "legs", equipment: "bodyweight", cue: "Torso upright, controlled descent." },
+  { id: "bulgarian-split-squat", name: "Bulgarian split squat", muscle_group: "legs", equipment: "bodyweight", cue: "Torso upright, front knee tracks toe." },
+  { id: "shrimp-squat", name: "Shrimp squat", muscle_group: "legs", equipment: "bodyweight", cue: "Back knee toward floor, stay controlled." },
+  { id: "ring-assisted-pistol", name: "Ring-assisted pistol squat", muscle_group: "legs", equipment: "rings", cue: "Hold rings lightly for balance, not to pull yourself up." },
+  { id: "box-pistol", name: "Box pistol squat", muscle_group: "legs", equipment: "bodyweight", cue: "Sit to a box on one leg, stand without the other foot helping." },
+  { id: "pistol-squat", name: "Pistol squat", muscle_group: "legs", equipment: "bodyweight", cue: "Full range on one leg, other leg stays extended." },
+  { id: "jump-squat", name: "Jump squat", muscle_group: "legs", equipment: "bodyweight", cue: "Soft landing, immediately reset stance." },
+  { id: "db-goblet-squat", name: "Goblet squat", muscle_group: "legs", equipment: "dumbbell", cue: "Hold weight at chest, elbows inside knees at bottom." },
+  { id: "db-lunge", name: "Dumbbell lunge", muscle_group: "legs", equipment: "dumbbell", cue: "Step long enough that front shin stays vertical." },
+  { id: "db-step-up", name: "Dumbbell step-up", muscle_group: "legs", equipment: "dumbbell", cue: "Drive through the heel of the working leg." },
+  { id: "db-weighted-pistol", name: "Weighted pistol squat", muscle_group: "legs", equipment: "dumbbell", cue: "Hold a dumbbell at chest once bodyweight pistols are smooth." },
+
+  // ---- hinge ----
+  { id: "glute-bridge", name: "Glute bridge", muscle_group: "hinge", equipment: "bodyweight", cue: "Squeeze glutes at top, avoid overarching low back." },
+  { id: "single-leg-glute-bridge", name: "Single-leg glute bridge", muscle_group: "hinge", equipment: "bodyweight", cue: "Hips level throughout, squeeze at top." },
+  { id: "hip-thrust-bw", name: "Bodyweight hip thrust", muscle_group: "hinge", equipment: "bodyweight", cue: "Shoulders on a bench, drive hips up." },
+  { id: "single-leg-rdl", name: "Single-leg RDL", muscle_group: "hinge", equipment: "bodyweight", cue: "Hinge at hip, flat back, slow eccentric." },
+  { id: "good-morning-bw", name: "Bodyweight good morning", muscle_group: "hinge", equipment: "bodyweight", cue: "Hinge from hips, soft knees, chest stays proud." },
+  { id: "nordic-curl-banded", name: "Banded nordic curl", muscle_group: "hinge", equipment: "band", cue: "Band assists the lower — lower as slow as you control." },
+  { id: "nordic-curl", name: "Nordic curl", muscle_group: "hinge", equipment: "bodyweight", cue: "Anchor ankles, lower under control as far as possible." },
+  { id: "db-rdl", name: "Dumbbell RDL", muscle_group: "hinge", equipment: "dumbbell", cue: "Dumbbells close to legs, hinge, flat back." },
+  { id: "db-deadlift", name: "Dumbbell deadlift", muscle_group: "hinge", equipment: "dumbbell", cue: "Brace before lifting, drive through heels." },
+  { id: "db-swing", name: "Dumbbell swing", muscle_group: "hinge", equipment: "dumbbell", cue: "Hip hinge power, not a squat — arms are just along for the ride." },
+
+  // ---- core: floor -> hanging -> rings ----
+  { id: "dead-bug", name: "Dead bug", muscle_group: "core", equipment: "bodyweight", cue: "Low back stays pressed to floor throughout." },
+  { id: "hollow-hold-tucked", name: "Hollow hold (tucked)", muscle_group: "core", equipment: "bodyweight", cue: "Knees tucked, low back pressed down — easier lever." },
+  { id: "hollow-hold", name: "Hollow body hold", muscle_group: "core", equipment: "bodyweight", cue: "Low back pressed to floor, legs extended." },
+  { id: "plank", name: "Plank", muscle_group: "core", equipment: "bodyweight", cue: "Straight line head to heels, ribs down." },
+  { id: "plank-shoulder-tap", name: "Plank shoulder taps", muscle_group: "core", equipment: "bodyweight", cue: "Minimize hip rotation with each tap." },
+  { id: "side-plank", name: "Side plank", muscle_group: "core", equipment: "bodyweight", cue: "Hips stacked and lifted, don't let them sag." },
+  { id: "hanging-knee-raise", name: "Hanging knee raise", muscle_group: "core", equipment: "bar", cue: "Avoid swinging, control the descent." },
+  { id: "hanging-leg-raise", name: "Hanging leg raise", muscle_group: "core", equipment: "bar", cue: "Legs straight, raise to at least parallel." },
+  { id: "toes-to-bar", name: "Toes to bar", muscle_group: "core", equipment: "bar", cue: "Control the swing, touch bar with control." },
+  { id: "ring-plank", name: "Ring plank", muscle_group: "core", equipment: "rings", cue: "Rings add instability — brace harder than a floor plank." },
+  { id: "ring-pike", name: "Ring pike", muscle_group: "core", equipment: "rings", cue: "Feet in rings, pike hips up keeping legs straight." },
+  { id: "ring-lsit-tucked", name: "Ring L-sit (tucked)", muscle_group: "core", equipment: "rings", cue: "Knees tucked to chest — easier lever than full L-sit." },
+  { id: "ring-lsit", name: "Ring L-sit", muscle_group: "core", equipment: "rings", cue: "Press rings down, legs straight out in front." },
+  { id: "ring-front-lever-tuck", name: "Tuck front lever", muscle_group: "core", equipment: "rings", cue: "Knees tucked tight, body horizontal, hollow the chest." },
+  { id: "db-weighted-situp", name: "Weighted sit-up", muscle_group: "core", equipment: "dumbbell", cue: "Hold weight at chest, control the descent." },
+  { id: "band-pallof-press", name: "Pallof press", muscle_group: "core", equipment: "band", cue: "Resist rotation — press straight out and back." },
+
+  // ---- ruck ----
+  { id: "ruck-walk", name: "Ruck walk", muscle_group: "ruck", equipment: "weighted pack", cue: "Upright posture, steady pace." },
+  { id: "ruck-stairs", name: "Ruck stairs", muscle_group: "ruck", equipment: "weighted pack", cue: "Controlled pace, drive through the whole foot." },
+  { id: "ruck-lunges", name: "Ruck walking lunges", muscle_group: "ruck", equipment: "weighted pack", cue: "Pack adds load — keep the same lunge form as unweighted." },
+  { id: "weighted-vest-carry", name: "Weighted vest carry", muscle_group: "ruck", equipment: "weighted vest", cue: "Steady breathing, tall posture." },
+  { id: "db-farmer-carry", name: "Farmer carry", muscle_group: "ruck", equipment: "dumbbell", cue: "Shoulders back, don't let the weight pull you forward." },
+  { id: "db-suitcase-carry", name: "Suitcase carry", muscle_group: "ruck", equipment: "dumbbell", cue: "Resist leaning away from the loaded side." },
+
+  // ---- push: dip line + planche line (gaps found vs r/bodyweightfitness RR + Fitloop) ----
+  { id: "parallel-bar-support-hold", name: "Parallel bar support hold", muscle_group: "push", equipment: "bar or rings", cue: "Arms locked, shoulders depressed away from ears." },
+  { id: "bench-dip", name: "Bench dip", muscle_group: "push", equipment: "bodyweight", cue: "Elbows track back, don't flare, lower under control." },
+  { id: "bar-negative-dip", name: "Negative dip", muscle_group: "push", equipment: "bar or rings", cue: "Jump or step to the top, lower for a slow 4-5 count." },
+  { id: "parallel-bar-dip", name: "Parallel bar dip", muscle_group: "push", equipment: "bar or rings", cue: "More stable on a fixed bar than rings — same movement either way." },
+  { id: "planche-lean", name: "Planche lean", muscle_group: "push", equipment: "bodyweight", cue: "Hands by hips, shift shoulders past hands, keep arms locked." },
+  { id: "tuck-planche", name: "Tuck planche", muscle_group: "push", equipment: "bodyweight", cue: "Knees tucked tight to chest, feet off floor, hips level with shoulders." },
+
+  // ---- pull: row variety, muscle-up line, back lever ----
+  { id: "archer-row", name: "Archer row", muscle_group: "pull", equipment: "rings", cue: "Pull toward one hand, other arm stays long and straight." },
+  { id: "skin-the-cat", name: "Skin the cat", muscle_group: "pull", equipment: "rings", cue: "Slow and controlled through the shoulders, stop if it pinches." },
+  { id: "muscle-up-negative", name: "Muscle-up negative", muscle_group: "pull", equipment: "rings", cue: "Start at the top, lower through the transition as slowly as possible." },
+  { id: "muscle-up", name: "Muscle-up", muscle_group: "pull", equipment: "rings", cue: "Pull high and fast, roll over the transition, avoid kipping early on." },
+  { id: "tuck-back-lever", name: "Tuck back lever", muscle_group: "pull", equipment: "rings", cue: "Knees tucked, body inverted and horizontal, control the entry and exit." },
+
+  // ---- legs: calf work was missing entirely, plus cossack squat ----
+  { id: "calf-raise", name: "Calf raise", muscle_group: "legs", equipment: "bodyweight", cue: "Full range, pause at the top, control the descent." },
+  { id: "cossack-squat", name: "Cossack squat", muscle_group: "legs", equipment: "bodyweight", cue: "Shift weight fully to one side, other leg stays straight." },
+  { id: "single-leg-calf-raise", name: "Single-leg calf raise", muscle_group: "legs", equipment: "bodyweight", cue: "Use a wall for balance only, not assistance." },
+
+  // ---- core: more skill-line variety ----
+  { id: "superman", name: "Superman", muscle_group: "core", equipment: "bodyweight", cue: "Lift chest and legs together, squeeze glutes, don't yank the neck." },
+  { id: "reverse-plank", name: "Reverse plank", muscle_group: "core", equipment: "bodyweight", cue: "Hips up, squeeze glutes, fingers pointed toward feet." },
+  { id: "copenhagen-plank", name: "Copenhagen plank", muscle_group: "core", equipment: "bodyweight", cue: "Top foot on a bench/couch edge, hips lifted and level." },
+  { id: "windshield-wipers", name: "Windshield wipers", muscle_group: "core", equipment: "bodyweight", cue: "Control the rotation both ways, shoulders stay flat." },
+  { id: "ring-ab-rollout", name: "Ring ab rollout", muscle_group: "core", equipment: "rings", cue: "Hollow position throughout, don't let the hips sag." },
+  { id: "dragon-flag", name: "Dragon flag", muscle_group: "core", equipment: "bodyweight", cue: "Only shoulders touch the bench, body stays a rigid straight line." },
+
+  // ---- push: more skill/explosive variety ----
+  { id: "elbow-lever", name: "Elbow lever", muscle_group: "core", equipment: "bodyweight", cue: "Elbows tucked into hip crease, lean forward until feet lift." },
+  { id: "plyo-pushup", name: "Plyo push-up", muscle_group: "push", equipment: "bodyweight", cue: "Explode hands off the floor, land soft with bent elbows." },
+  { id: "clapping-pushup", name: "Clapping push-up", muscle_group: "push", equipment: "bodyweight", cue: "Full extension before the clap, absorb the landing." },
+  { id: "one-arm-pushup", name: "One-arm push-up", muscle_group: "push", equipment: "bodyweight", cue: "Feet wide for a base, resist rotating the torso." },
+  { id: "handstand-walk", name: "Handstand walk", muscle_group: "push", equipment: "bodyweight", cue: "Small steps, look at the floor, ribs stacked over hips." },
+
+  // ---- pull: human flag line + one-arm pull-up line ----
+  { id: "band-assisted-human-flag", name: "Band-assisted human flag", muscle_group: "pull", equipment: "band", cue: "Top arm pushes, bottom arm pulls, band takes most of the load." },
+  { id: "tuck-human-flag", name: "Tuck human flag", muscle_group: "pull", equipment: "bar", cue: "Knees tucked tight, hips close to the pole, brace the obliques hard." },
+  { id: "one-arm-pullup-negative", name: "One-arm pull-up negative", muscle_group: "pull", equipment: "bar", cue: "Assist up with the other hand, lower on one arm as slow as possible." },
+  { id: "one-arm-pullup", name: "One-arm pull-up", muscle_group: "pull", equipment: "bar", cue: "Start dead hang, avoid swinging into the pull." },
+
+  // ---- legs & core: dynamic/explosive for variety in short sessions ----
+  { id: "broad-jump", name: "Broad jump", muscle_group: "legs", equipment: "bodyweight", cue: "Swing arms for momentum, land soft and stick it." },
+  { id: "jumping-lunge", name: "Jumping lunge", muscle_group: "legs", equipment: "bodyweight", cue: "Switch legs mid-air, land with control each side." },
+  { id: "burpee", name: "Burpee", muscle_group: "legs", equipment: "bodyweight", cue: "Chest to floor, explosive jump up, steady pace beats sloppy speed." },
+  { id: "mountain-climbers", name: "Mountain climbers", muscle_group: "core", equipment: "bodyweight", cue: "Hips stay low and level, drive knees in with control." },
+  { id: "bear-crawl", name: "Bear crawl", muscle_group: "core", equipment: "bodyweight", cue: "Knees hover just off the floor, opposite hand/foot move together." },
+  { id: "inchworm", name: "Inchworm", muscle_group: "core", equipment: "bodyweight", cue: "Walk hands out to a plank, walk feet up to hands, keep legs as straight as you can." },
+
+  // ---- hinge: bridge progression — a well-established category we had zero coverage of ----
+  { id: "wall-bridge", name: "Wall bridge", muscle_group: "hinge", equipment: "bodyweight", cue: "Walk hands down the wall toward the floor, breathe normally throughout." },
+  { id: "wheel-bridge", name: "Wheel bridge", muscle_group: "hinge", equipment: "bodyweight", cue: "Push through palms and feet, aim for an even upside-down U shape." },
+  { id: "full-bridge", name: "Full bridge", muscle_group: "hinge", equipment: "bodyweight", cue: "From standing, lean back with control until both palms touch down." },
+  { id: "stand-to-stand-bridge", name: "Stand-to-stand bridge", muscle_group: "hinge", equipment: "bodyweight", cue: "Only attempt once full bridges are solid — lean back to a bridge, then push back up to standing." },
+
+  // ---- core: rotational work ----
+  { id: "standing-twist", name: "Standing twist", muscle_group: "core", equipment: "bodyweight", cue: "Rotate from the torso, keep hips facing forward." },
+
+  // ---- pull: ring skill ----
+  { id: "ring-pullover", name: "Ring pullover", muscle_group: "pull", equipment: "rings", cue: "From a hang, pull and rotate up into a support position — go slow." },
+
+  // ---- mobility/prehab/rehab: a real category we had zero of, wired into
+  // warmup/cooldown selection below. Not part of the strength progression
+  // system (no muscle-group levels) since flexibility isn't tracked the
+  // same way as calisthenics skill difficulty.
+  { id: "arm-circles", name: "Arm circles", muscle_group: "mobility", equipment: "bodyweight", cue: "Small to large circles, both directions." },
+  { id: "shoulder-dislocates-band", name: "Shoulder dislocates", muscle_group: "mobility", equipment: "band", cue: "Wide grip, straight arms, pass the band over and back slowly." },
+  { id: "wall-slides", name: "Wall slides", muscle_group: "mobility", equipment: "bodyweight", cue: "Back flat against wall, slide arms up keeping contact throughout." },
+  { id: "scapular-wall-pushup", name: "Scapular wall push-up", muscle_group: "mobility", equipment: "bodyweight", cue: "Arms straight against wall, protract and retract shoulder blades only." },
+  { id: "doorway-chest-stretch", name: "Doorway chest stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Forearm on the frame, gently lean through until you feel the stretch." },
+  { id: "thread-the-needle", name: "Thread the needle", muscle_group: "mobility", equipment: "bodyweight", cue: "From all fours, thread one arm under the other, rotate through the upper back." },
+  { id: "wrist-circles", name: "Wrist circles", muscle_group: "mobility", equipment: "bodyweight", cue: "Both directions, then shake out." },
+  { id: "wrist-flexor-stretch", name: "Wrist flexor/extensor stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Straighten the arm, gently pull fingers back, then the reverse." },
+  { id: "childs-pose-reach", name: "Child's pose reach", muscle_group: "mobility", equipment: "bodyweight", cue: "Hips back to heels, walk hands out, sink the chest." },
+  { id: "cat-cow", name: "Cat-cow", muscle_group: "mobility", equipment: "bodyweight", cue: "Arch and round the spine slowly, following the breath." },
+  { id: "hip-90-90-stretch", name: "90/90 hip stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Both legs bent at 90°, lean forward over the front shin." },
+  { id: "worlds-greatest-stretch", name: "World's greatest stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Lunge, rotate toward the front leg, reach up — full body dynamic stretch." },
+  { id: "kneeling-hip-flexor-stretch", name: "Kneeling hip flexor stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Back knee down, squeeze the glute, shift weight forward gently." },
+  { id: "ankle-circles", name: "Ankle circles", muscle_group: "mobility", equipment: "bodyweight", cue: "Both directions each foot, then point and flex." },
+  { id: "wall-ankle-mobilization", name: "Wall ankle mobilization", muscle_group: "mobility", equipment: "bodyweight", cue: "Knee toward the wall without heel lifting, rock gently." },
+  { id: "deep-squat-hold", name: "Deep squat hold", muscle_group: "mobility", equipment: "bodyweight", cue: "Heels down, chest up, elbows can press knees out gently." },
+  { id: "pigeon-pose", name: "Pigeon pose", muscle_group: "mobility", equipment: "bodyweight", cue: "Front shin angled, hips square to the floor, fold forward." },
+  { id: "standing-hamstring-stretch", name: "Standing hamstring stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Soft knee, hinge from the hips, let the head hang." },
+
+  // ---- round 2: neck (desk job relevance), dedicated rotator cuff prehab
+  // (distinct from general shoulder mobility — this is injury prevention
+  // specifically for ring work), and lower-body stretches missed above ----
+  { id: "neck-circles", name: "Neck circles", muscle_group: "mobility", equipment: "bodyweight", cue: "Slow and controlled, both directions, stop if anything pinches." },
+  { id: "chin-tucks", name: "Chin tucks", muscle_group: "mobility", equipment: "bodyweight", cue: "Draw the chin straight back like making a double chin, hold briefly." },
+  { id: "neck-lateral-stretch", name: "Neck lateral stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Ear toward shoulder, light hand pressure only, never force it." },
+  { id: "prone-ytw-raise", name: "Prone Y-T-W raise", muscle_group: "mobility", equipment: "bodyweight", cue: "Face down, lift arms in a Y, then T, then W — thumbs up, squeeze the shoulder blades." },
+  { id: "band-external-rotation", name: "Band external rotation", muscle_group: "mobility", equipment: "band", cue: "Elbow pinned to your side at 90°, rotate the forearm out slowly." },
+  { id: "wall-angels", name: "Wall angels", muscle_group: "mobility", equipment: "bodyweight", cue: "Back and arms stay in contact with the wall as you slide up and down." },
+  { id: "standing-quad-stretch", name: "Standing quad stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Heel to glute, knees together, hold something for balance if needed." },
+  { id: "wall-calf-stretch", name: "Wall calf stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Back leg straight, heel down, lean into the wall." },
+  { id: "figure-4-glute-stretch", name: "Figure-4 glute stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Lying down, ankle crosses opposite knee, pull the thigh in gently." },
+  { id: "butterfly-stretch", name: "Butterfly stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Soles together, knees out, let gravity do the work — no bouncing." },
+  { id: "side-lunge-stretch", name: "Side lunge stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Sink into one side, other leg stays straight, feel the inner thigh." },
+  { id: "bird-dog", name: "Bird dog", muscle_group: "mobility", equipment: "bodyweight", cue: "Opposite arm and leg extend together, hips stay level, brief hold each side." },
+  { id: "thoracic-extension-chair", name: "Thoracic extension over a chair", muscle_group: "mobility", equipment: "bodyweight", cue: "Upper back over the chair edge, hands behind head, extend gently." },
+
+  // ---- from the Kavadlo brothers' (Al & Danny) well-documented progressions —
+  // real gaps confirmed against their published exercise lists ----
+  { id: "archer-pushup", name: "Archer push-up", muscle_group: "push", equipment: "bodyweight", cue: "Shift weight to one arm, the other stays straight and slides out to the side." },
+  { id: "archer-pullup", name: "Archer pull-up", muscle_group: "pull", equipment: "bar", cue: "Pull mostly with one arm, the other stays extended out to the side." },
+  { id: "toes-to-bar", name: "Toes to bar", muscle_group: "core", equipment: "bar", cue: "Straight legs the whole way, touch toes to the bar, lower with control." },
+  { id: "archer-squat", name: "Archer squat", muscle_group: "legs", equipment: "bodyweight", cue: "Shift weight to one leg, the other extends straight out to the side." },
+  { id: "hover-lunge", name: "Hover lunge", muscle_group: "legs", equipment: "bodyweight", cue: "Pause just above the floor at the bottom of the lunge before driving back up." },
+  { id: "l-sit-pullup", name: "L-sit pull-up", muscle_group: "pull", equipment: "bar", cue: "Hold the L-sit position throughout the entire pull, don't let the legs drop." },
+  { id: "l-sit-archer-pullup", name: "L-sit archer pull-up", muscle_group: "pull", equipment: "bar", cue: "Archer pull-up while maintaining the L-sit the whole way — very advanced." },
+];
+
+// Approximate difficulty level (1-5) per exercise, based on the progression
+// ladder each muscle group was authored as. Used only client-side to group
+// the swap picker into regressions/same-level/progressions — not stored in D1.
+const EXERCISE_LEVEL_MAP = {
+  // push
+  "wall-pushup": 1, "incline-pushup-high": 1, "incline-pushup": 2, "knee-pushup": 2,
+  "pushup": 3, "diamond-pushup": 3, "decline-pushup": 3, "archer-pushup": 4,
+  "pseudo-planche-pushup": 4, "one-arm-pushup-assisted": 4, "pike-pushup": 3,
+  "decline-pike-pushup": 4, "wall-handstand-hold": 4, "handstand-pushup": 5,
+  "ring-pushup-easy": 2, "ring-pushup": 3, "ring-archer-pushup": 4, "ring-typewriter-pushup": 5,
+  "ring-dip-supported": 2, "ring-dip": 3, "ring-dip-weighted": 5,
+  "db-floor-press": 3, "db-overhead-press": 3, "push-board-press": 3,
+  // pull
+  "dead-hang": 1, "active-hang": 1, "scap-pull": 2, "band-assisted-pullup": 2,
+  "negative-pullup": 2, "pullup": 3, "chinup": 3, "archer-pullup": 4,
+  "typewriter-pullup": 5, "one-arm-pullup-assisted": 4, "ring-row-easy": 2,
+  "ring-row": 3, "ring-row-feet-elevated": 4, "ring-pullup-assisted": 3,
+  "ring-pullup": 4, "ring-archer-pullup": 5, "inverted-row": 3, "band-pull-apart": 1,
+  "db-single-arm-row": 3, "db-renegade-row": 4, "weighted-pullup": 4,
+  // legs
+  "wall-sit": 1, "box-squat-high": 2, "bodyweight-squat": 3, "split-squat": 3,
+  "bulgarian-split-squat": 4, "shrimp-squat": 5, "ring-assisted-pistol": 2,
+  "box-pistol": 4, "pistol-squat": 5, "jump-squat": 3, "db-goblet-squat": 3,
+  "db-lunge": 3, "db-step-up": 3, "db-weighted-pistol": 5,
+  // hinge
+  "glute-bridge": 1, "single-leg-glute-bridge": 2, "hip-thrust-bw": 2,
+  "single-leg-rdl": 3, "good-morning-bw": 3, "nordic-curl-banded": 3,
+  "nordic-curl": 5, "db-rdl": 3, "db-deadlift": 3, "db-swing": 4,
+  // core
+  "dead-bug": 1, "hollow-hold-tucked": 2, "hollow-hold": 3, "plank": 3,
+  "plank-shoulder-tap": 3, "side-plank": 3, "hanging-knee-raise": 3,
+  "hanging-leg-raise": 4, "toes-to-bar": 5, "ring-plank": 3, "ring-pike": 4,
+  "ring-lsit-tucked": 3, "ring-lsit": 5, "ring-front-lever-tuck": 5,
+  "db-weighted-situp": 3, "band-pallof-press": 2,
+  // ruck
+  "ruck-walk": 2, "ruck-stairs": 3, "ruck-lunges": 3, "weighted-vest-carry": 2,
+  "db-farmer-carry": 3, "db-suitcase-carry": 3,
+  // new: dip/planche line
+  "parallel-bar-support-hold": 1, "bench-dip": 2, "bar-negative-dip": 2,
+  "parallel-bar-dip": 3, "planche-lean": 3, "tuck-planche": 5,
+  // new: rows/muscle-up/back lever
+  "archer-row": 4, "skin-the-cat": 3, "muscle-up-negative": 4, "muscle-up": 5,
+  "tuck-back-lever": 5,
+  // new: legs
+  "calf-raise": 1, "cossack-squat": 3, "single-leg-calf-raise": 3,
+  // new: core
+  "superman": 1, "reverse-plank": 2, "copenhagen-plank": 4,
+  "windshield-wipers": 4, "ring-ab-rollout": 4, "dragon-flag": 5,
+  // new: skill/explosive variety
+  "elbow-lever": 4, "plyo-pushup": 4, "clapping-pushup": 4, "one-arm-pushup": 5,
+  "handstand-walk": 5, "band-assisted-human-flag": 4, "tuck-human-flag": 5,
+  "one-arm-pullup-negative": 5, "one-arm-pullup": 5,
+  "broad-jump": 3, "jumping-lunge": 4, "burpee": 2,
+  "mountain-climbers": 2, "bear-crawl": 2, "inchworm": 1,
+  "wall-bridge": 1, "wheel-bridge": 3, "full-bridge": 4, "stand-to-stand-bridge": 5,
+  "standing-twist": 1, "ring-pullover": 4,
+  "archer-pushup": 4, "archer-pullup": 4, "toes-to-bar": 4,
+  "archer-squat": 3, "hover-lunge": 3, "l-sit-pullup": 4, "l-sit-archer-pullup": 5,
+};
+
+function levelOf(exerciseIdOrName) {
+  // accepts either a library id or falls back to matching by name
+  if (EXERCISE_LEVEL_MAP[exerciseIdOrName] !== undefined) return EXERCISE_LEVEL_MAP[exerciseIdOrName];
+  const match = exercises.find(x => x.name === exerciseIdOrName || x.id === exerciseIdOrName);
+  return match ? (EXERCISE_LEVEL_MAP[match.id] ?? 3) : 3;
+}
+
+// Static holds — their "reps" field represents seconds to hold, not a rep count.
+const HOLD_EXERCISE_IDS = new Set([
+  "wall-sit", "dead-hang", "active-hang", "wall-handstand-hold", "plank", "side-plank",
+  "ring-plank", "ring-lsit-tucked", "ring-lsit", "ring-front-lever-tuck",
+  "hollow-hold-tucked", "hollow-hold",
+  "parallel-bar-support-hold", "planche-lean", "tuck-planche", "tuck-back-lever",
+  "reverse-plank", "copenhagen-plank", "elbow-lever", "tuck-human-flag",
+  "band-assisted-human-flag", "wheel-bridge", "full-bridge",
+  "doorway-chest-stretch", "wrist-flexor-stretch", "childs-pose-reach",
+  "hip-90-90-stretch", "kneeling-hip-flexor-stretch", "deep-squat-hold",
+  "pigeon-pose", "standing-hamstring-stretch",
+  "neck-lateral-stretch", "standing-quad-stretch", "wall-calf-stretch",
+  "figure-4-glute-stretch", "butterfly-stretch", "side-lunge-stretch",
+  "thoracic-extension-chair",
+]);
+
+function isHoldExercise(exerciseIdOrName) {
+  if (HOLD_EXERCISE_IDS.has(exerciseIdOrName)) return true;
+  const match = exercises.find(x => x.name === exerciseIdOrName || x.id === exerciseIdOrName);
+  return match ? HOLD_EXERCISE_IDS.has(match.id) : false;
+}
+
+async function loadExercises() {
+  if (WORKER_URL) {
+    try {
+      exercises = await apiFetch("/api/exercises", { method: "GET" });
+      const existingById = new Map(exercises.map(e => [e.id, e]));
+      const toSync = BUILTIN_EXERCISES.filter(e => {
+        const existing = existingById.get(e.id);
+        if (!existing) return true; // missing entirely
+        // also re-sync if a field has drifted from the current library definition
+        return existing.name !== e.name || existing.muscle_group !== e.muscle_group ||
+               existing.equipment !== e.equipment || existing.cue !== e.cue;
+      });
+      for (const ex of toSync) {
+        await apiFetch("/api/exercises", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...ex, source: "builtin" }),
+        });
+      }
+      if (toSync.length) exercises = await apiFetch("/api/exercises", { method: "GET" });
+      return;
+    } catch (e) { /* fall through to local */ }
+  }
+  exercises = BUILTIN_EXERCISES.map(e => ({ ...e, source: "builtin", locked: 1 }));
+}
+
+function levelBucket(level) {
+  if (level <= 2) return "beginner";
+  if (level === 3) return "standard";
+  return "advanced";
+}
+
+function equipmentBucket(equipment) {
+  const e = (equipment || "bodyweight").toLowerCase();
+  if (e.includes("ring")) return "rings";
+  if (e.includes("dumbbell")) return "dumbbell";
+  if (e.includes("bar") && !e.includes("bodyweight")) return "bar"; // catches "bar", "bar or rings", "parallel bars"
+  if (e.includes("band")) return "band";
+  return "bodyweight";
+}
+
+function renderExercises(filterText = "", muscleGroup = "all", levelFilter = "all", equipFilter = "all") {
+  const list = document.getElementById("exerciseList");
+  const filtered = exercises.filter(e => {
+    const matchesText = e.name.toLowerCase().includes(filterText.toLowerCase());
+    const matchesMg = muscleGroup === "all" || e.muscle_group === muscleGroup;
+    const matchesLevel = levelFilter === "all" || levelBucket(levelOf(e.id)) === levelFilter;
+    const matchesEquip = equipFilter === "all" || equipmentBucket(e.equipment) === equipFilter;
+    return matchesText && matchesMg && matchesLevel && matchesEquip;
+  });
+  if (!filtered.length) { list.innerHTML = '<div class="empty">No matches.</div>'; return; }
+
+  const groups = {};
+  filtered.forEach(e => { (groups[e.muscle_group] ||= []).push(e); });
+  const isFiltering = !!filterText || muscleGroup !== "all" || levelFilter !== "all" || equipFilter !== "all";
+
+  list.innerHTML = Object.entries(groups).map(([mg, items]) => `
+    <details class="exercise-group" ${isFiltering ? "open" : ""}>
+      <summary>${mg} <span class="meta" style="display:inline;">(${items.length})</span></summary>
+      <div style="padding-top:4px;">
+        ${items.map(e => `
+          <div class="list-item">
+            <div>
+              <div class="name">${e.name}</div>
+              <div class="meta">${e.equipment || "bodyweight"}${e.source === "builtin" ? "" : " · " + e.source}</div>
+              ${howToHtml("lib-" + e.id, e.name, e.cue)}
+            </div>
+            ${e.source !== "builtin" ? `<button class="danger-link" data-del-ex="${e.id}">Delete</button>` : ""}
+          </div>
+        `).join("")}
+      </div>
+    </details>
+  `).join("");
+}
+
+// ---- programs ----
+async function loadPrograms() {
+  if (WORKER_URL) {
+    try { programs = await apiFetch("/api/programs", { method: "GET" }); return; }
+    catch (e) { /* fall through */ }
+  }
+  programs = [];
+}
+
+function renderPrograms() {
+  const list = document.getElementById("programList");
+  if (!programs.length) { list.innerHTML = '<div class="empty">None yet.</div>'; return; }
+  list.innerHTML = programs.map(p => `
+    <div class="list-item" style="flex-direction:column; align-items:stretch;">
+      <div class="name">${p.name}</div>
+      <div class="meta">${p.duration_weeks} weeks · ${p.source}${state.activeProgramId === p.id ? " · active" : ""}</div>
+      <div class="row" style="margin-top:10px;">
+        <button class="secondary" data-preview-program="${p.id}" style="padding:6px 10px; font-size:13px;">Preview</button>
+        <button class="secondary" data-use-program="${p.id}" style="padding:6px 10px; font-size:13px;">Use</button>
+        <button class="danger-link" data-del-program="${p.id}" style="margin-left:auto;">Delete</button>
+      </div>
+      <div class="preview-panel hidden" data-preview-panel="${p.id}" style="margin-top:10px;"></div>
+    </div>
+  `).join("");
+  renderActiveProgramInfo();
+}
+
+function renderProgramPreview(program) {
+  const phases = program.structure.phases || [];
+  if (!phases.length) return '<div class="empty">No phase structure found for this program.</div>';
+  return phases.map(ph => `
+    <div style="border-top:1px solid var(--border); padding-top:8px; margin-top:8px;">
+      <div class="name">${ph.phase} · weeks ${ph.week_start}-${ph.week_end}${ph.deload_weeks?.length ? ` (deload: wk ${ph.deload_weeks.join(", ")})` : ""}</div>
+      ${(ph.days || []).map(d => `
+        <div class="meta" style="margin-top:6px;"><strong style="color:var(--text);">${d.day}</strong></div>
+        <div class="meta">${(d.slots || []).map(s => `${s.muscle_group} ${s.sets}×${s.reps}`).join(" · ")}</div>
+      `).join("")}
+    </div>
+  `).join("");
+}
+
+// Compares actual weight trend from logged measurements against a target
+// recomp pace (0.5-0.75% bodyweight/week). Suggests a calorie nudge — from
+// carbs only — rather than changing anything automatically.
+function computeMacroSuggestion() {
+  const ms = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+  if (ms.length < 2) return null;
+  const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
+  const recent = ms.filter(m => new Date(m.date).getTime() >= cutoff);
+  const windowSet = recent.length >= 2 ? recent : ms.slice(-2);
+  if (windowSet.length < 2) return null;
+
+  const first = windowSet[0], last = windowSet[windowSet.length - 1];
+  const days = (new Date(last.date) - new Date(first.date)) / (24 * 60 * 60 * 1000);
+  if (days < 5) return null; // not enough spread to trust a rate yet
+
+  const pctChangeTotal = ((last.weight - first.weight) / first.weight) * 100;
+  const pctPerWeek = pctChangeTotal * (7 / days);
+  const targetMin = -0.75, targetMax = -0.5; // % per week, negative = loss
+
+  const t = state.settings.macroTargets || {};
+  if (pctPerWeek > targetMax) {
+    // losing slower than target (or gaining) — trim calories
+    return {
+      message: `Losing about ${Math.abs(pctPerWeek).toFixed(2)}%/week — slower than the ${Math.abs(targetMax)}-${Math.abs(targetMin)}% target range. Suggest trimming ~125 cal (from carbs).`,
+      deltaCalories: -125,
+    };
+  }
+  if (pctPerWeek < targetMin) {
+    // losing faster than target — likely muscle loss risk, add calories back
+    return {
+      message: `Losing about ${Math.abs(pctPerWeek).toFixed(2)}%/week — faster than the ${Math.abs(targetMax)}-${Math.abs(targetMin)}% target range, which risks muscle loss. Suggest adding ~125 cal back (to carbs).`,
+      deltaCalories: 125,
+    };
+  }
+  return { message: `On pace at ${Math.abs(pctPerWeek).toFixed(2)}%/week — right in the ${Math.abs(targetMax)}-${Math.abs(targetMin)}% recomp target range. No change suggested.`, deltaCalories: 0 };
+}
+
+async function applyMacroSuggestion(delta) {
+  const t = state.settings.macroTargets;
+  t.calories = Math.max(0, (t.calories || 0) + delta);
+  t.carbs = Math.max(0, (t.carbs || 0) + Math.round(delta / 4));
+  await persistNow();
+  renderMacroSummary();
+  renderWeeklyReview();
+  document.getElementById("targetCalories").value = t.calories;
+  document.getElementById("targetCarbs").value = t.carbs;
+}
+
+const REASON_SUGGESTIONS = {
+  "Traveling": "Cross-training and short bodyweight-only sessions travel well — lean on those when your routine is disrupted.",
+  "Poor sleep": "Sleep debt affects appetite regulation and recovery — worth prioritizing wind-down when you can.",
+  "Missed workout": "A shorter session beats a skipped one — even one exercise keeps the rotation moving.",
+  "Missed cross-training": "A short walk still counts, even if it's not the full planned distance.",
+  "Didn't track food": "Logging roughly (Quick-add/manual entry) beats not logging at all on your busiest days.",
+  "Alcohol": "Alcohol adds calories and can affect sleep/recovery quality on top of that.",
+  "Stress": "Stress affects both appetite and water retention — a change here isn't necessarily fat gained or lost.",
+  "Illness": "Weight loss from being sick isn't the kind of progress to chase — let this one reset once you're recovered.",
+  "Dehydration/low water intake": "A large drop from dehydration is water, not fat — rehydrating usually reverses it within a day or two.",
+  "Big workout": "A very demanding session can shift water short-term — this should settle back within a few days.",
+  "Didn't eat much": "Under-eating occasionally happens, but consistently skipping meals can work against the muscle-building side of this.",
+};
+
+function computeDaysSinceLastActivity() {
+  const dates = [];
+  (state.logs || []).forEach(l => dates.push(new Date(l.date)));
+  (state.cardioLogs || []).forEach(c => dates.push(new Date(c.date)));
+  if (!dates.length) return null;
+  const mostRecent = new Date(Math.max(...dates.map(d => d.getTime())));
+  const today = new Date();
+  const gap = Math.floor((new Date(today.toDateString()) - new Date(mostRecent.toDateString())) / (24 * 60 * 60 * 1000));
+  return gap;
+}
+
+function renderWelcomeBackBanner() {
+  const el = document.getElementById("welcomeBackBanner");
+  if (!el) return;
+  const gap = computeDaysSinceLastActivity();
+  const today = localDateStr();
+  if (gap === null || gap < 3 || state.welcomeBackDismissedDate === today) {
+    el.classList.add("hidden");
+    return;
+  }
+  el.classList.remove("hidden");
+  el.innerHTML = `
+    <div class="card">
+      <div class="meta" style="color:var(--text);">Welcome back — it's been ${gap} days. Nothing's changed or been lost; your program picked up right where you left off.</div>
+      <button class="danger-link" id="dismissWelcomeBackBtn" style="margin-top:6px;">Dismiss</button>
+    </div>`;
+  document.getElementById("dismissWelcomeBackBtn").addEventListener("click", async () => {
+    state.welcomeBackDismissedDate = today;
+    await persistNow();
+    renderWelcomeBackBanner();
+  });
+}
+
+// ---- streaks, journey stats, and celebrations ----
+function computeStreaks() {
+  const activeDays = new Set();
+  (state.logs || []).forEach(l => activeDays.add(new Date(l.date).toDateString()));
+  (state.cardioLogs || []).forEach(c => activeDays.add(new Date(c.date).toDateString()));
+  if (!activeDays.size) return { current: 0, longest: 0 };
+
+  let d = new Date();
+  if (!activeDays.has(d.toDateString())) d.setDate(d.getDate() - 1); // today not logged yet — check from yesterday
+  let current = 0;
+  while (activeDays.has(d.toDateString())) {
+    current++;
+    d.setDate(d.getDate() - 1);
+  }
+
+  const sortedDays = [...activeDays].map(s => new Date(s)).sort((a, b) => a - b);
+  let longest = 0, run = 0, prev = null;
+  sortedDays.forEach(day => {
+    if (prev && Math.round((day - prev) / 86400000) === 1) run++;
+    else run = 1;
+    longest = Math.max(longest, run);
+    prev = day;
+  });
+  return { current, longest: Math.max(longest, current) };
+}
+
+function computeJourneyStats() {
+  const totalWorkoutDays = new Set((state.logs || []).map(l => new Date(l.date).toDateString())).size;
+  const totalCardioSessions = (state.cardioLogs || []).length;
+  const totalCardioDistance = (state.cardioLogs || []).reduce((sum, c) => sum + (c.distance || 0), 0);
+  const totalCardioMinutes = (state.cardioLogs || []).reduce((sum, c) => sum + (c.duration || 0), 0);
+  const measurements = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+  const weightChange = measurements.length >= 2 ? (measurements[measurements.length - 1].weight - measurements[0].weight) : null;
+  const firstDate = measurements[0]?.date || null;
+  const streaks = computeStreaks();
+  return { totalWorkoutDays, totalCardioSessions, totalCardioDistance, totalCardioMinutes, weightChange, firstDate, ...streaks };
+}
+
+function pushCelebration(msg) {
+  state.celebrations = state.celebrations || [];
+  state.celebrations.push(msg);
+}
+
+// Called after a workout logs — checks for level-ups and workout-count milestones.
+function checkWorkoutMilestones(oldLevels) {
+  MUSCLE_GROUPS.forEach(mg => {
+    if ((state.progressLevels[mg] || 1) > (oldLevels[mg] || 1)) {
+      pushCelebration(`${mg.charAt(0).toUpperCase() + mg.slice(1)} leveled up to ${state.progressLevels[mg]}!`);
+    }
+  });
+  const totalWorkoutDays = new Set((state.logs || []).map(l => new Date(l.date).toDateString())).size;
+  const workoutMilestones = [10, 25, 50, 100, 150, 200, 250, 300, 365];
+  workoutMilestones.forEach(m => {
+    if (totalWorkoutDays >= m && !state.milestonesSeen.workoutDays.includes(m)) {
+      state.milestonesSeen.workoutDays.push(m);
+      pushCelebration(`${m} workout days logged — real consistency.`);
+    }
+  });
+}
+
+// Called after logging weight — checks for total-loss milestones from your first entry.
+function checkWeightMilestones() {
+  const measurements = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+  if (measurements.length < 2) return;
+  const totalLoss = measurements[0].weight - measurements[measurements.length - 1].weight;
+  const weightMilestones = [5, 10, 15, 20, 25, 30, 40, 50];
+  weightMilestones.forEach(m => {
+    if (totalLoss >= m && !state.milestonesSeen.weightLbs.includes(m)) {
+      state.milestonesSeen.weightLbs.push(m);
+      pushCelebration(`${m}lb down since you started — keep going.`);
+    }
+  });
+}
+
+function renderCelebrations() {
+  const el = document.getElementById("celebrationBanner");
+  if (!el) return;
+  if (!state.celebrations || !state.celebrations.length) { el.classList.add("hidden"); return; }
+  el.classList.remove("hidden");
+  el.innerHTML = `
+    <div class="card" style="border-left-color:var(--gold);">
+      ${state.celebrations.map(c => `<div class="meta" style="color:var(--text); margin-bottom:4px;">🎉 ${c}</div>`).join("")}
+      <button class="danger-link" id="dismissCelebrationsBtn" style="margin-top:4px;">Dismiss</button>
+    </div>`;
+  document.getElementById("dismissCelebrationsBtn").addEventListener("click", async () => {
+    state.celebrations = [];
+    await persistNow();
+    renderCelebrations();
+  });
+}
+
+function computeWeightCheckInSummary() {
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const recent = (state.measurements || []).filter(m => new Date(m.date).getTime() >= weekAgo && m.reasons && m.reasons.length);
+  if (!recent.length) return null;
+  const counts = {};
+  recent.forEach(m => m.reasons.forEach(r => { counts[r] = (counts[r] || 0) + 1; }));
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  return sorted.map(([reason, count]) => ({ reason, count, suggestion: REASON_SUGGESTIONS[reason] || "" }));
+}
+
+// Long-term view across ALL history, not just this week — a reason only
+// counts as a "pattern" once it's shown up more than once, so a single
+// one-off mention doesn't get over-weighted.
+function computeReasonPatterns() {
+  const all = (state.measurements || []).filter(m => m.reasons && m.reasons.length);
+  if (!all.length) return null;
+  const byReason = {};
+  all.forEach(m => {
+    const dir = m.checkInDirection === "down" ? "down" : "up";
+    m.reasons.forEach(r => {
+      if (!byReason[r]) byReason[r] = { up: 0, down: 0 };
+      byReason[r][dir]++;
+    });
+  });
+  const patterns = Object.entries(byReason)
+    .map(([reason, counts]) => ({ reason, ...counts, total: counts.up + counts.down }))
+    .filter(p => p.total >= 2)
+    .sort((a, b) => b.total - a.total);
+  return patterns.length ? patterns : null;
+}
+
+function renderReasonPatterns() {
+  const el = document.getElementById("reasonPatterns");
+  const patterns = computeReasonPatterns();
+  if (!patterns) { el.innerHTML = '<div class="empty">Not enough repeated reasons yet to spot a pattern.</div>'; return; }
+  el.innerHTML = patterns.map(p => {
+    const parts = [];
+    if (p.up) parts.push(`${p.up}× upticks`);
+    if (p.down) parts.push(`${p.down}× big drops`);
+    return `<div class="list-item"><div><div class="name">${p.reason}</div><div class="meta">${parts.join(" · ")}</div></div></div>`;
+  }).join("");
+}
+
+function renderWeeklyReview() {
+  const el = document.getElementById("weeklyReview");
+  const program = programs.find(p => p.id === state.activeProgramId);
+  const weekNumber = computeWeekNumber();
+  let phaseLabel = "no active program";
+  let deloadNote = "";
+  if (program) {
+    const { phase } = currentPhaseFor(program);
+    phaseLabel = phase?.phase || "n/a";
+    if (phase?.deload_weeks?.includes(weekNumber)) deloadNote = " · deload week";
+  }
+
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const recentLogs = (state.logs || []).filter(l => new Date(l.date).getTime() >= weekAgo);
+  const counts = { max: 0, hold: 0, missed: 0 };
+  recentLogs.forEach(l => { if (counts[l.result] !== undefined) counts[l.result]++; });
+
+  const suggestion = computeMacroSuggestion();
+  const checkInSummary = computeWeightCheckInSummary();
+
+  el.innerHTML = `
+    <div class="meta">Week ${weekNumber} · ${phaseLabel}${deloadNote}</div>
+    <div class="meta" style="margin-top:6px;">Last 7 days: ${recentLogs.length} exercises logged
+    (${counts.max} hit max, ${counts.hold} as prescribed, ${counts.missed} missed)</div>
+    ${suggestion ? `
+      <div class="meta" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">${suggestion.message}</div>
+      ${suggestion.deltaCalories !== 0 ? `<button class="secondary" id="applyMacroSuggestionBtn" style="margin-top:8px; width:100%;">Apply suggestion</button>` : ""}
+    ` : `<div class="meta" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">Log at least two weigh-ins about a week apart to get a calorie-pace suggestion here.</div>`}
+    ${checkInSummary ? `
+      <div class="meta" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
+        <strong style="color:var(--text);">This week's weight upticks were linked to:</strong>
+      </div>
+      ${checkInSummary.map(c => `
+        <div class="meta" style="margin-top:6px;">${c.reason} (${c.count})${c.suggestion ? ` — ${c.suggestion}` : ""}</div>
+      `).join("")}
+    ` : ""}
+    <div class="row" style="margin-top:10px;">
+      <button class="secondary" id="repeatWeekBtn" style="flex:1;">Repeat this week</button>
+      <button class="secondary" id="advanceWeekBtn" style="flex:1;">Advance a week</button>
+    </div>
+    ${state.weekAdjustment ? `<button class="danger-link" id="resetWeekBtn" style="margin-top:6px;">Reset to actual date (currently offset ${state.weekAdjustment > 0 ? "+" : ""}${state.weekAdjustment})</button>` : ""}
+  `;
+
+  if (suggestion && suggestion.deltaCalories !== 0) {
+    document.getElementById("applyMacroSuggestionBtn").addEventListener("click", () => applyMacroSuggestion(suggestion.deltaCalories));
+  }
+
+  document.getElementById("repeatWeekBtn").addEventListener("click", async () => {
+    state.weekAdjustment = (state.weekAdjustment || 0) - 1;
+    state.pendingWorkout = null;
+    await persistNow();
+    renderWeeklyReview();
+    if (program) ensureWorkoutReady(program);
+  });
+  document.getElementById("advanceWeekBtn").addEventListener("click", async () => {
+    state.weekAdjustment = (state.weekAdjustment || 0) + 1;
+    state.pendingWorkout = null;
+    await persistNow();
+    renderWeeklyReview();
+    if (program) ensureWorkoutReady(program);
+  });
+  const resetBtn = document.getElementById("resetWeekBtn");
+  if (resetBtn) resetBtn.addEventListener("click", async () => {
+    state.weekAdjustment = 0;
+    state.pendingWorkout = null;
+    await persistNow();
+    renderWeeklyReview();
+    if (program) ensureWorkoutReady(program);
+  });
+}
+
+function renderActiveProgramInfo() {
+  renderWelcomeBackBanner();
+  const headerName = document.getElementById("headerProgramName");
+  const active = programs.find(p => p.id === state.activeProgramId);
+  const genBtn = document.getElementById("genWorkoutBtn");
+  if (!active) {
+    headerName.textContent = "No active program";
+    genBtn.disabled = true;
+    document.getElementById("todayWorkout").innerHTML = '<div class="empty">Pick an active program first.</div>';
+    renderWeeklyReview();
+    return;
+  }
+  headerName.textContent = active.name;
+  genBtn.disabled = false;
+  genBtn.textContent = "Regenerate";
+  ensureWorkoutReady(active);
+  renderWeeklyReview();
+}
+
+function phaseKeyFor(program, phase) {
+  return `${program.id}:${phase?.phase}-${phase?.week_start}-${phase?.week_end}`;
+}
+
+// The "current" workout persists until you log a result for it — training
+// cadence is driven by completion, not calendar days, so rest days (or
+// skipped days) never throw the rotation out of sync.
+async function ensureWorkoutReady(program) {
+  const { phase, weekNumber } = currentPhaseFor(program);
+  const key = phaseKeyFor(program, phase);
+
+  if (state.pendingWorkout && state.pendingWorkout.programId === program.id &&
+      state.pendingWorkout.phaseKey === key && !state.pendingWorkout.completed) {
+    renderTodayWorkout(state.pendingWorkout.workout);
+    return;
+  }
+
+  const box = document.getElementById("todayWorkout");
+  box.innerHTML = '<div class="empty">Generating your next workout…</div>';
+  try {
+    const totalDays = (phase?.days || []).length || 1;
+    let nextIndex = 0;
+    if (state.pendingWorkout && state.pendingWorkout.programId === program.id &&
+        state.pendingWorkout.phaseKey === key && state.pendingWorkout.completed) {
+      nextIndex = (state.pendingWorkout.dayIndex + 1) % totalDays;
+    }
+    const workout = await generateTodayWorkout(program, nextIndex);
+    state.pendingWorkout = { programId: program.id, phaseKey: key, dayIndex: nextIndex, workout, completed: false };
+    await persistNow();
+    renderTodayWorkout(workout);
+  } catch (err) {
+    box.innerHTML = `<div class="empty">Couldn't auto-generate (${err.message}). Use the button below to retry.</div>`;
+  }
+}
+
+// ---- AI generation ----
+async function generateProgram(months, focus) {
+  const weeks = months * 4;
+  const system = `You design structured fitness programs as pure muscle-group slot
+plans, never fixed exercise names — that lets the app swap in different exercises
+each week from the user's library while still counting the right muscle groups
+toward progression. Compress the program into PHASES (e.g. foundation, build,
+peak) rather than writing out every individual week — most weeks within a phase
+share the same day/slot template, so this keeps output compact even for a
+12-month program. Respond with ONLY valid JSON, no prose, no markdown fences.`;
+  const prompt = `Design a ${weeks}-week program${focus ? " focused on: " + focus : ""}.
+Output JSON exactly in this shape:
+{"name": "string", "phases": [{"phase": "string label", "week_start": 1, "week_end": 8, "deload_weeks": [4], "days": [{"day": "string label", "slots": [{"muscle_group": "push|pull|legs|hinge|core|ruck", "sets": 3, "reps": "8-12"}]}]}]}
+Use as many phases as make sense for ${weeks} weeks (roughly one phase per 4-8 weeks),
+with each phase's day/slot template reflecting that phase's focus and difficulty
+(e.g. higher reps early, lower reps + more sets later). deload_weeks lists week
+numbers WITHIN that phase's range that should be lighter.`;
+  const data = await apiFetch("/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ system, prompt, max_tokens: 8000 }),
+  });
+  const text = data.content?.[0]?.text || "{}";
+  const structure = extractJson(text);
+  const program = {
+    id: "prog-" + Date.now(),
+    name: structure.name || `${months}-month program`,
+    duration_weeks: weeks,
+    source: "ai",
+    structure,
+  };
+  await apiFetch("/api/programs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(program),
+  });
+  return program;
+}
+
+function computeWeekNumber() {
+  const startDate = state.settings?.startDate ? new Date(state.settings.startDate) : new Date();
+  const raw = Math.floor((Date.now() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1;
+  return Math.max(1, raw + (state.weekAdjustment || 0));
+}
+
+function currentPhaseFor(program) {
+  const phases = program.structure.phases || [];
+  const weekNumber = computeWeekNumber();
+  const phase = phases.find(p => weekNumber >= p.week_start && weekNumber <= p.week_end) || phases[phases.length - 1] || phases[0];
+  return { phase, weekNumber };
+}
+
+async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
+  const recentFromHistory = (state.logs || []).slice(-15).map(l => l.exercise);
+  const recentNames = [...new Set([...avoidNames, ...recentFromHistory])].join(", ");
+  const levels = state.progressLevels;
+  // Hard cap: never hand the AI an exercise harder than the person's current
+  // tracked level for that muscle group. Previously the full ~170-exercise
+  // library (spanning levels 1-5) was passed with only a soft "scale
+  // difficulty" instruction, which is how advanced moves like "Archer
+  // pull-up" or "Ring typewriter push-up" slipped into a level 1-2 person's
+  // workout. Progression already happens via the level-up mechanic (hitting
+  // max reps on all sets bumps progressLevels), so the AI doesn't need to
+  // reach for harder exercises on its own — filtering here is what actually
+  // enforces the level system instead of just describing it in prose.
+  const availableList = exercises
+    .filter(e => {
+      const cap = levels[e.muscle_group];
+      if (cap === undefined) return true; // untracked group (e.g. mobility) — no cap
+      return levelOf(e.id) <= cap;
+    })
+    .map(e => `${e.name} (${e.muscle_group}, ${e.equipment || "bodyweight"}${isHoldExercise(e.id) ? ", ISOMETRIC HOLD" : ""})`).join("; ");
+  const mobilityList = exercises.filter(e => e.muscle_group === "mobility")
+    .map(e => `${e.name}${isHoldExercise(e.id) ? " (hold)" : " (dynamic)"}`).join("; ");
+  const { phase, weekNumber } = currentPhaseFor(program);
+  const isDeload = phase?.deload_weeks?.includes(weekNumber);
+  const day = phase?.days?.[dayIndex] || phase?.days?.[0];
+  const recoveryCaution = isLosingTooFast();
+  const system = `You pick specific exercises from a provided library to fill a day's
+muscle-group slots, prioritizing variety from recent sessions while keeping the
+muscle group correct so progression still counts. The available exercises list
+below has ALREADY been filtered to only include exercises at or below the
+person's current level for each muscle group — every exercise you see there is
+safe to pick regardless of muscle group. Do not second-guess this by favoring
+only the easiest items out of caution, but also never invent, substitute, or
+reach for a harder variant that isn't in the list, even if you think the person
+is ready for it (that's handled separately, by a level-up system, not by you).
+Set the reps field's top end to roughly match how hard a given pick is: lighter
+regressions top out around 8, standard versions around 10-12, harder variants
+around 12-15 or note added difficulty (tempo, pause, unilateral) instead of
+just more reps.
+For exercises marked ISOMETRIC HOLD in the available list, the reps field means
+SECONDS to hold, not a rep count (e.g. "20-30" means hold 20-30 seconds), scaled
+to level the same way (level 1-2 shorter holds ~15-20s, level 4-5 longer ~40-60s).
+Pair exercises into supersets whenever it genuinely makes sense — classically
+antagonist muscle groups worked back-to-back with minimal rest between them
+(push+pull is the standard pairing; e.g. ring push-up paired with ring row).
+Give paired exercises the same superset_group letter (e.g. "A"); leave
+superset_group null for anything that stands alone (e.g. legs, core, ruck days
+where there's no natural antagonist pairing, or when today's slots don't split
+evenly). Don't force a pairing where the muscle groups don't logically complement
+each other, and don't superset more than two exercises together.
+${isDeload ? "This is a DELOAD week for this phase — reduce sets and/or reps by roughly 30-40% across all exercises." : ""}
+${recoveryCaution ? "RECOVERY CAUTION: recent weight loss is outpacing the target rate, a sign recovery capacity may be compromised. Favor holding at the current level's difficulty rather than the hardest variant available for that level, and avoid adding extra intensity techniques (drop sets, extra tempo/pause) this session." : ""}
+Also include a short warmup and cool-down, selected from the mobility library
+below — not invented — targeted to the SPECIFIC muscle groups in today's slots
+(not generic): a push/pull day should lean on shoulder/wrist/thoracic items, a
+legs/hinge day should lean on hip/ankle items. Warmup: 2-3 items marked
+(dynamic) from the list (~3-4 minutes total). Cool-down: 1-2 items marked
+(hold) from the list, for the muscles just worked (~2 minutes total). All
+mobility library items are already bodyweight-only, so this works anywhere
+including while traveling. Genuinely quick — this is a 20-25 minute session
+overall.
+Mobility library: ${mobilityList}
+If a slot below includes an exercise_name, that's what the person's original
+program specifically prescribed — use that exact exercise if it appears in
+the available list below, rather than substituting a different one for that
+muscle group. The available list is already level-filtered, so if the named
+exercise doesn't appear there it means it's too advanced for their current
+level right now — in that case just pick a same-muscle-group alternative
+from the available list instead, no need to flag it.
+Respond with ONLY valid JSON.`;
+  const prompt = `Available exercises: ${availableList}.
+Recently used (avoid repeating if a same-muscle-group alternative exists): ${recentNames || "none yet"}.
+Current level per muscle group (1-5): ${JSON.stringify(levels)}.
+Current phase: ${phase?.phase || "n/a"}, week ${weekNumber}${isDeload ? " (deload)" : ""}.
+Today's day: "${day?.day || "n/a"}", slots: ${JSON.stringify(day?.slots || [])}.
+Output JSON: {"day": "string", "warmup": [{"name": "exact name from mobility library", "detail": "string, e.g. 30s each side"}], "exercises": [{"name": "string", "muscle_group": "string", "sets": 3, "reps": "8-12", "superset_group": "A"}], "cooldown": [{"name": "exact name from mobility library", "detail": "string, e.g. hold 20s"}]}
+superset_group is a letter shared by paired exercises, or null if standalone.`;
+  const data = await apiFetch("/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ system, prompt, max_tokens: 2000 }),
+  });
+  const text = data.content?.[0]?.text || "{}";
+  return extractJson(text);
+}
+
+let currentWorkout = null;
+
+// Checks whether today's workout shares a muscle group with the last
+// completed session, with no rest day in between (calendar-day gap <= 1).
+// Purely a heads-up — doesn't block or change anything automatically.
+function restDayCaution(workout) {
+  const logs = state.logs || [];
+  if (!logs.length || !workout) return null;
+  const sorted = logs.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+  const lastDate = new Date(sorted[0].date);
+  const lastDateStr = lastDate.toDateString();
+  const lastGroups = new Set(sorted.filter(l => new Date(l.date).toDateString() === lastDateStr).map(l => l.muscle_group));
+
+  const today = new Date();
+  const dayGap = Math.round((new Date(today.toDateString()) - new Date(lastDateStr)) / (24 * 60 * 60 * 1000));
+  if (dayGap > 1) return null; // at least one rest day already happened
+
+  const todayGroups = new Set(workout.exercises.map(e => e.muscle_group));
+  const overlap = [...todayGroups].filter(mg => lastGroups.has(mg));
+  if (!overlap.length) return null;
+
+  return `Rest day check: ${overlap.join(", ")} trained ${dayGap === 0 ? "earlier today" : "yesterday"} too — no rest day between sessions for ${overlap.length > 1 ? "these muscle groups" : "this muscle group"}. Consider resting it today or swapping to something else.`;
+}
+
+function renderTodayWorkout(workout) {
+  currentWorkout = workout;
+  const box = document.getElementById("todayWorkout");
+  const sessionBtn = document.getElementById("startSessionBtn");
+  const minDayBtn = document.getElementById("minimumDayBtn");
+  const cautionEl = document.getElementById("recoveryCautionNote");
+  if (!workout) {
+    cautionEl.innerHTML = "";
+    box.innerHTML = '<div class="empty">Pick an active program first.</div>';
+    sessionBtn.disabled = true;
+    minDayBtn.disabled = true;
+    return;
+  }
+  sessionBtn.disabled = false;
+  minDayBtn.disabled = false;
+
+  const genBtn = document.getElementById("genWorkoutBtn");
+  if (state.pendingWorkout?.completed) {
+    cautionEl.innerHTML = ""; // nothing to caution about — this session is already done
+    box.innerHTML = `<div class="empty">Workout logged: ${workout.exercises.map(e => e.name).join(", ")}. Your next workout will be ready when you come back.</div>`;
+    sessionBtn.textContent = "Session already logged";
+    sessionBtn.disabled = true;
+    minDayBtn.disabled = true;
+    genBtn.classList.add("hidden");
+    return;
+  }
+
+  // Only compute these for a workout you haven't done yet — checking a just-
+  // completed session against its own logs would always trivially "conflict".
+  const restNote = restDayCaution(workout);
+  cautionEl.innerHTML = (isLosingTooFast()
+    ? `<div class="meta" style="color:var(--gold); margin-bottom:8px;">Recovery caution: weight loss is outpacing target pace — holding progression steady, no intensity increases this week.</div>`
+    : "") + (restNote
+    ? `<div class="meta" style="color:var(--gold); margin-bottom:8px;">${restNote}</div>`
+    : "");
+
+  genBtn.classList.remove("hidden");
+  sessionBtn.textContent = "Start guided session";
+
+  function exerciseCardHtml(e, i) {
+    return `
+      <div class="list-item" data-ex-index="${i}" style="flex-direction:column; align-items:stretch; border-bottom:none;">
+        <div style="display:flex; justify-content:space-between;">
+          <div>
+            <div class="name">${e.name}</div>
+            <div class="meta">${e.muscle_group} · ${e.sets}×${e.reps}${isHoldExercise(e.name) ? "s hold" : ""} · level ${state.progressLevels[e.muscle_group] || 1}</div>
+            ${howToHtml("today-" + i, e.name, exercises.find(x => x.name === e.name)?.cue)}
+          </div>
+          <button class="danger-link" style="color:var(--accent);" data-swap-open="${i}">Swap</button>
+        </div>
+        <div class="swap-panel hidden" data-swap-panel="${i}" style="margin-top:8px;">
+          <div class="meta">No equipment for this one? Pick a swap — grouped by easier/harder:</div>
+          ${swapAlternatesHtml(e, i)}
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <div class="chip result-chip" data-ex="${i}" data-result="max">Hit max reps</div>
+          <div class="chip result-chip" data-ex="${i}" data-result="hold">As prescribed</div>
+          <div class="chip result-chip" data-ex="${i}" data-result="missed">Missed reps</div>
+        </div>
+      </div>`;
+  }
+
+  // group into render units: paired supersets stay visually bracketed together,
+  // everything else renders as its own card, in original order.
+  const seenGroups = new Set();
+  const unitsHtml = workout.exercises.map((e, i) => {
+    if (e.superset_group) {
+      if (seenGroups.has(e.superset_group)) return "";
+      seenGroups.add(e.superset_group);
+      const memberIdxs = workout.exercises.map((x, xi) => ({ x, xi })).filter(({ x }) => x.superset_group === e.superset_group);
+      return `
+        <div class="card" style="border-left-color:var(--gold); margin-bottom:10px;">
+          <div class="meta" style="margin-bottom:8px;">Superset ${e.superset_group}</div>
+          ${memberIdxs.map(({ x, xi }) => exerciseCardHtml(x, xi)).join('<div style="border-top:1px dashed var(--border); margin:10px 0;"></div>')}
+        </div>`;
+    }
+    return `<div class="card" style="margin-bottom:10px;">${exerciseCardHtml(e, i)}</div>`;
+  }).join("");
+
+  const warmupHtml = (workout.warmup && workout.warmup.length) ? `
+    <details class="exercise-group" style="margin-bottom:10px;">
+      <summary>Warmup (~3-4 min)</summary>
+      <div style="padding-top:6px;">
+        ${workout.warmup.map((w, i) => `<div class="list-item"><div><div class="name">${w.name}</div><div class="meta">${w.detail || ""}</div></div><button class="danger-link" style="color:var(--accent);" data-warmcool-swap="warmup:${i}">Swap</button></div>`).join("")}
+      </div>
+    </details>` : "";
+  const cooldownHtml = (workout.cooldown && workout.cooldown.length) ? `
+    <details class="exercise-group" style="margin-top:10px;">
+      <summary>Cool-down (~2 min)</summary>
+      <div style="padding-top:6px;">
+        ${workout.cooldown.map((c, i) => `<div class="list-item"><div><div class="name">${c.name}</div><div class="meta">${c.detail || ""}</div></div><button class="danger-link" style="color:var(--accent);" data-warmcool-swap="cooldown:${i}">Swap</button></div>`).join("")}
+      </div>
+    </details>` : "";
+
+  const workoutHtml = `
+    <details class="exercise-group">
+      <summary>Today's exercises</summary>
+      <div style="padding-top:6px;">
+        ${unitsHtml}
+      </div>
+    </details>`;
+
+  box.innerHTML = warmupHtml + workoutHtml + cooldownHtml + `<button id="completeWorkoutBtn" style="background:none; border:none; color:var(--accent); font-size:13px; cursor:pointer; padding:10px 0; display:block;">Complete workout without guided session ▸</button>`;
+  document.getElementById("completeWorkoutBtn").addEventListener("click", completeWorkout);
+}
+
+// Attached once, not inside renderTodayWorkout — that function runs on every
+// swap/regenerate/result-selection, and re-attaching here each time caused
+// duplicate listeners to pile up on this persistent container, making
+// toggle-based actions (opening a swap panel) appear to silently do nothing
+// since multiple listeners would open-then-immediately-close it per click.
+document.getElementById("todayWorkout").addEventListener("click", async (e) => {
+  const warmcoolBtn = e.target.closest("[data-warmcool-swap]");
+  if (warmcoolBtn) {
+    const [type, idx] = warmcoolBtn.dataset.warmcoolSwap.split(":");
+    await swapWarmupCooldownItem(type, parseInt(idx, 10));
+    return;
+  }
+  const howtoBtn = e.target.closest("[data-howto-open]");
+  if (howtoBtn) {
+    document.querySelector(`[data-howto-panel="${howtoBtn.dataset.howtoOpen}"]`)?.classList.toggle("hidden");
+    return;
+  }
+  if (handleSwapInfoClick(e)) return;
+  const openBtn = e.target.closest("[data-swap-open]");
+  if (openBtn) {
+    document.querySelector(`[data-swap-panel="${openBtn.dataset.swapOpen}"]`).classList.toggle("hidden");
+    return;
+  }
+  const pick = e.target.closest("[data-swap-pick]");
+  if (pick) {
+    await swapExercise(parseInt(pick.dataset.swapPick, 10), pick.dataset.swapName);
+    return;
+  }
+  const chip = e.target.closest(".result-chip");
+  if (chip) {
+    const group = chip.parentElement;
+    group.querySelectorAll(".result-chip").forEach(c => c.classList.remove("active"));
+    chip.classList.add("active");
+    const itemEl = chip.closest(".list-item");
+    group.querySelectorAll(".result-chip").forEach(c => { if (c !== chip) c.style.display = "none"; });
+    const swapBtn = itemEl.querySelector("[data-swap-open]");
+    if (swapBtn) swapBtn.style.display = "none";
+    const swapPanelEl = itemEl.querySelector(".swap-panel");
+    if (swapPanelEl) swapPanelEl.classList.add("hidden");
+  }
+});
+
+function howToHtml(uid, name, cue) {
+  const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(name + " exercise proper form tutorial")}`;
+  return `
+    <button class="danger-link" style="color:var(--text-muted); font-size:12px; margin-top:6px;" data-howto-open="${uid}">How to ▾</button>
+    <div class="hidden" data-howto-panel="${uid}" style="margin-top:4px;">
+      ${cue ? `<div class="meta">${cue}</div>` : ""}
+      <a href="${ytUrl}" target="_blank" rel="noopener" class="meta" style="color:var(--accent); display:inline-block; margin-top:4px;">Watch a demo ↗</a>
+    </div>`;
+}
+
+
+
+function buildYoutubeUrl(name) {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(name + " exercise proper form tutorial")}`;
+}
+
+function swapAlternatesHtml(currentExercise, uidPrefix) {
+  const currentLevel = levelOf(currentExercise.name);
+  const alternates = exercises.filter(x => x.muscle_group === currentExercise.muscle_group && x.name !== currentExercise.name);
+  const regressions = alternates.filter(x => levelOf(x.name) < currentLevel);
+  const sameLevel = alternates.filter(x => levelOf(x.name) === currentLevel);
+  const progressions = alternates.filter(x => levelOf(x.name) > currentLevel);
+  const chip = (x, cls) => `
+    <span style="display:inline-flex; align-items:center; gap:2px;">
+      <span class="chip ${cls}" data-swap-pick="${uidPrefix}" data-swap-name="${x.name.replace(/"/g,'&quot;')}">${x.name}</span>
+      <button class="danger-link" style="padding:2px 4px; font-size:12px; color:var(--text-muted);" data-swap-info-btn="${uidPrefix}" data-info-name="${x.name.replace(/"/g,'&quot;')}" data-info-cue="${(x.cue||"").replace(/"/g,'&quot;')}">ⓘ</button>
+    </span>`;
+  const bucket = (label, list, cls) => list.length ? `
+    <div class="meta" style="margin-top:8px; margin-bottom:4px;">${label}</div>
+    <div class="row">${list.map(x => chip(x, cls)).join("")}</div>
+  ` : "";
+  if (!alternates.length) return '<div class="empty" style="margin-top:6px;">No alternates in your library for this muscle group yet.</div>';
+  return `<div class="hidden" data-swap-info-panel="${uidPrefix}" style="margin-bottom:8px; padding-bottom:8px; border-bottom:1px dashed var(--border);"></div>` +
+         bucket("↓ Regressions (easier)", regressions, "swap-regression") +
+         bucket("= Same level", sameLevel, "swap-same") +
+         bucket("↑ Progressions (harder)", progressions, "swap-progression");
+}
+
+function handleSwapInfoClick(e) {
+  const infoBtn = e.target.closest("[data-swap-info-btn]");
+  if (!infoBtn) return false;
+  const panel = document.querySelector(`[data-swap-info-panel="${infoBtn.dataset.swapInfoBtn}"]`);
+  if (panel) {
+    const name = infoBtn.dataset.infoName;
+    const cue = infoBtn.dataset.infoCue;
+    panel.innerHTML = `
+      <div class="meta" style="margin-bottom:4px;"><strong style="color:var(--text);">${name}</strong>${cue ? ": " + cue : ""}</div>
+      <a href="${buildYoutubeUrl(name)}" target="_blank" rel="noopener" class="meta" style="color:var(--accent); display:inline-block;">Watch a demo ↗</a>`;
+    panel.classList.remove("hidden");
+    panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+  return true;
+}
+
+async function computeSwapAdjustment(original, replacement) {
+  const system = `You adjust sets/reps when one exercise is swapped for another so the
+training stimulus stays comparable — same approximate time-under-tension and
+relative effort for the same muscle group, even though leverage/equipment differ.
+Respond with ONLY valid JSON: {"sets": 3, "reps": "8-12"}`;
+  const prompt = `Original: ${original.name}, ${original.sets}×${original.reps}, muscle group ${original.muscle_group}.
+Replacing with: ${replacement.name} (equipment: ${replacement.equipment || "bodyweight"}).
+Give adjusted sets/reps for the replacement so effort stays comparable.`;
+  try {
+    const data = await apiFetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ system, prompt, max_tokens: 300 }),
+    });
+    const text = data.content?.[0]?.text || "{}";
+    const adj = extractJson(text);
+    return {
+      name: replacement.name,
+      muscle_group: original.muscle_group,
+      sets: adj.sets || original.sets,
+      reps: adj.reps || original.reps,
+      superset_group: original.superset_group || null,
+    };
+  } catch (err) {
+    return { name: replacement.name, muscle_group: original.muscle_group, sets: original.sets, reps: original.reps, superset_group: original.superset_group || null };
+  }
+}
+
+async function swapWarmupCooldownItem(type, idx) {
+  const list = currentWorkout[type];
+  if (!list || !list[idx]) return;
+  const original = list[idx];
+  const muscleGroups = [...new Set(currentWorkout.exercises.map(e => e.muscle_group))].join(", ");
+  const isWarmup = type === "warmup";
+  const mobilityList = exercises.filter(e => e.muscle_group === "mobility")
+    .map(e => `${e.name}${isHoldExercise(e.id) ? " (hold)" : " (dynamic)"}`).join("; ");
+  const system = `You pick a single alternative ${isWarmup ? "dynamic warmup movement" : "static cool-down stretch"}
+from the mobility library below — not invented — for the given muscle groups,
+something different from the one being replaced. All library items are already
+bodyweight-only. Respond with ONLY valid JSON:
+{"name": "exact name from mobility library", "detail": "string, e.g. ${isWarmup ? "30s each side" : "hold 20s"}"}`;
+  const prompt = `Mobility library: ${mobilityList}.
+Muscle groups today: ${muscleGroups}. Replacing: "${original.name}" (${original.detail || ""}).`;
+  try {
+    const data = await apiFetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ system, prompt, max_tokens: 200 }),
+    });
+    const text = data.content?.[0]?.text || "{}";
+    currentWorkout[type][idx] = extractJson(text);
+  } catch (err) {
+    alert("Couldn't get an alternative: " + err.message);
+    return;
+  }
+  if (state.pendingWorkout) state.pendingWorkout.workout = currentWorkout;
+  await persistNow();
+  renderTodayWorkout(currentWorkout);
+}
+
+async function swapExercise(index, newName) {
+  const original = currentWorkout.exercises[index];
+  const replacement = exercises.find(x => x.name === newName);
+  currentWorkout.exercises[index] = await computeSwapAdjustment(original, replacement);
+  if (state.pendingWorkout) state.pendingWorkout.workout = currentWorkout;
+  await persistNow();
+  renderTodayWorkout(currentWorkout);
+}
+
+function parseRepRange(repsStr) {
+  const nums = (String(repsStr).match(/\d+/g) || []).map(Number);
+  if (!nums.length) return { min: 0, max: 0 };
+  if (nums.length === 1) return { min: nums[0], max: nums[0] };
+  return { min: nums[0], max: nums[nums.length - 1] };
+}
+
+// True when the weight-trend pace check says you're losing faster than the
+// recomp target (0.5-0.75%/week) — a recovery-capacity warning sign, not
+// something to reward with a harder program.
+function isLosingTooFast() {
+  const suggestion = computeMacroSuggestion();
+  return !!(suggestion && suggestion.deltaCalories > 0);
+}
+
+async function applyWorkoutResults(results) {
+  const holdProgression = isLosingTooFast();
+  const oldLevels = { ...state.progressLevels };
+  const byGroup = {};
+  results.forEach(r => {
+    const mg = r.exercise.muscle_group;
+    if (!byGroup[mg]) byGroup[mg] = [];
+    byGroup[mg].push(r.result);
+  });
+  Object.entries(byGroup).forEach(([mg, outcomes]) => {
+    const cur = state.progressLevels[mg] || 1;
+    if (outcomes.includes("missed")) {
+      state.progressLevels[mg] = Math.max(1, cur - 1);
+    } else if (outcomes.every(o => o === "max") && !holdProgression) {
+      state.progressLevels[mg] = Math.min(5, cur + 1);
+    }
+  });
+
+  state.logs = state.logs || [];
+  results.forEach(r => {
+    state.logs.push({ date: new Date().toISOString(), exercise: r.exercise.name, muscle_group: r.exercise.muscle_group, result: r.result });
+  });
+
+  checkWorkoutMilestones(oldLevels);
+
+  if (state.pendingWorkout) state.pendingWorkout.completed = true;
+  await persistNow();
+  renderProgressCharts();
+  renderCelebrations();
+}
+
+async function completeWorkout() {
+  const items = document.querySelectorAll("#todayWorkout .list-item");
+  const results = [];
+  items.forEach((item) => {
+    const idx = parseInt(item.dataset.exIndex, 10);
+    const active = item.querySelector(".result-chip.active");
+    results.push({ exercise: currentWorkout.exercises[idx], result: active ? active.dataset.result : "hold" });
+  });
+  await applyWorkoutResults(results);
+  renderTodayWorkout(currentWorkout);
+  alert("Logged. Levels updated where you hit or missed the rep range.");
+}
+
+// ---- progress charts ----
+function renderLineChart(containerId, points, { yLabel = "" } = {}) {
+  const el = document.getElementById(containerId);
+  if (!points.length) { el.innerHTML = '<div class="empty">Not enough data yet.</div>'; return; }
+  const w = 300, h = 140, pad = 24;
+  const values = points.map(p => p.value);
+  const min = Math.min(...values), max = Math.max(...values);
+  const range = max - min || 1;
+  const stepX = points.length > 1 ? (w - pad * 2) / (points.length - 1) : 0;
+  const coords = points.map((p, i) => {
+    const x = pad + i * stepX;
+    const y = h - pad - ((p.value - min) / range) * (h - pad * 2);
+    return { x, y, label: p.label, value: p.value };
+  });
+  const pathD = coords.map((c, i) => `${i === 0 ? "M" : "L"}${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(" ");
+  const dots = coords.map(c => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3" fill="#0F6E63"/>`).join("");
+  const firstLabel = coords[0]?.label || "";
+  const lastLabel = coords[coords.length - 1]?.label || "";
+  el.innerHTML = `
+    <svg width="100%" viewBox="0 0 ${w} ${h + 20}" style="overflow:visible;">
+      <path d="${pathD}" fill="none" stroke="#0F6E63" stroke-width="2"/>
+      ${dots}
+      <text x="${pad}" y="${h + 16}" font-size="11" fill="#6B6A63">${firstLabel}</text>
+      <text x="${w - pad}" y="${h + 16}" font-size="11" fill="#6B6A63" text-anchor="end">${lastLabel}</text>
+      <text x="${pad}" y="14" font-size="11" fill="#6B6A63">${max.toFixed(0)}${yLabel}</text>
+      <text x="${pad}" y="${h - pad + 4}" font-size="11" fill="#6B6A63">${min.toFixed(0)}${yLabel}</text>
+    </svg>`;
+}
+
+function renderBarChart(containerId, bars) {
+  const el = document.getElementById(containerId);
+  if (!bars.length) { el.innerHTML = '<div class="empty">Not enough data yet.</div>'; return; }
+  const w = 300, h = 140, pad = 24;
+  const max = Math.max(...bars.map(b => b.value), 1);
+  const barW = (w - pad * 2) / bars.length - 6;
+  const barsSvg = bars.map((b, i) => {
+    const x = pad + i * ((w - pad * 2) / bars.length);
+    const barH = (b.value / max) * (h - pad * 2 - 10);
+    const y = h - pad - barH;
+    return `<text x="${(x + barW / 2).toFixed(1)}" y="${(y - 6).toFixed(1)}" font-size="12" fill="#EDEAE0" text-anchor="middle" font-family="monospace">${b.value}</text>
+            <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${barH.toFixed(1)}" fill="#0F6E63" rx="2"/>
+            <text x="${(x + barW / 2).toFixed(1)}" y="${h + 4}" font-size="10" fill="#6B6A63" text-anchor="middle">${b.label}</text>`;
+  }).join("");
+  el.innerHTML = `<svg width="100%" viewBox="0 0 ${w} ${h + 16}" style="overflow:visible;">${barsSvg}</svg>`;
+}
+
+function isoWeekLabel(date) {
+  const d = new Date(date);
+  const onejan = new Date(d.getFullYear(), 0, 1);
+  const week = Math.ceil((((d - onejan) / 86400000) + onejan.getDay() + 1) / 7);
+  return `W${week}`;
+}
+
+// ---- cross-training (walks/rucks, independent of the workout rotation) ----
+let cardioType = null;
+
+function openCardioForm(type) {
+  cardioType = type;
+  document.getElementById("cardioForm").classList.remove("hidden");
+  document.getElementById("cardioWeight").style.display = type === "ruck" ? "block" : "none";
+  document.getElementById("cardioDistance").focus();
+}
+
+document.getElementById("logWalkChip").addEventListener("click", () => openCardioForm("walk"));
+document.getElementById("logRuckChip").addEventListener("click", () => openCardioForm("ruck"));
+
+document.getElementById("saveCardioBtn").addEventListener("click", async () => {
+  const distance = parseFloat(document.getElementById("cardioDistance").value) || null;
+  const duration = parseInt(document.getElementById("cardioDuration").value, 10) || null;
+  const weight = cardioType === "ruck" ? (parseInt(document.getElementById("cardioWeight").value, 10) || null) : null;
+  if (!distance && !duration) { alert("Enter at least a distance or duration."); return; }
+  state.cardioLogs.push({ date: new Date().toISOString(), type: cardioType, distance, duration, weight });
+  await persistNow();
+  document.getElementById("cardioForm").classList.add("hidden");
+  document.getElementById("cardioDistance").value = "";
+  document.getElementById("cardioDuration").value = "";
+  document.getElementById("cardioWeight").value = "";
+  renderRecentCardio();
+  renderProgressCharts();
+});
+
+function renderRecentCardio() {
+  const el = document.getElementById("recentCardio");
+  const recent = (state.cardioLogs || []).slice(-5).reverse();
+  if (!recent.length) { el.innerHTML = ""; return; }
+  el.innerHTML = recent.map(c => `
+    <div class="meta" style="padding:4px 0;">
+      ${new Date(c.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })} ·
+      ${c.type === "ruck" ? "Ruck" : "Walk"}${c.distance ? ` · ${c.distance}mi` : ""}${c.duration ? ` · ${c.duration}min` : ""}${c.weight ? ` · ${c.weight}lb` : ""}
+    </div>
+  `).join("");
+}
+
+// ---- quick-add protein staples ----
+const QUICK_PROTEIN_FOODS = [
+  { name: "Greek yogurt (1 cup)", calories: 150, protein: 20, carbs: 8, fat: 4 },
+  { name: "Cottage cheese (1 cup)", calories: 180, protein: 25, carbs: 8, fat: 5 },
+  { name: "Protein bar", calories: 200, protein: 20, carbs: 22, fat: 7 },
+  { name: "2 hard-boiled eggs", calories: 140, protein: 12, carbs: 1, fat: 10 },
+  { name: "Whey protein shake", calories: 120, protein: 25, carbs: 3, fat: 2 },
+  { name: "Chicken breast (4oz)", calories: 165, protein: 35, carbs: 0, fat: 4 },
+];
+
+let resolvedQuickProteinFoods = QUICK_PROTEIN_FOODS;
+
+function findRecentLoggedFood(keywords) {
+  const logs = (state.foodLogs || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+  const match = logs.find(f => keywords.some(k => (f.name || "").toLowerCase().includes(k)));
+  return match ? { name: match.name, calories: match.calories, protein: match.protein, carbs: match.carbs, fat: match.fat } : null;
+}
+
+function renderQuickProteinChips() {
+  const el = document.getElementById("quickProteinChips");
+  const barMatch = findRecentLoggedFood(["protein bar"]);
+  const shakeMatch = findRecentLoggedFood(["protein shake", "whey", "protein powder"]);
+  resolvedQuickProteinFoods = QUICK_PROTEIN_FOODS.map(f => {
+    if (f.name === "Protein bar" && barMatch) return barMatch;
+    if (f.name === "Whey protein shake" && shakeMatch) return shakeMatch;
+    return f;
+  });
+  el.innerHTML = resolvedQuickProteinFoods.map((f, i) =>
+    `<div class="chip" data-quick-protein="${i}">${f.name} · ${f.protein}g</div>`
+  ).join("");
+}
+
+document.getElementById("quickProteinChips").addEventListener("click", async (e) => {
+  const chip = e.target.closest("[data-quick-protein]");
+  if (!chip) return;
+  const food = resolvedQuickProteinFoods[parseInt(chip.dataset.quickProtein, 10)];
+  await addFoodEntry({ ...food, source: "quick" });
+});
+
+
+// toISOString() returns the UTC date, but todaysFoodLogs/foodLogsForDate filter
+// using toDateString() (local time) — in US timezones during evening hours,
+// the UTC date is already "tomorrow", so defaulting date inputs to the UTC
+// date caused today's entries to appear missing. Always use local date instead.
+function localDateStr(d = new Date()) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function todaysFoodLogs() {
+  const todayStr = new Date().toDateString();
+  return (state.foodLogs || []).filter(f => new Date(f.date).toDateString() === todayStr);
+}
+
+function foodLogsForDate(dateStr) {
+  const targetStr = new Date(dateStr + "T00:00:00").toDateString();
+  return (state.foodLogs || []).filter(f => new Date(f.date).toDateString() === targetStr);
+}
+
+function macroBar(label, value, target) {
+  const pct = target ? Math.min(100, Math.round((value / target) * 100)) : 0;
+  return `
+    <div style="margin-top:8px;">
+      <div class="meta" style="display:flex; justify-content:space-between;">
+        <span>${label}</span><span>${value} / ${target || "?"}</span>
+      </div>
+      <div style="background:var(--surface-2); border-radius:2px; height:6px; margin-top:4px; overflow:hidden;">
+        <div style="background:var(--accent); height:100%; width:${pct}%;"></div>
+      </div>
+    </div>`;
+}
+
+function renderMacroSummary() {
+  const el = document.getElementById("macroSummary");
+  const proteinEl = document.getElementById("proteinRemaining");
+  const today = todaysFoodLogs();
+  const totals = today.reduce((acc, f) => ({
+    calories: acc.calories + (f.calories || 0),
+    protein: acc.protein + (f.protein || 0),
+    carbs: acc.carbs + (f.carbs || 0),
+    fat: acc.fat + (f.fat || 0),
+  }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+  const t = state.settings.macroTargets || {};
+
+  const proteinLeft = Math.max(0, (t.protein || 0) - totals.protein);
+  if (proteinEl) {
+    proteinEl.innerHTML = proteinLeft > 0
+      ? `<div style="font-family:var(--font-mono); font-size:32px; font-weight:600; color:var(--accent);">${proteinLeft}g</div><div class="meta">protein left today</div>`
+      : `<div style="font-family:var(--font-mono); font-size:32px; font-weight:600; color:var(--accent);">✓</div><div class="meta">protein target hit today</div>`;
+  }
+
+  el.innerHTML =
+    macroBar("Calories", totals.calories, t.calories) +
+    macroBar("Protein (g)", totals.protein, t.protein) +
+    macroBar("Carbs (g)", totals.carbs, t.carbs) +
+    macroBar("Fat (g)", totals.fat, t.fat);
+}
+
+function renderFoodLogList() {
+  const el = document.getElementById("foodLogList");
+  const dateInput = document.getElementById("foodLogDate");
+  const selectedDate = dateInput.value || localDateStr();
+  const dayLogs = foodLogsForDate(selectedDate);
+  if (!dayLogs.length) { el.innerHTML = '<div class="empty">Nothing logged for this day.</div>'; return; }
+  el.innerHTML = dayLogs.map((f, i) => {
+    const realIndex = state.foodLogs.indexOf(f);
+    return `
+      <div class="list-item" style="flex-direction:column; align-items:stretch; border-bottom:none;">
+        <div class="name">${f.name}</div>
+        <div class="meta">${f.calories} cal · ${f.protein}p · ${f.carbs}c · ${f.fat}f</div>
+        <div class="row" style="margin-top:8px;">
+          <button class="danger-link" style="color:var(--accent);" data-repeat-food="${realIndex}">+1 serving</button>
+          <button class="danger-link" style="color:var(--accent);" data-edit-food="${realIndex}">Edit</button>
+          <button class="danger-link" style="margin-left:auto;" data-del-food="${realIndex}">Delete</button>
+        </div>
+        <div class="hidden" data-edit-panel="${realIndex}" style="margin-top:8px;">
+          <input type="text" data-field="name" value="${f.name.replace(/"/g,'&quot;')}" placeholder="Food name" style="margin-bottom:8px;">
+          <div class="row">
+            <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" data-field="calories" value="${f.calories}"></div>
+            <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" data-field="protein" value="${f.protein}"></div>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" data-field="carbs" value="${f.carbs}"></div>
+            <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" data-field="fat" value="${f.fat}"></div>
+          </div>
+          <button class="primary" data-save-food="${realIndex}" style="margin-top:10px;">Save changes</button>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+document.getElementById("foodLogDate").addEventListener("change", renderFoodLogList);
+
+document.getElementById("foodLogList").addEventListener("click", async (e) => {
+  const repeatIdx = e.target.dataset.repeatFood;
+  if (repeatIdx !== undefined) {
+    const original = state.foodLogs[parseInt(repeatIdx, 10)];
+    if (original) {
+      await addFoodEntry({
+        name: original.name,
+        calories: original.calories,
+        protein: original.protein,
+        carbs: original.carbs,
+        fat: original.fat,
+        source: original.source,
+      });
+    }
+    return;
+  }
+  const editIdx = e.target.dataset.editFood;
+  if (editIdx !== undefined) {
+    document.querySelectorAll("[data-edit-panel]").forEach(p => {
+      if (p.dataset.editPanel !== editIdx) p.classList.add("hidden");
+    });
+    document.querySelector(`[data-edit-panel="${editIdx}"]`).classList.toggle("hidden");
+    return;
+  }
+  const saveIdx = e.target.dataset.saveFood;
+  if (saveIdx !== undefined) {
+    const panel = document.querySelector(`[data-edit-panel="${saveIdx}"]`);
+    const idx = parseInt(saveIdx, 10);
+    const getVal = (field) => panel.querySelector(`[data-field="${field}"]`).value;
+    state.foodLogs[idx] = {
+      ...state.foodLogs[idx],
+      name: getVal("name").trim() || state.foodLogs[idx].name,
+      calories: parseInt(getVal("calories"), 10) || 0,
+      protein: parseInt(getVal("protein"), 10) || 0,
+      carbs: parseInt(getVal("carbs"), 10) || 0,
+      fat: parseInt(getVal("fat"), 10) || 0,
+    };
+    await persistNow();
+    renderMacroSummary();
+    renderFoodLogList();
+    return;
+  }
+  const idx = e.target.dataset.delFood;
+  if (idx === undefined) return;
+  state.foodLogs.splice(parseInt(idx, 10), 1);
+  await persistNow();
+  renderMacroSummary();
+  renderFoodLogList();
+});
+
+async function addFoodEntry(entry) {
+  state.foodLogs.push({ date: new Date().toISOString(), ...entry });
+  await persistNow();
+  renderMacroSummary();
+  renderFoodLogList();
+  renderQuickProteinChips();
+}
+
+// -- photo scan --
+let scanBaseValues = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+
+document.getElementById("scanServings").addEventListener("input", (e) => {
+  const servings = parseFloat(e.target.value) || 0;
+  document.getElementById("scanCalories").value = Math.round(scanBaseValues.calories * servings);
+  document.getElementById("scanProtein").value = Math.round(scanBaseValues.protein * servings);
+  document.getElementById("scanCarbs").value = Math.round(scanBaseValues.carbs * servings);
+  document.getElementById("scanFat").value = Math.round(scanBaseValues.fat * servings);
+});
+
+document.getElementById("foodPhotoDrop").addEventListener("click", () => document.getElementById("foodPhotoInput").click());
+// Full-resolution camera photos (often 8-12+ MP) can exhaust memory when
+// converted to base64 directly, especially on Android. Downscale via canvas
+// first — plenty of detail survives for a food ID/macro estimate at 1200px.
+function resizeImageFile(file, maxDim = 1200, quality = 0.8) {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Couldn't decode the photo."));
+    };
+    img.onload = () => {
+      try {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) { height = Math.round(height * maxDim / width); width = maxDim; }
+          else { width = Math.round(width * maxDim / height); height = maxDim; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve({ base64: dataUrl.split(",")[1], media_type: "image/jpeg" });
+      } catch (err) {
+        reject(err);
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+    img.src = objectUrl;
+  });
+}
+
+// Uses createImageBitmap (browser-native decode, more memory-efficient than
+// an <img> element) + canvas.toBlob (binary output, not a base64 string) to
+// shrink oversized camera photos before upload. Explicitly closes the bitmap
+// to free memory right away rather than waiting on GC. Falls back to the
+// original file untouched if anything here fails or isn't supported —
+// worst case, upload just proceeds at full size like before.
+async function getUploadBlob(file, maxDim = 1400, quality = 0.8, maxBytes = 3 * 1024 * 1024) {
+  if (!("createImageBitmap" in window)) return file; // no support, send raw as before
+  if (file.size <= maxBytes) return file; // already small enough in actual bytes, skip processing
+
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+    let { width, height } = bitmap;
+    if (width > maxDim || height > maxDim) {
+      if (width > height) { height = Math.round(height * maxDim / width); width = maxDim; }
+      else { width = Math.round(width * maxDim / height); height = maxDim; }
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    canvas.getContext("2d").drawImage(bitmap, 0, 0, width, height);
+
+    // Iteratively drop quality until under the byte cap — guarantees a safe
+    // upload size regardless of source resolution/detail level.
+    let q = quality;
+    let blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", q));
+    let attempts = 0;
+    while (blob && blob.size > maxBytes && attempts < 5) {
+      q = Math.max(0.35, q - 0.15);
+      blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", q));
+      attempts++;
+    }
+    // Quality alone wasn't enough (very high detail/large source) — shrink dimensions too.
+    if (blob && blob.size > maxBytes) {
+      const smallerW = Math.round(width * 0.7);
+      const smallerH = Math.round(height * 0.7);
+      canvas.width = smallerW;
+      canvas.height = smallerH;
+      canvas.getContext("2d").drawImage(bitmap, 0, 0, smallerW, smallerH);
+      blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.6));
+    }
+    return blob || file;
+  } catch (err) {
+    return file;
+  } finally {
+    if (bitmap) bitmap.close();
+  }
+}
+
+document.getElementById("foodPhotoInput").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById("foodScanStatus");
+  statusEl.style.display = "block";
+  statusEl.textContent = "Analyzing photo…";
+  document.getElementById("foodScanReview").classList.add("hidden");
+  try {
+    if (!WORKER_URL) throw new Error("no worker url configured");
+    const uploadBlob = await getUploadBlob(file);
+    console.log("Scanning photo, original:", file.size, "upload size:", uploadBlob.size);
+    const note = document.getElementById("scanNote").value.trim();
+    // Encoding happens here, not in the Worker — the blob is already small
+    // (resized above) so this is fast and memory-safe, and it avoids the
+    // Worker's 10ms free-tier CPU budget, which a server-side base64 loop
+    // over even a couple MB can exceed on larger photos.
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(uploadBlob);
+    });
+    const resp = await fetch(WORKER_URL.replace(/\/$/, "") + "/api/food-scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        image: { media_type: uploadBlob.type || file.type || "image/jpeg", data: base64 },
+        note,
+      }),
+    });
+    if (!resp.ok) {
+      const errBody = await resp.text().catch(() => "");
+      throw new Error(`${resp.status}: ${errBody.slice(0, 300)}`);
+    }
+    const data = await resp.json();
+    const text = data.content?.[0]?.text || "{}";
+    const est = extractJson(text);
+    scanBaseValues = { calories: est.calories || 0, protein: est.protein || 0, carbs: est.carbs || 0, fat: est.fat || 0 };
+    document.getElementById("scanName").value = est.name || "";
+    document.getElementById("scanServings").value = "1";
+    document.getElementById("scanCalories").value = est.calories || "";
+    document.getElementById("scanProtein").value = est.protein || "";
+    document.getElementById("scanCarbs").value = est.carbs || "";
+    document.getElementById("scanFat").value = est.fat || "";
+    document.getElementById("foodScanReview").classList.remove("hidden");
+    document.getElementById("scanNote").value = "";
+    statusEl.textContent = "Review the estimate below, then add it.";
+  } catch (err) {
+    statusEl.textContent = "Scan failed: " + err.message;
+  }
+});
+
+document.getElementById("saveScanBtn").addEventListener("click", async () => {
+  const name = document.getElementById("scanName").value.trim();
+  if (!name) { alert("Enter a food name."); return; }
+  await addFoodEntry({
+    name,
+    calories: parseInt(document.getElementById("scanCalories").value, 10) || 0,
+    protein: parseInt(document.getElementById("scanProtein").value, 10) || 0,
+    carbs: parseInt(document.getElementById("scanCarbs").value, 10) || 0,
+    fat: parseInt(document.getElementById("scanFat").value, 10) || 0,
+    source: "photo",
+  });
+  ["scanName", "scanCalories", "scanProtein", "scanCarbs", "scanFat"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("scanServings").value = "1";
+  document.getElementById("foodScanReview").classList.add("hidden");
+  document.getElementById("foodScanStatus").style.display = "none";
+});
+
+// -- manual known-macro entry --
+document.getElementById("saveManualBtn").addEventListener("click", async () => {
+  const name = document.getElementById("manualName").value.trim();
+  if (!name) { alert("Enter a food name."); return; }
+  await addFoodEntry({
+    name,
+    calories: parseInt(document.getElementById("manualCalories").value, 10) || 0,
+    protein: parseInt(document.getElementById("manualProtein").value, 10) || 0,
+    carbs: parseInt(document.getElementById("manualCarbs").value, 10) || 0,
+    fat: parseInt(document.getElementById("manualFat").value, 10) || 0,
+    source: "manual",
+  });
+  ["manualName", "manualCalories", "manualProtein", "manualCarbs", "manualFat"].forEach(id => document.getElementById(id).value = "");
+});
+
+// -- macro targets (Settings) --
+document.getElementById("saveTargetsBtn").addEventListener("click", async () => {
+  state.settings.macroTargets = {
+    calories: parseInt(document.getElementById("targetCalories").value, 10) || 0,
+    protein: parseInt(document.getElementById("targetProtein").value, 10) || 0,
+    carbs: parseInt(document.getElementById("targetCarbs").value, 10) || 0,
+    fat: parseInt(document.getElementById("targetFat").value, 10) || 0,
+  };
+  await persistNow();
+  renderMacroSummary();
+  alert("Targets saved.");
+});
+
+function renderJourneyStats() {
+  const el = document.getElementById("journeyStats");
+  if (!el) return;
+  const s = computeJourneyStats();
+  const rows = [];
+  rows.push(`<div class="list-item"><div class="name">Current streak</div><div class="meta">${s.current} day${s.current === 1 ? "" : "s"}${s.longest > s.current ? ` (best: ${s.longest})` : ""}</div></div>`);
+  rows.push(`<div class="list-item"><div class="name">Workouts logged</div><div class="meta">${s.totalWorkoutDays}</div></div>`);
+  if (s.totalCardioSessions) {
+    rows.push(`<div class="list-item"><div class="name">Walks/rucks logged</div><div class="meta">${s.totalCardioSessions} sessions · ${s.totalCardioDistance.toFixed(1)}mi · ${s.totalCardioMinutes}min</div></div>`);
+  }
+  if (s.weightChange !== null) {
+    const dir = s.weightChange < 0 ? "down" : s.weightChange > 0 ? "up" : "unchanged";
+    rows.push(`<div class="list-item"><div class="name">Weight since you started</div><div class="meta">${Math.abs(s.weightChange).toFixed(1)}lb ${dir}${s.firstDate ? ` (since ${s.firstDate})` : ""}</div></div>`);
+  }
+  el.innerHTML = rows.join("");
+}
+
+function renderProgressCharts() {
+  renderJourneyStats();
+  const measurements = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+  renderLineChart("weightChart", measurements.map(m => ({ label: m.date.slice(5), value: m.weight })), { yLabel: "lb" });
+  renderReasonPatterns();
+
+  const logs = state.logs || [];
+  const byWeek = {};
+  const seenDaysByWeek = {};
+  logs.forEach(l => {
+    const wk = isoWeekLabel(l.date);
+    const dayStr = new Date(l.date).toDateString();
+    if (!seenDaysByWeek[wk]) seenDaysByWeek[wk] = new Set();
+    if (!seenDaysByWeek[wk].has(dayStr)) {
+      seenDaysByWeek[wk].add(dayStr);
+      byWeek[wk] = (byWeek[wk] || 0) + 1;
+    }
+  });
+  const weekLabels = Object.keys(byWeek).slice(-10);
+  renderBarChart("volumeChart", weekLabels.map(wk => ({ label: wk, value: byWeek[wk] })));
+
+  const cardioByWeek = {};
+  (state.cardioLogs || []).forEach(c => {
+    const wk = isoWeekLabel(c.date);
+    cardioByWeek[wk] = (cardioByWeek[wk] || 0) + (c.duration || 0);
+  });
+  const cardioWeekLabels = Object.keys(cardioByWeek).slice(-10);
+  renderBarChart("cardioChart", cardioWeekLabels.map(wk => ({ label: wk, value: cardioByWeek[wk] })));
+}
+
+let pendingCheckInMeasurementIdx = null;
+let pendingCheckInDirection = null;
+const activeCheckInReasons = new Set();
+
+const INCREASE_REASONS = ["Traveling", "Poor sleep", "Missed workout", "Missed cross-training", "Didn't track food", "Alcohol", "Stress"];
+const DECREASE_REASONS = ["Illness", "Dehydration/low water intake", "Big workout", "Didn't eat much", "Traveling", "Stress"];
+
+function renderCheckInChips(direction) {
+  const reasons = direction === "up" ? INCREASE_REASONS : DECREASE_REASONS;
+  document.getElementById("weightCheckInChips").innerHTML = reasons.map(r =>
+    `<div class="chip" data-reason="${r}">${r}</div>`
+  ).join("");
+}
+
+document.getElementById("logWeightBtn").addEventListener("click", async () => {
+  const weight = parseFloat(document.getElementById("weightInput").value);
+  const date = document.getElementById("measurementDateInput").value || localDateStr();
+  if (isNaN(weight)) { alert("Enter a weight first."); return; }
+  state.measurements = state.measurements || [];
+
+  // find the most recent prior entry (before this date) to compare against
+  const prior = state.measurements
+    .filter(m => m.date < date)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+
+  state.measurements = state.measurements.filter(m => m.date !== date);
+  state.measurements.push({ date, weight });
+  checkWeightMilestones();
+  await persistNow();
+  document.getElementById("weightInput").value = "";
+  renderProgressCharts();
+  renderCelebrations();
+
+  let direction = null;
+  if (prior && weight > prior.weight) {
+    direction = "up"; // any increase at all — the goal is loss, so worth a look every time
+  } else if (prior && weight < prior.weight) {
+    const pctDrop = ((prior.weight - weight) / prior.weight) * 100;
+    if (pctDrop >= 1.5) direction = "down"; // only flag decreases large enough to look unusual
+  }
+
+  if (direction) {
+    pendingCheckInMeasurementIdx = state.measurements.findIndex(m => m.date === date);
+    pendingCheckInDirection = direction;
+    activeCheckInReasons.clear();
+    renderCheckInChips(direction);
+    const diff = Math.abs(weight - prior.weight).toFixed(1);
+    document.getElementById("weightCheckInMessage").textContent = direction === "up"
+      ? `Up ${diff}lb since your last entry (${prior.weight}lb). What happened? (optional, pick any that apply)`
+      : `Down ${diff}lb since your last entry (${prior.weight}lb) — that's a bigger drop than usual. Anything unusual? (optional)`;
+    document.getElementById("weightCheckInPanel").classList.remove("hidden");
+  } else {
+    document.getElementById("weightCheckInPanel").classList.add("hidden");
+  }
+});
+
+document.getElementById("weightCheckInChips").addEventListener("click", (e) => {
+  const chip = e.target.closest("[data-reason]");
+  if (!chip) return;
+  chip.classList.toggle("active");
+  const reason = chip.dataset.reason;
+  if (activeCheckInReasons.has(reason)) activeCheckInReasons.delete(reason);
+  else activeCheckInReasons.add(reason);
+});
+
+document.getElementById("weightCheckInSaveBtn").addEventListener("click", async () => {
+  if (pendingCheckInMeasurementIdx !== null && state.measurements[pendingCheckInMeasurementIdx]) {
+    state.measurements[pendingCheckInMeasurementIdx].reasons = [...activeCheckInReasons];
+    state.measurements[pendingCheckInMeasurementIdx].checkInDirection = pendingCheckInDirection;
+    await persistNow();
+    renderReasonPatterns();
+    renderWeeklyReview();
+  }
+  document.getElementById("weightCheckInPanel").classList.add("hidden");
+});
+
+document.getElementById("weightCheckInSkipBtn").addEventListener("click", () => {
+  document.getElementById("weightCheckInPanel").classList.add("hidden");
+});
+
+document.getElementById("measurementDateInput").value = localDateStr();
+// ---- guided session ----
+let session = null;
+
+function formatTime(s) {
+  const m = Math.floor(s / 60), sec = s % 60;
+  return `${m}:${sec.toString().padStart(2, "0")}`;
+}
+
+function playBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    osc.frequency.value = 880;
+    osc.connect(ctx.destination);
+    osc.start();
+    setTimeout(() => { osc.stop(); ctx.close(); }, 300);
+  } catch (e) { /* audio not available, ignore */ }
+}
+
+// Builds a flat queue of "do this set" steps. Superset partners interleave
+// round by round (A set 1, B set 1, A set 2, B set 2, ...) with a short
+// transition between partners and a full rest only after each complete round.
+function buildSessionQueue(exs) {
+  const queue = [];
+  const seenGroups = new Set();
+  exs.forEach((e, i) => {
+    if (e.superset_group) {
+      if (seenGroups.has(e.superset_group)) return;
+      seenGroups.add(e.superset_group);
+      const members = exs.map((x, xi) => ({ ...x, exIndex: xi })).filter(x => x.superset_group === e.superset_group);
+      const maxSets = Math.max(...members.map(m => m.sets));
+      for (let round = 0; round < maxSets; round++) {
+        members.forEach((m, mi) => {
+          if (round >= m.sets) return;
+          const isLastInRound = mi === members.length - 1;
+          queue.push({
+            exIndex: m.exIndex, name: m.name, muscle_group: m.muscle_group,
+            reps: m.reps, setNum: round + 1, totalSets: m.sets,
+            restAfter: isLastInRound ? 90 : 15,
+            supersetLabel: `Superset ${e.superset_group} · ${mi + 1} of ${members.length}`,
+          });
+        });
+      }
+    } else {
+      for (let s = 0; s < e.sets; s++) {
+        queue.push({
+          exIndex: i, name: e.name, muscle_group: e.muscle_group,
+          reps: e.reps, setNum: s + 1, totalSets: e.sets,
+          restAfter: 90, supersetLabel: null,
+        });
+      }
+    }
+  });
+  return queue;
+}
+
+function startSession() {
+  if (!currentWorkout) return;
+  session = {
+    phase: (currentWorkout.warmup && currentWorkout.warmup.length) ? "warmup" : "main",
+    queue: buildSessionQueue(currentWorkout.exercises),
+    pos: 0,
+    resting: false,
+    restEndTime: 0,
+    holding: false,
+    timerId: null,
+    setsActual: {}, // exIndex -> [actual reps per set, or seconds held for isometric holds]
+    minimalMode: false,
+    checkpointAt: null,
+  };
+  document.getElementById("todayWorkout").classList.add("hidden");
+  document.getElementById("startSessionBtn").classList.add("hidden");
+  document.getElementById("minimumDayBtn").classList.add("hidden");
+  document.getElementById("genWorkoutBtn").classList.add("hidden");
+  renderSession();
+}
+
+// A deliberately tiny entry point for days when starting at all is the real
+// barrier — just the first exercise (or superset pair), then a checkpoint
+// asking whether to continue into the full workout or stop there. Skips
+// warmup entirely to keep the barrier as low as possible.
+function startMinimumDay() {
+  if (!currentWorkout) return;
+  const fullQueue = buildSessionQueue(currentWorkout.exercises);
+  const firstExIndex = fullQueue[0]?.exIndex;
+  const firstGroup = currentWorkout.exercises[firstExIndex]?.superset_group;
+  const initialExIndexes = new Set(
+    currentWorkout.exercises
+      .map((e, i) => ({ e, i }))
+      .filter(({ e, i }) => firstGroup ? e.superset_group === firstGroup : i === firstExIndex)
+      .map(({ i }) => i)
+  );
+  const checkpointIdx = fullQueue.findIndex(step => !initialExIndexes.has(step.exIndex));
+  session = {
+    phase: "main", // skip warmup — lowest possible barrier to just starting
+    queue: fullQueue,
+    pos: 0,
+    resting: false,
+    restEndTime: 0,
+    holding: false,
+    timerId: null,
+    setsActual: {},
+    minimalMode: true,
+    checkpointAt: checkpointIdx === -1 ? null : checkpointIdx,
+  };
+  document.getElementById("todayWorkout").classList.add("hidden");
+  document.getElementById("startSessionBtn").classList.add("hidden");
+  document.getElementById("minimumDayBtn").classList.add("hidden");
+  document.getElementById("genWorkoutBtn").classList.add("hidden");
+  renderSession();
+}
+
+function renderMinimumDayCheckpoint() {
+  const panel = document.getElementById("sessionPanel");
+  panel.innerHTML = `
+    <div class="card">
+      <h2>Nice — that's today's minimum done</h2>
+      <div class="meta">Feeling good? Your call either way.</div>
+      <button class="primary" id="continueFullBtn" style="margin-top:10px; width:100%;">Continue to full workout</button>
+      <button class="secondary" id="stopHereBtn" style="margin-top:8px; width:100%;">Stop here for today</button>
+    </div>`;
+  document.getElementById("continueFullBtn").addEventListener("click", () => {
+    session.minimalMode = false;
+    session.checkpointAt = null;
+    if (session.pos >= session.queue.length) {
+      renderSession();
+    } else {
+      const lastStep = session.queue[session.pos - 1];
+      startRest(lastStep.restAfter);
+    }
+  });
+  document.getElementById("stopHereBtn").addEventListener("click", finishSessionPartial);
+}
+
+async function finishSessionPartial() {
+  const results = currentWorkout.exercises
+    .map((e, i) => ({ e, i }))
+    .filter(({ i }) => session.setsActual[i] && session.setsActual[i].length)
+    .map(({ e, i }) => {
+      const actuals = session.setsActual[i];
+      const range = parseRepRange(e.reps);
+      let result = "hold";
+      if (actuals.some(a => a < range.min)) result = "missed";
+      else if (actuals.every(a => a >= range.max)) result = "max";
+      return { exercise: e, result };
+    });
+  await applyWorkoutResults(results);
+  session = null;
+  document.getElementById("sessionPanel").classList.add("hidden");
+  document.getElementById("todayWorkout").classList.remove("hidden");
+  document.getElementById("startSessionBtn").classList.remove("hidden");
+  document.getElementById("minimumDayBtn").classList.remove("hidden");
+  document.getElementById("genWorkoutBtn").classList.remove("hidden");
+  renderTodayWorkout(currentWorkout);
+  alert("Logged what you did today — that counts. Full workout waits for next time.");
+}
+
+function renderWarmupCooldownStep(phase) {
+  const panel = document.getElementById("sessionPanel");
+  const items = currentWorkout[phase] || [];
+  const isWarmup = phase === "warmup";
+  panel.innerHTML = `
+    <div class="card">
+      <h2>${isWarmup ? "Warmup" : "Cool-down"}</h2>
+      ${items.map((it, i) => `
+        <div class="list-item">
+          <div><div class="name">${it.name}</div><div class="meta">${it.detail || ""}</div></div>
+          <button class="danger-link" style="color:var(--accent);" data-warmcool-swap="${phase}:${i}">Swap</button>
+        </div>`).join("")}
+      <button class="primary" id="warmCoolContinueBtn" style="margin-top:10px; width:100%;">${isWarmup ? "Start workout" : "Finish session"}</button>
+      <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
+    </div>`;
+  panel.querySelectorAll("[data-warmcool-swap]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const [type, idx] = btn.dataset.warmcoolSwap.split(":");
+      await swapWarmupCooldownItem(type, parseInt(idx, 10));
+      renderWarmupCooldownStep(phase);
+    });
+  });
+  document.getElementById("warmCoolContinueBtn").addEventListener("click", () => {
+    if (isWarmup) {
+      session.phase = "main";
+      renderSession();
+    } else {
+      finishSession();
+    }
+  });
+  document.getElementById("endSessionBtn").addEventListener("click", () => {
+    if (!confirm("End session early? Remaining exercises won't be logged.")) return;
+    session = null;
+    document.getElementById("sessionPanel").classList.add("hidden");
+    document.getElementById("todayWorkout").classList.remove("hidden");
+    document.getElementById("startSessionBtn").classList.remove("hidden");
+    document.getElementById("minimumDayBtn").classList.remove("hidden");
+    document.getElementById("genWorkoutBtn").classList.remove("hidden");
+  });
+}
+
+function renderSession() {
+  const panel = document.getElementById("sessionPanel");
+  if (!session) { panel.classList.add("hidden"); panel.innerHTML = ""; return; }
+  panel.classList.remove("hidden");
+
+  if (session.phase === "warmup" || session.phase === "cooldown") {
+    renderWarmupCooldownStep(session.phase);
+    return;
+  }
+
+  if (session.pos >= session.queue.length) {
+    if (currentWorkout.cooldown && currentWorkout.cooldown.length) {
+      session.phase = "cooldown";
+      renderSession();
+    } else {
+      finishSession();
+    }
+    return;
+  }
+
+  const step = session.queue[session.pos];
+
+  if (session.resting) {
+    const remaining = Math.max(0, Math.ceil((session.restEndTime - Date.now()) / 1000));
+    panel.innerHTML = `
+      <div class="card">
+        <h2>Rest</h2>
+        <div id="restClock" style="font-size:36px; font-weight:600; text-align:center; margin:14px 0; font-family:var(--font-mono);">${formatTime(remaining)}</div>
+        <button class="secondary" id="skipRestBtn" style="width:100%;">Skip rest</button>
+      </div>`;
+    document.getElementById("skipRestBtn").addEventListener("click", () => {
+      clearInterval(session.timerId);
+      session.resting = false;
+      renderSession();
+    });
+    return;
+  }
+
+  const endSessionHandler = () => {
+    document.getElementById("endSessionBtn").addEventListener("click", () => {
+      if (!confirm("End session early? Remaining exercises won't be logged.")) return;
+      session = null;
+      document.getElementById("sessionPanel").classList.add("hidden");
+      document.getElementById("todayWorkout").classList.remove("hidden");
+      document.getElementById("startSessionBtn").classList.remove("hidden");
+      document.getElementById("minimumDayBtn").classList.remove("hidden");
+      document.getElementById("genWorkoutBtn").classList.remove("hidden");
+    });
+  };
+
+  if (isHoldExercise(step.name)) {
+    const range = parseRepRange(step.reps);
+    const targetSeconds = range.max || range.min || 20;
+
+    if (session.holding) {
+      const remaining = Math.max(0, Math.ceil((session.holdEndTime - Date.now()) / 1000));
+      panel.innerHTML = `
+        <div class="card">
+          ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
+          <h2>${step.name}</h2>
+          <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · holding</div>
+          <div id="holdClock" style="font-size:36px; font-weight:600; text-align:center; margin:14px 0; font-family:var(--font-mono);">${formatTime(remaining)}</div>
+          <button class="secondary" id="stopHoldBtn" style="width:100%;">Stop / let go</button>
+        </div>`;
+      document.getElementById("stopHoldBtn").addEventListener("click", () => {
+        clearInterval(session.timerId);
+        const remainingAtStop = Math.max(0, Math.ceil((session.holdEndTime - Date.now()) / 1000));
+        const held = session.holdTargetSeconds - remainingAtStop;
+        session.holding = false;
+        recordSetAndAdvance(session.holdStep, Math.max(1, held));
+      });
+      return;
+    }
+
+    panel.innerHTML = `
+      <div class="card">
+        ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
+        <h2>${step.name}</h2>
+        <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${targetSeconds}s hold</div>
+        <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
+        <div class="hidden" id="sessionSwapPanel" style="margin-top:8px;">
+          <div class="meta">Pick a swap — grouped by easier/harder:</div>
+          ${swapAlternatesHtml(currentWorkout.exercises[step.exIndex], step.exIndex)}
+        </div>
+        <button class="primary" id="startHoldBtn" style="margin-top:10px;">Start hold</button>
+        <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
+      </div>`;
+    document.getElementById("sessionSwapOpenBtn").addEventListener("click", () => {
+      document.getElementById("sessionSwapPanel").classList.toggle("hidden");
+    });
+    document.getElementById("sessionSwapPanel").addEventListener("click", async (e) => {
+      if (handleSwapInfoClick(e)) return;
+      const pick = e.target.closest("[data-swap-pick]");
+      if (!pick) return;
+      await sessionSwapExercise(parseInt(pick.dataset.swapPick, 10), pick.dataset.swapName);
+    });
+    document.getElementById("startHoldBtn").addEventListener("click", () => startHold(step, targetSeconds));
+    endSessionHandler();
+    return;
+  }
+
+  panel.innerHTML = `
+    <div class="card">
+      ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
+      <h2>${step.name}</h2>
+      <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${step.reps} reps</div>
+      <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
+      <div class="hidden" id="sessionSwapPanel" style="margin-top:8px;">
+        <div class="meta">Pick a swap — grouped by easier/harder:</div>
+        ${swapAlternatesHtml(currentWorkout.exercises[step.exIndex], step.exIndex)}
+      </div>
+      <input type="text" inputmode="numeric" id="actualRepsInput" placeholder="Actual reps completed" style="margin-top:10px;">
+      <button class="primary" id="completeSetBtn" style="margin-top:10px;">Complete set</button>
+      <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
+    </div>`;
+
+  document.getElementById("sessionSwapOpenBtn").addEventListener("click", () => {
+    document.getElementById("sessionSwapPanel").classList.toggle("hidden");
+  });
+  document.getElementById("sessionSwapPanel").addEventListener("click", async (e) => {
+    if (handleSwapInfoClick(e)) return;
+    const pick = e.target.closest("[data-swap-pick]");
+    if (!pick) return;
+    await sessionSwapExercise(parseInt(pick.dataset.swapPick, 10), pick.dataset.swapName);
+  });
+  document.getElementById("completeSetBtn").addEventListener("click", () => {
+    const input = document.getElementById("actualRepsInput");
+    const val = parseInt(input.value, 10);
+    if (isNaN(val)) {
+      input.style.borderColor = "var(--danger)";
+      return;
+    }
+    recordSetAndAdvance(step, val);
+  });
+
+  endSessionHandler();
+}
+
+async function sessionSwapExercise(exIndex, newName) {
+  const original = currentWorkout.exercises[exIndex];
+  const replacement = exercises.find(x => x.name === newName);
+  const adjusted = await computeSwapAdjustment(original, replacement);
+  currentWorkout.exercises[exIndex] = adjusted;
+  // Propagate the swap to any not-yet-done sets of this exercise still queued.
+  for (let p = session.pos; p < session.queue.length; p++) {
+    if (session.queue[p].exIndex === exIndex) {
+      session.queue[p].name = adjusted.name;
+      session.queue[p].reps = adjusted.reps;
+      session.queue[p].muscle_group = adjusted.muscle_group;
+    }
+  }
+  if (state.pendingWorkout) state.pendingWorkout.workout = currentWorkout;
+  await persistNow();
+  renderSession();
+}
+
+function recordSetAndAdvance(step, val) {
+  if (!session.setsActual[step.exIndex]) session.setsActual[step.exIndex] = [];
+  session.setsActual[step.exIndex].push(val);
+  session.pos++;
+  if (session.minimalMode && session.checkpointAt !== null && session.pos === session.checkpointAt) {
+    renderMinimumDayCheckpoint();
+    return;
+  }
+  if (session.pos >= session.queue.length) {
+    renderSession();
+  } else {
+    startRest(step.restAfter);
+  }
+}
+
+function startHold(step, targetSeconds) {
+  session.holding = true;
+  session.holdTargetSeconds = targetSeconds;
+  session.holdStep = step;
+  session.holdEndTime = Date.now() + targetSeconds * 1000;
+  renderSession();
+  session.timerId = setInterval(tickHold, 1000);
+}
+
+function tickHold() {
+  if (!session || !session.holding) return;
+  const remaining = Math.max(0, Math.ceil((session.holdEndTime - Date.now()) / 1000));
+  const clock = document.getElementById("holdClock");
+  if (clock) clock.textContent = formatTime(remaining);
+  if (remaining <= 0) {
+    clearInterval(session.timerId);
+    playBeep();
+    session.holding = false;
+    recordSetAndAdvance(session.holdStep, session.holdTargetSeconds);
+  }
+}
+
+function startRest(seconds) {
+  session.resting = true;
+  session.restEndTime = Date.now() + seconds * 1000;
+  renderSession();
+  session.timerId = setInterval(tickRest, 1000);
+}
+
+function tickRest() {
+  if (!session || !session.resting) return;
+  const remaining = Math.max(0, Math.ceil((session.restEndTime - Date.now()) / 1000));
+  const clock = document.getElementById("restClock");
+  if (clock) clock.textContent = formatTime(remaining);
+  if (remaining <= 0) {
+    clearInterval(session.timerId);
+    playBeep();
+    session.resting = false;
+    renderSession();
+  }
+}
+
+// setInterval throttles or pauses while the screen is locked or the tab is
+// backgrounded, so a decrementing counter would drift. Recomputing from the
+// absolute end time on return keeps rest periods and holds accurate regardless.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible" || !session) return;
+  if (session.resting) tickRest();
+  if (session.holding) tickHold();
+});
+
+async function finishSession() {
+  const results = currentWorkout.exercises.map((e, i) => {
+    const actuals = session.setsActual[i] || [];
+    const range = parseRepRange(e.reps);
+    let result = "hold";
+    if (!actuals.length) result = "hold";
+    else if (actuals.some(a => a < range.min)) result = "missed";
+    else if (actuals.every(a => a >= range.max)) result = "max";
+    return { exercise: e, result };
+  });
+  await applyWorkoutResults(results);
+  session = null;
+  document.getElementById("sessionPanel").classList.add("hidden");
+  document.getElementById("todayWorkout").classList.remove("hidden");
+  document.getElementById("startSessionBtn").classList.remove("hidden");
+  document.getElementById("minimumDayBtn").classList.remove("hidden");
+  document.getElementById("genWorkoutBtn").classList.remove("hidden");
+  renderTodayWorkout(currentWorkout);
+  alert("Session complete. Logged and levels updated automatically from your actual reps.");
+}
+
+document.getElementById("startSessionBtn").addEventListener("click", startSession);
+document.getElementById("minimumDayBtn").addEventListener("click", startMinimumDay);
+
+document.getElementById("programsSubNav").addEventListener("click", (e) => {
+  const chip = e.target.closest("[data-subtab]");
+  if (!chip) return;
+  document.querySelectorAll("#programsSubNav .chip").forEach(c => c.classList.remove("active"));
+  chip.classList.add("active");
+  document.getElementById("subtab-my-programs").classList.toggle("hidden", chip.dataset.subtab !== "my-programs");
+  document.getElementById("subtab-library").classList.toggle("hidden", chip.dataset.subtab !== "library");
+});
+
+let lastActiveTab = "today";
+
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    lastActiveTab = btn.dataset.tab;
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.getElementById("profileBtn").classList.remove("active");
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
+    btn.classList.add("active");
+    document.getElementById("tab-" + btn.dataset.tab).classList.remove("hidden");
+    if (btn.dataset.tab === "today") {
+      const active = programs.find(p => p.id === state.activeProgramId);
+      if (active) ensureWorkoutReady(active);
+    }
+  });
+});
+
+document.getElementById("profileBtn").addEventListener("click", () => {
+  const profileBtn = document.getElementById("profileBtn");
+  if (profileBtn.classList.contains("active")) {
+    // already in Settings — pressing again exits back to whichever tab was open before
+    const targetBtn = document.querySelector(`.tab-btn[data-tab="${lastActiveTab}"]`);
+    if (targetBtn) targetBtn.click();
+    return;
+  }
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
+  profileBtn.classList.add("active");
+  document.getElementById("tab-settings").classList.remove("hidden");
+});
+
+// ---- duration chips ----
+let selectedMonths = 6;
+document.getElementById("durationChips").addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  document.querySelectorAll("#durationChips .chip").forEach(c => c.classList.remove("active"));
+  chip.classList.add("active");
+  selectedMonths = parseInt(chip.dataset.months, 10);
+});
+
+// ---- generate program ----
+document.getElementById("generateProgramBtn").addEventListener("click", async (e) => {
+  const btn = e.target;
+  const focus = document.getElementById("programFocus").value.trim();
+  btn.disabled = true; btn.textContent = "Generating…";
+  try {
+    const program = await generateProgram(selectedMonths, focus);
+    await loadPrograms();
+    renderPrograms();
+    alert(`"${program.name}" saved — it's hardcoded in your library until you delete it.`);
+  } catch (err) {
+    alert("Generation failed: " + err.message + (WORKER_URL ? "" : " (set your Worker URL in Settings first)"));
+  } finally {
+    btn.disabled = false; btn.textContent = "Generate program";
+  }
+});
+
+// ---- upload / import program ----
+document.getElementById("uploadDrop").addEventListener("click", () => document.getElementById("uploadInput").click());
+document.getElementById("uploadInput").addEventListener("change", async (e) => {
+  const files = Array.from(e.target.files || []);
+  if (!files.length) return;
+  const statusEl = document.getElementById("uploadStatus");
+  statusEl.style.display = "block";
+  statusEl.textContent = "Reading files…";
+  try {
+    const encoded = await Promise.all(files.map(async f => {
+      if (f.type.startsWith("image/")) {
+        const { base64, media_type } = await resizeImageFile(f, 1600, 0.85); // a bit higher res since these need to be read as text
+        return { media_type, data: base64 };
+      }
+      return new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = () => res({ media_type: f.type, data: reader.result.split(",")[1] });
+        reader.onerror = rej;
+        reader.readAsDataURL(f);
+      });
+    }));
+    statusEl.textContent = "Parsing with AI…";
+    const instructions = `Extract the structured training program from these file(s).
+Determine the program's actual total duration from what's in the document itself
+— don't assume any particular length (e.g. exactly a year); read the real number
+of weeks/phases as written. Compress it into PHASES rather than writing out every
+individual week — identify the distinct blocks/phases (e.g. foundation, build,
+peak) and the day/slot template each phase uses, noting which weeks within each
+phase are deload weeks. This keeps the output compact even for a long program.
+For each slot, also capture the SPECIFIC exercise name the document actually
+names for it (e.g. "Archer pull-up", not just "pull") — this is what the
+person's original program prescribed, and it should be preserved and used
+later, not replaced with something generic. Use exercise_name: null only if
+the document genuinely doesn't specify one and leaves it open.
+Output ONLY valid JSON: {"name": "string", "phases": [{"phase": "string", "week_start": 1, "week_end": 8, "deload_weeks": [4], "days": [{"day": "string", "slots": [{"muscle_group": "push|pull|legs|hinge|core|ruck", "sets": 3, "reps": "8-12", "exercise_name": "string or null"}]}]}]}`;
+    const data = await apiFetch("/api/import", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ files: encoded, instructions }),
+    });
+    const text = data.content?.[0]?.text || "{}";
+    const structure = extractJson(text);
+
+    // Reconcile named exercises against the library — anything the document
+    // specified that we don't already have gets added as a custom entry, so
+    // generation can actually use what the original program prescribed
+    // instead of silently falling back to a same-muscle-group substitute.
+    const namedExercises = new Map(); // name (lowercased) -> { name, muscle_group }
+    (structure.phases || []).forEach(phase => {
+      (phase.days || []).forEach(day => {
+        (day.slots || []).forEach(slot => {
+          if (slot.exercise_name && slot.exercise_name.trim()) {
+            namedExercises.set(slot.exercise_name.trim().toLowerCase(), {
+              name: slot.exercise_name.trim(),
+              muscle_group: slot.muscle_group,
+            });
+          }
+        });
+      });
+    });
+    const existingNames = new Set(exercises.map(e => e.name.toLowerCase()));
+    const toCreate = [...namedExercises.values()].filter(e => !existingNames.has(e.name.toLowerCase()));
+    for (const ex of toCreate) {
+      try {
+        await apiFetch("/api/exercises", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: "imported-" + ex.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+            name: ex.name,
+            muscle_group: ex.muscle_group,
+            equipment: "bodyweight",
+            cue: "",
+            source: "imported",
+          }),
+        });
+      } catch (e) { /* skip on individual failure, don't block the whole import */ }
+    }
+    if (toCreate.length) await loadExercises();
+
+    const maxWeek = Math.max(0, ...(structure.phases || []).map(p => p.week_end || 0));
+    const program = {
+      id: "prog-" + Date.now(),
+      name: structure.name || "Imported program",
+      duration_weeks: maxWeek,
+      source: "uploaded",
+      structure,
+    };
+    await apiFetch("/api/programs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(program),
+    });
+    await loadPrograms();
+    renderPrograms();
+    statusEl.textContent = `"${program.name}" saved — hardcoded until you delete it.`;
+  } catch (err) {
+    statusEl.textContent = "Import failed: " + err.message;
+  }
+});
+
+// ---- program list actions ----
+document.getElementById("programList").addEventListener("click", async (e) => {
+  const previewId = e.target.dataset.previewProgram;
+  const useId = e.target.dataset.useProgram;
+  const delId = e.target.dataset.delProgram;
+  if (previewId) {
+    const panel = document.querySelector(`[data-preview-panel="${previewId}"]`);
+    const isHidden = panel.classList.contains("hidden");
+    document.querySelectorAll(".preview-panel").forEach(p => p.classList.add("hidden"));
+    if (isHidden) {
+      const program = programs.find(p => p.id === previewId);
+      panel.innerHTML = renderProgramPreview(program);
+      panel.classList.remove("hidden");
+    }
+    return;
+  }
+  if (useId) {
+    state.activeProgramId = useId;
+    await applyStartingLevelsIfUntrained();
+    renderActiveProgramInfo();
+  }
+  if (delId) {
+    if (!confirm("Delete this program? This can't be undone.")) return;
+    await apiFetch("/api/programs/" + delId, { method: "DELETE" });
+    if (state.activeProgramId === delId) state.activeProgramId = null;
+    await loadPrograms();
+    renderPrograms();
+    await persistNow();
+  }
+});
+
+// ---- today workout generation ----
+document.getElementById("genWorkoutBtn").addEventListener("click", async (e) => {
+  const btn = e.target;
+  const program = programs.find(p => p.id === state.activeProgramId);
+  if (!program) return;
+  btn.disabled = true; btn.textContent = "Generating…";
+  try {
+    const { phase } = currentPhaseFor(program);
+    const key = phaseKeyFor(program, phase);
+    const dayIndex = (state.pendingWorkout && state.pendingWorkout.programId === program.id && state.pendingWorkout.phaseKey === key)
+      ? state.pendingWorkout.dayIndex : 0;
+    const avoidNames = state.pendingWorkout?.workout?.exercises?.map(ex => ex.name) || [];
+    const workout = await generateTodayWorkout(program, dayIndex, avoidNames);
+    state.pendingWorkout = { programId: program.id, phaseKey: key, dayIndex, workout, completed: false };
+    await persistNow();
+    renderTodayWorkout(workout);
+  } catch (err) {
+    alert("Couldn't generate a workout: " + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = "Regenerate";
+  }
+});
+
+// ---- library search/filter ----
+let currentMg = "all";
+let currentLevel = "all";
+let currentEquip = "all";
+document.getElementById("exerciseSearch").addEventListener("input", (e) => renderExercises(e.target.value, currentMg, currentLevel, currentEquip));
+document.getElementById("muscleFilterChips").addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  document.querySelectorAll("#muscleFilterChips .chip").forEach(c => c.classList.remove("active"));
+  chip.classList.add("active");
+  currentMg = chip.dataset.mg;
+  renderExercises(document.getElementById("exerciseSearch").value, currentMg, currentLevel, currentEquip);
+});
+document.getElementById("levelFilterChips").addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  document.querySelectorAll("#levelFilterChips .chip").forEach(c => c.classList.remove("active"));
+  chip.classList.add("active");
+  currentLevel = chip.dataset.level;
+  renderExercises(document.getElementById("exerciseSearch").value, currentMg, currentLevel, currentEquip);
+});
+document.getElementById("equipmentFilterChips").addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  document.querySelectorAll("#equipmentFilterChips .chip").forEach(c => c.classList.remove("active"));
+  chip.classList.add("active");
+  currentEquip = chip.dataset.equip;
+  renderExercises(document.getElementById("exerciseSearch").value, currentMg, currentLevel, currentEquip);
+});
+document.getElementById("exerciseList").addEventListener("click", async (e) => {
+  const howtoBtn = e.target.closest("[data-howto-open]");
+  if (howtoBtn) {
+    document.querySelector(`[data-howto-panel="${howtoBtn.dataset.howtoOpen}"]`)?.classList.toggle("hidden");
+    return;
+  }
+  const id = e.target.dataset.delEx;
+  if (!id) return;
+  if (!confirm("Remove this exercise from the library?")) return;
+  await apiFetch("/api/exercises/" + id, { method: "DELETE" });
+  await loadExercises();
+  renderExercises(document.getElementById("exerciseSearch").value, currentMg, currentLevel, currentEquip);
+});
+
+// ---- settings ----
+document.getElementById("workerUrlInput").value = WORKER_URL;
+document.getElementById("saveWorkerUrlBtn").addEventListener("click", async () => {
+  WORKER_URL = document.getElementById("workerUrlInput").value.trim();
+  localStorage.setItem(LS_WORKER_URL_KEY, WORKER_URL);
+  await init();
+  alert("Saved. Reconnected to " + (WORKER_URL || "local-only mode") + ".");
+});
+
+document.getElementById("exportBtn").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify({ state, exercises, programs }, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `train-fuel-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+});
+document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importInput").click());
+document.getElementById("importInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const parsed = JSON.parse(reader.result);
+    state = parsed.state || state;
+    await persistNow();
+    alert("Backup restored and synced.");
+  };
+  reader.readAsText(file);
+});
+
+document.getElementById("startDateInput").addEventListener("change", async (e) => {
+  state.settings.startDate = e.target.value;
+  await persistNow();
+});
+
+// ---- starting level per movement pattern ----
+const STARTING_LEVEL_MAP = { beginner: 1, intermediate: 3, advanced: 5 };
+const MUSCLE_GROUPS = ["push", "pull", "legs", "hinge", "core", "ruck"];
+
+function renderStartingLevelSettings() {
+  const el = document.getElementById("startingLevelSettings");
+  el.innerHTML = MUSCLE_GROUPS.map(mg => `
+    <div style="margin-top:10px;">
+      <div class="meta" style="text-transform:capitalize; margin-bottom:4px;">${mg}</div>
+      <div class="row">
+        ${["beginner", "intermediate", "advanced"].map(lvl => `
+          <div class="chip ${state.settings.startingLevels[mg] === lvl ? "active" : ""}" data-start-mg="${mg}" data-start-lvl="${lvl}">${lvl.charAt(0).toUpperCase() + lvl.slice(1)}</div>
+        `).join("")}
+      </div>
+    </div>
+  `).join("");
+}
+
+document.getElementById("startingLevelSettings").addEventListener("click", async (e) => {
+  const chip = e.target.closest("[data-start-mg]");
+  if (!chip) return;
+  const mg = chip.dataset.startMg, lvl = chip.dataset.startLvl;
+  state.settings.startingLevels[mg] = lvl;
+  await persistNow();
+  renderStartingLevelSettings();
+});
+
+// Applies the calibrated starting level to any muscle group that has never
+// been logged yet — protects already-earned progress on groups you've trained.
+async function applyStartingLevelsIfUntrained() {
+  const trainedGroups = new Set((state.logs || []).map(l => l.muscle_group));
+  MUSCLE_GROUPS.forEach(mg => {
+    if (!trainedGroups.has(mg)) {
+      const lvl = state.settings.startingLevels?.[mg] || "intermediate";
+      state.progressLevels[mg] = STARTING_LEVEL_MAP[lvl];
+    }
+  });
+  await persistNow();
+}
+
+// ---- init ----
+async function init() {
+  await loadState();
+  await loadExercises();
+  await loadPrograms();
+  renderExercises();
+  renderPrograms();
+  renderCelebrations();
+  renderProgressCharts();
+  renderRecentCardio();
+  renderStartingLevelSettings();
+  renderMacroSummary();
+  renderQuickProteinChips();
+  document.getElementById("foodLogDate").value = localDateStr();
+  renderFoodLogList();
+  if (state.settings?.startDate) document.getElementById("startDateInput").value = state.settings.startDate;
+  const t = state.settings.macroTargets || {};
+  document.getElementById("targetCalories").value = t.calories || "";
+  document.getElementById("targetProtein").value = t.protein || "";
+  document.getElementById("targetCarbs").value = t.carbs || "";
+  document.getElementById("targetFat").value = t.fat || "";
+}
+init();
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
+</script>
+</body>
+</html>
