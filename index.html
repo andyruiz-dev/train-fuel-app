@@ -1834,6 +1834,22 @@ function isLosingTooFast() {
 }
 
 async function applyWorkoutResults(results) {
+  // Guard against a duplicate submission — a fast double-tap or a mobile
+  // "ghost click" firing the completion handler twice for one tap. This
+  // previously let a single workout double-count, inflating progressLevels
+  // by an extra step each time (e.g. push jumping 3->5 instead of 3->4 from
+  // one real session). If the exact same set of exercise/result pairs was
+  // already logged in the last few seconds, treat this call as the echo of
+  // that submission and skip it rather than applying it again.
+  const now = Date.now();
+  const signature = results.map(r => `${r.exercise.name}:${r.result}`).sort().join("|");
+  const recentSignature = (state.logs || [])
+    .filter(l => now - new Date(l.date).getTime() < 8000)
+    .map(l => `${l.exercise}:${l.result}`).sort().join("|");
+  if (signature && signature === recentSignature) {
+    return;
+  }
+
   const holdProgression = isLosingTooFast();
   const oldLevels = { ...state.progressLevels };
   const byGroup = {};
