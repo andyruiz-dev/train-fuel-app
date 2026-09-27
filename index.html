@@ -2461,18 +2461,27 @@ function resizeImageFile(file, maxDim = 1200, quality = 0.8) {
 // to free memory right away rather than waiting on GC. Falls back to the
 // original file untouched if anything here fails or isn't supported —
 // worst case, upload just proceeds at full size like before.
+//
+// Critical detail: the resize target is passed straight into createImageBitmap
+// via resizeWidth/resizeQuality, so the browser's native decoder downsamples
+// WHILE decoding rather than materializing a full-resolution bitmap first and
+// scaling after. Many current Android camera photos are 48MP+; decoding one of
+// those to a full bitmap before shrinking it can spike memory by 150-200MB+,
+// which is what was triggering Chrome's low-memory kill/reload mid-scan —
+// a full page reload, not a JS error, so nothing ever reached the try/catch
+// and the app just silently landed back on the default tab with the in-flight
+// scan lost. Decoding pre-downscaled avoids ever creating that huge
+// intermediate bitmap.
 async function getUploadBlob(file, maxDim = 1400, quality = 0.8, maxBytes = 3 * 1024 * 1024) {
   if (!("createImageBitmap" in window)) return file; // no support, send raw as before
   if (file.size <= maxBytes) return file; // already small enough in actual bytes, skip processing
 
   let bitmap;
   try {
-    bitmap = await createImageBitmap(file);
-    let { width, height } = bitmap;
-    if (width > maxDim || height > maxDim) {
-      if (width > height) { height = Math.round(height * maxDim / width); width = maxDim; }
-      else { width = Math.round(width * maxDim / height); height = maxDim; }
-    }
+    // resizeWidth alone (no resizeHeight) preserves the source aspect ratio
+    // per spec, and decode+downsample happens as one native step.
+    bitmap = await createImageBitmap(file, { resizeWidth: maxDim, resizeQuality: "medium" });
+    const { width, height } = bitmap;
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
@@ -2488,7 +2497,8 @@ async function getUploadBlob(file, maxDim = 1400, quality = 0.8, maxBytes = 3 * 
       blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", q));
       attempts++;
     }
-    // Quality alone wasn't enough (very high detail/large source) — shrink dimensions too.
+    // Quality alone wasn't enough — shrink dimensions further, still off the
+    // already-downscaled bitmap (never redraws at full source resolution).
     if (blob && blob.size > maxBytes) {
       const smallerW = Math.round(width * 0.7);
       const smallerH = Math.round(height * 0.7);
@@ -2499,6 +2509,10 @@ async function getUploadBlob(file, maxDim = 1400, quality = 0.8, maxBytes = 3 * 
     }
     return blob || file;
   } catch (err) {
+    // Deliberately do NOT fall back to a full-resolution decode here — that's
+    // the exact risky path this function exists to avoid. Send the original
+    // file untouched instead; worst case the upload is a bit larger, but
+    // nothing decodes at full size in this browser context.
     return file;
   } finally {
     if (bitmap) bitmap.close();
@@ -3192,11 +3206,18 @@ document.getElementById("programsSubNav").addEventListener("click", (e) => {
   document.getElementById("subtab-library").classList.toggle("hidden", chip.dataset.subtab !== "library");
 });
 
-let lastActiveTab = "today";
+// Persisted (not just in-memory) so that if the browser ever does reload the
+// page out from under you — a low-memory kill, backgrounding, whatever —
+// you land back on the tab you were actually using instead of always
+// bouncing to Today. Doesn't recover in-progress unsaved work (a photo scan
+// mid-analysis, say), just avoids compounding that with a confusing jump.
+const LS_LAST_TAB_KEY = "trainFuelLastTab";
+let lastActiveTab = localStorage.getItem(LS_LAST_TAB_KEY) || "today";
 
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     lastActiveTab = btn.dataset.tab;
+    try { localStorage.setItem(LS_LAST_TAB_KEY, lastActiveTab); } catch (err) {}
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
     document.getElementById("profileBtn").classList.remove("active");
     document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
@@ -3566,6 +3587,13 @@ async function init() {
   document.getElementById("targetProtein").value = t.protein || "";
   document.getElementById("targetCarbs").value = t.carbs || "";
   document.getElementById("targetFat").value = t.fat || "";
+  // Restore whichever tab was open before, now that all panels' content is
+  // actually populated — done here rather than at top-level so a restored
+  // Food/Progress/Programs tab isn't briefly empty while init() is still running.
+  if (lastActiveTab !== "today") {
+    const restoreBtn = document.querySelector(`.tab-btn[data-tab="${lastActiveTab}"]`);
+    if (restoreBtn) restoreBtn.click();
+  }
 }
 init();
 
