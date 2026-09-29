@@ -183,6 +183,9 @@
         <h2 style="margin:0;">Today's workout</h2>
         <button id="genWorkoutBtn" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; padding:4px 0;" disabled>Regenerate</button>
       </div>
+      <div class="row" style="margin-bottom:8px;">
+        <div class="chip" id="travelModeToggle">✈️ Traveling — bodyweight + band only</div>
+      </div>
       <div id="recoveryCautionNote"></div>
       <div id="todayWorkout" class="empty">Pick an active program first.</div>
       <button class="primary" id="startSessionBtn" style="margin-top:10px; width:100%;" disabled>Start guided session</button>
@@ -611,6 +614,7 @@ async function loadState() {
   if (!state.celebrations) state.celebrations = [];
   if (typeof state.welcomeBackDismissedDate !== "string") state.welcomeBackDismissedDate = "";
   if (!state.settings.macroTargets) state.settings.macroTargets = { calories: 2300, protein: 160, carbs: 200, fat: 70 };
+  if (typeof state.travelMode !== "boolean") state.travelMode = false;
 }
 
 function saveStateLocal() {
@@ -1754,7 +1758,15 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
   // different plane on its own — filtering here is what actually enforces
   // it instead of just describing it in prose.
   let planeFilteredPush = [], planeFilteredPull = [];
+  // Travel mode: restrict to gear that actually travels (bodyweight + a
+  // packable resistance band). Applied ahead of the level/plane filters
+  // below rather than as a separate pass, so it composes with them instead
+  // of needing its own fallback logic. Note there are zero pure-bodyweight
+  // pull exercises in the library — band coverage (band-assisted pull-ups/
+  // rows) is what keeps pull day possible at all here, not optional.
+  const TRAVEL_EQUIPMENT = new Set(["bodyweight", "band"]);
   const availableExercises = exercises.filter(e => {
+    if (state.travelMode && !TRAVEL_EQUIPMENT.has(e.equipment || "bodyweight")) return false;
     if (e.muscle_group === "push" || e.muscle_group === "pull") {
       const plane = planeOf(e.id, e.muscle_group);
       if (plane !== planeFor[e.muscle_group]) return false;
@@ -1779,6 +1791,7 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
     planeFor[mg] = fallbackPlane;
     exercises.forEach(e => {
       if (e.muscle_group !== mg) return;
+      if (state.travelMode && !TRAVEL_EQUIPMENT.has(e.equipment || "bodyweight")) return;
       const plane = planeOf(e.id, e.muscle_group);
       if (plane !== fallbackPlane) return;
       const cap = planeLevels[`${mg}_${plane}`] ?? 1;
@@ -3817,6 +3830,34 @@ document.getElementById("genWorkoutBtn").addEventListener("click", async (e) => 
   }
 });
 
+// Travel mode: restricts today's-workout generation to bodyweight + band
+// exercises (see TRAVEL_EQUIPMENT in generateTodayWorkout). Full session,
+// not minimum-day — the point is swapping out equipment you don't have on
+// the road, not lowering the bar. Regenerates today's workout immediately
+// so the toggle takes visible effect, same dayIndex-preserving pattern as
+// the Regenerate button above.
+document.getElementById("travelModeToggle").addEventListener("click", async () => {
+  state.travelMode = !state.travelMode;
+  document.getElementById("travelModeToggle").classList.toggle("active", state.travelMode);
+  await persistNow();
+  const program = programs.find(p => p.id === state.activeProgramId);
+  if (!program) return;
+  const { phase } = currentPhaseFor(program);
+  const key = phaseKeyFor(program, phase);
+  const dayIndex = (state.pendingWorkout && state.pendingWorkout.programId === program.id && state.pendingWorkout.phaseKey === key)
+    ? state.pendingWorkout.dayIndex : 0;
+  const box = document.getElementById("todayWorkout");
+  box.innerHTML = '<div class="empty">Regenerating for travel…</div>';
+  try {
+    const workout = await generateTodayWorkout(program, dayIndex);
+    state.pendingWorkout = { programId: program.id, phaseKey: key, dayIndex, workout, completed: false };
+    await persistNow();
+    renderTodayWorkout(workout);
+  } catch (err) {
+    box.innerHTML = `<div class="empty">Couldn't regenerate (${err.message}). Use Regenerate below to retry.</div>`;
+  }
+});
+
 // ---- library search/filter ----
 let currentMg = "all";
 let currentLevel = "all";
@@ -3978,6 +4019,7 @@ async function init() {
   document.getElementById("targetProtein").value = t.protein || "";
   document.getElementById("targetCarbs").value = t.carbs || "";
   document.getElementById("targetFat").value = t.fat || "";
+  document.getElementById("travelModeToggle").classList.toggle("active", !!state.travelMode);
   // Restore whichever tab was open before, now that all panels' content is
   // actually populated — done here rather than at top-level so a restored
   // Food/Progress/Programs tab isn't briefly empty while init() is still running.
