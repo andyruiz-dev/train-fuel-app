@@ -1529,26 +1529,29 @@ function renderWeeklyReview() {
   });
 
   document.getElementById("repeatWeekBtn").addEventListener("click", async () => {
+    const keepDayIndex = state.pendingWorkout?.dayIndex;
     state.weekAdjustment = (state.weekAdjustment || 0) - 1;
     state.pendingWorkout = null;
     await persistNow();
     renderWeeklyReview();
-    if (program) ensureWorkoutReady(program);
+    if (program) ensureWorkoutReady(program, keepDayIndex);
   });
   document.getElementById("advanceWeekBtn").addEventListener("click", async () => {
+    const keepDayIndex = state.pendingWorkout?.dayIndex;
     state.weekAdjustment = (state.weekAdjustment || 0) + 1;
     state.pendingWorkout = null;
     await persistNow();
     renderWeeklyReview();
-    if (program) ensureWorkoutReady(program);
+    if (program) ensureWorkoutReady(program, keepDayIndex);
   });
   const resetBtn = document.getElementById("resetWeekBtn");
   if (resetBtn) resetBtn.addEventListener("click", async () => {
+    const keepDayIndex = state.pendingWorkout?.dayIndex;
     state.weekAdjustment = 0;
     state.pendingWorkout = null;
     await persistNow();
     renderWeeklyReview();
-    if (program) ensureWorkoutReady(program);
+    if (program) ensureWorkoutReady(program, keepDayIndex);
   });
 }
 
@@ -1578,7 +1581,14 @@ function phaseKeyFor(program, phase) {
 // The "current" workout persists until you log a result for it — training
 // cadence is driven by completion, not calendar days, so rest days (or
 // skipped days) never throw the rotation out of sync.
-async function ensureWorkoutReady(program) {
+// forceDayIndex lets a caller that just wiped pendingWorkout (Repeat/Advance/
+// Reset week — see below) tell this function which day-of-rotation to
+// regenerate instead of silently defaulting to Day 1. Without it, those
+// buttons reset the whole 7-day rotation back to the start every time
+// they're clicked, which is how a day (e.g. the one core slot in Foundation
+// phase) can go weeks without ever coming up — the cycle keeps restarting
+// before it gets there.
+async function ensureWorkoutReady(program, forceDayIndex) {
   const { phase, weekNumber } = currentPhaseFor(program);
   const key = phaseKeyFor(program, phase);
 
@@ -1592,7 +1602,7 @@ async function ensureWorkoutReady(program) {
   box.innerHTML = '<div class="empty">Generating your next workout…</div>';
   try {
     const totalDays = (phase?.days || []).length || 1;
-    let nextIndex = 0;
+    let nextIndex = typeof forceDayIndex === "number" ? ((forceDayIndex % totalDays) + totalDays) % totalDays : 0;
     if (state.pendingWorkout && state.pendingWorkout.programId === program.id &&
         state.pendingWorkout.phaseKey === key && state.pendingWorkout.completed) {
       nextIndex = (state.pendingWorkout.dayIndex + 1) % totalDays;
