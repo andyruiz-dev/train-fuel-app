@@ -1903,6 +1903,20 @@ function restDayCaution(workout) {
   return `Rest day check: ${overlap.join(", ")} trained ${dayGap === 0 ? "earlier today" : "yesterday"} too — no rest day between sessions for ${overlap.length > 1 ? "these muscle groups" : "this muscle group"}. Consider resting it today or swapping to something else.`;
 }
 
+// Same idea as travel mode, but for the other named consistency trigger:
+// stress/busy periods, which don't have an equipment fix — the existing
+// "minimum day" mode is already the right tool, it just wasn't surfaced
+// proactively. "Stress" has to have actually been logged as a check-in
+// reason recently (not inferred) — this only nudges toward what's already
+// there, it doesn't gate or change anything about today's workout itself.
+function recentStressCaution(days = 3) {
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  const recent = (state.measurements || []).some(m =>
+    new Date(m.date).getTime() >= cutoff && m.reasons && m.reasons.includes("Stress"));
+  if (!recent) return null;
+  return "Stress logged recently — no pressure for the full session today. \"Do the minimum\" below still counts.";
+}
+
 function renderTodayWorkout(workout) {
   currentWorkout = workout;
   const box = document.getElementById("todayWorkout");
@@ -1933,10 +1947,13 @@ function renderTodayWorkout(workout) {
   // Only compute these for a workout you haven't done yet — checking a just-
   // completed session against its own logs would always trivially "conflict".
   const restNote = restDayCaution(workout);
+  const stressNote = recentStressCaution();
   cautionEl.innerHTML = (isLosingTooFast()
     ? `<div class="meta" style="color:var(--gold); margin-bottom:8px;">Recovery caution: weight loss is outpacing target pace — holding progression steady, no intensity increases this week.</div>`
     : "") + (restNote
     ? `<div class="meta" style="color:var(--gold); margin-bottom:8px;">${restNote}</div>`
+    : "") + (stressNote
+    ? `<div class="meta" style="color:var(--gold); margin-bottom:8px;">${stressNote}</div>`
     : "");
 
   genBtn.classList.remove("hidden");
