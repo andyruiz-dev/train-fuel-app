@@ -410,6 +410,7 @@
         don't count as a pattern yet.
       </p>
       <div id="reasonPatterns" class="empty">Not enough repeated reasons yet to spot a pattern.</div>
+      <div class="meta" id="reasonPatternsHint" style="margin-top:6px; cursor:pointer;"></div>
     </div>
   </section>
 
@@ -1431,17 +1432,35 @@ function computeReasonPatterns() {
   return patterns.length ? patterns : null;
 }
 
+// Capped to a handful by default (this list only ever grows as more reasons
+// repeat across your weigh-in history, never shrinks) — tap the hint to see
+// the rest, same tap-to-expand pattern as everything else on this tab.
+const REASON_PATTERNS_COLLAPSED_COUNT = 3;
+let reasonPatternsOpen = false;
 function renderReasonPatterns() {
   const el = document.getElementById("reasonPatterns");
+  const hintEl = document.getElementById("reasonPatternsHint");
   const patterns = computeReasonPatterns();
-  if (!patterns) { el.innerHTML = '<div class="empty">Not enough repeated reasons yet to spot a pattern.</div>'; return; }
-  el.innerHTML = patterns.map(p => {
+  if (!patterns) {
+    el.innerHTML = '<div class="empty">Not enough repeated reasons yet to spot a pattern.</div>';
+    hintEl.textContent = "";
+    return;
+  }
+  const shown = reasonPatternsOpen ? patterns : patterns.slice(0, REASON_PATTERNS_COLLAPSED_COUNT);
+  el.innerHTML = shown.map(p => {
     const parts = [];
     if (p.up) parts.push(`${p.up}× upticks`);
     if (p.down) parts.push(`${p.down}× big drops`);
     return `<div class="list-item"><div><div class="name">${p.reason}</div><div class="meta">${parts.join(" · ")}</div></div></div>`;
   }).join("");
+  hintEl.textContent = patterns.length > REASON_PATTERNS_COLLAPSED_COUNT
+    ? (reasonPatternsOpen ? "Show fewer" : `See all ${patterns.length} patterns`)
+    : "";
 }
+document.getElementById("reasonPatternsHint").addEventListener("click", () => {
+  reasonPatternsOpen = !reasonPatternsOpen;
+  renderReasonPatterns();
+});
 
 let weeklyReviewLogsOpen = false;
 function renderWeeklyReview() {
