@@ -1098,7 +1098,7 @@ function renderExercises(filterText = "", muscleGroup = "all", levelFilter = "al
             <div>
               <div class="name">${e.name}</div>
               <div class="meta">${e.equipment || "bodyweight"}${e.source === "builtin" ? "" : " · " + e.source}</div>
-              ${howToHtml("lib-" + e.id, e.name, e.cue, e.id)}
+              ${howToHtml("lib-" + e.id, e.name, e.cue)}
             </div>
             ${e.source !== "builtin" ? `<button class="danger-link" data-del-ex="${e.id}">Delete</button>` : ""}
           </div>
@@ -1937,7 +1937,7 @@ function renderTodayWorkout(workout) {
           <div>
             <div class="name">${e.name}</div>
             <div class="meta">${e.muscle_group} · ${e.sets}×${e.reps}${isHoldExercise(e.name) ? "s hold" : ""} · ${levelLabelFor(e)}${strapNote}</div>
-            ${howToHtml("today-" + i, e.name, exercises.find(x => x.name === e.name)?.cue, exercises.find(x => x.name === e.name)?.id)}
+            ${howToHtml("today-" + i, e.name, exercises.find(x => x.name === e.name)?.cue)}
           </div>
           <button class="danger-link" style="color:var(--accent);" data-swap-open="${i}">Swap</button>
         </div>
@@ -2039,90 +2039,11 @@ document.getElementById("todayWorkout").addEventListener("click", async (e) => {
   }
 });
 
-// PILOT BATCH — form diagrams for the 6 hardest-to-picture exercises
-// currently in rotation. These are simple stick-figure schematics, not
-// anatomically precise renderings — I have no reference image to check
-// proportions against, so each one leans on short text callouts quoting the
-// specific checkpoints from a sourced description (GMB, NASM, E3 Rehab,
-// Bullbar, Dieringe — see commit message) rather than trusting the geometry
-// alone to carry the accuracy. Deliberately a small pilot: confirm this
-// style is actually useful before committing to the rest of the library.
-const EXERCISE_DIAGRAMS = {
-  "archer-pushup": `<svg viewBox="0 0 200 115" width="100%" height="92" xmlns="http://www.w3.org/2000/svg">
-    <line x1="15" y1="100" x2="190" y2="100" stroke="currentColor" stroke-width="1.5" opacity="0.25"/>
-    <circle cx="30" cy="40" r="7" fill="none" stroke="currentColor" stroke-width="3.5"/>
-    <polyline points="35,46 165,98" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-    <polyline points="38,48 45,68 42,98" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="45,55 100,100" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-    <text x="8" y="74" font-size="9" fill="currentColor">weight shifts</text>
-    <text x="8" y="85" font-size="9" fill="currentColor">to bent arm</text>
-    <text x="93" y="68" font-size="9" fill="currentColor">other arm stays</text>
-    <text x="93" y="79" font-size="9" fill="currentColor">straight, reaches out</text>
-  </svg>`,
-  "tuck-planche": `<svg viewBox="0 0 200 115" width="100%" height="92" xmlns="http://www.w3.org/2000/svg">
-    <line x1="15" y1="100" x2="190" y2="100" stroke="currentColor" stroke-width="1.5" opacity="0.25"/>
-    <circle cx="35" cy="58" r="7" fill="none" stroke="currentColor" stroke-width="3.5"/>
-    <polyline points="40,62 92,55" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-    <polyline points="50,60 70,98" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-    <polyline points="92,55 78,48 70,38" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <text x="95" y="45" font-size="9" fill="currentColor">knees pulled</text>
-    <text x="95" y="56" font-size="9" fill="currentColor">tight to chest</text>
-    <text x="10" y="30" font-size="9" fill="currentColor">shoulders forward of hand,</text>
-    <text x="10" y="41" font-size="9" fill="currentColor">arms locked, body ~level</text>
-  </svg>`,
-  "planche-lean": `<svg viewBox="0 0 200 115" width="100%" height="92" xmlns="http://www.w3.org/2000/svg">
-    <line x1="15" y1="100" x2="190" y2="100" stroke="currentColor" stroke-width="1.5" opacity="0.25"/>
-    <circle cx="32" cy="53" r="7" fill="none" stroke="currentColor" stroke-width="3.5"/>
-    <polyline points="37,58 120,80 175,99" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="45,60 70,98" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-    <text x="10" y="30" font-size="9" fill="currentColor">shoulders pass in front of hands</text>
-    <text x="140" y="90" font-size="9" fill="currentColor">toes stay down</text>
-  </svg>`,
-  "l-sit-pullup": `<svg viewBox="0 0 200 100" width="100%" height="80" xmlns="http://www.w3.org/2000/svg">
-    <line x1="20" y1="15" x2="150" y2="15" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-    <circle cx="68" cy="38" r="7" fill="none" stroke="currentColor" stroke-width="3.5"/>
-    <polyline points="75,42 60,32 70,15" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <line x1="75" y1="45" x2="78" y2="75" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-    <polyline points="78,75 175,75" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-    <text x="95" y="70" font-size="9" fill="currentColor">legs locked, parallel to floor</text>
-    <text x="8" y="55" font-size="9" fill="currentColor">chest</text>
-    <text x="8" y="66" font-size="9" fill="currentColor">to bar</text>
-  </svg>`,
-  "nordic-curl-banded": `<svg viewBox="0 0 200 115" width="100%" height="92" xmlns="http://www.w3.org/2000/svg">
-    <line x1="15" y1="98" x2="190" y2="98" stroke="currentColor" stroke-width="1.5" opacity="0.25"/>
-    <line x1="55" y1="98" x2="60" y2="95" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-    <polyline points="60,95 90,65 130,35" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="140" cy="28" r="7" fill="none" stroke="currentColor" stroke-width="3.5"/>
-    <path d="M175,10 Q150,20 128,38" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3,3"/>
-    <text x="65" y="80" font-size="9" fill="currentColor">knees anchored</text>
-    <text x="90" y="30" font-size="9" fill="currentColor">straight line: knee–hip–shoulder</text>
-    <text x="150" y="15" font-size="9" fill="currentColor">band assists</text>
-  </svg>`,
-  "skin-the-cat": `<svg viewBox="0 0 220 120" width="100%" height="96" xmlns="http://www.w3.org/2000/svg">
-    <line x1="30" y1="15" x2="60" y2="15" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-    <circle cx="45" cy="35" r="6" fill="none" stroke="currentColor" stroke-width="3.5"/>
-    <line x1="45" y1="15" x2="45" y2="112" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-    <text x="10" y="105" font-size="8" fill="currentColor">start: straight-arm hang</text>
-    <path d="M78,55 Q110,55 140,55" fill="none" stroke="currentColor" stroke-width="2"/>
-    <polygon points="140,55 133,51 133,59" fill="currentColor"/>
-    <text x="80" y="45" font-size="8" fill="currentColor">rotate hips up &amp; back</text>
-    <line x1="155" y1="15" x2="185" y2="15" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-    <line x1="170" y1="15" x2="170" y2="50" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-    <circle cx="163" cy="60" r="6" fill="none" stroke="currentColor" stroke-width="3.5"/>
-    <polyline points="170,50 195,25 210,12" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-    <text x="150" y="80" font-size="8" fill="currentColor">checkpoint: hips reach</text>
-    <text x="150" y="90" font-size="8" fill="currentColor">ring height, arms straight</text>
-    <text x="150" y="100" font-size="8" fill="currentColor">(continues into a hang below)</text>
-  </svg>`,
-};
-
-function howToHtml(uid, name, cue, exerciseId) {
+function howToHtml(uid, name, cue) {
   const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(name + " exercise proper form tutorial")}`;
-  const diagram = exerciseId ? EXERCISE_DIAGRAMS[exerciseId] : null;
   return `
     <button class="danger-link" style="color:var(--text-muted); font-size:12px; margin-top:6px;" data-howto-open="${uid}">How to ▾</button>
     <div class="hidden" data-howto-panel="${uid}" style="margin-top:4px;">
-      ${diagram ? `<div style="color:var(--text-muted);">${diagram}</div>` : ""}
       ${cue ? `<div class="meta">${cue}</div>` : ""}
       <a href="${ytUrl}" target="_blank" rel="noopener" class="meta" style="color:var(--accent); display:inline-block; margin-top:4px;">Watch a demo ↗</a>
     </div>`;
@@ -3437,12 +3358,8 @@ function renderSession() {
   // browser and on the pre-session workout preview, but never during the
   // actual guided session — the one moment it's most useful, mid-set with
   // no time to go look it up elsewhere.
-  const stepExercise = exercises.find(x => x.name === step.name);
-  const stepCue = stepExercise?.cue || "";
-  const stepDiagram = stepExercise?.id ? EXERCISE_DIAGRAMS[stepExercise.id] : null;
-  const stepCueHtml = (stepDiagram || stepCue) ? `
-    ${stepDiagram ? `<div style="color:var(--text-muted); margin-top:4px;">${stepDiagram}</div>` : ""}
-    ${stepCue ? `<div class="meta" style="margin-top:4px;">💡 ${stepCue}</div>` : ""}` : "";
+  const stepCue = exercises.find(x => x.name === step.name)?.cue || "";
+  const stepCueHtml = stepCue ? `<div class="meta" style="margin-top:4px;">💡 ${stepCue}</div>` : "";
 
   if (session.resting) {
     const remaining = Math.max(0, Math.ceil((session.restEndTime - Date.now()) / 1000));
