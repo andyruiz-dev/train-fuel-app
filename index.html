@@ -562,6 +562,20 @@ function setSync(ok, label) {
   document.getElementById("syncLabel").textContent = label;
 }
 
+// One retry, network-level failures only (fetch itself throwing — a dropped
+// mobile connection, DNS hiccup, etc.) — never for a clean HTTP error
+// response, since retrying a 400 "image too large" just wastes a mobile
+// data round-trip to get the same rejection again.
+async function fetchWithRetry(url, opts, retries = 1) {
+  try {
+    return await fetch(url, opts);
+  } catch (err) {
+    if (retries <= 0) throw err;
+    await new Promise(r => setTimeout(r, 600));
+    return fetchWithRetry(url, opts, retries - 1);
+  }
+}
+
 async function apiFetch(path, opts) {
   if (!WORKER_URL) throw new Error("no worker url configured");
   const resp = await fetch(WORKER_URL.replace(/\/$/, "") + path, opts);
@@ -2681,51 +2695,77 @@ function resizeImageFile(file, maxDim = 1200, quality = 0.8) {
 // and the app just silently landed back on the default tab with the in-flight
 // scan lost. Decoding pre-downscaled avoids ever creating that huge
 // intermediate bitmap.
-async function getUploadBlob(file, maxDim = 1400, quality = 0.8, maxBytes = 3 * 1024 * 1024) {
-  if (!("createImageBitmap" in window)) return file; // no support, send raw as before
-  if (file.size <= maxBytes) return file; // already small enough in actual bytes, skip processing
-
-  let bitmap;
-  try {
-    // resizeWidth alone (no resizeHeight) preserves the source aspect ratio
-    // per spec, and decode+downsample happens as one native step.
-    bitmap = await createImageBitmap(file, { resizeWidth: maxDim, resizeQuality: "medium" });
-    const { width, height } = bitmap;
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    canvas.getContext("2d").drawImage(bitmap, 0, 0, width, height);
-
-    // Iteratively drop quality until under the byte cap — guarantees a safe
-    // upload size regardless of source resolution/detail level.
-    let q = quality;
-    let blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", q));
-    let attempts = 0;
-    while (blob && blob.size > maxBytes && attempts < 5) {
-      q = Math.max(0.35, q - 0.15);
-      blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", q));
-      attempts++;
+// THE BUG THIS REPLACES: the old catch block gave up by returning the raw,
+// undownscaled file — which is exactly the near-guaranteed-to-fail path.
+// Claude's API hard-rejects any image over 10MB base64-encoded, and a
+// modern phone's full-res camera photo (48MP+ JPEGs commonly run
+// 8-20MB) blows past that every time. So any time the resize step failed
+// for ANY reason — a transient decode hiccup, an odd EXIF/format quirk,
+// momentary memory pressure — the scan didn't just degrade, it silently
+// switched to a payload that was essentially guaranteed to be rejected by
+// the API a moment later. That's what "constantly stops working" actually
+// was: not random, just a resize failure being masked as an unrelated
+// upload failure every time it happened.
+//
+// Fix: retry the SAME safe resize-during-decode path (the thing that
+// prevents the original low-memory crash) at progressively smaller
+// targets instead of ever falling back to a full-resolution file. If every
+// tier fails, refuse with a clear message rather than uploading something
+// doomed — manual entry is right there as a fallback.
+async function getUploadBlob(file, maxBytes = 3 * 1024 * 1024) {
+  if (!("createImageBitmap" in window)) {
+    if (file.size > maxBytes) {
+      throw new Error("Your browser can't resize this photo and it's too large to upload as-is. Use manual entry below instead.");
     }
-    // Quality alone wasn't enough — shrink dimensions further, still off the
-    // already-downscaled bitmap (never redraws at full source resolution).
-    if (blob && blob.size > maxBytes) {
-      const smallerW = Math.round(width * 0.7);
-      const smallerH = Math.round(height * 0.7);
-      canvas.width = smallerW;
-      canvas.height = smallerH;
-      canvas.getContext("2d").drawImage(bitmap, 0, 0, smallerW, smallerH);
-      blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.6));
-    }
-    return blob || file;
-  } catch (err) {
-    // Deliberately do NOT fall back to a full-resolution decode here — that's
-    // the exact risky path this function exists to avoid. Send the original
-    // file untouched instead; worst case the upload is a bit larger, but
-    // nothing decodes at full size in this browser context.
     return file;
-  } finally {
-    if (bitmap) bitmap.close();
   }
+  if (file.size <= maxBytes) return file; // already small enough, skip processing entirely
+
+  for (const maxDim of [1400, 900, 600]) {
+    let bitmap;
+    try {
+      // resizeWidth alone (no resizeHeight) preserves aspect ratio per spec,
+      // and decode+downsample happens as one native step — this is what
+      // keeps a 48MP photo from ever being materialized at full resolution.
+      bitmap = await createImageBitmap(file, { resizeWidth: maxDim, resizeQuality: "medium" });
+      const { width, height } = bitmap;
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext("2d").drawImage(bitmap, 0, 0, width, height);
+
+      let q = 0.8;
+      let blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", q));
+      let attempts = 0;
+      while (blob && blob.size > maxBytes && attempts < 6) {
+        q = Math.max(0.3, q - 0.12);
+        blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", q));
+        attempts++;
+      }
+      if (blob && blob.size <= maxBytes) return blob;
+
+      // Quality floor reached and still too big — shrink dimensions further
+      // within this same already-downscaled bitmap (never redraws from the
+      // original file) until it fits or gets too small to bother with.
+      let w = width, h = height;
+      while (blob && blob.size > maxBytes && w > 300) {
+        w = Math.round(w * 0.75);
+        h = Math.round(h * 0.75);
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext("2d").drawImage(bitmap, 0, 0, w, h);
+        blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.5));
+      }
+      if (blob && blob.size <= maxBytes) return blob;
+      // Still oversized at this tier — fall through and try a smaller maxDim.
+    } catch (err) {
+      // This tier's decode/resize failed — try the next smaller target on
+      // the same safe path rather than giving up or falling back to raw.
+    } finally {
+      if (bitmap) bitmap.close();
+    }
+  }
+  throw new Error("Couldn't shrink this photo enough to upload safely. Try a different photo, or use manual entry below.");
 }
 
 document.getElementById("foodPhotoInput").addEventListener("change", async (e) => {
@@ -2750,7 +2790,7 @@ document.getElementById("foodPhotoInput").addEventListener("change", async (e) =
       reader.onerror = reject;
       reader.readAsDataURL(uploadBlob);
     });
-    const resp = await fetch(WORKER_URL.replace(/\/$/, "") + "/api/food-scan", {
+    const resp = await fetchWithRetry(WORKER_URL.replace(/\/$/, "") + "/api/food-scan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
