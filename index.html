@@ -183,10 +183,9 @@
         <h2 style="margin:0;">Today's workout</h2>
         <button id="genWorkoutBtn" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; padding:4px 0;" disabled>Regenerate</button>
       </div>
-      <div class="row" style="margin-bottom:4px;">
+      <div class="row" style="margin-bottom:8px;">
         <div class="chip" id="travelModeToggle">✈️ Travel mode</div>
       </div>
-      <div class="meta" style="margin-bottom:8px;">Bodyweight, rings, band, or dumbbell — no push board or vest.</div>
       <div id="recoveryCautionNote"></div>
       <div id="todayWorkout" class="empty">Pick an active program first.</div>
       <button class="primary" id="startSessionBtn" style="margin-top:10px; width:100%;" disabled>Start guided session</button>
@@ -690,7 +689,6 @@ const BUILTIN_EXERCISES = [
   { id: "ring-dip-weighted", name: "Weighted ring dip", muscle_group: "push", equipment: "rings", cue: "Add load once bodyweight dips are smooth for reps." },
   { id: "db-floor-press", name: "Dumbbell floor press", muscle_group: "push", equipment: "dumbbell", cue: "Upper arms touch floor lightly, press to lockout." },
   { id: "db-overhead-press", name: "Dumbbell overhead press", muscle_group: "push", equipment: "dumbbell", cue: "Brace core, press straight overhead, avoid arching." },
-  { id: "push-board-press", name: "Push board press", muscle_group: "push", equipment: "push board", cue: "Full lockout, controlled tempo down." },
 
   // ---- pull: dead hang -> bar -> rings ----
   { id: "dead-hang", name: "Dead hang", muscle_group: "pull", equipment: "bar", cue: "Shoulders engaged, don't fully relax into the joint." },
@@ -892,7 +890,7 @@ const EXERCISE_LEVEL_MAP = {
   "decline-pike-pushup": 4, "wall-handstand-hold": 4, "handstand-pushup": 5,
   "ring-pushup-easy": 2, "ring-pushup": 3, "ring-archer-pushup": 4, "ring-typewriter-pushup": 5,
   "ring-dip-supported": 2, "ring-dip": 3, "ring-dip-weighted": 5,
-  "db-floor-press": 3, "db-overhead-press": 3, "push-board-press": 3,
+  "db-floor-press": 3, "db-overhead-press": 3,
   // pull
   "dead-hang": 1, "active-hang": 1, "scap-pull": 2, "band-assisted-pullup": 2,
   "negative-pullup": 2, "pullup": 3, "chinup": 3, "archer-pullup": 4,
@@ -960,7 +958,7 @@ const EXERCISE_PLANE_MAP = {
   "pushup": "h", "diamond-pushup": "h", "decline-pushup": "h", "archer-pushup": "h",
   "pseudo-planche-pushup": "h", "one-arm-pushup-assisted": "h", "ring-pushup-easy": "h",
   "ring-pushup": "h", "ring-archer-pushup": "h", "ring-typewriter-pushup": "h",
-  "db-floor-press": "h", "push-board-press": "h", "planche-lean": "h", "tuck-planche": "h",
+  "db-floor-press": "h", "planche-lean": "h", "tuck-planche": "h",
   "plyo-pushup": "h", "clapping-pushup": "h", "one-arm-pushup": "h", "elbow-lever": "h",
   // push - vertical (overhead press / dip line, presses along the body's long axis)
   "pike-pushup": "v", "decline-pike-pushup": "v", "wall-handstand-hold": "v", "handstand-pushup": "v",
@@ -1761,8 +1759,8 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
   let planeFilteredPush = [], planeFilteredPull = [];
   // Travel mode: restrict to gear that's actually likely to be on hand —
   // bodyweight, a packable band, and rings/dumbbell since those often come
-  // along or are available at a hotel gym. Deliberately excludes push board
-  // and weighted vest/pack — those stay home. Applied ahead of the
+  // along or are available at a hotel gym. Deliberately excludes weighted
+  // vest/pack — those stay home. Applied ahead of the
   // level/plane filters below rather than as a separate pass, so it
   // composes with them instead of needing its own fallback logic.
   const TRAVEL_EQUIPMENT = new Set(["bodyweight", "band", "rings", "dumbbell", "bar or rings"]);
