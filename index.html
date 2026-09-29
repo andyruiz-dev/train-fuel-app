@@ -3354,6 +3354,12 @@ function renderSession() {
   }
 
   const step = session.queue[session.pos];
+  // The library's per-exercise form cue is already shown in the library
+  // browser and on the pre-session workout preview, but never during the
+  // actual guided session — the one moment it's most useful, mid-set with
+  // no time to go look it up elsewhere.
+  const stepCue = exercises.find(x => x.name === step.name)?.cue || "";
+  const stepCueHtml = stepCue ? `<div class="meta" style="margin-top:4px;">💡 ${stepCue}</div>` : "";
 
   if (session.resting) {
     const remaining = Math.max(0, Math.ceil((session.restEndTime - Date.now()) / 1000));
@@ -3394,6 +3400,7 @@ function renderSession() {
           ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
           <h2>${step.name}</h2>
           <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · holding${ringStrapNoteFor(step)}</div>
+          ${stepCueHtml}
           <div id="holdClock" style="font-size:36px; font-weight:600; text-align:center; margin:14px 0; font-family:var(--font-mono);">${formatTime(remaining)}</div>
           <button class="secondary" id="stopHoldBtn" style="width:100%;">Stop / let go</button>
         </div>`;
@@ -3412,6 +3419,7 @@ function renderSession() {
         ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
         <h2>${step.name}</h2>
         <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${targetSeconds}s hold${ringStrapNoteFor(step)}</div>
+        ${stepCueHtml}
         <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
         <div class="hidden" id="sessionSwapPanel" style="margin-top:8px;">
           <div class="meta">Pick a swap — grouped by easier/harder:</div>
@@ -3439,6 +3447,7 @@ function renderSession() {
       ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
       <h2>${step.name}</h2>
       <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${step.reps} reps${ringStrapNoteFor(step)}</div>
+      ${stepCueHtml}
       <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
       <div class="hidden" id="sessionSwapPanel" style="margin-top:8px;">
         <div class="meta">Pick a swap — grouped by easier/harder:</div>
