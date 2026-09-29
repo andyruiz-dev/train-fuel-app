@@ -1617,6 +1617,55 @@ async function ensureWorkoutReady(program, forceDayIndex) {
 }
 
 // ---- AI generation ----
+// The AI designs each phase's weekly day/slot template freely, with only a
+// prose description of what a good template looks like — nothing forces it
+// to actually cover every trained muscle group at a reasonable frequency.
+// That's how a Foundation phase ended up scheduling core just 1x/week while
+// Build/Peak got 3x/week: nothing caught the imbalance before it shipped.
+// This runs deterministically on whatever the AI returns, the same way
+// plane balance for push/pull is enforced in code rather than left to the
+// prompt alone. It does two things: drops/repairs slots with an
+// unrecognized muscle_group (a hallucinated or misspelled value would
+// otherwise silently create an untracked, never-served slot), then tops up
+// any of push/pull/legs/hinge/core that falls under a weekly floor by
+// appending a slot to whichever training day is lightest and doesn't
+// already train that group. Ruck is intentionally excluded from the floor —
+// it's cardio, tracked as its own activity, and not every program should be
+// forced to include it.
+const KNOWN_MUSCLE_GROUPS = ["push", "pull", "legs", "hinge", "core", "ruck"];
+const MUSCLE_GROUP_FLOOR = { push: 2, pull: 2, legs: 2, hinge: 2, core: 2 };
+function balanceProgramStructure(structure) {
+  (structure.phases || []).forEach(phase => {
+    const days = phase.days || [];
+    days.forEach(d => {
+      d.slots = (d.slots || []).filter(s => KNOWN_MUSCLE_GROUPS.includes(s.muscle_group));
+    });
+    const counts = {};
+    Object.keys(MUSCLE_GROUP_FLOOR).forEach(g => (counts[g] = 0));
+    days.forEach(d => d.slots.forEach(s => {
+      if (counts[s.muscle_group] !== undefined) counts[s.muscle_group]++;
+    }));
+    const anySlot = days.flatMap(d => d.slots).find(Boolean) || { sets: 3, reps: "10-12" };
+    Object.keys(MUSCLE_GROUP_FLOOR).forEach(group => {
+      let deficit = MUSCLE_GROUP_FLOOR[group] - counts[group];
+      if (deficit <= 0) return;
+      const candidates = days
+        .filter(d => d.slots.length > 0 && !d.slots.some(s => s.muscle_group === group))
+        .sort((a, b) => a.slots.length - b.slots.length);
+      for (const d of candidates) {
+        if (deficit <= 0) break;
+        const template = d.slots[0] || anySlot;
+        d.slots.push({ muscle_group: group, sets: template.sets, reps: template.reps });
+        deficit--;
+      }
+      if (deficit > 0) {
+        console.warn(`balanceProgramStructure: could not reach floor for "${group}" in phase "${phase.phase}" (short by ${deficit}) — every training day already trains it or has no room`);
+      }
+    });
+  });
+  return structure;
+}
+
 async function generateProgram(months, focus) {
   const weeks = months * 4;
   const system = `You design structured fitness programs as pure muscle-group slot
@@ -1639,7 +1688,7 @@ numbers WITHIN that phase's range that should be lighter.`;
     body: JSON.stringify({ system, prompt, max_tokens: 8000 }),
   });
   const text = data.content?.[0]?.text || "{}";
-  const structure = extractJson(text);
+  const structure = balanceProgramStructure(extractJson(text));
   const program = {
     id: "prog-" + Date.now(),
     name: structure.name || `${months}-month program`,
