@@ -183,8 +183,9 @@
         <h2 style="margin:0;">Today's workout</h2>
         <button id="genWorkoutBtn" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; padding:4px 0;" disabled>Regenerate</button>
       </div>
-      <div class="row" style="margin-bottom:8px;">
-        <div class="chip" id="travelModeToggle">✈️ Travel mode</div>
+      <div id="travelModeToggle" style="cursor:pointer; font-family:var(--font-display); font-size:15px; font-weight:500; letter-spacing:0.2px; display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
+        <span>✈️ Travel mode</span>
+        <span id="travelModeState" style="color:var(--text-muted); font-size:12px; font-family:var(--font-mono);">Off</span>
       </div>
       <div id="recoveryCautionNote"></div>
       <div id="todayWorkout" class="empty">Pick an active program first.</div>
@@ -3852,9 +3853,14 @@ document.getElementById("genWorkoutBtn").addEventListener("click", async (e) => 
 // the road, not lowering the bar. Regenerates today's workout immediately
 // so the toggle takes visible effect, same dayIndex-preserving pattern as
 // the Regenerate button above.
+function syncTravelModeLabel() {
+  const el = document.getElementById("travelModeState");
+  el.textContent = state.travelMode ? "On" : "Off";
+  el.style.color = state.travelMode ? "var(--accent)" : "var(--text-muted)";
+}
 document.getElementById("travelModeToggle").addEventListener("click", async () => {
   state.travelMode = !state.travelMode;
-  document.getElementById("travelModeToggle").classList.toggle("active", state.travelMode);
+  syncTravelModeLabel();
   await persistNow();
   const program = programs.find(p => p.id === state.activeProgramId);
   if (!program) return;
@@ -4035,7 +4041,7 @@ async function init() {
   document.getElementById("targetProtein").value = t.protein || "";
   document.getElementById("targetCarbs").value = t.carbs || "";
   document.getElementById("targetFat").value = t.fat || "";
-  document.getElementById("travelModeToggle").classList.toggle("active", !!state.travelMode);
+  syncTravelModeLabel();
   // Restore whichever tab was open before, now that all panels' content is
   // actually populated — done here rather than at top-level so a restored
   // Food/Progress/Programs tab isn't briefly empty while init() is still running.
