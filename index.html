@@ -1640,6 +1640,16 @@ function balanceProgramStructure(structure) {
     days.forEach(d => {
       d.slots = (d.slots || []).filter(s => KNOWN_MUSCLE_GROUPS.includes(s.muscle_group));
     });
+    // Nothing requires the AI to leave any day empty — a 7-day training week
+    // is a real risk if its prose interpretation of "days" drifts. Force one
+    // rest day per phase (clearing the lightest training day) BEFORE the
+    // group-floor backfill below, so any slots lost here get naturally
+    // redistributed by that step rather than the two fighting each other.
+    if (days.length > 0 && !days.some(d => d.slots.length === 0)) {
+      const lightest = days.slice().sort((a, b) => a.slots.length - b.slots.length)[0];
+      console.warn(`balanceProgramStructure: phase "${phase.phase}" had no rest day — clearing "${lightest.day}" to force one`);
+      lightest.slots = [];
+    }
     const counts = {};
     Object.keys(MUSCLE_GROUP_FLOOR).forEach(g => (counts[g] = 0));
     days.forEach(d => d.slots.forEach(s => {
