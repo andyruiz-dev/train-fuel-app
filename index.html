@@ -393,11 +393,15 @@
     </div>
     <div class="card">
       <h2>Weekly workouts</h2>
-      <div id="volumeChart" class="empty">Complete a few workouts to see your frequency per week.</div>
+      <div id="volumeChart" class="empty" style="cursor:pointer;">Complete a few workouts to see your frequency per week.</div>
+      <div class="meta" id="volumeHistoryHint" style="margin-top:6px; cursor:pointer;"></div>
+      <div id="volumeHistoryList" class="hidden" style="margin-top:8px;"></div>
     </div>
     <div class="card">
       <h2>Weekly walk/ruck minutes</h2>
-      <div id="cardioChart" class="empty">Log a walk or ruck to see this fill in.</div>
+      <div id="cardioChart" class="empty" style="cursor:pointer;">Log a walk or ruck to see this fill in.</div>
+      <div class="meta" id="cardioHistoryHint" style="margin-top:6px; cursor:pointer;"></div>
+      <div id="cardioHistoryList" class="hidden" style="margin-top:8px;"></div>
     </div>
     <div class="card">
       <h2>Recurring patterns</h2>
@@ -2739,7 +2743,10 @@ function renderProgressCharts() {
     }
   });
   const weekLabels = Object.keys(byWeek).slice(-10);
-  renderBarChart("volumeChart", weekLabels.map(wk => ({ label: wk, value: byWeek[wk] })));
+  const volumeRows = weekLabels.map(wk => ({ label: wk, value: byWeek[wk] }));
+  renderBarChart("volumeChart", volumeRows);
+  renderTileHistory("volumeChart", "volumeHistoryHint", "volumeHistoryList", volumeRows,
+    v => `${v} workout day${v === 1 ? "" : "s"}`, "week");
 
   const cardioByWeek = {};
   (state.cardioLogs || []).forEach(c => {
@@ -2747,8 +2754,51 @@ function renderProgressCharts() {
     cardioByWeek[wk] = (cardioByWeek[wk] || 0) + (c.duration || 0);
   });
   const cardioWeekLabels = Object.keys(cardioByWeek).slice(-10);
-  renderBarChart("cardioChart", cardioWeekLabels.map(wk => ({ label: wk, value: cardioByWeek[wk] })));
+  const cardioRows = cardioWeekLabels.map(wk => ({ label: wk, value: cardioByWeek[wk] }));
+  renderBarChart("cardioChart", cardioRows);
+  renderTileHistory("cardioChart", "cardioHistoryHint", "cardioHistoryList", cardioRows,
+    v => `${v} min`, "week");
 }
+
+// Generic tap-to-expand history list for any bar-chart tile (weekly
+// workouts, weekly cardio minutes) — same pattern as the weight trend
+// chart's history: collapsed by default, a hint line says how many entries
+// are available, tapping the chart or the hint toggles a newest-first list.
+// Open/closed state AND the latest rows/formatter persist per chart across
+// re-renders, so the click listeners (registered once, below) can toggle
+// and redraw without needing the data passed back in at click time.
+const tileHistoryOpen = {};
+const tileHistoryData = {};
+function renderTileHistory(chartId, hintId, listId, rows, formatValue, unitLabel = "entry") {
+  tileHistoryData[chartId] = { hintId, listId, rows, formatValue, unitLabel };
+  const hintEl = document.getElementById(hintId);
+  const listEl = document.getElementById(listId);
+  if (!rows.length) {
+    hintEl.textContent = "";
+    listEl.classList.add("hidden");
+    return;
+  }
+  const open = !!tileHistoryOpen[chartId];
+  hintEl.textContent = open ? "Hide history" : `See history (${rows.length} ${unitLabel}${rows.length === 1 ? "" : "s"})`;
+  if (!open) {
+    listEl.classList.add("hidden");
+    return;
+  }
+  listEl.classList.remove("hidden");
+  listEl.innerHTML = rows.slice().reverse().map(r =>
+    `<div class="list-item"><div class="name">${r.label}</div><div class="meta">${formatValue(r.value)}</div></div>`
+  ).join("");
+}
+function toggleTileHistory(chartId) {
+  const cached = tileHistoryData[chartId];
+  if (!cached) return; // nothing rendered yet (e.g. clicked before first renderProgressCharts)
+  tileHistoryOpen[chartId] = !tileHistoryOpen[chartId];
+  renderTileHistory(chartId, cached.hintId, cached.listId, cached.rows, cached.formatValue, cached.unitLabel);
+}
+document.getElementById("volumeChart").addEventListener("click", () => toggleTileHistory("volumeChart"));
+document.getElementById("volumeHistoryHint").addEventListener("click", () => toggleTileHistory("volumeChart"));
+document.getElementById("cardioChart").addEventListener("click", () => toggleTileHistory("cardioChart"));
+document.getElementById("cardioHistoryHint").addEventListener("click", () => toggleTileHistory("cardioChart"));
 
 // Tap/click the weight trend chart (or the hint under it) to expand a
 // newest-first list of every logged measurement, each with its change from
