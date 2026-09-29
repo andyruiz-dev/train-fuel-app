@@ -184,7 +184,7 @@
         <button id="genWorkoutBtn" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; padding:4px 0;" disabled>Regenerate</button>
       </div>
       <div class="row" style="margin-bottom:8px;">
-        <div class="chip" id="travelModeToggle">✈️ Traveling — bodyweight + band only</div>
+        <div class="chip" id="travelModeToggle">✈️ Traveling — no push board/vest</div>
       </div>
       <div id="recoveryCautionNote"></div>
       <div id="todayWorkout" class="empty">Pick an active program first.</div>
@@ -1758,13 +1758,13 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
   // different plane on its own — filtering here is what actually enforces
   // it instead of just describing it in prose.
   let planeFilteredPush = [], planeFilteredPull = [];
-  // Travel mode: restrict to gear that actually travels (bodyweight + a
-  // packable resistance band). Applied ahead of the level/plane filters
-  // below rather than as a separate pass, so it composes with them instead
-  // of needing its own fallback logic. Note there are zero pure-bodyweight
-  // pull exercises in the library — band coverage (band-assisted pull-ups/
-  // rows) is what keeps pull day possible at all here, not optional.
-  const TRAVEL_EQUIPMENT = new Set(["bodyweight", "band"]);
+  // Travel mode: restrict to gear that's actually likely to be on hand —
+  // bodyweight, a packable band, and rings/dumbbell since those often come
+  // along or are available at a hotel gym. Deliberately excludes push board
+  // and weighted vest/pack — those stay home. Applied ahead of the
+  // level/plane filters below rather than as a separate pass, so it
+  // composes with them instead of needing its own fallback logic.
+  const TRAVEL_EQUIPMENT = new Set(["bodyweight", "band", "rings", "dumbbell", "bar or rings"]);
   const availableExercises = exercises.filter(e => {
     if (state.travelMode && !TRAVEL_EQUIPMENT.has(e.equipment || "bodyweight")) return false;
     if (e.muscle_group === "push" || e.muscle_group === "pull") {
@@ -3830,8 +3830,8 @@ document.getElementById("genWorkoutBtn").addEventListener("click", async (e) => 
   }
 });
 
-// Travel mode: restricts today's-workout generation to bodyweight + band
-// exercises (see TRAVEL_EQUIPMENT in generateTodayWorkout). Full session,
+// Travel mode: restricts today's-workout generation to gear likely to be on
+// hand while traveling (see TRAVEL_EQUIPMENT in generateTodayWorkout). Full session,
 // not minimum-day — the point is swapping out equipment you don't have on
 // the road, not lowering the bar. Regenerates today's workout immediately
 // so the toggle takes visible effect, same dayIndex-preserving pattern as
