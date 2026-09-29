@@ -1443,6 +1443,7 @@ function renderReasonPatterns() {
   }).join("");
 }
 
+let weeklyReviewLogsOpen = false;
 function renderWeeklyReview() {
   const el = document.getElementById("weeklyReview");
   const program = programs.find(p => p.id === state.activeProgramId);
@@ -1463,10 +1464,15 @@ function renderWeeklyReview() {
   const suggestion = computeMacroSuggestion();
   const checkInSummary = computeWeightCheckInSummary();
 
+  const logsDetailHtml = weeklyReviewLogsOpen ? (recentLogs.length ? recentLogs.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).map(l => `
+    <div class="list-item"><div class="name">${new Date(l.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · ${l.exercise}</div><div class="meta">${l.result}</div></div>
+  `).join("") : `<div class="empty">Nothing logged this week yet.</div>`) : "";
+
   el.innerHTML = `
     <div class="meta">Week ${weekNumber} · ${phaseLabel}${deloadNote}</div>
-    <div class="meta" style="margin-top:6px;">Last 7 days: ${recentLogs.length} exercises logged
-    (${counts.max} hit max, ${counts.hold} as prescribed, ${counts.missed} missed)</div>
+    <div class="meta" id="weeklyReviewLogsToggle" style="margin-top:6px; cursor:pointer;">Last 7 days: ${recentLogs.length} exercises logged
+    (${counts.max} hit max, ${counts.hold} as prescribed, ${counts.missed} missed) · ${weeklyReviewLogsOpen ? "hide" : "see"} which</div>
+    ${logsDetailHtml}
     ${suggestion ? `
       <div class="meta" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">${suggestion.message}</div>
       ${suggestion.deltaCalories !== 0 ? `<button class="secondary" id="applyMacroSuggestionBtn" style="margin-top:8px; width:100%;">Apply suggestion</button>` : ""}
@@ -1497,6 +1503,11 @@ function renderWeeklyReview() {
   if (suggestion && suggestion.deltaCalories !== 0) {
     document.getElementById("applyMacroSuggestionBtn").addEventListener("click", () => applyMacroSuggestion(suggestion.deltaCalories));
   }
+
+  document.getElementById("weeklyReviewLogsToggle").addEventListener("click", () => {
+    weeklyReviewLogsOpen = !weeklyReviewLogsOpen;
+    renderWeeklyReview();
+  });
 
   document.getElementById("repeatWeekBtn").addEventListener("click", async () => {
     state.weekAdjustment = (state.weekAdjustment || 0) - 1;
@@ -2705,22 +2716,50 @@ document.getElementById("saveTargetsBtn").addEventListener("click", async () => 
   alert("Targets saved.");
 });
 
+// "Workouts logged" and "Walks/rucks logged" are tap-to-expand, same as the
+// chart tiles — the row shows a total, tapping it reveals every underlying
+// entry. This container's HTML is fully rebuilt on every render (unlike the
+// chart tiles, which have fixed containers), so the toggle uses one
+// delegated click listener on the parent rather than per-row listeners that
+// would be destroyed and need re-attaching each render.
+const journeyDetailOpen = { workouts: false, cardio: false };
 function renderJourneyStats() {
   const el = document.getElementById("journeyStats");
   if (!el) return;
   const s = computeJourneyStats();
   const rows = [];
   rows.push(`<div class="list-item"><div class="name">Current streak</div><div class="meta">${s.current} day${s.current === 1 ? "" : "s"}${s.longest > s.current ? ` (best: ${s.longest})` : ""}</div></div>`);
-  rows.push(`<div class="list-item"><div class="name">Workouts logged</div><div class="meta">${s.totalWorkoutDays}</div></div>`);
-  if (s.totalCardioSessions) {
-    rows.push(`<div class="list-item"><div class="name">Walks/rucks logged</div><div class="meta">${s.totalCardioSessions} sessions · ${s.totalCardioDistance.toFixed(1)}mi · ${s.totalCardioMinutes}min</div></div>`);
+
+  rows.push(`<div class="list-item" data-journey-toggle="workouts" style="cursor:pointer;"><div class="name">Workouts logged</div><div class="meta">${s.totalWorkoutDays} · ${journeyDetailOpen.workouts ? "hide" : "see"} log</div></div>`);
+  if (journeyDetailOpen.workouts) {
+    const logs = (state.logs || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+    rows.push(logs.length ? logs.map(l => `
+      <div class="list-item"><div class="name">${new Date(l.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · ${l.exercise}</div><div class="meta">${l.result}</div></div>
+    `).join("") : `<div class="empty">No workouts logged yet.</div>`);
   }
+
+  if (s.totalCardioSessions) {
+    rows.push(`<div class="list-item" data-journey-toggle="cardio" style="cursor:pointer;"><div class="name">Walks/rucks logged</div><div class="meta">${s.totalCardioSessions} sessions · ${s.totalCardioDistance.toFixed(1)}mi · ${s.totalCardioMinutes}min · ${journeyDetailOpen.cardio ? "hide" : "see"} log</div></div>`);
+    if (journeyDetailOpen.cardio) {
+      const cardio = (state.cardioLogs || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+      rows.push(cardio.map(c => `
+        <div class="list-item"><div class="name">${new Date(c.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · ${c.type === "ruck" ? "Ruck" : "Walk"}</div><div class="meta">${c.distance ? `${c.distance}mi · ` : ""}${c.duration ? `${c.duration}min` : ""}${c.weight ? ` · ${c.weight}lb` : ""}</div></div>
+      `).join(""));
+    }
+  }
+
   if (s.weightChange !== null) {
     const dir = s.weightChange < 0 ? "down" : s.weightChange > 0 ? "up" : "unchanged";
     rows.push(`<div class="list-item"><div class="name">Weight since you started</div><div class="meta">${Math.abs(s.weightChange).toFixed(1)}lb ${dir}${s.firstDate ? ` (since ${s.firstDate})` : ""}</div></div>`);
   }
   el.innerHTML = rows.join("");
 }
+document.getElementById("journeyStats").addEventListener("click", (e) => {
+  const row = e.target.closest("[data-journey-toggle]");
+  if (!row) return;
+  journeyDetailOpen[row.dataset.journeyToggle] = !journeyDetailOpen[row.dataset.journeyToggle];
+  renderJourneyStats();
+});
 
 function renderProgressCharts() {
   renderJourneyStats();
