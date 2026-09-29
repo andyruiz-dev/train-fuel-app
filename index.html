@@ -2747,7 +2747,22 @@ function computeRecoveryStatus() {
   // caution line (positive = margin left) or how far past it you already are
   // (negative, shown as "past the line" below).
   const marginToCaution = pctPerWeek - targetMin;
-  return { ready: true, pctPerWeek, targetMin, targetMax, days, status, marginToCaution };
+
+  // Pull in whatever weight check-in reasons were logged for entries inside
+  // this same pace window — a fast-loss pace is frequently dehydration, a
+  // big workout, illness, or under-eating rather than actual fat/muscle
+  // loss, and those get flagged right when a swing is logged (see
+  // DECREASE_REASONS / the weightCheckIn flow). Surfacing them here ties the
+  // "likely explanation" directly to the same window the pace number came
+  // from, instead of a separate fixed 7-day window like the Weekly Review's
+  // check-in summary uses.
+  const reasonCounts = {};
+  windowSet.forEach(m => (m.reasons || []).forEach(r => { reasonCounts[r] = (reasonCounts[r] || 0) + 1; }));
+  const reasons = Object.entries(reasonCounts)
+    .map(([reason, count]) => ({ reason, count, suggestion: REASON_SUGGESTIONS[reason] || "" }))
+    .sort((a, b) => b.count - a.count);
+
+  return { ready: true, pctPerWeek, targetMin, targetMax, days, status, marginToCaution, reasons };
 }
 
 let recoveryStatusOpen = false;
@@ -2778,11 +2793,18 @@ function renderRecoveryStatus() {
   const marginStr = r.marginToCaution < 0
     ? `${Math.abs(r.marginToCaution).toFixed(2)} pts past the ${r.targetMin}% caution line`
     : `${r.marginToCaution.toFixed(2)} pts of margin before the ${r.targetMin}% caution line`;
+  const reasonsHtml = r.reasons.length ? `
+    <div class="meta" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
+      <strong style="color:var(--text);">Likely explanation, from what you logged this window:</strong>
+    </div>
+    ${r.reasons.map(x => `<div class="meta" style="margin-top:6px;">${x.reason} (${x.count})${x.suggestion ? ` — ${x.suggestion}` : ""}</div>`).join("")}
+  ` : (r.status === "caution" ? `<div class="meta" style="margin-top:10px;">No reason logged for the check-ins in this window — worth logging one next time a swing prompts the check-in card, so this can point to a likely cause instead of just the number.</div>` : "");
   detailEl.innerHTML = `
     <div class="list-item"><div class="name">Current pace</div><div class="meta">${paceStr}</div></div>
     <div class="list-item"><div class="name">Target range</div><div class="meta">${rangeStr}</div></div>
     <div class="list-item"><div class="name">Margin to caution</div><div class="meta">${marginStr}</div></div>
-    <div class="meta" style="margin-top:8px;">Based on your last ${r.days.toFixed(0)} days of weigh-ins. If pace drops past ${r.targetMin}%/week, progression holds steady (no intensity increases) until it's back in range — that's what "recovery caution" means.</div>`;
+    <div class="meta" style="margin-top:8px;">Based on your last ${r.days.toFixed(0)} days of weigh-ins. If pace drops past ${r.targetMin}%/week, progression holds steady (no intensity increases) until it's back in range — that's what "recovery caution" means.</div>
+    ${reasonsHtml}`;
 }
 function toggleRecoveryStatus() {
   recoveryStatusOpen = !recoveryStatusOpen;
