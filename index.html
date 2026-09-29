@@ -382,7 +382,9 @@
     </div>
     <div class="card">
       <h2>Weight trend</h2>
-      <div id="weightChart" class="empty">Log a few measurements to see a trend.</div>
+      <div id="weightChart" class="empty" style="cursor:pointer;">Log a few measurements to see a trend.</div>
+      <div class="meta" id="weightHistoryHint" style="margin-top:6px; cursor:pointer;"></div>
+      <div id="weightHistoryList" class="hidden" style="margin-top:8px;"></div>
     </div>
     <div class="card">
       <h2>Weekly workouts</h2>
@@ -2646,6 +2648,7 @@ function renderProgressCharts() {
   renderJourneyStats();
   const measurements = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
   renderLineChart("weightChart", measurements.map(m => ({ label: m.date.slice(5), value: m.weight })), { yLabel: "lb" });
+  renderWeightHistoryList();
   renderReasonPatterns();
 
   const logs = state.logs || [];
@@ -2671,6 +2674,41 @@ function renderProgressCharts() {
   const cardioWeekLabels = Object.keys(cardioByWeek).slice(-10);
   renderBarChart("cardioChart", cardioWeekLabels.map(wk => ({ label: wk, value: cardioByWeek[wk] })));
 }
+
+// Tap/click the weight trend chart (or the hint under it) to expand a
+// newest-first list of every logged measurement, each with its change from
+// the entry before it. Stays open across re-renders (e.g. right after
+// logging a new weight) so it doesn't collapse itself out from under you.
+let weightHistoryOpen = false;
+function renderWeightHistoryList() {
+  const listEl = document.getElementById("weightHistoryList");
+  const hintEl = document.getElementById("weightHistoryHint");
+  const measurements = (state.measurements || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+  if (!measurements.length) {
+    hintEl.textContent = "";
+    listEl.classList.add("hidden");
+    return;
+  }
+  hintEl.textContent = weightHistoryOpen ? "Hide history" : `See history (${measurements.length} ${measurements.length === 1 ? "entry" : "entries"})`;
+  if (!weightHistoryOpen) {
+    listEl.classList.add("hidden");
+    return;
+  }
+  listEl.classList.remove("hidden");
+  listEl.innerHTML = measurements.map((m, i) => {
+    // measurements is newest-first here, so the "previous" entry chronologically is the next one in this array
+    const prior = measurements[i + 1];
+    const delta = prior ? m.weight - prior.weight : null;
+    const deltaStr = delta == null ? "" : ` · ${delta > 0 ? "+" : ""}${delta.toFixed(1)}lb`;
+    return `<div class="list-item"><div class="name">${m.date}</div><div class="meta">${m.weight}lb${deltaStr}</div></div>`;
+  }).join("");
+}
+function toggleWeightHistory() {
+  weightHistoryOpen = !weightHistoryOpen;
+  renderWeightHistoryList();
+}
+document.getElementById("weightChart").addEventListener("click", toggleWeightHistory);
+document.getElementById("weightHistoryHint").addEventListener("click", toggleWeightHistory);
 
 let pendingCheckInMeasurementIdx = null;
 let pendingCheckInDirection = null;
