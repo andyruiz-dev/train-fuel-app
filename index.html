@@ -3213,6 +3213,63 @@ function formatTime(s) {
   return `${m}:${sec.toString().padStart(2, "0")}`;
 }
 
+// For the end-of-session summary, not the live countdown clocks above —
+// "42m 10s" / "1h 08m" reads better on a completed-workout card than a
+// running m:ss timer does.
+function formatDuration(ms) {
+  if (ms == null) return null;
+  const totalSeconds = Math.max(0, Math.round(ms / 1000));
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  if (h > 0) return `${h}h ${m.toString().padStart(2, "0")}m`;
+  if (m > 0) return `${m}m ${s.toString().padStart(2, "0")}s`;
+  return `${s}s`;
+}
+
+// results: the same [{ exercise, result }] shape finishSession/
+// finishSessionPartial already build. Reads elapsed time off session.startedAt
+// (set when the guided session began) and set/exercise counts off
+// session.setsActual (the live log of actual reps/hold-seconds per exercise).
+function buildSessionSummary(results) {
+  const elapsedMs = session && session.startedAt ? Date.now() - session.startedAt : null;
+  const setsActual = (session && session.setsActual) || {};
+  const totalSets = Object.values(setsActual).reduce((sum, arr) => sum + arr.length, 0);
+  const exercisesDone = Object.values(setsActual).filter(arr => arr.length).length;
+  const maxCount = results.filter(r => r.result === "max").length;
+  return { elapsedMs, totalSets, exercisesDone, maxCount };
+}
+
+function renderSessionSummary(summary, opts = {}) {
+  const panel = document.getElementById("sessionPanel");
+  const duration = formatDuration(summary.elapsedMs);
+  const subtitle = opts.partial
+    ? "Logged what you did today — that counts. Full workout waits for next time."
+    : "Logged and levels updated automatically from your actual reps.";
+  panel.classList.remove("hidden");
+  panel.innerHTML = `
+    <div class="card">
+      <h2>${opts.partial ? "Session stopped" : "Workout complete"}</h2>
+      <div class="meta">${subtitle}</div>
+      <div style="display:flex; gap:24px; margin:18px 0; flex-wrap:wrap;">
+        ${duration ? `<div><div style="font-size:24px; font-weight:600;">${duration}</div><div class="meta">total time</div></div>` : ""}
+        <div><div style="font-size:24px; font-weight:600;">${summary.exercisesDone}</div><div class="meta">exercise${summary.exercisesDone === 1 ? "" : "s"}</div></div>
+        <div><div style="font-size:24px; font-weight:600;">${summary.totalSets}</div><div class="meta">set${summary.totalSets === 1 ? "" : "s"}</div></div>
+        ${summary.maxCount ? `<div><div style="font-size:24px; font-weight:600;">${summary.maxCount}</div><div class="meta">at max</div></div>` : ""}
+      </div>
+      <button class="primary" id="sessionSummaryDoneBtn" style="width:100%;">Done</button>
+    </div>`;
+  document.getElementById("sessionSummaryDoneBtn").addEventListener("click", () => {
+    session = null;
+    panel.classList.add("hidden");
+    document.getElementById("todayWorkout").classList.remove("hidden");
+    document.getElementById("startSessionBtn").classList.remove("hidden");
+    document.getElementById("minimumDayBtn").classList.remove("hidden");
+    document.getElementById("genWorkoutBtn").classList.remove("hidden");
+    renderTodayWorkout(currentWorkout);
+  }, { once: true });
+}
+
 function playBeep() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -3274,6 +3331,7 @@ function startSession() {
     setsActual: {}, // exIndex -> [actual reps per set, or seconds held for isometric holds]
     minimalMode: false,
     checkpointAt: null,
+    startedAt: Date.now(),
   };
   document.getElementById("todayWorkout").classList.add("hidden");
   document.getElementById("startSessionBtn").classList.add("hidden");
@@ -3309,6 +3367,7 @@ function startMinimumDay() {
     setsActual: {},
     minimalMode: true,
     checkpointAt: checkpointIdx === -1 ? null : checkpointIdx,
+    startedAt: Date.now(),
   };
   document.getElementById("todayWorkout").classList.add("hidden");
   document.getElementById("startSessionBtn").classList.add("hidden");
@@ -3351,15 +3410,9 @@ async function finishSessionPartial() {
       else if (actuals.every(a => a >= range.max)) result = "max";
       return { exercise: e, result };
     });
+  const summary = buildSessionSummary(results);
   await applyWorkoutResults(results);
-  session = null;
-  document.getElementById("sessionPanel").classList.add("hidden");
-  document.getElementById("todayWorkout").classList.remove("hidden");
-  document.getElementById("startSessionBtn").classList.remove("hidden");
-  document.getElementById("minimumDayBtn").classList.remove("hidden");
-  document.getElementById("genWorkoutBtn").classList.remove("hidden");
-  renderTodayWorkout(currentWorkout);
-  alert("Logged what you did today — that counts. Full workout waits for next time.");
+  renderSessionSummary(summary, { partial: true });
 }
 
 function renderWarmupCooldownStep(phase) {
@@ -3644,15 +3697,9 @@ async function finishSession() {
     else if (actuals.every(a => a >= range.max)) result = "max";
     return { exercise: e, result };
   });
+  const summary = buildSessionSummary(results);
   await applyWorkoutResults(results);
-  session = null;
-  document.getElementById("sessionPanel").classList.add("hidden");
-  document.getElementById("todayWorkout").classList.remove("hidden");
-  document.getElementById("startSessionBtn").classList.remove("hidden");
-  document.getElementById("minimumDayBtn").classList.remove("hidden");
-  document.getElementById("genWorkoutBtn").classList.remove("hidden");
-  renderTodayWorkout(currentWorkout);
-  alert("Session complete. Logged and levels updated automatically from your actual reps.");
+  renderSessionSummary(summary);
 }
 
 document.getElementById("startSessionBtn").addEventListener("click", startSession);
