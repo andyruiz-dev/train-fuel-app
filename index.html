@@ -43,12 +43,12 @@
   }
   header .sub{font-family:var(--font-mono); font-size:11px; color:var(--text-muted); margin-top:4px; display:flex; align-items:center; white-space:nowrap; overflow:hidden;}
   #headerProgramName{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:70%;}
-  #profileBtn{
+  #profileBtn, #programsBtn{
     background:none; border:1px solid var(--border); border-radius:50%;
     width:36px; height:36px; font-size:16px; color:var(--text-muted);
-    cursor:pointer; flex-shrink:0; margin-left:12px;
+    cursor:pointer; flex-shrink:0; margin-left:8px;
   }
-  #profileBtn.active{border-color:var(--accent); color:var(--accent);}
+  #profileBtn.active, #programsBtn.active{border-color:var(--accent); color:var(--accent);}
   main{padding:0 16px 24px; max-width:640px; margin:0 auto;}
   .card{
     background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent);
@@ -145,7 +145,10 @@
     <h1>Train &amp; Fuel</h1>
     <div class="sub"><span id="headerProgramName">No active program</span> · <span id="syncDot" class="status-dot"></span><span id="syncLabel">connecting…</span></div>
   </div>
-  <button id="profileBtn" aria-label="Settings">⚙</button>
+  <div style="display:flex; flex-shrink:0;">
+    <button id="programsBtn" class="tab-btn" data-tab="programs" aria-label="Programs">📋</button>
+    <button id="profileBtn" aria-label="Settings">⚙</button>
+  </div>
 </header>
 
 <main>
@@ -153,6 +156,7 @@
   <!-- TODAY -->
   <section id="tab-today" class="tab-panel">
     <div id="flagsBanner" class="hidden"></div>
+    <div id="coachTeaser" class="hidden"></div>
     <div id="welcomeBackBanner" class="hidden"></div>
     <div id="celebrationBanner" class="hidden"></div>
 
@@ -526,7 +530,6 @@
   <button class="tab-btn" data-tab="coach"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H8l-4 4V4z"/></svg>Coach</button>
   <button class="tab-btn" data-tab="food"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>Food</button>
   <button class="tab-btn" data-tab="progress"><svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,4 21,20 3,20"/></svg>Progress</button>
-  <button class="tab-btn" data-tab="programs"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>Programs</button>
 </nav>
 
 <script>
@@ -1624,6 +1627,7 @@ document.getElementById("saveDailyCheckinBtn").addEventListener("click", async (
     ? "Saved for today — tap to update."
     : "Cleared for today.";
   renderCoachNote();
+  renderCoachTeaser();
 });
 
 // ---- Coach correlation engine ----
@@ -1711,6 +1715,33 @@ function renderCoachNote() {
     return;
   }
   el.innerHTML = result.insights.map(i => `<div class="meta" style="margin-bottom:8px;">${i}</div>`).join("");
+}
+
+// A condensed teaser on Today surfacing the single strongest Coach finding,
+// so it's seen where attention already is instead of only existing inside
+// a tab you have to remember to open. Deliberately only appears once there
+// is a real, evidence-backed finding — unlike the Coach tab itself, this
+// does NOT show the "still gathering data" placeholder here, to avoid
+// nagging with an empty-handed banner every day before there's anything to
+// say. Not a dismissible flag: a correlation finding is a standing fact,
+// not a one-time event, so it just reflects current state like the other
+// banners above it rather than needing to be acknowledged away.
+function renderCoachTeaser() {
+  const el = document.getElementById("coachTeaser");
+  if (!el) return;
+  const result = computeCoachInsights();
+  if (!result.insights.length) { el.classList.add("hidden"); el.innerHTML = ""; return; }
+  el.classList.remove("hidden");
+  el.innerHTML = `
+    <div class="card" style="border-left-color:var(--accent);">
+      <div class="meta" style="font-weight:600; color:var(--text); margin-bottom:6px;">🧠 Coach found something</div>
+      <div class="meta" style="color:var(--text);">${result.insights[0]}</div>
+      <button class="secondary" id="openCoachFromTeaser" style="margin-top:8px;">See Coach tab</button>
+    </div>`;
+  document.getElementById("openCoachFromTeaser").addEventListener("click", () => {
+    const coachBtn = document.querySelector('.tab-btn[data-tab="coach"]');
+    if (coachBtn) coachBtn.click();
+  });
 }
 
 // Split by check-in direction instead of lumping every logged reason
@@ -4169,6 +4200,7 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
       const active = programs.find(p => p.id === state.activeProgramId);
       if (active) ensureWorkoutReady(active);
       renderDailyCheckin();
+      renderCoachTeaser();
     }
     if (btn.dataset.tab === "coach") {
       renderCoachNote();
@@ -4554,6 +4586,7 @@ async function init() {
   renderCelebrations();
   renderFlagsBanner();
   renderCoachNote();
+  renderCoachTeaser();
   renderDailyCheckin();
   renderProgressCharts();
   renderRecentCardio();
