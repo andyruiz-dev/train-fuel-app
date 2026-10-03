@@ -2069,7 +2069,7 @@ function renderWeeklyReview() {
       <button class="secondary" id="repeatWeekBtn" style="flex:1;">Repeat this week</button>
       <button class="secondary" id="advanceWeekBtn" style="flex:1;">Advance a week</button>
     </div>
-    ${state.weekAdjustment ? `<button class="danger-link" id="resetWeekBtn" style="margin-top:6px;">Reset to actual date (currently offset ${state.weekAdjustment > 0 ? "+" : ""}${state.weekAdjustment})</button>` : ""}
+    ${state.weekAdjustment ? `<button class="secondary" id="resetWeekBtn" style="margin-top:6px; width:100%;">Reset to actual date (currently offset ${state.weekAdjustment > 0 ? "+" : ""}${state.weekAdjustment})</button>` : ""}
   `;
 
   if (suggestion && suggestion.deltaCalories !== 0) {
