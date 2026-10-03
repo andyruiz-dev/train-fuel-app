@@ -794,16 +794,15 @@ const BUILTIN_EXERCISES = [
   { id: "db-floor-press", name: "Dumbbell floor press", muscle_group: "push", equipment: "dumbbell", cue: "Upper arms touch floor lightly, press to lockout." },
   { id: "db-overhead-press", name: "Dumbbell overhead press", muscle_group: "push", equipment: "dumbbell", cue: "Brace core, press straight overhead, avoid arching." },
 
-  // ---- pull: dead hang -> bar -> rings ----
-  { id: "dead-hang", name: "Dead hang", muscle_group: "pull", equipment: "bar", cue: "Shoulders engaged, don't fully relax into the joint." },
-  { id: "active-hang", name: "Active hang", muscle_group: "pull", equipment: "bar", cue: "Pull shoulder blades down and back, hold." },
-  { id: "scap-pull", name: "Scapular pull-up", muscle_group: "pull", equipment: "bar", cue: "Pull shoulder blades down without bending elbows." },
+  // ---- pull: dead hang -> rings (no fixed bar in the equipment list — every
+  // hang/pull-up/chin-up variant below is done on rings) ----
+  { id: "dead-hang", name: "Dead hang", muscle_group: "pull", equipment: "rings", cue: "Shoulders engaged, don't fully relax into the joint." },
+  { id: "active-hang", name: "Active hang", muscle_group: "pull", equipment: "rings", cue: "Pull shoulder blades down and back, hold." },
+  { id: "scap-pull", name: "Scapular pull-up", muscle_group: "pull", equipment: "rings", cue: "Pull shoulder blades down without bending elbows." },
   { id: "band-assisted-pullup", name: "Band-assisted pull-up", muscle_group: "pull", equipment: "band", cue: "Band under knee/foot, full range each rep." },
-  { id: "negative-pullup", name: "Negative pull-up", muscle_group: "pull", equipment: "bar", cue: "Jump to top, lower for a slow 4-5 count." },
-  { id: "pullup", name: "Pull-up", muscle_group: "pull", equipment: "bar", cue: "Chin over bar, controlled descent." },
-  { id: "chinup", name: "Chin-up", muscle_group: "pull", equipment: "bar", cue: "Underhand grip, drive elbows down." },
-  { id: "archer-pullup", name: "Archer pull-up", muscle_group: "pull", equipment: "bar", cue: "Pull toward one hand, other arm stays extended." },
-  { id: "typewriter-pullup", name: "Typewriter pull-up", muscle_group: "pull", equipment: "bar", cue: "Hold at top, shift side to side without dropping." },
+  { id: "negative-pullup", name: "Negative pull-up", muscle_group: "pull", equipment: "rings", cue: "Jump to top, lower for a slow 4-5 count." },
+  { id: "chinup", name: "Chin-up", muscle_group: "pull", equipment: "rings", cue: "Underhand grip, drive elbows down." },
+  { id: "typewriter-pullup", name: "Typewriter pull-up", muscle_group: "pull", equipment: "rings", cue: "Hold at top, shift side to side without dropping." },
   { id: "one-arm-pullup-assisted", name: "One-arm pull-up (band assisted)", muscle_group: "pull", equipment: "band", cue: "Band takes most of the load on the free side." },
   { id: "ring-row-easy", name: "Ring row (feet forward)", muscle_group: "pull", equipment: "rings", cue: "More upright body angle — easier version." },
   { id: "ring-row", name: "Ring row", muscle_group: "pull", equipment: "rings", cue: "Body straight, pull chest to hands." },
@@ -811,7 +810,6 @@ const BUILTIN_EXERCISES = [
   { id: "ring-pullup-assisted", name: "Ring pull-up (feet supported)", muscle_group: "pull", equipment: "rings", cue: "Feet lightly touching floor, build toward full ring pull-up." },
   { id: "ring-pullup", name: "Ring pull-up", muscle_group: "pull", equipment: "rings", cue: "Rings add instability — brace through the whole pull." },
   { id: "ring-archer-pullup", name: "Ring archer pull-up", muscle_group: "pull", equipment: "rings", cue: "Advanced — one arm dominant, other stays extended." },
-  { id: "inverted-row", name: "Inverted row", muscle_group: "pull", equipment: "bar", cue: "Body straight under a low bar, pull chest up." },
   { id: "band-pull-apart", name: "Band pull-apart", muscle_group: "pull", equipment: "band", cue: "Squeeze shoulder blades, slow return." },
   { id: "db-single-arm-row", name: "Single-arm dumbbell row", muscle_group: "pull", equipment: "dumbbell", cue: "Flat back, pull elbow past hip, no torso rotation." },
   { id: "db-renegade-row", name: "Renegade row", muscle_group: "pull", equipment: "dumbbell", cue: "Plank position, minimize hip sway as you row." },
@@ -852,9 +850,9 @@ const BUILTIN_EXERCISES = [
   { id: "plank", name: "Plank", muscle_group: "core", equipment: "bodyweight", cue: "Straight line head to heels, ribs down." },
   { id: "plank-shoulder-tap", name: "Plank shoulder taps", muscle_group: "core", equipment: "bodyweight", cue: "Minimize hip rotation with each tap." },
   { id: "side-plank", name: "Side plank", muscle_group: "core", equipment: "bodyweight", cue: "Hips stacked and lifted, don't let them sag." },
-  { id: "hanging-knee-raise", name: "Hanging knee raise", muscle_group: "core", equipment: "bar", cue: "Avoid swinging, control the descent." },
-  { id: "hanging-leg-raise", name: "Hanging leg raise", muscle_group: "core", equipment: "bar", cue: "Legs straight, raise to at least parallel." },
-  { id: "toes-to-bar", name: "Toes to bar", muscle_group: "core", equipment: "bar", cue: "Control the swing, touch bar with control." },
+  { id: "hanging-knee-raise", name: "Hanging knee raise", muscle_group: "core", equipment: "rings", cue: "Avoid swinging, control the descent." },
+  { id: "hanging-leg-raise", name: "Hanging leg raise", muscle_group: "core", equipment: "rings", cue: "Legs straight, raise to at least parallel." },
+  { id: "toes-to-rings", name: "Toes to rings", muscle_group: "core", equipment: "rings", cue: "Control the swing, touch feet to the rings with control." },
   { id: "ring-plank", name: "Ring plank", muscle_group: "core", equipment: "rings", cue: "Rings add instability — brace harder than a floor plank." },
   { id: "ring-pike", name: "Ring pike", muscle_group: "core", equipment: "rings", cue: "Feet in rings, pike hips up keeping legs straight." },
   { id: "ring-lsit-tucked", name: "Ring L-sit (tucked)", muscle_group: "core", equipment: "rings", cue: "Knees tucked to chest — easier lever than full L-sit." },
@@ -906,11 +904,11 @@ const BUILTIN_EXERCISES = [
   { id: "one-arm-pushup", name: "One-arm push-up", muscle_group: "push", equipment: "bodyweight", cue: "Feet wide for a base, resist rotating the torso." },
   { id: "handstand-walk", name: "Handstand walk", muscle_group: "push", equipment: "bodyweight", cue: "Small steps, look at the floor, ribs stacked over hips." },
 
-  // ---- pull: human flag line + one-arm pull-up line ----
-  { id: "band-assisted-human-flag", name: "Band-assisted human flag", muscle_group: "pull", equipment: "band", cue: "Top arm pushes, bottom arm pulls, band takes most of the load." },
-  { id: "tuck-human-flag", name: "Tuck human flag", muscle_group: "pull", equipment: "bar", cue: "Knees tucked tight, hips close to the pole, brace the obliques hard." },
-  { id: "one-arm-pullup-negative", name: "One-arm pull-up negative", muscle_group: "pull", equipment: "bar", cue: "Assist up with the other hand, lower on one arm as slow as possible." },
-  { id: "one-arm-pullup", name: "One-arm pull-up", muscle_group: "pull", equipment: "bar", cue: "Start dead hang, avoid swinging into the pull." },
+  // ---- pull: one-arm pull-up line ----
+  // (the human flag line was removed — it needs a fixed vertical pole,
+  // which isn't equipment this person has or trains with)
+  { id: "one-arm-pullup-negative", name: "One-arm pull-up negative", muscle_group: "pull", equipment: "rings", cue: "Assist up with the other hand, lower on one arm as slow as possible." },
+  { id: "one-arm-pullup", name: "One-arm pull-up", muscle_group: "pull", equipment: "rings", cue: "Start dead hang, avoid swinging into the pull." },
 
   // ---- legs & core: dynamic/explosive for variety in short sessions ----
   { id: "broad-jump", name: "Broad jump", muscle_group: "legs", equipment: "bodyweight", cue: "Swing arms for momentum, land soft and stick it." },
@@ -980,8 +978,8 @@ const BUILTIN_EXERCISES = [
   // Library and a conflicting level for toes-to-bar in EXERCISE_LEVEL_MAP)
   { id: "archer-squat", name: "Archer squat", muscle_group: "legs", equipment: "bodyweight", cue: "Shift weight to one leg, the other extends straight out to the side." },
   { id: "hover-lunge", name: "Hover lunge", muscle_group: "legs", equipment: "bodyweight", cue: "Pause just above the floor at the bottom of the lunge before driving back up." },
-  { id: "l-sit-pullup", name: "L-sit pull-up", muscle_group: "pull", equipment: "bar", cue: "Hold the L-sit position throughout the entire pull, don't let the legs drop." },
-  { id: "l-sit-archer-pullup", name: "L-sit archer pull-up", muscle_group: "pull", equipment: "bar", cue: "Archer pull-up while maintaining the L-sit the whole way — very advanced." },
+  { id: "l-sit-pullup", name: "L-sit pull-up", muscle_group: "pull", equipment: "rings", cue: "Hold the L-sit position throughout the entire pull, don't let the legs drop." },
+  { id: "l-sit-archer-pullup", name: "L-sit archer pull-up", muscle_group: "pull", equipment: "rings", cue: "Archer pull-up while maintaining the L-sit the whole way — very advanced." },
 
   // ---- parallettes: push/core, same lines as bar/rings but handles close to
   // the floor — easier on the wrists for push-up/handstand/L-sit work ----
@@ -1013,10 +1011,9 @@ const EXERCISE_LEVEL_MAP = {
   "db-floor-press": 3, "db-overhead-press": 3,
   // pull
   "dead-hang": 1, "active-hang": 1, "scap-pull": 2, "band-assisted-pullup": 2,
-  "negative-pullup": 2, "pullup": 3, "chinup": 3, "archer-pullup": 4,
-  "typewriter-pullup": 5, "one-arm-pullup-assisted": 4, "ring-row-easy": 2,
+  "negative-pullup": 2, "chinup": 3, "typewriter-pullup": 5, "one-arm-pullup-assisted": 4, "ring-row-easy": 2,
   "ring-row": 3, "ring-row-feet-elevated": 4, "ring-pullup-assisted": 3,
-  "ring-pullup": 4, "ring-archer-pullup": 5, "inverted-row": 3, "band-pull-apart": 1,
+  "ring-pullup": 4, "ring-archer-pullup": 5, "band-pull-apart": 1,
   "db-single-arm-row": 3, "db-renegade-row": 4, "weighted-pullup": 4,
   // legs
   "wall-sit": 1, "box-squat-high": 2, "bodyweight-squat": 3, "split-squat": 3,
@@ -1030,7 +1027,7 @@ const EXERCISE_LEVEL_MAP = {
   // core
   "dead-bug": 1, "hollow-hold-tucked": 2, "hollow-hold": 3, "plank": 3,
   "plank-shoulder-tap": 3, "side-plank": 3, "hanging-knee-raise": 3,
-  "hanging-leg-raise": 4, "toes-to-bar": 5, "ring-plank": 3, "ring-pike": 4,
+  "hanging-leg-raise": 4, "toes-to-rings": 5, "ring-plank": 3, "ring-pike": 4,
   "ring-lsit-tucked": 3, "ring-lsit": 5, "ring-front-lever-tuck": 5,
   "db-weighted-situp": 3, "band-pallof-press": 2,
   // ruck
@@ -1049,7 +1046,7 @@ const EXERCISE_LEVEL_MAP = {
   "windshield-wipers": 4, "ring-ab-rollout": 4, "dragon-flag": 5,
   // new: skill/explosive variety
   "elbow-lever": 4, "plyo-pushup": 4, "clapping-pushup": 4, "one-arm-pushup": 5,
-  "handstand-walk": 5, "band-assisted-human-flag": 4, "tuck-human-flag": 5,
+  "handstand-walk": 5,
   "one-arm-pullup-negative": 5, "one-arm-pullup": 5,
   "broad-jump": 3, "jumping-lunge": 4, "burpee": 2,
   "mountain-climbers": 2, "bear-crawl": 2, "inchworm": 1,
@@ -1090,12 +1087,12 @@ const EXERCISE_PLANE_MAP = {
   "parallel-bar-support-hold": "v", "bench-dip": "v", "bar-negative-dip": "v", "parallel-bar-dip": "v",
   "handstand-walk": "v",
   // pull - horizontal (rows)
-  "ring-row-easy": "h", "ring-row": "h", "ring-row-feet-elevated": "h", "inverted-row": "h",
+  "ring-row-easy": "h", "ring-row": "h", "ring-row-feet-elevated": "h",
   "band-pull-apart": "h", "db-single-arm-row": "h", "db-renegade-row": "h", "archer-row": "h",
   "tuck-back-lever": "h", "ring-pullover": "h",
   // pull - vertical (the actual pull-up ladder)
   "dead-hang": "v", "active-hang": "v", "scap-pull": "v", "band-assisted-pullup": "v",
-  "negative-pullup": "v", "pullup": "v", "chinup": "v", "archer-pullup": "v",
+  "negative-pullup": "v", "chinup": "v",
   "typewriter-pullup": "v", "one-arm-pullup-assisted": "v", "ring-pullup-assisted": "v",
   "ring-pullup": "v", "ring-archer-pullup": "v", "weighted-pullup": "v", "skin-the-cat": "v",
   "muscle-up-negative": "v", "muscle-up": "v", "one-arm-pullup-negative": "v", "one-arm-pullup": "v",
@@ -1122,8 +1119,8 @@ const HOLD_EXERCISE_IDS = new Set([
   "ring-plank", "ring-lsit-tucked", "ring-lsit", "ring-front-lever-tuck",
   "hollow-hold-tucked", "hollow-hold",
   "parallel-bar-support-hold", "planche-lean", "tuck-planche", "tuck-back-lever",
-  "reverse-plank", "copenhagen-plank", "elbow-lever", "tuck-human-flag",
-  "band-assisted-human-flag", "wheel-bridge", "full-bridge",
+  "reverse-plank", "copenhagen-plank", "elbow-lever",
+  "wheel-bridge", "full-bridge",
   "doorway-chest-stretch", "wrist-flexor-stretch", "childs-pose-reach",
   "hip-90-90-stretch", "kneeling-hip-flexor-stretch", "deep-squat-hold",
   "pigeon-pose", "standing-hamstring-stretch",
