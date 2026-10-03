@@ -152,6 +152,7 @@
 
   <!-- TODAY -->
   <section id="tab-today" class="tab-panel">
+    <div id="flagsBanner" class="hidden"></div>
     <div id="welcomeBackBanner" class="hidden"></div>
     <div id="celebrationBanner" class="hidden"></div>
 
@@ -639,6 +640,7 @@ async function loadState() {
   if (!state.foodLogs) state.foodLogs = [];
   if (!state.milestonesSeen) state.milestonesSeen = { weightLbs: [], workoutDays: [] };
   if (!state.celebrations) state.celebrations = [];
+  if (!state.flags) state.flags = [];
   if (typeof state.welcomeBackDismissedDate !== "string") state.welcomeBackDismissedDate = "";
   if (!state.settings.macroTargets) state.settings.macroTargets = { calories: 2300, protein: 160, carbs: 200, fat: 70 };
   if (typeof state.travelMode !== "boolean") state.travelMode = false;
@@ -1475,6 +1477,68 @@ function renderCelebrations() {
   });
 }
 
+// Flags are the "can't be cleared until reviewed" counterpart to
+// celebrations: a finding worth your attention (a macro suggestion, a
+// body-fat trend) that stays pinned at the top of Today until you've
+// explicitly looked at it, not something that fades on its own or gets
+// buried in a tab you have to remember to open.
+//
+// One flag per `type` at a time. Re-upserting with the SAME message as an
+// already-acknowledged flag is a no-op — if nothing's changed since you
+// last reviewed it, it shouldn't nag you again. A genuinely different
+// message (the suggestion flipped direction, a new trend appeared)
+// un-acknowledges it, since that's new information you haven't seen yet.
+// Returns whether anything actually changed, so callers only persist when
+// there's something to save.
+function upsertFlag(type, message) {
+  state.flags = state.flags || [];
+  const existing = state.flags.find(f => f.type === type);
+  if (existing) {
+    if (existing.message === message) return false;
+    existing.message = message;
+    existing.date = localDateStr();
+    existing.acknowledged = false;
+    return true;
+  }
+  state.flags.push({ id: `${type}-${Date.now()}`, type, message, date: localDateStr(), acknowledged: false });
+  return true;
+}
+
+// Removes a flag entirely once its underlying condition no longer applies
+// (e.g. the macro suggestion went back to "on pace, no change") — there's
+// nothing left to review, so it shouldn't linger waiting for an ack it'll
+// never need.
+function clearFlagType(type) {
+  const before = state.flags.length;
+  state.flags = (state.flags || []).filter(f => f.type !== type);
+  return state.flags.length !== before;
+}
+
+function renderFlagsBanner() {
+  const el = document.getElementById("flagsBanner");
+  if (!el) return;
+  const unacked = (state.flags || []).filter(f => !f.acknowledged);
+  if (!unacked.length) { el.classList.add("hidden"); el.innerHTML = ""; return; }
+  el.classList.remove("hidden");
+  el.innerHTML = `
+    <div class="card" style="border-left-color:var(--danger);">
+      <div class="meta" style="font-weight:600; color:var(--text); margin-bottom:6px;">⚑ Needs a look</div>
+      ${unacked.map(f => `
+        <div style="margin-bottom:10px;">
+          <div class="meta" style="color:var(--text);">${f.message}</div>
+          <button class="secondary" data-flag-ack="${f.id}" style="margin-top:6px;">Reviewed</button>
+        </div>`).join("")}
+    </div>`;
+  el.querySelectorAll("[data-flag-ack]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const flag = (state.flags || []).find(f => f.id === btn.dataset.flagAck);
+      if (flag) flag.acknowledged = true;
+      await persistNow();
+      renderFlagsBanner();
+    });
+  });
+}
+
 // Split by check-in direction instead of lumping every logged reason
 // together under one hardcoded "upticks" header — that previously mixed
 // reasons for weight INCREASES in with the overall weekly number even when
@@ -1573,6 +1637,17 @@ function renderWeeklyReview() {
 
   const suggestion = computeMacroSuggestion();
   const checkInSummary = computeWeightCheckInSummary();
+
+  // Any suggestion that isn't the plain "on pace, no change" default is
+  // worth flagging for an explicit review — a calorie change either
+  // direction, or the recomposition override, both count. "On pace" and
+  // "not enough data yet" aren't actionable, so they clear any stale flag
+  // instead of creating one.
+  const suggestionIsNotable = suggestion && (suggestion.deltaCalories !== 0 || suggestion.message.includes("recomposition"));
+  const flagChanged = suggestionIsNotable
+    ? upsertFlag("macroSuggestion", suggestion.message)
+    : clearFlagType("macroSuggestion");
+  if (flagChanged) { persistNow(); renderFlagsBanner(); }
 
   const logsDetailHtml = weeklyReviewLogsOpen ? (recentLogs.length ? recentLogs.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).map(l => `
     <div class="list-item"><div class="name">${new Date(l.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · ${l.exercise}</div><div class="meta">${l.result}</div></div>
@@ -3066,9 +3141,21 @@ document.getElementById("journeyStats").addEventListener("click", (e) => {
 function renderBodyFatSummary() {
   const el = document.getElementById("bodyFatSummary");
   const bf = computeBodyFatTrend();
-  if (!bf) { el.textContent = ""; return; }
+  if (!bf) {
+    el.textContent = "";
+    if (clearFlagType("bodyFatTrend")) { persistNow(); renderFlagsBanner(); }
+    return;
+  }
   const trendWord = bf.ptsPerWeek <= -0.1 ? "trending down" : bf.ptsPerWeek >= 0.1 ? "trending up" : "holding steady";
-  el.textContent = `Body fat (Navy method): ${bf.latest}% as of ${new Date(bf.latestDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })} — ${trendWord} (${bf.ptsPerWeek >= 0 ? "+" : ""}${bf.ptsPerWeek.toFixed(2)} pts/week).`;
+  const message = `Body fat (Navy method): ${bf.latest}% as of ${new Date(bf.latestDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })} — ${trendWord} (${bf.ptsPerWeek >= 0 ? "+" : ""}${bf.ptsPerWeek.toFixed(2)} pts/week).`;
+  el.textContent = message;
+
+  // Only a real move (not "holding steady") is worth flagging for review —
+  // a flat trend is just confirmation nothing's changed.
+  const flagChanged = Math.abs(bf.ptsPerWeek) >= 0.1
+    ? upsertFlag("bodyFatTrend", message)
+    : clearFlagType("bodyFatTrend");
+  if (flagChanged) { persistNow(); renderFlagsBanner(); }
 }
 
 function renderProgressCharts() {
@@ -4284,6 +4371,7 @@ async function init() {
   renderExercises();
   renderPrograms();
   renderCelebrations();
+  renderFlagsBanner();
   renderProgressCharts();
   renderRecentCardio();
   renderStartingLevelSettings();
