@@ -4303,13 +4303,29 @@ document.getElementById("programsSubNav").addEventListener("click", (e) => {
   document.getElementById("subtab-library").classList.toggle("hidden", chip.dataset.subtab !== "library");
 });
 
-// Persisted (not just in-memory) so that if the browser ever does reload the
-// page out from under you — a low-memory kill, backgrounding, whatever —
-// you land back on the tab you were actually using instead of always
-// bouncing to Coach. Doesn't recover in-progress unsaved work (a photo scan
-// mid-analysis, say), just avoids compounding that with a confusing jump.
+// Persisted (not just in-memory) so that if the app ever gets killed and
+// relaunched out from under you — a low-memory kill, backgrounding,
+// whatever — you land back on the tab you were actually using instead of
+// always bouncing to Coach. Doesn't recover in-progress unsaved work (a
+// photo scan mid-analysis, say), just avoids compounding that with a
+// confusing jump.
+//
+// An explicit pull-to-refresh is different from that, though — it's a
+// deliberate "start over" gesture, not a crash the app should paper over,
+// so it should land on Coach (the real front door) regardless of whatever
+// tab was open before. The two look identical to a naive reload check, but
+// PerformanceNavigationTiming tells them apart: a refresh (pull-to-refresh
+// included) reports navigation type "reload"; the OS relaunching a killed
+// PWA reports a fresh "navigate" instead. Only override the in-memory
+// value here, not localStorage itself — so a crash with no clicks in
+// between still has the real last-touched tab to fall back to.
 const LS_LAST_TAB_KEY = "trainFuelLastTab";
 let lastActiveTab = localStorage.getItem(LS_LAST_TAB_KEY) || "coach";
+try {
+  const navEntry = performance.getEntriesByType("navigation")[0];
+  const isExplicitReload = navEntry ? navEntry.type === "reload" : performance.navigation?.type === 1;
+  if (isExplicitReload) lastActiveTab = "coach";
+} catch (err) {}
 
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
