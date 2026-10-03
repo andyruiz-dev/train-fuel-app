@@ -189,10 +189,11 @@
           <div style="display:flex; justify-content:flex-end;">
             <button id="genWorkoutBtn" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; padding:4px 0;" disabled>Regenerate</button>
           </div>
-          <div id="travelModeToggle" style="cursor:pointer; font-family:var(--font-display); font-size:15px; font-weight:500; letter-spacing:0.2px; display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
+          <div id="travelModeToggle" style="cursor:pointer; font-family:var(--font-display); font-size:15px; font-weight:500; letter-spacing:0.2px; display:flex; justify-content:space-between; align-items:center; padding:10px 0;">
             <span>✈️ Travel mode</span>
             <span id="travelModeState" style="color:var(--text-muted); font-size:12px; font-family:var(--font-mono);">Off</span>
           </div>
+          <p class="meta" style="margin-top:0; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border);">Restricts today's workout to gear you'd actually have on the road (bodyweight, bands, rings) — turning it on or off regenerates today's exercises.</p>
           <div id="recoveryCautionNote"></div>
           <div id="todayWorkout" class="empty">Pick an active program first.</div>
           <button class="primary" id="startSessionBtn" style="margin-top:10px; width:100%;" disabled>Start guided session</button>
@@ -426,7 +427,7 @@
     </div>
 
     <div class="card">
-      <details>
+      <details id="weeklyReviewDetails">
         <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">This week</summary>
         <div id="weeklyReview" style="margin-top:10px;"></div>
       </details>
@@ -1187,7 +1188,7 @@ function renderExercises(filterText = "", muscleGroup = "all", levelFilter = "al
           <div class="list-item">
             <div>
               <div class="name">${e.name}</div>
-              <div class="meta">${e.equipment || "bodyweight"}${e.source === "builtin" ? "" : " · " + e.source}</div>
+              <div class="meta">${e.equipment || "bodyweight"} · level ${levelOf(e.id)}${e.source === "builtin" ? "" : " · " + e.source}</div>
               ${howToHtml("lib-" + e.id, e.name, e.cue)}
             </div>
             ${e.source !== "builtin" ? `<button class="danger-link" data-del-ex="${e.id}">Delete</button>` : ""}
@@ -1648,6 +1649,17 @@ function clearFlagType(type) {
   return state.flags.length !== before;
 }
 
+// Each flag type's own card is where the real action lives (e.g. "Apply
+// suggestion" on the nutrition card) — this banner used to repeat that
+// card's full message verbatim with only a "Reviewed" button, which made
+// tapping "Reviewed" look like it had handled the suggestion when it
+// hadn't. Instead, the banner now shows a short pointer and jumps you to
+// the real card; "Reviewed" still just dismisses the flag, same as before.
+const FLAG_DISPLAY = {
+  macroSuggestion: { label: "New nutrition suggestion — see This week", detailsId: "weeklyReviewDetails" },
+  bodyFatTrend: { label: "Body-fat trend updated — see Body composition", detailsId: "bodyCompDetails" },
+};
+
 function renderFlagsBanner() {
   const el = document.getElementById("flagsBanner");
   if (!el) return;
@@ -1657,12 +1669,27 @@ function renderFlagsBanner() {
   el.innerHTML = `
     <div class="card" style="border-left-color:var(--danger);">
       <div class="meta" style="font-weight:600; color:var(--text); margin-bottom:6px;">⚑ Needs a look</div>
-      ${unacked.map(f => `
-        <div style="margin-bottom:10px;">
-          <div class="meta" style="color:var(--text);">${f.message}</div>
-          <button class="secondary" data-flag-ack="${f.id}" style="margin-top:6px;">Reviewed</button>
-        </div>`).join("")}
+      ${unacked.map(f => {
+        const display = FLAG_DISPLAY[f.type];
+        const label = display ? display.label : f.message;
+        return `
+        <div style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <div class="meta" data-flag-goto="${f.id}" style="color:var(--text); cursor:pointer; flex:1;">${label}${display ? " ›" : ""}</div>
+          <button class="secondary" data-flag-ack="${f.id}">Reviewed</button>
+        </div>`;
+      }).join("")}
     </div>`;
+  el.querySelectorAll("[data-flag-goto]").forEach(row => {
+    row.addEventListener("click", () => {
+      const flag = unacked.find(f => f.id === row.dataset.flagGoto);
+      const display = flag && FLAG_DISPLAY[flag.type];
+      if (!display) return;
+      const target = document.getElementById(display.detailsId);
+      if (!target) return;
+      if ("open" in target) target.open = true;
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
   el.querySelectorAll("[data-flag-ack]").forEach(btn => {
     btn.addEventListener("click", async () => {
       const flag = (state.flags || []).find(f => f.id === btn.dataset.flagAck);
@@ -2133,17 +2160,21 @@ function renderWeeklyReview() {
       : `Reset — you're training as if it's ${n} ${weekWord} ahead of your actual start date`;
   }
 
+  const sectionLabelStyle = "font-size:11px; text-transform:uppercase; letter-spacing:0.6px; color:var(--text-muted); margin-top:14px; margin-bottom:4px;";
   el.innerHTML = `
+    <div style="${sectionLabelStyle} margin-top:0;">Training week</div>
     <div class="meta">Week ${weekNumber} · ${phaseLabel}${deloadNote}</div>
     <div class="meta" id="weeklyReviewLogsToggle" style="margin-top:6px; cursor:pointer;">Last 7 days: ${recentLogs.length} exercises logged
     (${counts.max} hit max, ${counts.hold} as prescribed, ${counts.missed} missed) · ${weeklyReviewLogsOpen ? "hide" : "see"} which</div>
     ${logsDetailHtml}
+
+    <div style="${sectionLabelStyle}">Nutrition</div>
     ${suggestion ? `
-      <div class="meta" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">${suggestion.message}</div>
+      <div class="meta">${suggestion.message}</div>
       ${suggestion.deltaCalories !== 0 ? `<button class="secondary" id="applyMacroSuggestionBtn" style="margin-top:8px; width:100%;">Apply suggestion</button>` : ""}
-    ` : `<div class="meta" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">Log at least two weigh-ins about a week apart to get a calorie-pace suggestion here.</div>`}
+    ` : `<div class="meta">Log at least two weigh-ins about a week apart to get a calorie-pace suggestion here.</div>`}
     ${checkInSummary?.up.length ? `
-      <div class="meta" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
+      <div class="meta" style="margin-top:10px;">
         <strong style="color:var(--text);">This week's weight upticks were linked to:</strong>
       </div>
       ${checkInSummary.up.map(c => `
@@ -2151,14 +2182,16 @@ function renderWeeklyReview() {
       `).join("")}
     ` : ""}
     ${checkInSummary?.down.length ? `
-      <div class="meta" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
+      <div class="meta" style="margin-top:10px;">
         <strong style="color:var(--text);">This week's notable weight drops were linked to:</strong>
       </div>
       ${checkInSummary.down.map(c => `
         <div class="meta" style="margin-top:6px;">${c.reason} (${c.count})${c.suggestion ? ` — ${c.suggestion}` : ""}</div>
       `).join("")}
     ` : ""}
-    <div class="meta" style="margin-top:10px;">Behind on your plan? Repeat this week. Ahead of schedule? Advance a week. (Doesn't change your program start date — just this week's number.)</div>
+
+    <div style="${sectionLabelStyle}">Week adjustment</div>
+    <div class="meta">Behind on your plan? Repeat this week. Ahead of schedule? Advance a week. (Doesn't change your program start date — just this week's number.)</div>
     <div class="row" style="margin-top:6px;">
       <button class="secondary" id="repeatWeekBtn" style="flex:1;">Repeat this week</button>
       <button class="secondary" id="advanceWeekBtn" style="flex:1;">Advance a week</button>
@@ -2895,7 +2928,7 @@ function swapAlternatesHtml(currentExercise, uidPrefix) {
   const chip = (x, cls) => `
     <span style="display:inline-flex; align-items:center; gap:2px;">
       <span class="chip ${cls}" data-swap-pick="${uidPrefix}" data-swap-name="${x.name.replace(/"/g,'&quot;')}">${x.name}</span>
-      <button class="danger-link" style="padding:2px 4px; font-size:12px; color:var(--text-muted);" data-swap-info-btn="${uidPrefix}" data-info-name="${x.name.replace(/"/g,'&quot;')}" data-info-cue="${(x.cue||"").replace(/"/g,'&quot;')}">ⓘ</button>
+      <button class="danger-link" aria-label="Info" style="padding:8px; margin:-8px -4px -8px -4px; font-size:14px; color:var(--text-muted); min-width:32px; min-height:32px;" data-swap-info-btn="${uidPrefix}" data-info-name="${x.name.replace(/"/g,'&quot;')}" data-info-cue="${(x.cue||"").replace(/"/g,'&quot;')}">ⓘ</button>
     </span>`;
   const bucket = (label, list, cls) => list.length ? `
     <div class="meta" style="margin-top:8px; margin-bottom:4px;">${label}</div>
@@ -4382,6 +4415,14 @@ function renderSession() {
   // no time to go look it up elsewhere.
   const stepCue = exercises.find(x => x.name === step.name)?.cue || "";
   const stepCueHtml = stepCue ? `<div class="meta" style="margin-top:4px;">💡 ${stepCue}</div>` : "";
+  const stepLevelLabel = levelLabelFor(step);
+  // The legend for "level"/horizontal-vertical/straps only lives on the
+  // pre-session exercise list, which is hidden once a session starts — so
+  // repeat a short version on the very first step, where it's still fresh
+  // context, rather than leaving it unexplained for the rest of the workout.
+  const levelLegendHtml = session.pos === 0
+    ? `<div class="meta" style="margin-top:4px;">Level is a 1-5 difficulty tier; straps is your ring-strap setting (rings only).</div>`
+    : "";
 
   if (session.resting) {
     const remaining = Math.max(0, Math.ceil((session.restEndTime - Date.now()) / 1000));
@@ -4440,7 +4481,8 @@ function renderSession() {
       <div class="card">
         ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
         <h2>${step.name}</h2>
-        <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${targetSeconds}s hold${ringStrapNoteFor(step)}</div>
+        <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${targetSeconds}s hold · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
+        ${levelLegendHtml}
         ${stepCueHtml}
         <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
         <div class="hidden" id="sessionSwapPanel" style="margin-top:8px;">
@@ -4468,7 +4510,8 @@ function renderSession() {
     <div class="card">
       ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
       <h2>${step.name}</h2>
-      <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${step.reps} reps${ringStrapNoteFor(step)}</div>
+      <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${step.reps} reps · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
+      ${levelLegendHtml}
       ${stepCueHtml}
       <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
       <div class="hidden" id="sessionSwapPanel" style="margin-top:8px;">
@@ -4631,6 +4674,10 @@ document.getElementById("programsSubNav").addEventListener("click", (e) => {
 // between still has the real last-touched tab to fall back to.
 const LS_LAST_TAB_KEY = "trainFuelLastTab";
 let lastActiveTab = localStorage.getItem(LS_LAST_TAB_KEY) || "coach";
+// Whichever tab was open right before Programs was opened — lets a second
+// tap on the Programs icon return you there, matching how the Settings
+// icon already behaves on a repeat tap.
+let tabBeforePrograms = "coach";
 try {
   const navEntry = performance.getEntriesByType("navigation")[0];
   const isExplicitReload = navEntry ? navEntry.type === "reload" : performance.navigation?.type === 1;
@@ -4639,6 +4686,13 @@ try {
 
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
+    if (btn.dataset.tab === "programs" && btn.classList.contains("active")) {
+      // already in Programs — pressing again exits back to whichever tab was open before, same as Settings
+      const targetBtn = document.querySelector(`.tab-btn[data-tab="${tabBeforePrograms}"]`);
+      if (targetBtn) targetBtn.click();
+      return;
+    }
+    if (btn.dataset.tab === "programs") tabBeforePrograms = lastActiveTab;
     lastActiveTab = btn.dataset.tab;
     try { localStorage.setItem(LS_LAST_TAB_KEY, lastActiveTab); } catch (err) {}
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
