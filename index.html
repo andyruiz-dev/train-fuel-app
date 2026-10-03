@@ -195,7 +195,7 @@
             <span>✈️ Travel mode</span>
             <span id="travelModeState" style="color:var(--text-muted); font-size:12px; font-family:var(--font-mono);">Off</span>
           </div>
-          <p class="meta" style="margin-top:0; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border);">Generates a bodyweight-only workout, with ring exercises still available as a swap if you brought rings — no dumbbell/band exercises. Turning it on or off regenerates today's exercises.</p>
+          <p class="meta" style="margin-top:0; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border);">Generates a bodyweight-only workout — rings are still available as a swap if you brought them, but nothing else (no dumbbell, band, parallettes, or ab wheel). Turning it on or off regenerates today's exercises.</p>
           <div id="recoveryCautionNote"></div>
           <div id="todayWorkout" class="empty">Pick an active program first.</div>
           <button class="primary" id="startSessionBtn" style="margin-top:10px; width:100%;" disabled>Start guided session</button>
@@ -974,9 +974,10 @@ const BUILTIN_EXERCISES = [
 
   // ---- from the Kavadlo brothers' (Al & Danny) well-documented progressions —
   // real gaps confirmed against their published exercise lists ----
-  { id: "archer-pushup", name: "Archer push-up", muscle_group: "push", equipment: "bodyweight", cue: "Shift weight to one arm, the other stays straight and slides out to the side." },
-  { id: "archer-pullup", name: "Archer pull-up", muscle_group: "pull", equipment: "bar", cue: "Pull mostly with one arm, the other stays extended out to the side." },
-  { id: "toes-to-bar", name: "Toes to bar", muscle_group: "core", equipment: "bar", cue: "Straight legs the whole way, touch toes to the bar, lower with control." },
+  // (archer push-up/pull-up and toes to bar already exist above — those three
+  // were duplicated here with slightly different cue wording; removed rather
+  // than kept, since a duplicate id caused double rows in the Exercise
+  // Library and a conflicting level for toes-to-bar in EXERCISE_LEVEL_MAP)
   { id: "archer-squat", name: "Archer squat", muscle_group: "legs", equipment: "bodyweight", cue: "Shift weight to one leg, the other extends straight out to the side." },
   { id: "hover-lunge", name: "Hover lunge", muscle_group: "legs", equipment: "bodyweight", cue: "Pause just above the floor at the bottom of the lunge before driving back up." },
   { id: "l-sit-pullup", name: "L-sit pull-up", muscle_group: "pull", equipment: "bar", cue: "Hold the L-sit position throughout the entire pull, don't let the legs drop." },
@@ -1054,7 +1055,6 @@ const EXERCISE_LEVEL_MAP = {
   "mountain-climbers": 2, "bear-crawl": 2, "inchworm": 1,
   "wall-bridge": 1, "wheel-bridge": 3, "full-bridge": 4, "stand-to-stand-bridge": 5,
   "standing-twist": 1, "ring-pullover": 4,
-  "archer-pushup": 4, "archer-pullup": 4, "toes-to-bar": 4,
   "archer-squat": 3, "hover-lunge": 3, "l-sit-pullup": 4, "l-sit-archer-pullup": 5,
   // new: parallettes + ab wheel
   "parallette-pushup": 3, "parallette-pseudo-planche-pushup": 4, "parallette-dip": 3,
@@ -1199,11 +1199,14 @@ function levelBucket(level) {
 
 function equipmentBucket(equipment) {
   const e = (equipment || "bodyweight").toLowerCase();
+  // "bar" must be checked before "ring" — "bar or rings" contains "ring",
+  // so checking ring first silently swallowed every "bar or rings" exercise
+  // into the Rings bucket and the library's "Bar" filter never showed them.
+  if (e.includes("bar") && !e.includes("bodyweight")) return "bar"; // catches "bar", "bar or rings", "parallel bars"
   if (e.includes("ring")) return "rings";
   if (e.includes("parallette")) return "parallettes";
   if (e.includes("ab wheel")) return "ab-wheel";
   if (e.includes("dumbbell")) return "dumbbell";
-  if (e.includes("bar") && !e.includes("bodyweight")) return "bar"; // catches "bar", "bar or rings", "parallel bars"
   if (e.includes("band")) return "band";
   return "bodyweight";
 }
@@ -4849,7 +4852,13 @@ names for it (e.g. "Archer pull-up", not just "pull") — this is what the
 person's original program prescribed, and it should be preserved and used
 later, not replaced with something generic. Use exercise_name: null only if
 the document genuinely doesn't specify one and leaves it open.
-Output ONLY valid JSON: {"name": "string", "phases": [{"phase": "string", "week_start": 1, "week_end": 8, "deload_weeks": [4], "days": [{"day": "string", "slots": [{"muscle_group": "push|pull|legs|hinge|core|ruck", "sets": 3, "reps": "8-12", "exercise_name": "string or null"}]}]}]}`;
+When a named exercise's equipment is clear from the document or the exercise
+itself, also set "equipment" to exactly one of: "bodyweight", "rings",
+"parallettes", "ab wheel", "dumbbell", "band". This person trains
+calisthenics only — never guess "barbell" or any other gym-machine
+equipment even if the document mentions one; use null instead if the
+equipment genuinely isn't one of those six or isn't clear.
+Output ONLY valid JSON: {"name": "string", "phases": [{"phase": "string", "week_start": 1, "week_end": 8, "deload_weeks": [4], "days": [{"day": "string", "slots": [{"muscle_group": "push|pull|legs|hinge|core|ruck", "sets": 3, "reps": "8-12", "exercise_name": "string or null", "equipment": "string or null"}]}]}]}`;
     const data = await apiFetch("/api/import", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -4862,14 +4871,20 @@ Output ONLY valid JSON: {"name": "string", "phases": [{"phase": "string", "week_
     // specified that we don't already have gets added as a custom entry, so
     // generation can actually use what the original program prescribed
     // instead of silently falling back to a same-muscle-group substitute.
-    const namedExercises = new Map(); // name (lowercased) -> { name, muscle_group }
+    // Equipment the AI reported must be one of these six (this person trains
+    // calisthenics only) — anything else, including a stray "barbell" guess,
+    // falls back to null rather than being trusted and stored.
+    const IMPORT_ALLOWED_EQUIPMENT = new Set(["bodyweight", "rings", "parallettes", "ab wheel", "dumbbell", "band"]);
+    const namedExercises = new Map(); // name (lowercased) -> { name, muscle_group, equipment }
     (structure.phases || []).forEach(phase => {
       (phase.days || []).forEach(day => {
         (day.slots || []).forEach(slot => {
           if (slot.exercise_name && slot.exercise_name.trim()) {
+            const equip = typeof slot.equipment === "string" ? slot.equipment.trim().toLowerCase() : null;
             namedExercises.set(slot.exercise_name.trim().toLowerCase(), {
               name: slot.exercise_name.trim(),
               muscle_group: slot.muscle_group,
+              equipment: equip && IMPORT_ALLOWED_EQUIPMENT.has(equip) ? equip : null,
             });
           }
         });
@@ -4886,7 +4901,10 @@ Output ONLY valid JSON: {"name": "string", "phases": [{"phase": "string", "week_
             id: "imported-" + ex.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
             name: ex.name,
             muscle_group: ex.muscle_group,
-            equipment: "bodyweight",
+            // null (not a hardcoded "bodyweight") when the document didn't
+            // make the equipment clear — a wrong explicit guess would be
+            // worse than leaving it unspecified for equipment filtering.
+            equipment: ex.equipment,
             cue: "",
             source: "imported",
           }),
