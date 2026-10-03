@@ -1945,8 +1945,8 @@ function renderMorningChecklist() {
   el.classList.remove("hidden");
   el.innerHTML = `
     <div class="card" style="border-left-color:var(--accent);">
-      <div class="meta" style="font-weight:600; color:var(--text); margin-bottom:6px;">Today</div>
-      ${rows.map(r => `<div class="meta" id="${r.id}" style="cursor:pointer; padding:4px 0;">○ ${r.label}</div>`).join("")}
+      <div class="meta" style="font-weight:600; color:var(--text); margin-bottom:6px;">Still to do today</div>
+      ${rows.map(r => `<div class="meta" id="${r.id}" style="cursor:pointer; padding:4px 0; display:flex; justify-content:space-between; align-items:center;"><span>${r.label}</span><span aria-hidden="true">›</span></div>`).join("")}
     </div>`;
 
   const goTo = (targetId, open) => {
