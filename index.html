@@ -2040,6 +2040,20 @@ function renderWeeklyReview() {
     <div class="list-item"><div class="name">${new Date(l.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · ${l.exercise}</div><div class="meta">${l.result}</div></div>
   `).join("") : `<div class="empty">Nothing logged this week yet.</div>`) : "";
 
+  // Plain-language version of the week offset — "offset -2" means nothing
+  // without already knowing this is a +/-1-per-tap counter from
+  // Repeat/Advance. Says what it actually does instead: how many weeks your
+  // program's week-of-phase number has been held back from (or pushed ahead
+  // of) what your actual start date would normally put you at.
+  let resetWeekLabel = "";
+  if (state.weekAdjustment) {
+    const n = Math.abs(state.weekAdjustment);
+    const weekWord = n === 1 ? "week" : "weeks";
+    resetWeekLabel = state.weekAdjustment < 0
+      ? `Reset — you're training as if it's ${n} ${weekWord} earlier than your actual start date`
+      : `Reset — you're training as if it's ${n} ${weekWord} ahead of your actual start date`;
+  }
+
   el.innerHTML = `
     <div class="meta">Week ${weekNumber} · ${phaseLabel}${deloadNote}</div>
     <div class="meta" id="weeklyReviewLogsToggle" style="margin-top:6px; cursor:pointer;">Last 7 days: ${recentLogs.length} exercises logged
@@ -2069,7 +2083,7 @@ function renderWeeklyReview() {
       <button class="secondary" id="repeatWeekBtn" style="flex:1;">Repeat this week</button>
       <button class="secondary" id="advanceWeekBtn" style="flex:1;">Advance a week</button>
     </div>
-    ${state.weekAdjustment ? `<button class="secondary" id="resetWeekBtn" style="margin-top:6px; width:100%;">Reset to actual date (currently offset ${state.weekAdjustment > 0 ? "+" : ""}${state.weekAdjustment})</button>` : ""}
+    ${state.weekAdjustment ? `<button class="secondary" id="resetWeekBtn" style="margin-top:6px; width:100%;">${resetWeekLabel}</button>` : ""}
   `;
 
   if (suggestion && suggestion.deltaCalories !== 0) {
