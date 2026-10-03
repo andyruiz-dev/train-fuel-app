@@ -184,18 +184,22 @@
         </div>
       </details>
 
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
-        <h2 style="margin:0;">Today's workout</h2>
-        <button id="genWorkoutBtn" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; padding:4px 0;" disabled>Regenerate</button>
-      </div>
-      <div id="travelModeToggle" style="cursor:pointer; font-family:var(--font-display); font-size:15px; font-weight:500; letter-spacing:0.2px; display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
-        <span>✈️ Travel mode</span>
-        <span id="travelModeState" style="color:var(--text-muted); font-size:12px; font-family:var(--font-mono);">Off</span>
-      </div>
-      <div id="recoveryCautionNote"></div>
-      <div id="todayWorkout" class="empty">Pick an active program first.</div>
-      <button class="primary" id="startSessionBtn" style="margin-top:10px; width:100%;" disabled>Start guided session</button>
-      <button class="secondary" id="minimumDayBtn" style="margin-top:8px; width:100%;" disabled>Not feeling it? Do the minimum</button>
+      <details id="todayWorkoutDetails" open style="margin-top:10px;">
+        <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Today's workout</summary>
+        <div style="margin-top:10px;">
+          <div style="display:flex; justify-content:flex-end;">
+            <button id="genWorkoutBtn" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; padding:4px 0;" disabled>Regenerate</button>
+          </div>
+          <div id="travelModeToggle" style="cursor:pointer; font-family:var(--font-display); font-size:15px; font-weight:500; letter-spacing:0.2px; display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
+            <span>✈️ Travel mode</span>
+            <span id="travelModeState" style="color:var(--text-muted); font-size:12px; font-family:var(--font-mono);">Off</span>
+          </div>
+          <div id="recoveryCautionNote"></div>
+          <div id="todayWorkout" class="empty">Pick an active program first.</div>
+          <button class="primary" id="startSessionBtn" style="margin-top:10px; width:100%;" disabled>Start guided session</button>
+          <button class="secondary" id="minimumDayBtn" style="margin-top:8px; width:100%;" disabled>Not feeling it? Do the minimum</button>
+        </div>
+      </details>
     </div>
     <div id="sessionPanel" class="hidden"></div>
   </section>
