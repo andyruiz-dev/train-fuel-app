@@ -358,7 +358,6 @@
           <div class="chip" data-equip="bodyweight">Bodyweight</div>
           <div class="chip" data-equip="rings">Rings</div>
           <div class="chip" data-equip="dumbbell">Dumbbell</div>
-          <div class="chip" data-equip="bar">Bar</div>
           <div class="chip" data-equip="band">Band</div>
           <div class="chip" data-equip="parallettes">Parallettes</div>
           <div class="chip" data-equip="ab-wheel">Ab wheel</div>
@@ -870,10 +869,12 @@ const BUILTIN_EXERCISES = [
   { id: "db-suitcase-carry", name: "Suitcase carry", muscle_group: "ruck", equipment: "dumbbell", cue: "Resist leaning away from the loaded side." },
 
   // ---- push: dip line + planche line (gaps found vs r/bodyweightfitness RR + Fitloop) ----
-  { id: "parallel-bar-support-hold", name: "Parallel bar support hold", muscle_group: "push", equipment: "bar or rings", cue: "Arms locked, shoulders depressed away from ears." },
+  { id: "ring-support-hold", name: "Ring support hold", muscle_group: "push", equipment: "rings", cue: "Arms locked, shoulders depressed away from ears." },
   { id: "bench-dip", name: "Bench dip", muscle_group: "push", equipment: "bodyweight", cue: "Elbows track back, don't flare, lower under control." },
-  { id: "bar-negative-dip", name: "Negative dip", muscle_group: "push", equipment: "bar or rings", cue: "Jump or step to the top, lower for a slow 4-5 count." },
-  { id: "parallel-bar-dip", name: "Parallel bar dip", muscle_group: "push", equipment: "bar or rings", cue: "More stable on a fixed bar than rings — same movement either way." },
+  { id: "ring-negative-dip", name: "Ring negative dip", muscle_group: "push", equipment: "rings", cue: "Jump or step to the top, lower for a slow 4-5 count." },
+  // parallel-bar-dip removed — same movement as ring-dip above, just on a
+  // fixed bar instead of rings; merged into ring-dip rather than kept as a
+  // separate equipment: "bar or rings" duplicate.
   { id: "planche-lean", name: "Planche lean", muscle_group: "push", equipment: "bodyweight", cue: "Hands by hips, shift shoulders past hands, keep arms locked." },
   { id: "tuck-planche", name: "Tuck planche", muscle_group: "push", equipment: "bodyweight", cue: "Knees tucked tight to chest, feet off floor, hips level with shoulders." },
 
@@ -1034,8 +1035,8 @@ const EXERCISE_LEVEL_MAP = {
   "ruck-walk": 2, "ruck-stairs": 3, "ruck-lunges": 3, "weighted-vest-carry": 2,
   "db-farmer-carry": 3, "db-suitcase-carry": 3,
   // new: dip/planche line
-  "parallel-bar-support-hold": 1, "bench-dip": 2, "bar-negative-dip": 2,
-  "parallel-bar-dip": 3, "planche-lean": 3, "tuck-planche": 5,
+  "ring-support-hold": 1, "bench-dip": 2, "ring-negative-dip": 2,
+  "planche-lean": 3, "tuck-planche": 5,
   // new: rows/muscle-up/back lever
   "archer-row": 4, "skin-the-cat": 3, "muscle-up-negative": 4, "muscle-up": 5,
   "tuck-back-lever": 5,
@@ -1084,7 +1085,7 @@ const EXERCISE_PLANE_MAP = {
   // push - vertical (overhead press / dip line, presses along the body's long axis)
   "pike-pushup": "v", "decline-pike-pushup": "v", "wall-handstand-hold": "v", "handstand-pushup": "v",
   "ring-dip-supported": "v", "ring-dip": "v", "ring-dip-weighted": "v", "db-overhead-press": "v",
-  "parallel-bar-support-hold": "v", "bench-dip": "v", "bar-negative-dip": "v", "parallel-bar-dip": "v",
+  "ring-support-hold": "v", "bench-dip": "v", "ring-negative-dip": "v",
   "handstand-walk": "v",
   // pull - horizontal (rows)
   "ring-row-easy": "h", "ring-row": "h", "ring-row-feet-elevated": "h",
@@ -1118,7 +1119,7 @@ const HOLD_EXERCISE_IDS = new Set([
   "wall-sit", "dead-hang", "active-hang", "wall-handstand-hold", "plank", "side-plank",
   "ring-plank", "ring-lsit-tucked", "ring-lsit", "ring-front-lever-tuck",
   "hollow-hold-tucked", "hollow-hold",
-  "parallel-bar-support-hold", "planche-lean", "tuck-planche", "tuck-back-lever",
+  "ring-support-hold", "planche-lean", "tuck-planche", "tuck-back-lever",
   "reverse-plank", "copenhagen-plank", "elbow-lever",
   "wheel-bridge", "full-bridge",
   "doorway-chest-stretch", "wrist-flexor-stretch", "childs-pose-reach",
@@ -1196,10 +1197,9 @@ function levelBucket(level) {
 
 function equipmentBucket(equipment) {
   const e = (equipment || "bodyweight").toLowerCase();
-  // "bar" must be checked before "ring" — "bar or rings" contains "ring",
-  // so checking ring first silently swallowed every "bar or rings" exercise
-  // into the Rings bucket and the library's "Bar" filter never showed them.
-  if (e.includes("bar") && !e.includes("bodyweight")) return "bar"; // catches "bar", "bar or rings", "parallel bars"
+  // No fixed-bar equipment exists in this library — every exercise is
+  // bodyweight, rings, parallettes, ab wheel, dumbbell, or band — so there's
+  // no "bar" bucket/filter chip to route into.
   if (e.includes("ring")) return "rings";
   if (e.includes("parallette")) return "parallettes";
   if (e.includes("ab wheel")) return "ab-wheel";
@@ -2363,7 +2363,7 @@ async function ensureWorkoutReady(program, forceDayIndex) {
 // Module-level (not just inside generateTodayWorkout) so the swap panel can
 // apply the same restriction while travel mode is on, not just the initial
 // workout generation.
-const TRAVEL_EQUIPMENT = new Set(["bodyweight", "rings", "bar or rings"]);
+const TRAVEL_EQUIPMENT = new Set(["bodyweight", "rings"]);
 
 const KNOWN_MUSCLE_GROUPS = ["push", "pull", "legs", "hinge", "core", "ruck"];
 const MUSCLE_GROUP_FLOOR = { push: 2, pull: 2, legs: 2, hinge: 2, core: 2 };
