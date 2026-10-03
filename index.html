@@ -518,9 +518,13 @@
     </div>
     <div class="card">
       <h2>Body composition</h2>
-      <p class="meta" style="margin-bottom:10px;">Set once — only needed if you log neck/waist measurements for a Navy method body-fat % estimate.</p>
+      <p class="meta" style="margin-bottom:10px;">Height is only needed if you log neck/waist measurements for a Navy method body-fat % estimate. Goals (optional) power the start → goal forecast shown on the Body composition card.</p>
       <div class="field"><div class="field-label">Height (in)</div><input type="text" inputmode="decimal" id="heightInches" placeholder="70"></div>
-      <button class="secondary" id="saveHeightBtn" style="margin-top:10px;">Save height</button>
+      <div class="row" style="margin-top:8px;">
+        <div class="field"><div class="field-label">Goal weight (lb)</div><input type="text" inputmode="decimal" id="goalWeightInput" placeholder="optional"></div>
+        <div class="field"><div class="field-label">Goal body fat (%)</div><input type="text" inputmode="decimal" id="goalBodyFatInput" placeholder="optional"></div>
+      </div>
+      <button class="secondary" id="saveHeightBtn" style="margin-top:10px;">Save</button>
     </div>
     <div class="card">
       <h2>Daily macro targets</h2>
@@ -1320,7 +1324,83 @@ function computeWeightTrend(windowDays = 14) {
   const slopePerDay = den === 0 ? 0 : num / den; // lb/day
   const pctPerWeek = (slopePerDay * 7 / meanY) * 100;
 
-  return { pctPerWeek, days, n, excludedFlagged };
+  return { pctPerWeek, lbPerWeek: slopePerDay * 7, days, n, excludedFlagged };
+}
+
+// Start → goal → forecast for the Body composition card. "Start" is always
+// the first-ever logged weight (no separate input for it — matches how the
+// rest of the app treats "first log" as the baseline everywhere else, e.g.
+// the Journey stats). "Goal" is optional (state.settings.goalWeight, set in
+// Settings) — without one this just reports start/current with no forecast.
+// The forecast projects the 14-day trend (computeWeightTrend) forward; if
+// that trend is flat or moving away from the goal, there's deliberately no
+// fabricated ETA — see computeBodyFatGoalForecast for the mirrored logic.
+function computeWeightGoalForecast() {
+  const ms = (state.measurements || [])
+    .filter(m => typeof m.weight === "number")
+    .slice()
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  if (!ms.length) return null;
+  const start = ms[0];
+  const latest = ms[ms.length - 1];
+  const goal = state.settings?.goalWeight || null;
+  const trend = computeWeightTrend(14);
+  const out = {
+    startWeight: start.weight, startDate: start.date,
+    currentWeight: latest.weight, currentDate: latest.date,
+    goalWeight: goal, trendLbPerWeek: trend ? trend.lbPerWeek : null,
+  };
+  if (goal) {
+    const remaining = goal - latest.weight;
+    out.remaining = remaining;
+    if (Math.abs(remaining) < 0.1) {
+      out.status = "reached";
+    } else if (trend && Math.abs(trend.lbPerWeek) >= 0.05 && Math.sign(trend.lbPerWeek) === Math.sign(remaining)) {
+      out.weeksToGoal = remaining / trend.lbPerWeek;
+      out.status = "onTrack";
+    } else {
+      out.status = "noEta";
+    }
+  }
+  return out;
+}
+
+// Mirrors computeWeightGoalForecast, but over body-fat % (needs neck+waist
+// logged, so this naturally returns null far more often than the weight
+// version — only shown once computeBodyFatTrend already has data).
+function computeBodyFatGoalForecast() {
+  const ms = (state.measurements || [])
+    .filter(m => typeof m.bodyFatPct === "number")
+    .slice()
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  if (!ms.length) return null;
+  const start = ms[0];
+  const latest = ms[ms.length - 1];
+  const goal = state.settings?.goalBodyFatPct || null;
+  const trend = computeBodyFatTrend();
+  const out = {
+    startPct: start.bodyFatPct, startDate: start.date,
+    currentPct: latest.bodyFatPct, currentDate: latest.date,
+    goalPct: goal,
+  };
+  if (goal) {
+    const remaining = goal - latest.bodyFatPct;
+    out.remaining = remaining;
+    if (Math.abs(remaining) < 0.1) {
+      out.status = "reached";
+    } else if (trend && Math.abs(trend.ptsPerWeek) >= 0.05 && Math.sign(trend.ptsPerWeek) === Math.sign(remaining)) {
+      out.weeksToGoal = remaining / trend.ptsPerWeek;
+      out.status = "onTrack";
+    } else {
+      out.status = "noEta";
+    }
+  }
+  return out;
+}
+
+function formatWeeksFromNow(weeks) {
+  const d = new Date(Date.now() + weeks * 7 * 24 * 60 * 60 * 1000);
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
 function computeMacroSuggestion() {
@@ -3478,10 +3558,18 @@ document.getElementById("saveRingStrapBtn").addEventListener("click", async () =
 // -- body composition (Settings) --
 document.getElementById("saveHeightBtn").addEventListener("click", async () => {
   const val = parseFloat(document.getElementById("heightInches").value);
+  const goalWeightVal = parseFloat(document.getElementById("goalWeightInput").value);
+  const goalBodyFatVal = parseFloat(document.getElementById("goalBodyFatInput").value);
+  // Height is the one field this card always needed; goals are optional, so
+  // only height is required to save at all. Each goal field is independently
+  // optional — clearing one shouldn't require re-entering the other.
   if (isNaN(val) || val <= 0) { alert("Enter a height in inches first."); return; }
   state.settings.heightInches = val;
+  state.settings.goalWeight = (!isNaN(goalWeightVal) && goalWeightVal > 0) ? goalWeightVal : null;
+  state.settings.goalBodyFatPct = (!isNaN(goalBodyFatVal) && goalBodyFatVal > 0) ? goalBodyFatVal : null;
   await persistNow();
-  alert("Height saved.");
+  renderProgressCharts();
+  alert("Saved.");
 });
 
 // -- macro targets (Settings) --
@@ -3544,22 +3632,63 @@ document.getElementById("journeyStats").addEventListener("click", (e) => {
 
 function renderBodyFatSummary() {
   const el = document.getElementById("bodyFatSummary");
+  let html = "";
+
+  // --- Weight: start -> current -> goal -> forecast ---
+  const wg = computeWeightGoalForecast();
+  if (!wg) {
+    html += `<div class="meta">Log a weigh-in to start tracking toward a goal.</div>`;
+  } else {
+    const startStr = `${wg.startWeight} lb (${new Date(wg.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })})`;
+    if (!wg.goalWeight) {
+      html += `<div class="meta">Weight: start ${startStr} → now ${wg.currentWeight} lb.</div>`;
+      html += `<div class="meta">Set a goal weight in Settings to see a forecast.</div>`;
+    } else {
+      html += `<div class="meta">Weight: start ${startStr} → now ${wg.currentWeight} lb → goal ${wg.goalWeight} lb.</div>`;
+      if (wg.status === "reached") {
+        html += `<div class="meta" style="color:var(--accent);">Goal weight reached.</div>`;
+      } else if (wg.status === "onTrack") {
+        const weeks = Math.abs(wg.weeksToGoal);
+        const weeksLabel = weeks < 1 ? "under a week" : `~${Math.round(weeks)} week${Math.round(weeks) === 1 ? "" : "s"}`;
+        html += `<div class="meta">At your current pace (${wg.trendLbPerWeek >= 0 ? "+" : ""}${wg.trendLbPerWeek.toFixed(2)} lb/week), ${weeksLabel} to goal — around ${formatWeeksFromNow(wg.weeksToGoal)}.</div>`;
+      } else {
+        html += `<div class="meta" style="color:var(--gold);">No ETA at your current trend — it's flat or moving away from your goal.</div>`;
+      }
+    }
+  }
+
+  // --- Body fat: same shape, only once neck+waist data exists ---
   const bf = computeBodyFatTrend();
   if (!bf) {
-    el.textContent = "Log neck + waist with a weigh-in to get a body-fat estimate here.";
+    html += `<div class="meta" style="margin-top:8px;">Log neck + waist with a weigh-in to get a body-fat estimate here.</div>`;
     if (clearFlagType("bodyFatTrend")) { persistNow(); renderFlagsBanner(); }
-    return;
-  }
-  const trendWord = bf.ptsPerWeek <= -0.1 ? "trending down" : bf.ptsPerWeek >= 0.1 ? "trending up" : "holding steady";
-  const message = `Body fat (Navy method): ${bf.latest}% as of ${new Date(bf.latestDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })} — ${trendWord} (${bf.ptsPerWeek >= 0 ? "+" : ""}${bf.ptsPerWeek.toFixed(2)} pts/week).`;
-  el.textContent = message;
+  } else {
+    const trendWord = bf.ptsPerWeek <= -0.1 ? "trending down" : bf.ptsPerWeek >= 0.1 ? "trending up" : "holding steady";
+    const message = `Body fat (Navy method): ${bf.latest}% as of ${new Date(bf.latestDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })} — ${trendWord} (${bf.ptsPerWeek >= 0 ? "+" : ""}${bf.ptsPerWeek.toFixed(2)} pts/week).`;
+    html += `<div class="meta" style="margin-top:8px;">${message}</div>`;
 
-  // Only a real move (not "holding steady") is worth flagging for review —
-  // a flat trend is just confirmation nothing's changed.
-  const flagChanged = Math.abs(bf.ptsPerWeek) >= 0.1
-    ? upsertFlag("bodyFatTrend", message)
-    : clearFlagType("bodyFatTrend");
-  if (flagChanged) { persistNow(); renderFlagsBanner(); }
+    const bfg = computeBodyFatGoalForecast();
+    if (!bfg?.goalPct) {
+      html += `<div class="meta">Set a goal body-fat % in Settings to see a forecast.</div>`;
+    } else if (bfg.status === "reached") {
+      html += `<div class="meta" style="color:var(--accent);">Goal body fat reached.</div>`;
+    } else if (bfg.status === "onTrack") {
+      const weeks = Math.abs(bfg.weeksToGoal);
+      const weeksLabel = weeks < 1 ? "under a week" : `~${Math.round(weeks)} week${Math.round(weeks) === 1 ? "" : "s"}`;
+      html += `<div class="meta">At this pace, ${weeksLabel} to your ${bfg.goalPct}% goal — around ${formatWeeksFromNow(bfg.weeksToGoal)}.</div>`;
+    } else {
+      html += `<div class="meta" style="color:var(--gold);">No ETA toward your body-fat goal at the current trend.</div>`;
+    }
+
+    // Only a real move (not "holding steady") is worth flagging for review —
+    // a flat trend is just confirmation nothing's changed.
+    const flagChanged = Math.abs(bf.ptsPerWeek) >= 0.1
+      ? upsertFlag("bodyFatTrend", message)
+      : clearFlagType("bodyFatTrend");
+    if (flagChanged) { persistNow(); renderFlagsBanner(); }
+  }
+
+  el.innerHTML = html;
 }
 
 function renderProgressCharts() {
@@ -4818,6 +4947,8 @@ async function init() {
   if (state.settings?.startDate) document.getElementById("startDateInput").value = state.settings.startDate;
   document.getElementById("ringStrapPush").value = state.ringStrap?.push ?? "";
   document.getElementById("heightInches").value = state.settings.heightInches || "";
+  document.getElementById("goalWeightInput").value = state.settings.goalWeight || "";
+  document.getElementById("goalBodyFatInput").value = state.settings.goalBodyFatPct || "";
   const t = state.settings.macroTargets || {};
   document.getElementById("targetCalories").value = t.calories || "";
   document.getElementById("targetProtein").value = t.protein || "";
