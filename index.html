@@ -366,6 +366,7 @@
 
   <!-- COACH -->
   <section id="tab-coach" class="tab-panel">
+    <div id="startHereBanner" class="hidden"></div>
     <div class="card">
       <h2>Coach's note</h2>
       <div id="coachNote" class="meta">Still gathering enough days to spot real patterns — check back once you've logged a bit more.</div>
@@ -444,7 +445,7 @@
       <div id="weightHistoryList" class="hidden" style="margin-top:8px;"></div>
     </div>
     <div class="card">
-      <h2>Recovery status</h2>
+      <h2>Weight-loss pace</h2>
       <div class="meta" id="recoveryStatusHint" style="cursor:pointer;"></div>
       <div id="recoveryStatusDetail" class="hidden" style="margin-top:8px;"></div>
     </div>
@@ -496,6 +497,7 @@
     </div>
     <div class="card">
       <h2>Program start date</h2>
+      <p class="meta" style="margin-bottom:10px;">Sets which week of your program's phases you're currently on. Change this if your actual start date was different — see "This week" on the Coach tab if the week number looks wrong (it also has Repeat/Advance/Reset controls for a one-off adjustment, without changing this date).</p>
       <input type="date" id="startDateInput">
     </div>
     <div class="card">
@@ -1884,6 +1886,28 @@ function computeCoachInsights() {
 // Coach's Note surfaces the engine's findings once there's enough evidence;
 // until then it shows a plain, honest placeholder — never a faked insight,
 // and never left blank.
+// Shown at the top of the Coach tab (the default/first tab) whenever there's
+// no active program — otherwise a brand-new user's first launch is just
+// "still gathering data" with no visible path to the one thing that actually
+// gets them started. Programs lives behind a header icon, not the bottom
+// nav, so this points at it explicitly rather than assuming it'll be found.
+function renderStartHereBanner() {
+  const el = document.getElementById("startHereBanner");
+  if (!el) return;
+  if (state.activeProgramId) { el.classList.add("hidden"); el.innerHTML = ""; return; }
+  el.classList.remove("hidden");
+  el.innerHTML = `
+    <div class="card" style="border-left-color:var(--accent);">
+      <div class="meta" style="font-weight:600; color:var(--text); margin-bottom:6px;">👋 Start here</div>
+      <div class="meta">Pick or build a training program to get going — generate one, or upload your own, from Programs.</div>
+      <button class="secondary" id="openProgramsFromStartHere" style="margin-top:8px;">Go to Programs</button>
+    </div>`;
+  document.getElementById("openProgramsFromStartHere").addEventListener("click", () => {
+    const programsBtn = document.getElementById("programsBtn");
+    if (programsBtn) programsBtn.click();
+  });
+}
+
 function renderCoachNote() {
   const el = document.getElementById("coachNote");
   if (!el) return;
@@ -2124,6 +2148,7 @@ function renderWeeklyReview() {
 
 function renderActiveProgramInfo() {
   renderWelcomeBackBanner();
+  renderStartHereBanner();
   const headerName = document.getElementById("headerProgramName");
   const active = programs.find(p => p.id === state.activeProgramId);
   const genBtn = document.getElementById("genWorkoutBtn");
@@ -2593,7 +2618,7 @@ function renderTodayWorkout(workout) {
   const restNote = restDayCaution(workout);
   const stressNote = recentStressCaution();
   cautionEl.innerHTML = previewNote + (isLosingTooFast()
-    ? `<div class="meta" style="color:var(--gold); margin-bottom:8px;">Recovery caution: weight loss is outpacing target pace — holding progression steady, no intensity increases this week.</div>`
+    ? `<div class="meta" style="color:var(--gold); margin-bottom:8px;">Pace caution: weight loss is outpacing target pace — holding progression steady, no intensity increases this week.</div>`
     : "") + (restNote
     ? `<div class="meta" style="color:var(--gold); margin-bottom:8px;">${restNote}</div>`
     : "") + (stressNote
@@ -2663,6 +2688,7 @@ function renderTodayWorkout(workout) {
     <details class="exercise-group">
       <summary>Today's exercises</summary>
       <div style="padding-top:6px;">
+        <div class="meta" style="margin-bottom:8px;">"Level" is a 1-5 difficulty tier for that exercise; horizontal/vertical marks which push or pull pattern it trains (e.g. push-ups vs. overhead presses — see Settings for your level per pattern); "straps" is your ring-strap length setting, shown on ring exercises only.</div>
         ${unitsHtml}
       </div>
     </details>`;
@@ -3879,7 +3905,7 @@ function renderRecoveryStatus() {
     return;
   }
   const STATUS_LABEL = {
-    caution: "Recovery caution is active",
+    caution: "Losing faster than target — pace caution active",
     slow: "Losing slower than target — no caution",
     onpace: "On pace — no caution",
   };
@@ -3908,7 +3934,7 @@ function renderRecoveryStatus() {
     <div class="list-item"><div class="name">Current pace</div><div class="meta">${paceStr}</div></div>
     <div class="list-item"><div class="name">Target range</div><div class="meta">${rangeStr}</div></div>
     <div class="list-item"><div class="name">Margin to caution</div><div class="meta">${marginStr}</div></div>
-    <div class="meta" style="margin-top:8px;">Based on a trend line across your last ${r.days.toFixed(0)} days of weigh-ins${excludedNote}. If pace drops past ${r.targetMin}%/week, progression holds steady (no intensity increases) until it's back in range — that's what "recovery caution" means.</div>
+    <div class="meta" style="margin-top:8px;">Based on a trend line across your last ${r.days.toFixed(0)} days of weigh-ins${excludedNote}. This is about weight-loss speed, not training recovery (soreness/sleep) — if pace drops past ${r.targetMin}%/week, progression holds steady (no intensity increases) until it's back in range; that's what "pace caution" means.</div>
     ${reasonsHtml}`;
 }
 function toggleRecoveryStatus() {
@@ -4609,7 +4635,7 @@ document.getElementById("generateProgramBtn").addEventListener("click", async (e
     const program = await generateProgram(selectedMonths, focus);
     await loadPrograms();
     renderPrograms();
-    alert(`"${program.name}" saved — it's hardcoded in your library until you delete it.`);
+    alert(`"${program.name}" saved to your library — it'll stay there until you delete it.`);
   } catch (err) {
     alert("Generation failed: " + err.message + (WORKER_URL ? "" : " (set your Worker URL in Settings first)"));
   } finally {
@@ -4712,7 +4738,7 @@ Output ONLY valid JSON: {"name": "string", "phases": [{"phase": "string", "week_
     });
     await loadPrograms();
     renderPrograms();
-    statusEl.textContent = `"${program.name}" saved — hardcoded until you delete it.`;
+    statusEl.textContent = `"${program.name}" saved to your library — it'll stay there until you delete it.`;
   } catch (err) {
     statusEl.textContent = "Import failed: " + err.message;
   }
