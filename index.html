@@ -1623,17 +1623,94 @@ document.getElementById("saveDailyCheckinBtn").addEventListener("click", async (
   document.getElementById("dailyCheckinSavedHint").textContent = (activeDailyCheckinEnergy || activeDailyCheckinTags.size)
     ? "Saved for today — tap to update."
     : "Cleared for today.";
+  renderCoachNote();
 });
 
-// Coach's Note is the hook the future correlation engine fills with real
-// cross-signal findings (sleep/stress/alcohol vs. performance, etc). Until
-// there's enough daily check-in data to say anything evidence-backed, show
-// a plain "still gathering data" placeholder rather than leaving the card
-// blank or faking a finding.
+// ---- Coach correlation engine ----
+// Joins daily check-ins (energy + reason tags) against same-day workout and
+// food logs to find real patterns, in the spirit of WHOOP Journal / Built
+// With Science+: "associated with," never "caused by"; every finding shows
+// its entry counts rather than acting like a black-box verdict; and the
+// evidence bar is a flat minimum-group-size (3 days with the tag, 3 without
+// it) rather than a fixed lookback window, since logging is sparser here
+// than on a wearable — all history counts, not just the last 90 days.
+const COACH_MIN_GROUP = 3;
+
+function workoutMissedRateForDate(dateStr) {
+  const dayLogs = (state.logs || []).filter(l => localDateStr(new Date(l.date)) === dateStr);
+  if (!dayLogs.length) return null;
+  return dayLogs.filter(l => l.result === "missed").length / dayLogs.length;
+}
+
+function proteinHitForDate(dateStr) {
+  const foods = foodLogsForDate(dateStr);
+  if (!foods.length) return null;
+  const target = (state.settings.macroTargets || {}).protein;
+  if (!target) return null;
+  const totalProtein = foods.reduce((a, f) => a + (f.protein || 0), 0);
+  return totalProtein >= target * 0.9 ? 1 : 0;
+}
+
+// Splits all logged check-ins into "has this signal" / "doesn't" groups for
+// one outcome metric, keeping only days that actually have that outcome's
+// data. Returns null when either group is below the evidence minimum.
+function compareCheckinGroups(checkins, matchFn, outcomeFn) {
+  const withGroup = [], withoutGroup = [];
+  checkins.forEach(c => {
+    const outcome = outcomeFn(c.date);
+    if (outcome == null) return;
+    (matchFn(c) ? withGroup : withoutGroup).push(outcome);
+  });
+  if (withGroup.length < COACH_MIN_GROUP || withoutGroup.length < COACH_MIN_GROUP) return null;
+  const avg = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+  return { withAvg: avg(withGroup), withoutAvg: avg(withoutGroup), nWith: withGroup.length, nWithout: withoutGroup.length };
+}
+
+function computeCoachInsights() {
+  const checkins = (state.dailyCheckins || []).filter(c => (c.tags && c.tags.length) || c.energy);
+  const found = [];
+
+  function addInsight(label, matchFn, outcomeFn, outcomeNoun, pctThreshold) {
+    const r = compareCheckinGroups(checkins, matchFn, outcomeFn);
+    if (!r) return;
+    const diff = r.withAvg - r.withoutAvg;
+    if (Math.abs(diff) < pctThreshold) return;
+    const withPct = Math.round(r.withAvg * 100);
+    const withoutPct = Math.round(r.withoutAvg * 100);
+    const direction = diff > 0 ? "higher" : "lower";
+    found.push({
+      strength: Math.abs(diff) * Math.min(r.nWith, r.nWithout),
+      text: `${label} is associated with a ${direction} rate of ${outcomeNoun} (${withPct}% vs ${withoutPct}% on days without it — based on ${r.nWith} vs ${r.nWithout} logged days).`,
+    });
+  }
+
+  ALL_CHECKIN_TAGS.forEach(tag => {
+    addInsight(tag, c => (c.tags || []).includes(tag), workoutMissedRateForDate, "missed reps on logged workouts", 0.15);
+    addInsight(tag, c => (c.tags || []).includes(tag), proteinHitForDate, "hitting your protein target", 0.2);
+  });
+  addInsight("Low energy", c => c.energy === "low", workoutMissedRateForDate, "missed reps on logged workouts", 0.15);
+  addInsight("Low energy", c => c.energy === "low", proteinHitForDate, "hitting your protein target", 0.2);
+
+  found.sort((a, b) => b.strength - a.strength);
+  return { totalCheckins: checkins.length, insights: found.slice(0, 3).map(f => f.text) };
+}
+
+// Coach's Note surfaces the engine's findings once there's enough evidence;
+// until then it shows a plain, honest placeholder — never a faked insight,
+// and never left blank.
 function renderCoachNote() {
   const el = document.getElementById("coachNote");
   if (!el) return;
-  el.textContent = "Still gathering enough days to spot real patterns — check back once you've logged a bit more.";
+  const result = computeCoachInsights();
+  if (!result.insights.length) {
+    el.innerHTML = `<div class="meta">${
+      result.totalCheckins === 0
+        ? "Still gathering enough days to spot real patterns — check back once you've logged a few daily check-ins."
+        : `Logged ${result.totalCheckins} daily check-in${result.totalCheckins === 1 ? "" : "s"} so far — keep going and patterns will start showing up here once there's enough matched data (roughly 3 days with and without a given reason).`
+    }</div>`;
+    return;
+  }
+  el.innerHTML = result.insights.map(i => `<div class="meta" style="margin-bottom:8px;">${i}</div>`).join("");
 }
 
 // Split by check-in direction instead of lumping every logged reason
@@ -4092,6 +4169,9 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
       const active = programs.find(p => p.id === state.activeProgramId);
       if (active) ensureWorkoutReady(active);
       renderDailyCheckin();
+    }
+    if (btn.dataset.tab === "coach") {
+      renderCoachNote();
     }
   });
 });
