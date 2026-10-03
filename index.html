@@ -2434,24 +2434,38 @@ function renderTodayWorkout(workout) {
     minDayBtn.disabled = true;
     let nextUpHtml = "";
     let skipBtnHtml = "";
+    let previewAreaHtml = "";
     const activeProgram = programs.find(p => p.id === state.activeProgramId);
+    let previewNextIndex = null, previewPhaseKey = null;
     if (activeProgram && state.pendingWorkout) {
       const { phase } = currentPhaseFor(activeProgram);
+      previewPhaseKey = phaseKeyFor(activeProgram, phase);
       const totalDays = (phase?.days || []).length || 1;
-      const nextDay = phase?.days?.[(state.pendingWorkout.dayIndex + 1) % totalDays];
+      previewNextIndex = (state.pendingWorkout.dayIndex + 1) % totalDays;
+      const nextDay = phase?.days?.[previewNextIndex];
       if (nextDay) {
-        // The actual exercise picks only exist once generateTodayWorkout
-        // (an AI call) runs for that day — which only happens when you
-        // commit to it. But the day's slot breakdown (which muscle groups,
-        // how many sets/reps each) comes straight from the phase template,
-        // already in memory, so it can show a real preview of what's
-        // queued up without generating, persisting, or touching dayIndex /
-        // pendingWorkout at all — nothing about the week's rotation moves
-        // just from looking.
         const slotPreview = (nextDay.slots || []).length
           ? (nextDay.slots || []).map(s => `${s.muscle_group} ${s.sets}×${s.reps}`).join(" · ")
           : "Rest";
         nextUpHtml = `<div class="meta" style="margin-top:8px;">Next up: ${nextDay.day}</div><div class="meta" style="margin-top:2px;">${slotPreview}</div>`;
+
+        // "Preview exercises" runs the same generation that Skip rest would
+        // commit to, but only caches the result in state.previewWorkout —
+        // it never touches pendingWorkout/dayIndex, so nothing about the
+        // rotation moves just from looking. If you've already generated a
+        // preview for this exact next slot, show it straight away instead
+        // of a button; skipRestDay() below reuses this same cached object
+        // so what you previewed is exactly what you get, not a second,
+        // possibly different, generation.
+        const cached = state.previewWorkout;
+        const hasCachedPreview = cached && cached.programId === activeProgram.id &&
+          cached.phaseKey === previewPhaseKey && cached.dayIndex === previewNextIndex;
+        if (hasCachedPreview) {
+          previewAreaHtml = `<div id="nextDayPreviewBox" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">${previewExerciseListHtml(cached.workout)}</div>`;
+        } else {
+          previewAreaHtml = `<button class="secondary" id="previewNextDayBtn" style="margin-top:10px; width:100%;">Preview exercises</button><div id="nextDayPreviewBox" style="margin-top:10px;"></div>`;
+        }
+
         // The rotation is completion-driven, not calendar-driven — this rest
         // slot comes up on a fixed cycle regardless of how many calendar
         // rest days already happened in between, so there's no way from the
@@ -2464,9 +2478,13 @@ function renderTodayWorkout(workout) {
     const restLine = hasLoggedWorkoutToday()
       ? "Nothing scheduled next in the rotation — a rest slot is up."
       : "Nothing scheduled today — rest and recover.";
-    box.innerHTML = `<div class="card">${previewNote}<h2>${workout.day || "Rest day"}</h2><div class="meta">${restLine}</div>${nextUpHtml}${skipBtnHtml}</div>`;
+    box.innerHTML = `<div class="card">${previewNote}<h2>${workout.day || "Rest day"}</h2><div class="meta">${restLine}</div>${nextUpHtml}${previewAreaHtml}${skipBtnHtml}</div>`;
     const skipBtn = document.getElementById("skipRestDayBtn");
     if (skipBtn) skipBtn.addEventListener("click", skipRestDay, { once: true });
+    const previewBtn = document.getElementById("previewNextDayBtn");
+    if (previewBtn && activeProgram && previewNextIndex !== null) {
+      previewBtn.addEventListener("click", () => previewNextDayExercises(activeProgram, previewNextIndex, previewPhaseKey), { once: true });
+    }
     return;
   }
 
@@ -2563,18 +2581,68 @@ async function skipRestDay() {
   const program = programs.find(p => p.id === state.activeProgramId);
   if (!program || !state.pendingWorkout) return;
   const box = document.getElementById("todayWorkout");
-  box.innerHTML = '<div class="empty">Generating your next workout…</div>';
   try {
     const { phase } = currentPhaseFor(program);
     const key = phaseKeyFor(program, phase);
     const totalDays = (phase?.days || []).length || 1;
     const nextIndex = (state.pendingWorkout.dayIndex + 1) % totalDays;
-    const workout = await generateTodayWorkout(program, nextIndex);
+    // Reuse a cached preview for this exact slot if one exists — guarantees
+    // what you previewed with "Preview exercises" is exactly what you
+    // start, not a second, possibly different, generation.
+    const cached = state.previewWorkout;
+    const hasCached = cached && cached.programId === program.id && cached.phaseKey === key && cached.dayIndex === nextIndex;
+    let workout;
+    if (hasCached) {
+      workout = cached.workout;
+    } else {
+      box.innerHTML = '<div class="empty">Generating your next workout…</div>';
+      workout = await generateTodayWorkout(program, nextIndex);
+    }
     state.pendingWorkout = { programId: program.id, phaseKey: key, dayIndex: nextIndex, workout, completed: false };
+    state.previewWorkout = null;
     await persistNow();
     renderTodayWorkout(workout);
   } catch (err) {
     box.innerHTML = `<div class="empty">Couldn't generate the next workout (${err.message}). Use Regenerate to retry.</div>`;
+  }
+}
+
+// Read-only list markup for a previewed workout — no swap controls or
+// result chips, since nothing here is loggable yet (the real interactive
+// card only appears once you've actually committed to the day).
+function previewExerciseListHtml(workout) {
+  if (!workout || !workout.exercises || !workout.exercises.length) {
+    return `<div class="meta">Rest day — nothing to preview.</div>`;
+  }
+  return `<div class="meta" style="margin-bottom:6px;">Preview — the exact exercises you'll get when you start this day:</div>` +
+    workout.exercises.map(e => `
+      <div class="list-item" style="border-bottom:none; padding:4px 0;">
+        <div>
+          <div class="name">${e.name}</div>
+          <div class="meta">${e.muscle_group} · ${e.sets}×${e.reps}${isHoldExercise(e.name) ? "s hold" : ""}</div>
+        </div>
+      </div>`).join("");
+}
+
+// Generates (once) and caches the actual exercise list for the day queued
+// up after the current rest slot, without touching pendingWorkout/dayIndex
+// — so looking at it doesn't move the rotation. skipRestDay() checks this
+// same cache and reuses it directly rather than generating again, so the
+// preview and the real thing always match.
+async function previewNextDayExercises(program, dayIndex, key) {
+  const btn = document.getElementById("previewNextDayBtn");
+  const box = document.getElementById("nextDayPreviewBox");
+  if (btn) { btn.disabled = true; btn.textContent = "Generating preview…"; }
+  try {
+    const avoidNames = state.pendingWorkout?.workout?.exercises?.map(ex => ex.name) || [];
+    const workout = await generateTodayWorkout(program, dayIndex, avoidNames);
+    state.previewWorkout = { programId: program.id, phaseKey: key, dayIndex, workout };
+    await persistNow();
+    if (box) box.innerHTML = previewExerciseListHtml(workout);
+    if (btn) btn.remove();
+  } catch (err) {
+    if (box) box.innerHTML = `<div class="empty">Couldn't generate a preview (${err.message}).</div>`;
+    if (btn) { btn.disabled = false; btn.textContent = "Preview exercises"; }
   }
 }
 
