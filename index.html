@@ -393,6 +393,11 @@
       </details>
     </div>
 
+    <div class="card">
+      <h2>Body composition</h2>
+      <div class="meta" id="bodyFatSummary">Log neck + waist with a weigh-in to get a body-fat estimate here.</div>
+    </div>
+
     <div class="card" id="dailyCheckinCard">
       <details id="dailyCheckinDetails">
         <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Daily check-in</summary>
@@ -417,10 +422,6 @@
         <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">This week</summary>
         <div id="weeklyReview" style="margin-top:10px;"></div>
       </details>
-    </div>
-    <div class="card">
-      <h2>Body composition</h2>
-      <div class="meta" id="bodyFatSummary">Log neck + waist with a weigh-in to get a body-fat estimate here.</div>
     </div>
   </section>
 
@@ -1647,16 +1648,20 @@ document.getElementById("checkinTagChips").addEventListener("click", (e) => {
 
 document.getElementById("saveDailyCheckinBtn").addEventListener("click", async () => {
   const today = localDateStr();
+  const wasCleared = !activeDailyCheckinEnergy && !activeDailyCheckinTags.size;
   state.dailyCheckins = (state.dailyCheckins || []).filter(c => c.date !== today);
-  if (activeDailyCheckinEnergy || activeDailyCheckinTags.size) {
+  if (!wasCleared) {
     state.dailyCheckins.push({ date: today, energy: activeDailyCheckinEnergy, tags: [...activeDailyCheckinTags] });
   }
   await persistNow();
-  document.getElementById("dailyCheckinSavedHint").textContent = (activeDailyCheckinEnergy || activeDailyCheckinTags.size)
-    ? "Saved for today — tap to update."
-    : "Cleared for today.";
   renderCoachNote();
   renderCoachTeaser();
+  // Re-render last: rebuilds the chip state from what was just saved, and —
+  // the actual fix here — collapses the details once today's entry exists,
+  // which this handler previously never did (it only set the hint text
+  // directly and left the card open regardless).
+  renderDailyCheckin();
+  if (wasCleared) document.getElementById("dailyCheckinSavedHint").textContent = "Cleared for today.";
 });
 
 // ---- Coach correlation engine ----
