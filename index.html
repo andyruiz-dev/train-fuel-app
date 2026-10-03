@@ -1611,22 +1611,18 @@ function renderDailyCheckin() {
   });
   hintEl.textContent = existing ? "Saved for today — tap to update." : "";
 
-  // Collapsed once today's entry is already in, open otherwise — the morning
-  // routine (Coach tab) shouldn't stay full-length after it's done for the
-  // day, but shouldn't need a tap to open before it's done either.
+  // Always collapsed by default — tap to open. (Previously this opened
+  // itself until today's entry existed; that still left it open-by-default
+  // every morning, which read as cluttered rather than collapsed.)
   const details = document.getElementById("dailyCheckinDetails");
-  if (details) details.open = !existing;
+  if (details) details.open = false;
 }
 
-// Same auto-collapse idea for the weigh-in card: open until today's weight
-// is logged, collapsed after, so the Coach tab doesn't stay long once the
-// morning routine is actually finished.
+// Same collapsed-by-default treatment for the weigh-in card.
 function renderWeighInDetailsState() {
   const details = document.getElementById("weighInDetails");
   if (!details) return;
-  const today = localDateStr();
-  const existing = (state.measurements || []).some(m => m.date === today);
-  details.open = !existing;
+  details.open = false;
 }
 
 document.getElementById("checkinEnergyChips").addEventListener("click", (e) => {
@@ -2074,20 +2070,12 @@ async function ensureWorkoutReady(program, forceDayIndex) {
   try {
     const totalDays = (phase?.days || []).length || 1;
     let nextIndex = typeof forceDayIndex === "number" ? ((forceDayIndex % totalDays) + totalDays) % totalDays : 0;
-    // previewOnly marks a workout auto-advanced into view right after
-    // completing today's real session — a look-ahead for mental prep, not
-    // a second session the app is asking for today. Only this specific
-    // path (completed pendingWorkout, no explicit forceDayIndex) sets it;
-    // forceDayIndex callers (Skip rest, Repeat/Advance/Reset week) are a
-    // deliberate "start this now" action and should read that way.
-    let previewOnly = false;
     if (state.pendingWorkout && state.pendingWorkout.programId === program.id &&
         state.pendingWorkout.phaseKey === key && state.pendingWorkout.completed) {
       nextIndex = (state.pendingWorkout.dayIndex + 1) % totalDays;
-      previewOnly = typeof forceDayIndex !== "number";
     }
     const workout = await generateTodayWorkout(program, nextIndex);
-    state.pendingWorkout = { programId: program.id, phaseKey: key, dayIndex: nextIndex, workout, completed: false, previewOnly };
+    state.pendingWorkout = { programId: program.id, phaseKey: key, dayIndex: nextIndex, workout, completed: false };
     await persistNow();
     renderTodayWorkout(workout);
   } catch (err) {
@@ -2419,14 +2407,16 @@ function renderTodayWorkout(workout) {
     return;
   }
 
-  // previewOnly (set by ensureWorkoutReady) means this card auto-advanced
-  // into view right after a real session was already completed today — it's
-  // a look-ahead for mental prep, not a second thing "due today." Say so
+  // Computed fresh from today's actual logs (hasLoggedWorkoutToday), not a
+  // stored flag — so this is correct even for a pendingWorkout that was
+  // sitting around before this check existed, or from an earlier day. If
+  // you've already logged a session today, whatever's showing here is a
+  // look-ahead for mental prep, not a second thing "due today." Say so
   // plainly wherever this is shown, since the rotation being completion-
   // driven (not calendar-driven) means what's "next" and what's "today"
   // aren't the same thing once you've already trained today.
-  const previewNote = state.pendingWorkout?.previewOnly
-    ? `<div class="meta" style="color:var(--accent); margin-bottom:8px;">Already logged a session today — this is a preview of what's queued up next, not something due today.</div>`
+  const previewNote = hasLoggedWorkoutToday()
+    ? `<div class="meta" style="color:var(--accent); margin-bottom:8px;">Already logged a session today — this is a preview of what's queued up next.</div>`
     : "";
 
   // A day in the rotation can legitimately have zero slots (the rest day
@@ -2460,7 +2450,7 @@ function renderTodayWorkout(workout) {
         skipBtnHtml = `<button class="primary" id="skipRestDayBtn" style="margin-top:12px; width:100%;">Skip rest — start ${nextDay.day}</button>`;
       }
     }
-    const restLine = state.pendingWorkout?.previewOnly
+    const restLine = hasLoggedWorkoutToday()
       ? "Nothing scheduled next in the rotation — a rest slot is up."
       : "Nothing scheduled today — rest and recover.";
     box.innerHTML = `<div class="card">${previewNote}<h2>${workout.day || "Rest day"}</h2><div class="meta">${restLine}</div>${nextUpHtml}${skipBtnHtml}</div>`;
@@ -3034,6 +3024,15 @@ function todaysFoodLogs() {
 function foodLogsForDate(dateStr) {
   const targetStr = new Date(dateStr + "T00:00:00").toDateString();
   return (state.foodLogs || []).filter(f => new Date(f.date).toDateString() === targetStr);
+}
+
+// Computed fresh at render time (not a stored flag) so it's correct
+// regardless of when the current pendingWorkout object was created —
+// a pendingWorkout persisted before this check existed, or one that's sat
+// around since yesterday, still gets the right answer today.
+function hasLoggedWorkoutToday() {
+  const today = localDateStr();
+  return (state.logs || []).some(l => localDateStr(new Date(l.date)) === today);
 }
 
 function macroBar(label, value, target) {
@@ -4534,12 +4533,8 @@ document.getElementById("genWorkoutBtn").addEventListener("click", async (e) => 
     const dayIndex = (state.pendingWorkout && state.pendingWorkout.programId === program.id && state.pendingWorkout.phaseKey === key)
       ? state.pendingWorkout.dayIndex : 0;
     const avoidNames = state.pendingWorkout?.workout?.exercises?.map(ex => ex.name) || [];
-    // Preserve previewOnly across a Regenerate — swapping exercise variation
-    // on a previewed next-workout shouldn't silently reclassify it as
-    // today's real session.
-    const previewOnly = state.pendingWorkout?.previewOnly || false;
     const workout = await generateTodayWorkout(program, dayIndex, avoidNames);
-    state.pendingWorkout = { programId: program.id, phaseKey: key, dayIndex, workout, completed: false, previewOnly };
+    state.pendingWorkout = { programId: program.id, phaseKey: key, dayIndex, workout, completed: false };
     await persistNow();
     renderTodayWorkout(workout);
   } catch (err) {
