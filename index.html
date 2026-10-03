@@ -1958,6 +1958,31 @@ function renderTodayWorkout(workout) {
     return;
   }
 
+  // A day in the rotation can legitimately have zero slots (the rest day
+  // balanceProgramStructure guarantees every phase has) — that generates a
+  // real, correct workout with an empty exercises array, not a failure. Left
+  // to the generic rendering below this used to show as a blank "Today's
+  // exercises" accordion with nothing in it, indistinguishable from
+  // something actually being broken. Say plainly that it's a rest day
+  // instead, and name what's coming next so there's still something to plan
+  // around.
+  if (!workout.exercises || workout.exercises.length === 0) {
+    cautionEl.innerHTML = "";
+    genBtn.classList.remove("hidden");
+    sessionBtn.disabled = true;
+    minDayBtn.disabled = true;
+    let nextUpHtml = "";
+    const activeProgram = programs.find(p => p.id === state.activeProgramId);
+    if (activeProgram && state.pendingWorkout) {
+      const { phase } = currentPhaseFor(activeProgram);
+      const totalDays = (phase?.days || []).length || 1;
+      const nextDay = phase?.days?.[(state.pendingWorkout.dayIndex + 1) % totalDays];
+      if (nextDay) nextUpHtml = `<div class="meta" style="margin-top:8px;">Next up: ${nextDay.day}</div>`;
+    }
+    box.innerHTML = `<div class="card"><h2>${workout.day || "Rest day"}</h2><div class="meta">Nothing scheduled today — rest and recover.</div>${nextUpHtml}</div>`;
+    return;
+  }
+
   // Only compute these for a workout you haven't done yet — checking a just-
   // completed session against its own logs would always trivially "conflict".
   const restNote = restDayCaution(workout);
