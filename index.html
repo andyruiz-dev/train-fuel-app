@@ -374,6 +374,11 @@
         <input type="text" inputmode="decimal" id="weightInput" placeholder="Weight (lbs)" style="flex:1;">
         <input type="date" id="measurementDateInput" style="flex:1;">
       </div>
+      <div class="row" style="margin-top:8px;">
+        <input type="text" inputmode="decimal" id="neckInput" placeholder="Neck (in, optional)" style="flex:1;">
+        <input type="text" inputmode="decimal" id="waistInput" placeholder="Waist (in, optional)" style="flex:1;">
+      </div>
+      <div class="meta" style="margin-top:4px;">Add neck + waist occasionally for a body-fat % estimate (Navy method) — tells a recomp (clothes fit better, scale flat) apart from an actual stall. Needs your height set once in Settings.</div>
       <button class="secondary" id="logWeightBtn" style="margin-top:10px;">Log weight</button>
       <div id="weightCheckInPanel" class="hidden" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
         <div class="meta" id="weightCheckInMessage" style="margin-bottom:8px;"></div>
@@ -387,6 +392,7 @@
     <div class="card">
       <h2>Weight trend</h2>
       <div id="weightChart" class="empty" style="cursor:pointer;">Log a few measurements to see a trend.</div>
+      <div class="meta" id="bodyFatSummary" style="margin-top:6px;"></div>
       <div class="meta" id="weightHistoryHint" style="margin-top:6px; cursor:pointer;"></div>
       <div id="weightHistoryList" class="hidden" style="margin-top:8px;"></div>
     </div>
@@ -468,6 +474,12 @@
       </p>
       <div class="field"><div class="field-label">Push straps</div><input type="number" step="0.5" min="1" max="12" inputmode="decimal" id="ringStrapPush" placeholder="8.5"></div>
       <button class="secondary" id="saveRingStrapBtn" style="margin-top:10px;">Save</button>
+    </div>
+    <div class="card">
+      <h2>Body composition</h2>
+      <p class="meta" style="margin-bottom:10px;">Set once — only needed if you log neck/waist measurements for a Navy method body-fat % estimate.</p>
+      <div class="field"><div class="field-label">Height (in)</div><input type="text" inputmode="decimal" id="heightInches" placeholder="70"></div>
+      <button class="secondary" id="saveHeightBtn" style="margin-top:10px;">Save height</button>
     </div>
     <div class="card">
       <h2>Daily macro targets</h2>
@@ -1187,6 +1199,51 @@ function renderProgramPreview(program) {
 //      shouldn't anchor the "what's my real trend" calculation. Falls back
 //      to including them (noting how many) rather than refusing to answer
 //      if excluding them leaves too little data.
+// Navy method body-fat % estimate, male formula (the app has no notion of
+// sex elsewhere, so this is the one variant implemented — the female
+// formula additionally needs hip circumference and a different constant
+// set). All inputs in inches. Returns null for missing/non-positive inputs
+// or a waist<=neck measurement, which the formula can't make sense of.
+function navyBodyFatPct(waistIn, neckIn, heightIn) {
+  if (!(waistIn > 0) || !(neckIn > 0) || !(heightIn > 0)) return null;
+  const diff = waistIn - neckIn;
+  if (diff <= 0) return null;
+  return 495 / (1.0324 - 0.19077 * Math.log10(diff) + 0.15456 * Math.log10(heightIn)) - 450;
+}
+
+// Mirrors computeWeightTrend's regression approach, but over bodyFatPct
+// entries, which are occasional (only logged when neck+waist are both
+// given) rather than near-daily — hence the much wider default window and
+// no "flagged reason" exclusion, since body-fat check-ins don't go through
+// the same up/down check-in flow as weight.
+function computeBodyFatTrend(windowDays = 60) {
+  const ms = (state.measurements || [])
+    .filter(m => typeof m.bodyFatPct === "number")
+    .slice()
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  if (ms.length < 2) return null;
+
+  const cutoff = Date.now() - windowDays * 24 * 60 * 60 * 1000;
+  const windowSet = ms.filter(m => new Date(m.date).getTime() >= cutoff);
+  const set = windowSet.length >= 2 ? windowSet : ms.slice(-2);
+  if (set.length < 2) return null;
+
+  const first = set[0], last = set[set.length - 1];
+  const days = (new Date(last.date) - new Date(first.date)) / (24 * 60 * 60 * 1000);
+  if (days < 5) return null;
+
+  const t0 = new Date(set[0].date).getTime();
+  const xs = set.map(m => (new Date(m.date).getTime() - t0) / (24 * 60 * 60 * 1000));
+  const ys = set.map(m => m.bodyFatPct);
+  const n = xs.length;
+  const meanX = xs.reduce((a, b) => a + b, 0) / n;
+  const meanY = ys.reduce((a, b) => a + b, 0) / n;
+  const num = xs.reduce((sum, x, i) => sum + (x - meanX) * (ys[i] - meanY), 0);
+  const den = xs.reduce((sum, x) => sum + (x - meanX) ** 2, 0);
+  const slopePerDay = den === 0 ? 0 : num / den; // percentage points per day
+  return { ptsPerWeek: slopePerDay * 7, days, n, latest: last.bodyFatPct, latestDate: last.date };
+}
+
 function computeWeightTrend(windowDays = 14) {
   const ms = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
   if (ms.length < 2) return null;
@@ -1232,6 +1289,22 @@ function computeMacroSuggestion() {
   const excludedNote = excludedFlagged ? ` (excluding ${excludedFlagged} flagged day${excludedFlagged === 1 ? "" : "s"})` : "";
 
   if (pctPerWeek > targetMax) {
+    // Losing slower than target by scale weight alone — but a stalled scale
+    // with body-fat % still trending down is a recomposition (fat loss and
+    // muscle gain roughly offsetting on the scale), not a real stall, and
+    // cutting calories here would work against the muscle-gain side of
+    // that. Check the body-fat trend (only present if neck+waist have been
+    // logged at least twice) before assuming the scale number is the whole
+    // story. -0.1 pts/week is a small, deliberately loose threshold — Navy
+    // method tape measurements are noisy rep to rep, so this is meant to
+    // catch a real trend over weeks, not react to one reading.
+    const bf = computeBodyFatTrend();
+    if (bf && bf.ptsPerWeek <= -0.1) {
+      return {
+        message: `Scale is ~flat (${Math.abs(pctPerWeek).toFixed(2)}%/week${excludedNote}), but body-fat is trending down (${bf.ptsPerWeek.toFixed(2)} pts/week, Navy method) — looks like a recomposition, not a stall. Holding macros steady rather than cutting.`,
+        deltaCalories: 0,
+      };
+    }
     // losing slower than target (or gaining) — trim calories
     return {
       message: `Losing about ${Math.abs(pctPerWeek).toFixed(2)}%/week${excludedNote} — slower than the ${Math.abs(targetMax)}-${Math.abs(targetMin)}% target range. Suggest trimming ~125 cal (from carbs).`,
@@ -2923,6 +2996,15 @@ document.getElementById("saveRingStrapBtn").addEventListener("click", async () =
   alert("Ring strap setting saved.");
 });
 
+// -- body composition (Settings) --
+document.getElementById("saveHeightBtn").addEventListener("click", async () => {
+  const val = parseFloat(document.getElementById("heightInches").value);
+  if (isNaN(val) || val <= 0) { alert("Enter a height in inches first."); return; }
+  state.settings.heightInches = val;
+  await persistNow();
+  alert("Height saved.");
+});
+
 // -- macro targets (Settings) --
 document.getElementById("saveTargetsBtn").addEventListener("click", async () => {
   state.settings.macroTargets = {
@@ -2981,10 +3063,19 @@ document.getElementById("journeyStats").addEventListener("click", (e) => {
   renderJourneyStats();
 });
 
+function renderBodyFatSummary() {
+  const el = document.getElementById("bodyFatSummary");
+  const bf = computeBodyFatTrend();
+  if (!bf) { el.textContent = ""; return; }
+  const trendWord = bf.ptsPerWeek <= -0.1 ? "trending down" : bf.ptsPerWeek >= 0.1 ? "trending up" : "holding steady";
+  el.textContent = `Body fat (Navy method): ${bf.latest}% as of ${new Date(bf.latestDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })} — ${trendWord} (${bf.ptsPerWeek >= 0 ? "+" : ""}${bf.ptsPerWeek.toFixed(2)} pts/week).`;
+}
+
 function renderProgressCharts() {
   renderJourneyStats();
   const measurements = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
   renderLineChart("weightChart", measurements.map(m => ({ label: m.date.slice(5), value: m.weight })), { yLabel: "lb" });
+  renderBodyFatSummary();
   renderWeightHistoryList();
   renderRecoveryStatus();
   renderReasonPatterns();
@@ -3211,11 +3302,28 @@ document.getElementById("logWeightBtn").addEventListener("click", async () => {
     .filter(m => m.date < date)
     .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
 
+  const neckVal = parseFloat(document.getElementById("neckInput").value);
+  const waistVal = parseFloat(document.getElementById("waistInput").value);
+  const entry = { date, weight };
+  if (!isNaN(neckVal)) entry.neck = neckVal;
+  if (!isNaN(waistVal)) entry.waist = waistVal;
+  if (!isNaN(neckVal) && !isNaN(waistVal)) {
+    const heightIn = state.settings.heightInches;
+    if (heightIn) {
+      const bf = navyBodyFatPct(waistVal, neckVal, heightIn);
+      if (bf != null) entry.bodyFatPct = Math.round(bf * 10) / 10;
+    } else {
+      alert("Add your height in Settings → Body composition to get a body-fat estimate from these — weight is saved either way.");
+    }
+  }
+
   state.measurements = state.measurements.filter(m => m.date !== date);
-  state.measurements.push({ date, weight });
+  state.measurements.push(entry);
   checkWeightMilestones();
   await persistNow();
   document.getElementById("weightInput").value = "";
+  document.getElementById("neckInput").value = "";
+  document.getElementById("waistInput").value = "";
   renderProgressCharts();
   renderCelebrations();
 
@@ -4185,6 +4293,7 @@ async function init() {
   renderFoodLogList();
   if (state.settings?.startDate) document.getElementById("startDateInput").value = state.settings.startDate;
   document.getElementById("ringStrapPush").value = state.ringStrap?.push ?? "";
+  document.getElementById("heightInches").value = state.settings.heightInches || "";
   const t = state.settings.macroTargets || {};
   document.getElementById("targetCalories").value = t.calories || "";
   document.getElementById("targetProtein").value = t.protein || "";
