@@ -156,6 +156,21 @@
     <div id="welcomeBackBanner" class="hidden"></div>
     <div id="celebrationBanner" class="hidden"></div>
 
+    <div class="card" id="dailyCheckinCard">
+      <h2>Daily check-in</h2>
+      <p class="meta" style="margin-top:0;">Optional — quick signal so the Coach can spot patterns over time.</p>
+      <div class="meta" style="margin-top:10px; margin-bottom:4px;">Energy today</div>
+      <div class="row" id="checkinEnergyChips">
+        <div class="chip" data-energy="low">Low</div>
+        <div class="chip" data-energy="normal">Normal</div>
+        <div class="chip" data-energy="high">High</div>
+      </div>
+      <div class="meta" style="margin-top:10px; margin-bottom:4px;">Anything going on? (optional, pick any)</div>
+      <div class="row" id="checkinTagChips" style="flex-wrap:wrap;"></div>
+      <button class="secondary" id="saveDailyCheckinBtn" style="margin-top:10px; width:100%;">Save check-in</button>
+      <div class="meta" id="dailyCheckinSavedHint" style="margin-top:6px;"></div>
+    </div>
+
     <div class="card">
       <details class="exercise-group">
         <summary>Cross-training</summary>
@@ -1547,6 +1562,68 @@ function renderFlagsBanner() {
     });
   });
 }
+
+// Daily check-in: a lightweight, decoupled-from-weigh-ins log of energy +
+// what's going on, every day (not just on a big weight swing). Reuses the
+// same reason-tag vocabulary as the weigh-in check-in rather than inventing
+// a second taxonomy, plus one energy rating — this is the raw signal the
+// correlation engine (Coach's Note) will eventually join against workout
+// and food logs. One entry per calendar day; re-saving the same day updates
+// it in place rather than creating a duplicate.
+let activeDailyCheckinEnergy = null;
+const activeDailyCheckinTags = new Set();
+
+function renderDailyCheckin() {
+  const tagsEl = document.getElementById("checkinTagChips");
+  const energyEl = document.getElementById("checkinEnergyChips");
+  const hintEl = document.getElementById("dailyCheckinSavedHint");
+  if (!tagsEl || !energyEl || !hintEl) return;
+
+  tagsEl.innerHTML = ALL_CHECKIN_TAGS.map(t => `<div class="chip" data-tag="${t}">${t}</div>`).join("");
+
+  const today = localDateStr();
+  const existing = (state.dailyCheckins || []).find(c => c.date === today);
+  activeDailyCheckinTags.clear();
+  activeDailyCheckinEnergy = existing ? existing.energy : null;
+  (existing ? existing.tags : []).forEach(t => activeDailyCheckinTags.add(t));
+
+  energyEl.querySelectorAll("[data-energy]").forEach(chip => {
+    chip.classList.toggle("active", chip.dataset.energy === activeDailyCheckinEnergy);
+  });
+  tagsEl.querySelectorAll("[data-tag]").forEach(chip => {
+    chip.classList.toggle("active", activeDailyCheckinTags.has(chip.dataset.tag));
+  });
+  hintEl.textContent = existing ? "Saved for today — tap to update." : "";
+}
+
+document.getElementById("checkinEnergyChips").addEventListener("click", (e) => {
+  const chip = e.target.closest("[data-energy]");
+  if (!chip) return;
+  activeDailyCheckinEnergy = chip.dataset.energy === activeDailyCheckinEnergy ? null : chip.dataset.energy;
+  document.getElementById("checkinEnergyChips").querySelectorAll("[data-energy]").forEach(c =>
+    c.classList.toggle("active", c.dataset.energy === activeDailyCheckinEnergy));
+});
+
+document.getElementById("checkinTagChips").addEventListener("click", (e) => {
+  const chip = e.target.closest("[data-tag]");
+  if (!chip) return;
+  chip.classList.toggle("active");
+  const tag = chip.dataset.tag;
+  if (activeDailyCheckinTags.has(tag)) activeDailyCheckinTags.delete(tag);
+  else activeDailyCheckinTags.add(tag);
+});
+
+document.getElementById("saveDailyCheckinBtn").addEventListener("click", async () => {
+  const today = localDateStr();
+  state.dailyCheckins = (state.dailyCheckins || []).filter(c => c.date !== today);
+  if (activeDailyCheckinEnergy || activeDailyCheckinTags.size) {
+    state.dailyCheckins.push({ date: today, energy: activeDailyCheckinEnergy, tags: [...activeDailyCheckinTags] });
+  }
+  await persistNow();
+  document.getElementById("dailyCheckinSavedHint").textContent = (activeDailyCheckinEnergy || activeDailyCheckinTags.size)
+    ? "Saved for today — tap to update."
+    : "Cleared for today.";
+});
 
 // Coach's Note is the hook the future correlation engine fills with real
 // cross-signal findings (sleep/stress/alcohol vs. performance, etc). Until
@@ -3390,6 +3467,9 @@ const activeCheckInReasons = new Set();
 
 const INCREASE_REASONS = ["Traveling", "Poor sleep", "Missed workout", "Missed cross-training", "Didn't track food", "Alcohol", "Stress"];
 const DECREASE_REASONS = ["Illness", "Dehydration/low water intake", "Big workout", "Didn't eat much", "Traveling", "Stress"];
+// Daily check-in reuses this same tag vocabulary (defined here, after both
+// lists exist) rather than a second taxonomy — see renderDailyCheckin above.
+const ALL_CHECKIN_TAGS = [...new Set([...INCREASE_REASONS, ...DECREASE_REASONS])];
 
 function renderCheckInChips(direction) {
   const reasons = direction === "up" ? INCREASE_REASONS : DECREASE_REASONS;
@@ -4011,6 +4091,7 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
     if (btn.dataset.tab === "today") {
       const active = programs.find(p => p.id === state.activeProgramId);
       if (active) ensureWorkoutReady(active);
+      renderDailyCheckin();
     }
   });
 });
@@ -4393,6 +4474,7 @@ async function init() {
   renderCelebrations();
   renderFlagsBanner();
   renderCoachNote();
+  renderDailyCheckin();
   renderProgressCharts();
   renderRecentCardio();
   renderStartingLevelSettings();
