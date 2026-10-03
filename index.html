@@ -165,7 +165,9 @@
         <div style="padding-top:6px;">
           <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
             Log a walk or ruck any day — doesn't touch your program's rotation, just tracked
-            alongside it for your own record and the Progress charts.
+            alongside it for your own record and the Progress charts. (A "ruck" is just a walk
+            while carrying extra weight, usually in a backpack — if you don't have a weighted
+            pack, "Log a walk" is the one you want.)
           </p>
           <div class="row">
             <div class="chip" id="logWalkChip">Log a walk</div>
@@ -348,7 +350,7 @@
         <div class="row" id="levelFilterChips" style="margin-top:8px;">
           <div class="chip active" data-level="all">All levels</div>
           <div class="chip" data-level="beginner">Beginner (1-2)</div>
-          <div class="chip" data-level="standard">Standard (3)</div>
+          <div class="chip" data-level="standard">Intermediate (3)</div>
           <div class="chip" data-level="advanced">Advanced (4-5)</div>
         </div>
         <div class="row" id="equipmentFilterChips" style="margin-top:8px;">
@@ -386,7 +388,7 @@
             <input type="text" inputmode="decimal" id="neckInput" placeholder="Neck (in, optional)" style="flex:1;">
             <input type="text" inputmode="decimal" id="waistInput" placeholder="Waist (in, optional)" style="flex:1;">
           </div>
-          <div class="meta" style="margin-top:4px;">Add neck + waist occasionally for a body-fat % estimate (Navy method) — tells a recomp (clothes fit better, scale flat) apart from an actual stall. Needs your height set once in Settings.</div>
+          <div class="meta" style="margin-top:4px;">Add neck + waist occasionally for a body-fat % estimate (Navy method) — measure your neck just below the Adam's apple and your waist at the belly button, both snug but not pulled tight. This can tell "recomposition" (building muscle while losing fat, so the scale stays flat even though your body's changing) apart from an actual stall. Needs your height set once in Settings.</div>
           <button class="secondary" id="logWeightBtn" style="margin-top:10px;">Log weight</button>
           <div id="weightCheckInPanel" class="hidden" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
             <div class="meta" id="weightCheckInMessage" style="margin-bottom:8px;"></div>
@@ -505,12 +507,17 @@
     <div class="card">
       <h2>Starting level per movement pattern</h2>
       <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
-        Sets where a fresh, never-trained muscle group begins (beginner/intermediate/advanced).
-        Once you've logged a workout for a group, this no longer touches it — auto-progression
-        from your rep ranges takes over from there. Push and pull are split into "horizontal"
-        and "vertical" because they're trained as separate progressions: horizontal push/pull
-        is push-ups and rows, vertical push/pull is overhead presses and pull-ups — set each
-        independently.
+        Sets where a fresh, never-trained muscle group begins. Once you've logged a workout for
+        a group, this no longer touches it — auto-progression from your rep ranges takes over
+        from there. Not sure which to pick? <strong style="color:var(--text);">Beginner</strong>
+        = you've never done structured exercise for this movement before;
+        <strong style="color:var(--text);">Intermediate</strong> = you've trained it on and off,
+        casually, for a while; <strong style="color:var(--text);">Advanced</strong> = you've
+        followed a structured program for it before. When in doubt, pick Beginner — it's easy to
+        move up once a few workouts feel too easy, and much safer than starting too hard. Push
+        and pull are split into "horizontal" and "vertical" because they're trained as separate
+        progressions: horizontal push/pull is push-ups and rows, vertical push/pull is overhead
+        presses and pull-ups — set each independently.
       </p>
       <div id="startingLevelSettings"></div>
     </div>
@@ -543,6 +550,13 @@
     </div>
     <div class="card">
       <h2>Daily macro targets</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+        New to tracking macros? A simple starting point: protein around 0.7-1g per lb of your
+        bodyweight, calories around what keeps your weight roughly steady right now (lower it
+        a bit if the goal is fat loss), and carbs/fat split to fill out the rest. You don't need
+        to get this exact — log for a week or two and the Coach's weekly suggestions on the
+        Coach tab will nudge these for you from there.
+      </p>
       <div class="row">
         <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="targetCalories" placeholder="2300"></div>
         <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="targetProtein" placeholder="160"></div>
@@ -612,7 +626,7 @@ const LS_WORKER_URL_KEY = "tf_worker_url";
 // that changes. Settings can still override it if it's ever redeployed elsewhere.
 const DEFAULT_WORKER_URL = "https://train-fuel.andy-p-ruiz.workers.dev";
 let WORKER_URL = localStorage.getItem(LS_WORKER_URL_KEY) || DEFAULT_WORKER_URL;
-let state = { settings: { startingLevels: { push: "intermediate", pull: "intermediate", legs: "intermediate", hinge: "intermediate", core: "intermediate", ruck: "intermediate" },
+let state = { settings: { startingLevels: { push: "beginner", pull: "beginner", legs: "beginner", hinge: "beginner", core: "beginner", ruck: "beginner" },
   macroTargets: { calories: 2300, protein: 160, carbs: 200, fat: 70 } },
   measurements: [], logs: [], cardioLogs: [], foodLogs: [], activeProgramId: null, weekAdjustment: 0,
   progressLevels: { push: 1, pull: 1, legs: 1, hinge: 1, core: 1, ruck: 1 },
@@ -693,7 +707,7 @@ async function loadState() {
   if (typeof state.weekAdjustment !== "number") state.weekAdjustment = 0;
   if (!state.settings) state.settings = {};
   if (!state.settings.startingLevels) {
-    state.settings.startingLevels = { push: "intermediate", pull: "intermediate", legs: "intermediate", hinge: "intermediate", core: "intermediate", ruck: "intermediate" };
+    state.settings.startingLevels = { push: "beginner", pull: "beginner", legs: "beginner", hinge: "beginner", core: "beginner", ruck: "beginner" };
   }
   if (!state.cardioLogs) state.cardioLogs = [];
   if (!state.foodLogs) state.foodLogs = [];
@@ -2164,6 +2178,7 @@ function renderWeeklyReview() {
   el.innerHTML = `
     <div style="${sectionLabelStyle} margin-top:0;">Training week</div>
     <div class="meta">Week ${weekNumber} · ${phaseLabel}${deloadNote}</div>
+    ${deloadNote ? `<div class="meta" style="margin-top:4px;">Deload = a planned lighter week built into your program so your body can recover — sets and reps are automatically reduced, no action needed from you.</div>` : ""}
     <div class="meta" id="weeklyReviewLogsToggle" style="margin-top:6px; cursor:pointer;">Last 7 days: ${recentLogs.length} exercises logged
     (${counts.max} hit max, ${counts.hold} as prescribed, ${counts.missed} missed) · ${weeklyReviewLogsOpen ? "hide" : "see"} which</div>
     ${logsDetailHtml}
@@ -2751,7 +2766,7 @@ function renderTodayWorkout(workout) {
       const memberIdxs = workout.exercises.map((x, xi) => ({ x, xi })).filter(({ x }) => x.superset_group === e.superset_group);
       return `
         <div class="card" style="border-left-color:var(--gold); margin-bottom:10px;">
-          <div class="meta" style="margin-bottom:8px;">Superset ${e.superset_group}</div>
+          <div class="meta" style="margin-bottom:8px;">Superset ${e.superset_group} — do one set of each exercise back-to-back, then rest</div>
           ${memberIdxs.map(({ x, xi }) => exerciseCardHtml(x, xi)).join('<div style="border-top:1px dashed var(--border); margin:10px 0;"></div>')}
         </div>`;
     }
@@ -2777,7 +2792,8 @@ function renderTodayWorkout(workout) {
     <details class="exercise-group">
       <summary>Today's exercises</summary>
       <div style="padding-top:6px;">
-        <div class="meta" style="margin-bottom:8px;">"Level" is a 1-5 difficulty tier for that exercise; horizontal/vertical marks which push or pull pattern it trains (e.g. push-ups vs. overhead presses — see Settings for your level per pattern); "straps" is your ring-strap length setting, shown on ring exercises only.</div>
+        <div class="meta" style="margin-bottom:4px;">"Level" is a 1-5 difficulty tier (1 = easiest variation in the library, 5 = hardest); horizontal/vertical marks which push or pull pattern it trains (e.g. push-ups vs. overhead presses — see Settings for your level per pattern); "straps" is your ring-strap length setting, shown on ring exercises only.</div>
+        <div class="meta" style="margin-bottom:8px;">After a set: "Hit max reps" means you could've done more with good form, "As prescribed" means you did the planned amount, "Missed reps" means you couldn't finish them with good form. Stop any set early if form breaks down or something hurts — none of this is about pushing to failure.</div>
         ${unitsHtml}
       </div>
     </details>`;
@@ -4024,7 +4040,7 @@ function renderRecoveryStatus() {
     <div class="list-item"><div class="name">Current pace</div><div class="meta">${paceStr}</div></div>
     <div class="list-item"><div class="name">Target range</div><div class="meta">${rangeStr}</div></div>
     <div class="list-item"><div class="name">Margin to caution</div><div class="meta">${marginStr}</div></div>
-    <div class="meta" style="margin-top:8px;">Based on a trend line across your last ${r.days.toFixed(0)} days of weigh-ins${excludedNote}. This is about weight-loss speed, not training recovery (soreness/sleep) — if pace drops past ${r.targetMin}%/week, progression holds steady (no intensity increases) until it's back in range; that's what "pace caution" means.</div>
+    <div class="meta" style="margin-top:8px;">Based on a trend line across your last ${r.days.toFixed(0)} days of weigh-ins${excludedNote}. This is about weight-loss speed, not training recovery (soreness/sleep) — if pace drops past ${r.targetMin}%/week, progression holds steady (no intensity increases) until it's back in range; that's what "pace caution" means. Losing much faster than this target range risks losing muscle along with fat, not just fat — slower and steadier holds onto more of the muscle you're building.</div>
     ${reasonsHtml}`;
 }
 function toggleRecoveryStatus() {
@@ -4420,8 +4436,11 @@ function renderSession() {
   // pre-session exercise list, which is hidden once a session starts — so
   // repeat a short version on the very first step, where it's still fresh
   // context, rather than leaving it unexplained for the rest of the workout.
+  // Also the one place a total beginner first hits "stop if it hurts" —
+  // this isn't about pushing to failure — and, if the session opens on a
+  // superset, how to actually run one.
   const levelLegendHtml = session.pos === 0
-    ? `<div class="meta" style="margin-top:4px;">Level is a 1-5 difficulty tier; straps is your ring-strap setting (rings only).</div>`
+    ? `<div class="meta" style="margin-top:4px;">Level is a 1-5 difficulty tier (1 = easiest in the library, 5 = hardest); straps is your ring-strap setting (rings only). Stop a set any time your form breaks down or something hurts — this isn't about pushing to failure.${step.supersetLabel ? " For a superset: do one set of each paired exercise back-to-back, then rest." : ""}</div>`
     : "";
 
   if (session.resting) {
@@ -4465,6 +4484,7 @@ function renderSession() {
           <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · holding${ringStrapNoteFor(step)}</div>
           ${stepCueHtml}
           <div id="holdClock" style="font-size:36px; font-weight:600; text-align:center; margin:14px 0; font-family:var(--font-mono);">${formatTime(remaining)}</div>
+          <div class="meta" style="text-align:center; margin-top:-6px; margin-bottom:10px;">It's completely normal not to hit the full target time yet — stop whenever you need to.</div>
           <button class="secondary" id="stopHoldBtn" style="width:100%;">Stop / let go</button>
         </div>`;
       document.getElementById("stopHoldBtn").addEventListener("click", () => {
@@ -5065,14 +5085,14 @@ async function applyStartingLevelsIfUntrained() {
     .map(l => `${l.muscle_group}_${planeOf(l.exercise, l.muscle_group)}`));
   MUSCLE_GROUPS.forEach(mg => {
     if (!trainedGroups.has(mg)) {
-      const lvl = state.settings.startingLevels?.[mg] || "intermediate";
+      const lvl = state.settings.startingLevels?.[mg] || "beginner";
       state.progressLevels[mg] = STARTING_LEVEL_MAP[lvl];
     }
   });
   state.planeLevels = state.planeLevels || { push_h: 1, push_v: 1, pull_h: 1, pull_v: 1 };
   PLANE_GROUPS.forEach(key => {
     if (!trainedPlaneGroups.has(key)) {
-      const lvl = state.settings.startingLevels?.[key] || "intermediate";
+      const lvl = state.settings.startingLevels?.[key] || "beginner";
       state.planeLevels[key] = STARTING_LEVEL_MAP[lvl];
     }
   });
