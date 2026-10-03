@@ -195,7 +195,7 @@
             <span>✈️ Travel mode</span>
             <span id="travelModeState" style="color:var(--text-muted); font-size:12px; font-family:var(--font-mono);">Off</span>
           </div>
-          <p class="meta" style="margin-top:0; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border);">Restricts today's workout to gear you'd actually have on the road (bodyweight, bands, rings) — turning it on or off regenerates today's exercises.</p>
+          <p class="meta" style="margin-top:0; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border);">Generates a bodyweight-only workout, with ring exercises still available as a swap if you brought rings — no dumbbell/band exercises. Turning it on or off regenerates today's exercises.</p>
           <div id="recoveryCautionNote"></div>
           <div id="todayWorkout" class="empty">Pick an active program first.</div>
           <button class="primary" id="startSessionBtn" style="margin-top:10px; width:100%;" disabled>Start guided session</button>
@@ -360,6 +360,8 @@
           <div class="chip" data-equip="dumbbell">Dumbbell</div>
           <div class="chip" data-equip="bar">Bar</div>
           <div class="chip" data-equip="band">Band</div>
+          <div class="chip" data-equip="parallettes">Parallettes</div>
+          <div class="chip" data-equip="ab-wheel">Ab wheel</div>
         </div>
         <div id="exerciseList" style="margin-top:12px;" class="empty">Loading…</div>
       </div>
@@ -979,6 +981,21 @@ const BUILTIN_EXERCISES = [
   { id: "hover-lunge", name: "Hover lunge", muscle_group: "legs", equipment: "bodyweight", cue: "Pause just above the floor at the bottom of the lunge before driving back up." },
   { id: "l-sit-pullup", name: "L-sit pull-up", muscle_group: "pull", equipment: "bar", cue: "Hold the L-sit position throughout the entire pull, don't let the legs drop." },
   { id: "l-sit-archer-pullup", name: "L-sit archer pull-up", muscle_group: "pull", equipment: "bar", cue: "Archer pull-up while maintaining the L-sit the whole way — very advanced." },
+
+  // ---- parallettes: push/core, same lines as bar/rings but handles close to
+  // the floor — easier on the wrists for push-up/handstand/L-sit work ----
+  { id: "parallette-pushup", name: "Parallette push-up", muscle_group: "push", equipment: "parallettes", cue: "Deeper range than a floor push-up — lower until shoulders dip below hand height." },
+  { id: "parallette-pseudo-planche-pushup", name: "Parallette pseudo planche push-up", muscle_group: "push", equipment: "parallettes", cue: "Lean shoulders well past the handles, elbows locked." },
+  { id: "parallette-dip", name: "Parallette dip", muscle_group: "push", equipment: "parallettes", cue: "Lower under control, elbows track back, don't flare." },
+  { id: "parallette-handstand-hold", name: "Parallette handstand hold", muscle_group: "push", equipment: "parallettes", cue: "Wrists stay neutral on the handles — easier on the joints than a floor handstand." },
+  { id: "parallette-l-sit-tucked", name: "Parallette L-sit (tucked)", muscle_group: "core", equipment: "parallettes", cue: "Knees tucked to chest, push down through straight arms." },
+  { id: "parallette-l-sit", name: "Parallette L-sit", muscle_group: "core", equipment: "parallettes", cue: "Legs straight out in front, shoulders depressed, hold." },
+  { id: "parallette-shoulder-tap", name: "Parallette plank shoulder taps", muscle_group: "core", equipment: "parallettes", cue: "Hands on the handles, minimize hip rotation with each tap." },
+  { id: "parallette-l-sit-compression", name: "Parallette L-sit compression", muscle_group: "core", equipment: "parallettes", cue: "Pull chest toward thighs in the L-sit — advanced hip-flexor/core compression." },
+
+  // ---- ab wheel: core ----
+  { id: "ab-wheel-rollout-kneeling", name: "Ab wheel rollout (kneeling)", muscle_group: "core", equipment: "ab wheel", cue: "Hollow position throughout — roll out only as far as you can keep your back flat." },
+  { id: "ab-wheel-rollout-standing", name: "Ab wheel rollout (standing)", muscle_group: "core", equipment: "ab wheel", cue: "Very advanced — brace hard, roll out from standing without the hips sagging or the back rounding." },
 ];
 
 // Approximate difficulty level (1-5) per exercise, based on the progression
@@ -1039,6 +1056,11 @@ const EXERCISE_LEVEL_MAP = {
   "standing-twist": 1, "ring-pullover": 4,
   "archer-pushup": 4, "archer-pullup": 4, "toes-to-bar": 4,
   "archer-squat": 3, "hover-lunge": 3, "l-sit-pullup": 4, "l-sit-archer-pullup": 5,
+  // new: parallettes + ab wheel
+  "parallette-pushup": 3, "parallette-pseudo-planche-pushup": 4, "parallette-dip": 3,
+  "parallette-handstand-hold": 4, "parallette-l-sit-tucked": 2, "parallette-l-sit": 4,
+  "parallette-shoulder-tap": 3, "parallette-l-sit-compression": 5,
+  "ab-wheel-rollout-kneeling": 4, "ab-wheel-rollout-standing": 5,
 };
 
 function levelOf(exerciseIdOrName) {
@@ -1078,6 +1100,9 @@ const EXERCISE_PLANE_MAP = {
   "ring-pullup": "v", "ring-archer-pullup": "v", "weighted-pullup": "v", "skin-the-cat": "v",
   "muscle-up-negative": "v", "muscle-up": "v", "one-arm-pullup-negative": "v", "one-arm-pullup": "v",
   "l-sit-pullup": "v", "l-sit-archer-pullup": "v",
+  // push - parallettes (pushup/planche line is horizontal, dip/handstand line is vertical)
+  "parallette-pushup": "h", "parallette-pseudo-planche-pushup": "h",
+  "parallette-dip": "v", "parallette-handstand-hold": "v",
 };
 
 // Defaults for any push/pull exercise not explicitly classified above (e.g.
@@ -1105,6 +1130,8 @@ const HOLD_EXERCISE_IDS = new Set([
   "neck-lateral-stretch", "standing-quad-stretch", "wall-calf-stretch",
   "figure-4-glute-stretch", "butterfly-stretch", "side-lunge-stretch",
   "thoracic-extension-chair",
+  "parallette-handstand-hold", "parallette-l-sit-tucked", "parallette-l-sit",
+  "parallette-l-sit-compression",
 ]);
 
 function isHoldExercise(exerciseIdOrName) {
@@ -1173,6 +1200,8 @@ function levelBucket(level) {
 function equipmentBucket(equipment) {
   const e = (equipment || "bodyweight").toLowerCase();
   if (e.includes("ring")) return "rings";
+  if (e.includes("parallette")) return "parallettes";
+  if (e.includes("ab wheel")) return "ab-wheel";
   if (e.includes("dumbbell")) return "dumbbell";
   if (e.includes("bar") && !e.includes("bodyweight")) return "bar"; // catches "bar", "bar or rings", "parallel bars"
   if (e.includes("band")) return "band";
@@ -2328,6 +2357,14 @@ async function ensureWorkoutReady(program, forceDayIndex) {
 // already train that group. Ruck is intentionally excluded from the floor —
 // it's cardio, tracked as its own activity, and not every program should be
 // forced to include it.
+// Travel mode: restrict to gear actually likely to be on hand on the road —
+// bodyweight plus rings, which travel well and come along on most trips.
+// Deliberately excludes band/dumbbell/weighted vest/pack — those stay home.
+// Module-level (not just inside generateTodayWorkout) so the swap panel can
+// apply the same restriction while travel mode is on, not just the initial
+// workout generation.
+const TRAVEL_EQUIPMENT = new Set(["bodyweight", "rings", "bar or rings"]);
+
 const KNOWN_MUSCLE_GROUPS = ["push", "pull", "legs", "hinge", "core", "ruck"];
 const MUSCLE_GROUP_FLOOR = { push: 2, pull: 2, legs: 2, hinge: 2, core: 2 };
 function balanceProgramStructure(structure) {
@@ -2450,13 +2487,10 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
   // different plane on its own — filtering here is what actually enforces
   // it instead of just describing it in prose.
   let planeFilteredPush = [], planeFilteredPull = [];
-  // Travel mode: restrict to gear that's actually likely to be on hand —
-  // bodyweight, a packable band, and rings/dumbbell since those often come
-  // along or are available at a hotel gym. Deliberately excludes weighted
-  // vest/pack — those stay home. Applied ahead of the
-  // level/plane filters below rather than as a separate pass, so it
-  // composes with them instead of needing its own fallback logic.
-  const TRAVEL_EQUIPMENT = new Set(["bodyweight", "band", "rings", "dumbbell", "bar or rings"]);
+  // Travel mode equipment restriction (TRAVEL_EQUIPMENT, module-level)
+  // applied ahead of the level/plane filters below rather than as a
+  // separate pass, so it composes with them instead of needing its own
+  // fallback logic.
   const availableExercises = exercises.filter(e => {
     if (state.travelMode && !TRAVEL_EQUIPMENT.has(e.equipment || "bodyweight")) return false;
     if (e.muscle_group === "push" || e.muscle_group === "pull") {
@@ -2937,7 +2971,14 @@ function buildYoutubeUrl(name) {
 
 function swapAlternatesHtml(currentExercise, uidPrefix) {
   const currentLevel = levelOf(currentExercise.name);
-  const alternates = exercises.filter(x => x.muscle_group === currentExercise.muscle_group && x.name !== currentExercise.name);
+  // While travel mode is on, don't offer a swap to equipment that's not
+  // coming on the trip (a dumbbell or band swap is useless mid-workout on
+  // the road) — same TRAVEL_EQUIPMENT restriction generation itself uses,
+  // so "swap" still means "what could I actually do right now."
+  const alternates = exercises.filter(x =>
+    x.muscle_group === currentExercise.muscle_group && x.name !== currentExercise.name &&
+    (!state.travelMode || TRAVEL_EQUIPMENT.has(x.equipment || "bodyweight"))
+  );
   const regressions = alternates.filter(x => levelOf(x.name) < currentLevel);
   const sameLevel = alternates.filter(x => levelOf(x.name) === currentLevel);
   const progressions = alternates.filter(x => levelOf(x.name) > currentLevel);
@@ -2950,7 +2991,7 @@ function swapAlternatesHtml(currentExercise, uidPrefix) {
     <div class="meta" style="margin-top:8px; margin-bottom:4px;">${label}</div>
     <div class="row">${list.map(x => chip(x, cls)).join("")}</div>
   ` : "";
-  if (!alternates.length) return '<div class="empty" style="margin-top:6px;">No alternates in your library for this muscle group yet.</div>';
+  if (!alternates.length) return `<div class="empty" style="margin-top:6px;">${state.travelMode ? "No bodyweight/ring alternates in your library for this muscle group yet." : "No alternates in your library for this muscle group yet."}</div>`;
   return `<div class="hidden" data-swap-info-panel="${uidPrefix}" style="margin-bottom:8px; padding-bottom:8px; border-bottom:1px dashed var(--border);"></div>` +
          bucket("↓ Regressions (easier)", regressions, "swap-regression") +
          bucket("= Same level", sameLevel, "swap-same") +
