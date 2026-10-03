@@ -1972,14 +1972,26 @@ function renderTodayWorkout(workout) {
     sessionBtn.disabled = true;
     minDayBtn.disabled = true;
     let nextUpHtml = "";
+    let skipBtnHtml = "";
     const activeProgram = programs.find(p => p.id === state.activeProgramId);
     if (activeProgram && state.pendingWorkout) {
       const { phase } = currentPhaseFor(activeProgram);
       const totalDays = (phase?.days || []).length || 1;
       const nextDay = phase?.days?.[(state.pendingWorkout.dayIndex + 1) % totalDays];
-      if (nextDay) nextUpHtml = `<div class="meta" style="margin-top:8px;">Next up: ${nextDay.day}</div>`;
+      if (nextDay) {
+        nextUpHtml = `<div class="meta" style="margin-top:8px;">Next up: ${nextDay.day}</div>`;
+        // The rotation is completion-driven, not calendar-driven — this rest
+        // slot comes up on a fixed cycle regardless of how many calendar
+        // rest days already happened in between, so there's no way from the
+        // normal flow to say "I've already rested enough this week, give me
+        // the next real workout instead." Lets that next day's session
+        // generate immediately rather than forcing today to stay empty.
+        skipBtnHtml = `<button class="primary" id="skipRestDayBtn" style="margin-top:12px; width:100%;">Skip rest — start ${nextDay.day}</button>`;
+      }
     }
-    box.innerHTML = `<div class="card"><h2>${workout.day || "Rest day"}</h2><div class="meta">Nothing scheduled today — rest and recover.</div>${nextUpHtml}</div>`;
+    box.innerHTML = `<div class="card"><h2>${workout.day || "Rest day"}</h2><div class="meta">Nothing scheduled today — rest and recover.</div>${nextUpHtml}${skipBtnHtml}</div>`;
+    const skipBtn = document.getElementById("skipRestDayBtn");
+    if (skipBtn) skipBtn.addEventListener("click", skipRestDay, { once: true });
     return;
   }
 
@@ -2064,6 +2076,31 @@ function renderTodayWorkout(workout) {
 
   box.innerHTML = warmupHtml + workoutHtml + cooldownHtml + `<button id="completeWorkoutBtn" style="background:none; border:none; color:var(--accent); font-size:13px; cursor:pointer; padding:10px 0; display:block;">Complete workout without guided session ▸</button>`;
   document.getElementById("completeWorkoutBtn").addEventListener("click", completeWorkout);
+}
+
+// Called from the rest-day card's "Skip rest" button. Generates the NEXT
+// day in the rotation (dayIndex + 1) immediately, in place of today's
+// generated-but-empty rest slot, for whoever has already taken a calendar
+// rest day this week and doesn't want the fixed rotation slot forcing a
+// second one — the rotation has no concept of calendar rest days on its
+// own (see ensureWorkoutReady), so this is the explicit opt-out.
+async function skipRestDay() {
+  const program = programs.find(p => p.id === state.activeProgramId);
+  if (!program || !state.pendingWorkout) return;
+  const box = document.getElementById("todayWorkout");
+  box.innerHTML = '<div class="empty">Generating your next workout…</div>';
+  try {
+    const { phase } = currentPhaseFor(program);
+    const key = phaseKeyFor(program, phase);
+    const totalDays = (phase?.days || []).length || 1;
+    const nextIndex = (state.pendingWorkout.dayIndex + 1) % totalDays;
+    const workout = await generateTodayWorkout(program, nextIndex);
+    state.pendingWorkout = { programId: program.id, phaseKey: key, dayIndex: nextIndex, workout, completed: false };
+    await persistNow();
+    renderTodayWorkout(workout);
+  } catch (err) {
+    box.innerHTML = `<div class="empty">Couldn't generate the next workout (${err.message}). Use Regenerate to retry.</div>`;
+  }
 }
 
 // Attached once, not inside renderTodayWorkout — that function runs on every
