@@ -194,13 +194,6 @@
       <button class="secondary" id="minimumDayBtn" style="margin-top:8px; width:100%;" disabled>Not feeling it? Do the minimum</button>
     </div>
     <div id="sessionPanel" class="hidden"></div>
-
-    <div class="card">
-      <details>
-        <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Weekly review</summary>
-        <div id="weeklyReview" style="margin-top:10px;"></div>
-      </details>
-    </div>
   </section>
 
   <!-- FOOD -->
@@ -363,6 +356,22 @@
     </div>
   </section>
 
+  <!-- COACH -->
+  <section id="tab-coach" class="tab-panel hidden">
+    <div class="card">
+      <h2>Coach's note</h2>
+      <div id="coachNote" class="meta">Still gathering enough days to spot real patterns — check back once you've logged a bit more.</div>
+    </div>
+    <div class="card">
+      <h2>This week</h2>
+      <div id="weeklyReview"></div>
+    </div>
+    <div class="card">
+      <h2>Body composition</h2>
+      <div class="meta" id="bodyFatSummary">Log neck + waist with a weigh-in to get a body-fat estimate here.</div>
+    </div>
+  </section>
+
   <!-- PROGRESS -->
   <section id="tab-progress" class="tab-panel hidden">
     <div class="card">
@@ -393,7 +402,6 @@
     <div class="card">
       <h2>Weight trend</h2>
       <div id="weightChart" class="empty" style="cursor:pointer;">Log a few measurements to see a trend.</div>
-      <div class="meta" id="bodyFatSummary" style="margin-top:6px;"></div>
       <div class="meta" id="weightHistoryHint" style="margin-top:6px; cursor:pointer;"></div>
       <div id="weightHistoryList" class="hidden" style="margin-top:8px;"></div>
     </div>
@@ -500,6 +508,7 @@
 
 <nav class="tabs">
   <button class="tab-btn active" data-tab="today"><svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>Today</button>
+  <button class="tab-btn" data-tab="coach"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H8l-4 4V4z"/></svg>Coach</button>
   <button class="tab-btn" data-tab="food"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>Food</button>
   <button class="tab-btn" data-tab="progress"><svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,4 21,20 3,20"/></svg>Progress</button>
   <button class="tab-btn" data-tab="programs"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>Programs</button>
@@ -1537,6 +1546,17 @@ function renderFlagsBanner() {
       renderFlagsBanner();
     });
   });
+}
+
+// Coach's Note is the hook the future correlation engine fills with real
+// cross-signal findings (sleep/stress/alcohol vs. performance, etc). Until
+// there's enough daily check-in data to say anything evidence-backed, show
+// a plain "still gathering data" placeholder rather than leaving the card
+// blank or faking a finding.
+function renderCoachNote() {
+  const el = document.getElementById("coachNote");
+  if (!el) return;
+  el.textContent = "Still gathering enough days to spot real patterns — check back once you've logged a bit more.";
 }
 
 // Split by check-in direction instead of lumping every logged reason
@@ -3142,7 +3162,7 @@ function renderBodyFatSummary() {
   const el = document.getElementById("bodyFatSummary");
   const bf = computeBodyFatTrend();
   if (!bf) {
-    el.textContent = "";
+    el.textContent = "Log neck + waist with a weigh-in to get a body-fat estimate here.";
     if (clearFlagType("bodyFatTrend")) { persistNow(); renderFlagsBanner(); }
     return;
   }
@@ -4372,6 +4392,7 @@ async function init() {
   renderPrograms();
   renderCelebrations();
   renderFlagsBanner();
+  renderCoachNote();
   renderProgressCharts();
   renderRecentCardio();
   renderStartingLevelSettings();
