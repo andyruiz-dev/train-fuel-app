@@ -2303,6 +2303,20 @@ function phaseKeyFor(program, phase) {
   return `${program.id}:${phase?.phase}-${phase?.week_start}-${phase?.week_end}`;
 }
 
+// A generated workout is just a plain JSON snapshot (name/sets/reps strings)
+// with no live link back to the exercise library — so when the library
+// changes (an exercise renamed, merged, or removed, e.g. the bar->rings
+// conversion), anything already cached in state.pendingWorkout or
+// state.previewWorkout keeps showing the old names forever with no way for
+// the person to tell something's stale. Checked wherever a cached workout
+// would otherwise be reused as-is, and treated as stale if ANY exercise name
+// no longer matches something in the current library.
+function workoutHasStaleExercises(workout) {
+  if (!workout || !workout.exercises || !workout.exercises.length) return false;
+  const currentNames = new Set(exercises.map(e => e.name.toLowerCase()));
+  return workout.exercises.some(e => !currentNames.has((e.name || "").toLowerCase()));
+}
+
 // The "current" workout persists until you log a result for it — training
 // cadence is driven by completion, not calendar days, so rest days (or
 // skipped days) never throw the rotation out of sync.
@@ -2317,9 +2331,10 @@ async function ensureWorkoutReady(program, forceDayIndex) {
   const { phase, weekNumber } = currentPhaseFor(program);
   const key = phaseKeyFor(program, phase);
 
-  if (state.pendingWorkout && state.pendingWorkout.programId === program.id &&
-      state.pendingWorkout.phaseKey === key && !state.pendingWorkout.completed) {
-    renderTodayWorkout(state.pendingWorkout.workout);
+  const cached = state.pendingWorkout;
+  const hasMatchingCache = cached && cached.programId === program.id && cached.phaseKey === key;
+  if (hasMatchingCache && !cached.completed && !workoutHasStaleExercises(cached.workout)) {
+    renderTodayWorkout(cached.workout);
     return;
   }
 
@@ -2328,9 +2343,12 @@ async function ensureWorkoutReady(program, forceDayIndex) {
   try {
     const totalDays = (phase?.days || []).length || 1;
     let nextIndex = typeof forceDayIndex === "number" ? ((forceDayIndex % totalDays) + totalDays) % totalDays : 0;
-    if (state.pendingWorkout && state.pendingWorkout.programId === program.id &&
-        state.pendingWorkout.phaseKey === key && state.pendingWorkout.completed) {
-      nextIndex = (state.pendingWorkout.dayIndex + 1) % totalDays;
+    if (hasMatchingCache && cached.completed) {
+      nextIndex = (cached.dayIndex + 1) % totalDays;
+    } else if (hasMatchingCache && !cached.completed) {
+      // Stale cache for a day not yet done — regenerate the same slot,
+      // don't advance the rotation just because the old copy aged out.
+      nextIndex = cached.dayIndex;
     }
     const workout = await generateTodayWorkout(program, nextIndex);
     state.pendingWorkout = { programId: program.id, phaseKey: key, dayIndex: nextIndex, workout, completed: false };
@@ -2722,7 +2740,8 @@ function renderTodayWorkout(workout) {
         // possibly different, generation.
         const cached = state.previewWorkout;
         const hasCachedPreview = cached && cached.programId === activeProgram.id &&
-          cached.phaseKey === previewPhaseKey && cached.dayIndex === previewNextIndex;
+          cached.phaseKey === previewPhaseKey && cached.dayIndex === previewNextIndex &&
+          !workoutHasStaleExercises(cached.workout);
         if (hasCachedPreview) {
           previewAreaHtml = `<div id="nextDayPreviewBox" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">${previewExerciseListHtml(cached.workout)}</div>`;
         } else {
@@ -2855,7 +2874,8 @@ async function skipRestDay() {
     // what you previewed with "Preview exercises" is exactly what you
     // start, not a second, possibly different, generation.
     const cached = state.previewWorkout;
-    const hasCached = cached && cached.programId === program.id && cached.phaseKey === key && cached.dayIndex === nextIndex;
+    const hasCached = cached && cached.programId === program.id && cached.phaseKey === key &&
+      cached.dayIndex === nextIndex && !workoutHasStaleExercises(cached.workout);
     let workout;
     if (hasCached) {
       workout = cached.workout;
