@@ -155,7 +155,6 @@
 
   <!-- TODAY -->
   <section id="tab-today" class="tab-panel hidden">
-    <div id="flagsBanner" class="hidden"></div>
     <div id="coachTeaser" class="hidden"></div>
     <div id="welcomeBackBanner" class="hidden"></div>
     <div id="celebrationBanner" class="hidden"></div>
@@ -367,6 +366,8 @@
   <!-- COACH -->
   <section id="tab-coach" class="tab-panel">
     <div id="startHereBanner" class="hidden"></div>
+    <div id="morningChecklist" class="hidden"></div>
+    <div id="flagsBanner" class="hidden"></div>
     <div class="card">
       <h2>Coach's note</h2>
       <div id="coachNote" class="meta">Still gathering enough days to spot real patterns — check back once you've logged a bit more.</div>
@@ -409,7 +410,7 @@
       <details id="dailyCheckinDetails">
         <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Daily check-in</summary>
         <div style="margin-top:10px;">
-          <p class="meta" style="margin-top:0;">Optional — quick signal so the Coach can spot patterns over time.</p>
+          <p class="meta" style="margin-top:0;">Optional — quick signal so the Coach can spot patterns over time. Separate from the "what happened?" prompt that can pop up after an unusual weigh-in above — this one's for logging how you're doing every day, swing or no swing.</p>
           <div class="meta" style="margin-top:10px; margin-bottom:4px;">Energy today</div>
           <div class="row" id="checkinEnergyChips">
             <div class="chip" data-energy="low">Low</div>
@@ -505,15 +506,20 @@
       <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
         Sets where a fresh, never-trained muscle group begins (beginner/intermediate/advanced).
         Once you've logged a workout for a group, this no longer touches it — auto-progression
-        from your rep ranges takes over from there.
+        from your rep ranges takes over from there. Push and pull are split into "horizontal"
+        and "vertical" because they're trained as separate progressions: horizontal push/pull
+        is push-ups and rows, vertical push/pull is overhead presses and pull-ups — set each
+        independently.
       </p>
       <div id="startingLevelSettings"></div>
     </div>
     <div class="card">
       <h2>Ring strap setting (push)</h2>
       <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
-        Independent from the level above — this tracks how horizontal your
-        ring push-ups are set to (lower number = more horizontal = harder).
+        Only matters if you're training ring push exercises (ring push-ups,
+        ring dips) — skip this otherwise. It tracks how horizontal your ring
+        push-ups are set to (lower number = more horizontal = harder),
+        separate from the beginner/intermediate/advanced level above.
         Auto-adjusts by 0.5 after any workout that includes a ring push
         exercise: hit max reps and it recommends one notch lower next time;
         miss and it backs off one notch higher. Push-only — pull's path to a
@@ -1646,7 +1652,7 @@ function renderFlagsBanner() {
   const el = document.getElementById("flagsBanner");
   if (!el) return;
   const unacked = (state.flags || []).filter(f => !f.acknowledged);
-  if (!unacked.length) { el.classList.add("hidden"); el.innerHTML = ""; return; }
+  if (!unacked.length) { el.classList.add("hidden"); el.innerHTML = ""; renderMorningChecklist(); return; }
   el.classList.remove("hidden");
   el.innerHTML = `
     <div class="card" style="border-left-color:var(--danger);">
@@ -1665,6 +1671,7 @@ function renderFlagsBanner() {
       renderFlagsBanner();
     });
   });
+  renderMorningChecklist();
 }
 
 // Daily check-in: a lightweight, decoupled-from-weigh-ins log of energy +
@@ -1704,6 +1711,7 @@ function renderDailyCheckin() {
   // every morning, which read as cluttered rather than collapsed.)
   const details = document.getElementById("dailyCheckinDetails");
   if (details) details.open = false;
+  renderMorningChecklist();
 }
 
 // Same collapsed-by-default treatment for the weigh-in card.
@@ -1908,6 +1916,53 @@ function renderStartHereBanner() {
   });
 }
 
+// A single "what's left to do this morning" checklist at the top of Coach —
+// the tab Andy actually opens first thing, per his stated routine (weigh in,
+// then check in, then see his day). Before this, the same three things
+// (weigh-in, daily check-in, any flags needing a "Reviewed") were three
+// separate collapsed cards you had to already know to check — nothing
+// prompted for them as a set. Hides entirely once nothing's left for today,
+// rather than sitting there as a permanent "all done" fixture.
+function renderMorningChecklist() {
+  const el = document.getElementById("morningChecklist");
+  if (!el) return;
+  const today = localDateStr();
+  const weighInPending = !(state.measurements || []).some(m => m.date === today);
+  const checkinPending = !(state.dailyCheckins || []).some(c => c.date === today);
+  const flagCount = (state.flags || []).filter(f => !f.acknowledged).length;
+
+  if (!weighInPending && !checkinPending && !flagCount) {
+    el.classList.add("hidden");
+    el.innerHTML = "";
+    return;
+  }
+
+  const rows = [];
+  if (weighInPending) rows.push({ id: "clWeighIn", label: "Log weight" });
+  if (checkinPending) rows.push({ id: "clCheckin", label: "Daily check-in" });
+  if (flagCount) rows.push({ id: "clFlags", label: `${flagCount} flag${flagCount === 1 ? "" : "s"} to review` });
+
+  el.classList.remove("hidden");
+  el.innerHTML = `
+    <div class="card" style="border-left-color:var(--accent);">
+      <div class="meta" style="font-weight:600; color:var(--text); margin-bottom:6px;">Today</div>
+      ${rows.map(r => `<div class="meta" id="${r.id}" style="cursor:pointer; padding:4px 0;">○ ${r.label}</div>`).join("")}
+    </div>`;
+
+  const goTo = (targetId, open) => {
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    if (open && "open" in target) target.open = true;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  const weighInRow = document.getElementById("clWeighIn");
+  if (weighInRow) weighInRow.addEventListener("click", () => goTo("weighInDetails", true));
+  const checkinRow = document.getElementById("clCheckin");
+  if (checkinRow) checkinRow.addEventListener("click", () => goTo("dailyCheckinDetails", true));
+  const flagsRow = document.getElementById("clFlags");
+  if (flagsRow) flagsRow.addEventListener("click", () => goTo("flagsBanner", false));
+}
+
 function renderCoachNote() {
   const el = document.getElementById("coachNote");
   if (!el) return;
@@ -2103,7 +2158,8 @@ function renderWeeklyReview() {
         <div class="meta" style="margin-top:6px;">${c.reason} (${c.count})${c.suggestion ? ` — ${c.suggestion}` : ""}</div>
       `).join("")}
     ` : ""}
-    <div class="row" style="margin-top:10px;">
+    <div class="meta" style="margin-top:10px;">Behind on your plan? Repeat this week. Ahead of schedule? Advance a week. (Doesn't change your program start date — just this week's number.)</div>
+    <div class="row" style="margin-top:6px;">
       <button class="secondary" id="repeatWeekBtn" style="flex:1;">Repeat this week</button>
       <button class="secondary" id="advanceWeekBtn" style="flex:1;">Advance a week</button>
     </div>
@@ -3745,6 +3801,7 @@ function renderProgressCharts() {
   renderWeightHistoryList();
   renderRecoveryStatus();
   renderReasonPatterns();
+  renderMorningChecklist();
 
   const logs = state.logs || [];
   const byWeek = {};
