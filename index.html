@@ -1631,14 +1631,21 @@ document.getElementById("saveDailyCheckinBtn").addEventListener("click", async (
 });
 
 // ---- Coach correlation engine ----
-// Joins daily check-ins (energy + reason tags) against same-day workout and
-// food logs to find real patterns, in the spirit of WHOOP Journal / Built
-// With Science+: "associated with," never "caused by"; every finding shows
-// its entry counts rather than acting like a black-box verdict; and the
-// evidence bar is a flat minimum-group-size (3 days with the tag, 3 without
-// it) rather than a fixed lookback window, since logging is sparser here
-// than on a wearable — all history counts, not just the last 90 days.
+// Joins daily check-ins (energy + reason tags) against workout and food
+// logs — same-day AND next-day — to find real patterns, in the spirit of
+// WHOOP Journal / Built With Science+: "associated with," never "caused
+// by"; every finding shows its entry counts rather than acting like a
+// black-box verdict; and the evidence bar is a flat minimum-group-size (3
+// days with the tag, 3 without it) rather than a fixed lookback window,
+// since logging is sparser here than on a wearable — all history counts,
+// not just the last 90 days.
 const COACH_MIN_GROUP = 3;
+
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + "T00:00:00");
+  d.setDate(d.getDate() + n);
+  return localDateStr(d);
+}
 
 function workoutMissedRateForDate(dateStr) {
   const dayLogs = (state.logs || []).filter(l => localDateStr(new Date(l.date)) === dateStr);
@@ -1653,6 +1660,22 @@ function proteinHitForDate(dateStr) {
   if (!target) return null;
   const totalProtein = foods.reduce((a, f) => a + (f.protein || 0), 0);
   return totalProtein >= target * 0.9 ? 1 : 0;
+}
+
+// Energy as an OUTCOME (not just a signal) — this is what actually answers
+// "was my low energy tied to nutrition" the direction you asked about: a
+// reason tag or missed protein on day X predicting low energy on day X (or
+// X+1), rather than only the reverse (low energy predicting worse logging).
+function lowEnergyForDate(dateStr) {
+  const c = (state.dailyCheckins || []).find(x => x.date === dateStr);
+  if (!c || !c.energy) return null;
+  return c.energy === "low" ? 1 : 0;
+}
+
+function hasAnyLogOnDate(dateStr) {
+  const workoutDay = (state.logs || []).some(l => localDateStr(new Date(l.date)) === dateStr);
+  const foodDay = foodLogsForDate(dateStr).length > 0;
+  return workoutDay || foodDay;
 }
 
 // Splits all logged check-ins into "has this signal" / "doesn't" groups for
@@ -1670,6 +1693,29 @@ function compareCheckinGroups(checkins, matchFn, outcomeFn) {
   return { withAvg: avg(withGroup), withoutAvg: avg(withoutGroup), nWith: withGroup.length, nWithout: withoutGroup.length };
 }
 
+// Specifically watches for your documented real relapse pattern — travel or
+// a stressful stretch leading to a multi-day logging gap — rather than
+// relying on the generic tag/outcome comparisons above to happen to notice
+// it. Needs at least 3 Traveling/Stress-tagged days in history, and only
+// fires when at least half of those were followed by 2+ silent days in the
+// next 3, so a single rough week doesn't trigger it.
+function computeRelapseRisk() {
+  const taggedDates = (state.dailyCheckins || [])
+    .filter(c => (c.tags || []).some(t => t === "Traveling" || t === "Stress"))
+    .map(c => c.date);
+  if (taggedDates.length < COACH_MIN_GROUP) return null;
+
+  let gapFollowCount = 0;
+  taggedDates.forEach(d => {
+    const silentDays = [1, 2, 3].filter(n => !hasAnyLogOnDate(addDays(d, n))).length;
+    if (silentDays >= 2) gapFollowCount++;
+  });
+
+  const rate = gapFollowCount / taggedDates.length;
+  if (rate < 0.5) return null;
+  return { rate, n: taggedDates.length, gapFollowCount };
+}
+
 function computeCoachInsights() {
   const checkins = (state.dailyCheckins || []).filter(c => (c.tags && c.tags.length) || c.energy);
   const found = [];
@@ -1682,18 +1728,38 @@ function computeCoachInsights() {
     const withPct = Math.round(r.withAvg * 100);
     const withoutPct = Math.round(r.withoutAvg * 100);
     const direction = diff > 0 ? "higher" : "lower";
+    // Reuse the same physiological one-liners already written for the
+    // weigh-in check-in reasons, so a finding reads as an explanation, not
+    // just a bare statistic.
+    const why = REASON_SUGGESTIONS[label] ? ` ${REASON_SUGGESTIONS[label]}` : "";
     found.push({
       strength: Math.abs(diff) * Math.min(r.nWith, r.nWithout),
-      text: `${label} is associated with a ${direction} rate of ${outcomeNoun} (${withPct}% vs ${withoutPct}% on days without it — based on ${r.nWith} vs ${r.nWithout} logged days).`,
+      text: `${label} is associated with a ${direction} rate of ${outcomeNoun} (${withPct}% vs ${withoutPct}% on days without it — based on ${r.nWith} vs ${r.nWithout} logged days).${why}`,
     });
   }
 
+  const lagged = (outcomeFn, lagDays) => (dateStr) => outcomeFn(addDays(dateStr, lagDays));
+
   ALL_CHECKIN_TAGS.forEach(tag => {
-    addInsight(tag, c => (c.tags || []).includes(tag), workoutMissedRateForDate, "missed reps on logged workouts", 0.15);
-    addInsight(tag, c => (c.tags || []).includes(tag), proteinHitForDate, "hitting your protein target", 0.2);
+    const matchFn = c => (c.tags || []).includes(tag);
+    addInsight(tag, matchFn, workoutMissedRateForDate, "missed reps on logged workouts", 0.15);
+    addInsight(tag, matchFn, proteinHitForDate, "hitting your protein target", 0.2);
+    addInsight(tag, matchFn, lagged(workoutMissedRateForDate, 1), "missed reps on the following day's workout", 0.15);
+    addInsight(tag, matchFn, lagged(lowEnergyForDate, 1), "low energy the following day", 0.2);
   });
   addInsight("Low energy", c => c.energy === "low", workoutMissedRateForDate, "missed reps on logged workouts", 0.15);
   addInsight("Low energy", c => c.energy === "low", proteinHitForDate, "hitting your protein target", 0.2);
+
+  // The relapse-pattern check is ranked above anything the generic engine
+  // finds — it's tied to a struggle you've described directly, not a
+  // pattern-matched coincidence, so it deserves top billing when it fires.
+  const relapse = computeRelapseRisk();
+  if (relapse) {
+    found.push({
+      strength: Infinity,
+      text: `Travel or stress days have led to a 2+ day logging gap in the days right after ${Math.round(relapse.rate * 100)}% of the time (${relapse.gapFollowCount} of ${relapse.n} instances) — this looks like the pattern that's derailed your routine before. Worth lining up a lighter fallback plan before the next trip or crunch period.`,
+    });
+  }
 
   found.sort((a, b) => b.strength - a.strength);
   return { totalCheckins: checkins.length, insights: found.slice(0, 3).map(f => f.text) };
