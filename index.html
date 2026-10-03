@@ -154,26 +154,11 @@
 <main>
 
   <!-- TODAY -->
-  <section id="tab-today" class="tab-panel">
+  <section id="tab-today" class="tab-panel hidden">
     <div id="flagsBanner" class="hidden"></div>
     <div id="coachTeaser" class="hidden"></div>
     <div id="welcomeBackBanner" class="hidden"></div>
     <div id="celebrationBanner" class="hidden"></div>
-
-    <div class="card" id="dailyCheckinCard">
-      <h2>Daily check-in</h2>
-      <p class="meta" style="margin-top:0;">Optional — quick signal so the Coach can spot patterns over time.</p>
-      <div class="meta" style="margin-top:10px; margin-bottom:4px;">Energy today</div>
-      <div class="row" id="checkinEnergyChips">
-        <div class="chip" data-energy="low">Low</div>
-        <div class="chip" data-energy="normal">Normal</div>
-        <div class="chip" data-energy="high">High</div>
-      </div>
-      <div class="meta" style="margin-top:10px; margin-bottom:4px;">Anything going on? (optional, pick any)</div>
-      <div class="row" id="checkinTagChips" style="flex-wrap:wrap;"></div>
-      <button class="secondary" id="saveDailyCheckinBtn" style="margin-top:10px; width:100%;">Save check-in</button>
-      <div class="meta" id="dailyCheckinSavedHint" style="margin-top:6px;"></div>
-    </div>
 
     <div class="card">
       <details class="exercise-group">
@@ -376,14 +361,62 @@
   </section>
 
   <!-- COACH -->
-  <section id="tab-coach" class="tab-panel hidden">
+  <section id="tab-coach" class="tab-panel">
     <div class="card">
       <h2>Coach's note</h2>
       <div id="coachNote" class="meta">Still gathering enough days to spot real patterns — check back once you've logged a bit more.</div>
     </div>
+
     <div class="card">
-      <h2>This week</h2>
-      <div id="weeklyReview"></div>
+      <details id="weighInDetails">
+        <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Log weight</summary>
+        <div style="margin-top:10px;">
+          <div class="row">
+            <input type="text" inputmode="decimal" id="weightInput" placeholder="Weight (lbs)" style="flex:1;">
+            <input type="date" id="measurementDateInput" style="flex:1;">
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <input type="text" inputmode="decimal" id="neckInput" placeholder="Neck (in, optional)" style="flex:1;">
+            <input type="text" inputmode="decimal" id="waistInput" placeholder="Waist (in, optional)" style="flex:1;">
+          </div>
+          <div class="meta" style="margin-top:4px;">Add neck + waist occasionally for a body-fat % estimate (Navy method) — tells a recomp (clothes fit better, scale flat) apart from an actual stall. Needs your height set once in Settings.</div>
+          <button class="secondary" id="logWeightBtn" style="margin-top:10px;">Log weight</button>
+          <div id="weightCheckInPanel" class="hidden" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+            <div class="meta" id="weightCheckInMessage" style="margin-bottom:8px;"></div>
+            <div class="row" id="weightCheckInChips"></div>
+            <div class="row" style="margin-top:10px;">
+              <button class="secondary" id="weightCheckInSaveBtn" style="flex:1;">Save</button>
+              <button class="danger-link" id="weightCheckInSkipBtn" style="flex:1;">Skip</button>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <div class="card" id="dailyCheckinCard">
+      <details id="dailyCheckinDetails">
+        <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Daily check-in</summary>
+        <div style="margin-top:10px;">
+          <p class="meta" style="margin-top:0;">Optional — quick signal so the Coach can spot patterns over time.</p>
+          <div class="meta" style="margin-top:10px; margin-bottom:4px;">Energy today</div>
+          <div class="row" id="checkinEnergyChips">
+            <div class="chip" data-energy="low">Low</div>
+            <div class="chip" data-energy="normal">Normal</div>
+            <div class="chip" data-energy="high">High</div>
+          </div>
+          <div class="meta" style="margin-top:10px; margin-bottom:4px;">Anything going on? (optional, pick any)</div>
+          <div class="row" id="checkinTagChips" style="flex-wrap:wrap;"></div>
+          <button class="secondary" id="saveDailyCheckinBtn" style="margin-top:10px; width:100%;">Save check-in</button>
+          <div class="meta" id="dailyCheckinSavedHint" style="margin-top:6px;"></div>
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">This week</summary>
+        <div id="weeklyReview" style="margin-top:10px;"></div>
+      </details>
     </div>
     <div class="card">
       <h2>Body composition</h2>
@@ -396,27 +429,6 @@
     <div class="card">
       <h2>Your journey so far</h2>
       <div id="journeyStats"></div>
-    </div>
-    <div class="card">
-      <h2>Log a measurement</h2>
-      <div class="row">
-        <input type="text" inputmode="decimal" id="weightInput" placeholder="Weight (lbs)" style="flex:1;">
-        <input type="date" id="measurementDateInput" style="flex:1;">
-      </div>
-      <div class="row" style="margin-top:8px;">
-        <input type="text" inputmode="decimal" id="neckInput" placeholder="Neck (in, optional)" style="flex:1;">
-        <input type="text" inputmode="decimal" id="waistInput" placeholder="Waist (in, optional)" style="flex:1;">
-      </div>
-      <div class="meta" style="margin-top:4px;">Add neck + waist occasionally for a body-fat % estimate (Navy method) — tells a recomp (clothes fit better, scale flat) apart from an actual stall. Needs your height set once in Settings.</div>
-      <button class="secondary" id="logWeightBtn" style="margin-top:10px;">Log weight</button>
-      <div id="weightCheckInPanel" class="hidden" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
-        <div class="meta" id="weightCheckInMessage" style="margin-bottom:8px;"></div>
-        <div class="row" id="weightCheckInChips"></div>
-        <div class="row" style="margin-top:10px;">
-          <button class="secondary" id="weightCheckInSaveBtn" style="flex:1;">Save</button>
-          <button class="danger-link" id="weightCheckInSkipBtn" style="flex:1;">Skip</button>
-        </div>
-      </div>
     </div>
     <div class="card">
       <h2>Weight trend</h2>
@@ -526,9 +538,9 @@
 </main>
 
 <nav class="tabs">
-  <button class="tab-btn active" data-tab="today"><svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>Today</button>
-  <button class="tab-btn" data-tab="coach"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H8l-4 4V4z"/></svg>Coach</button>
+  <button class="tab-btn active" data-tab="coach"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H8l-4 4V4z"/></svg>Coach</button>
   <button class="tab-btn" data-tab="food"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>Food</button>
+  <button class="tab-btn" data-tab="today"><svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>Today</button>
   <button class="tab-btn" data-tab="progress"><svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,4 21,20 3,20"/></svg>Progress</button>
 </nav>
 
@@ -1597,6 +1609,23 @@ function renderDailyCheckin() {
     chip.classList.toggle("active", activeDailyCheckinTags.has(chip.dataset.tag));
   });
   hintEl.textContent = existing ? "Saved for today — tap to update." : "";
+
+  // Collapsed once today's entry is already in, open otherwise — the morning
+  // routine (Coach tab) shouldn't stay full-length after it's done for the
+  // day, but shouldn't need a tap to open before it's done either.
+  const details = document.getElementById("dailyCheckinDetails");
+  if (details) details.open = !existing;
+}
+
+// Same auto-collapse idea for the weigh-in card: open until today's weight
+// is logged, collapsed after, so the Coach tab doesn't stay long once the
+// morning routine is actually finished.
+function renderWeighInDetailsState() {
+  const details = document.getElementById("weighInDetails");
+  if (!details) return;
+  const today = localDateStr();
+  const existing = (state.measurements || []).some(m => m.date === today);
+  details.open = !existing;
 }
 
 document.getElementById("checkinEnergyChips").addEventListener("click", (e) => {
@@ -3708,6 +3737,7 @@ document.getElementById("logWeightBtn").addEventListener("click", async () => {
     document.getElementById("weightCheckInPanel").classList.remove("hidden");
   } else {
     document.getElementById("weightCheckInPanel").classList.add("hidden");
+    renderWeighInDetailsState();
   }
 });
 
@@ -3729,10 +3759,12 @@ document.getElementById("weightCheckInSaveBtn").addEventListener("click", async 
     renderWeeklyReview();
   }
   document.getElementById("weightCheckInPanel").classList.add("hidden");
+  renderWeighInDetailsState();
 });
 
 document.getElementById("weightCheckInSkipBtn").addEventListener("click", () => {
   document.getElementById("weightCheckInPanel").classList.add("hidden");
+  renderWeighInDetailsState();
 });
 
 document.getElementById("measurementDateInput").value = localDateStr();
@@ -4248,10 +4280,10 @@ document.getElementById("programsSubNav").addEventListener("click", (e) => {
 // Persisted (not just in-memory) so that if the browser ever does reload the
 // page out from under you — a low-memory kill, backgrounding, whatever —
 // you land back on the tab you were actually using instead of always
-// bouncing to Today. Doesn't recover in-progress unsaved work (a photo scan
+// bouncing to Coach. Doesn't recover in-progress unsaved work (a photo scan
 // mid-analysis, say), just avoids compounding that with a confusing jump.
 const LS_LAST_TAB_KEY = "trainFuelLastTab";
-let lastActiveTab = localStorage.getItem(LS_LAST_TAB_KEY) || "today";
+let lastActiveTab = localStorage.getItem(LS_LAST_TAB_KEY) || "coach";
 
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -4265,11 +4297,12 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
     if (btn.dataset.tab === "today") {
       const active = programs.find(p => p.id === state.activeProgramId);
       if (active) ensureWorkoutReady(active);
-      renderDailyCheckin();
       renderCoachTeaser();
     }
     if (btn.dataset.tab === "coach") {
       renderCoachNote();
+      renderDailyCheckin();
+      renderWeighInDetailsState();
     }
   });
 });
@@ -4654,6 +4687,7 @@ async function init() {
   renderCoachNote();
   renderCoachTeaser();
   renderDailyCheckin();
+  renderWeighInDetailsState();
   renderProgressCharts();
   renderRecentCardio();
   renderStartingLevelSettings();
@@ -4672,8 +4706,8 @@ async function init() {
   syncTravelModeLabel();
   // Restore whichever tab was open before, now that all panels' content is
   // actually populated — done here rather than at top-level so a restored
-  // Food/Progress/Programs tab isn't briefly empty while init() is still running.
-  if (lastActiveTab !== "today") {
+  // Food/Today/Progress tab isn't briefly empty while init() is still running.
+  if (lastActiveTab !== "coach") {
     const restoreBtn = document.querySelector(`.tab-btn[data-tab="${lastActiveTab}"]`);
     if (restoreBtn) restoreBtn.click();
   }
