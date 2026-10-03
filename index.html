@@ -2440,7 +2440,18 @@ function renderTodayWorkout(workout) {
       const totalDays = (phase?.days || []).length || 1;
       const nextDay = phase?.days?.[(state.pendingWorkout.dayIndex + 1) % totalDays];
       if (nextDay) {
-        nextUpHtml = `<div class="meta" style="margin-top:8px;">Next up: ${nextDay.day}</div>`;
+        // The actual exercise picks only exist once generateTodayWorkout
+        // (an AI call) runs for that day — which only happens when you
+        // commit to it. But the day's slot breakdown (which muscle groups,
+        // how many sets/reps each) comes straight from the phase template,
+        // already in memory, so it can show a real preview of what's
+        // queued up without generating, persisting, or touching dayIndex /
+        // pendingWorkout at all — nothing about the week's rotation moves
+        // just from looking.
+        const slotPreview = (nextDay.slots || []).length
+          ? (nextDay.slots || []).map(s => `${s.muscle_group} ${s.sets}×${s.reps}`).join(" · ")
+          : "Rest";
+        nextUpHtml = `<div class="meta" style="margin-top:8px;">Next up: ${nextDay.day}</div><div class="meta" style="margin-top:2px;">${slotPreview}</div>`;
         // The rotation is completion-driven, not calendar-driven — this rest
         // slot comes up on a fixed cycle regardless of how many calendar
         // rest days already happened in between, so there's no way from the
