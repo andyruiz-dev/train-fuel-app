@@ -616,7 +616,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 09:50 CT";
+const APP_BUILD = "2026-10-04 10:05 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -4808,7 +4808,29 @@ function renderWeightHistoryList() {
     const prior = measurements[i + 1];
     const delta = prior ? m.weight - prior.weight : null;
     const deltaStr = delta == null ? "" : ` · ${delta > 0 ? "+" : ""}${delta.toFixed(1)}lb`;
-    return `<div class="list-item"><div class="name">${m.date}</div><div class="meta">${m.weight}lb${deltaStr}</div></div>`;
+    const bfStr = typeof m.bodyFatPct === "number" ? ` · ${m.bodyFatPct}% BF` : "";
+    const neckStr = typeof m.neck === "number" ? `${m.neck}in neck` : "";
+    const waistStr = typeof m.waist === "number" ? `${m.waist}in waist` : "";
+    const measureStr = [neckStr, waistStr].filter(Boolean).join(", ");
+    return `
+      <div class="list-item" style="flex-direction:column; align-items:stretch;">
+        <div class="name">${m.date}</div>
+        <div class="meta">${m.weight}lb${deltaStr}${bfStr}${measureStr ? " · " + measureStr : ""}</div>
+        <div class="row" style="margin-top:8px;">
+          <button class="danger-link" style="color:var(--accent);" data-edit-measure="${m.date}">Edit</button>
+          <button class="danger-link" style="margin-left:auto;" data-del-measure="${m.date}">Delete</button>
+        </div>
+        <div class="hidden" data-measure-edit-panel="${m.date}" style="margin-top:8px;">
+          <div class="row">
+            <div class="field"><div class="field-label">Weight (lb)</div><input type="text" inputmode="decimal" data-mfield="weight" value="${m.weight}"></div>
+            <div class="field"><div class="field-label">Neck (in)</div><input type="text" inputmode="decimal" data-mfield="neck" value="${m.neck ?? ""}" placeholder="optional"></div>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <div class="field"><div class="field-label">Waist (in)</div><input type="text" inputmode="decimal" data-mfield="waist" value="${m.waist ?? ""}" placeholder="optional"></div>
+          </div>
+          <button class="primary" data-save-measure="${m.date}" style="margin-top:10px;">Save changes</button>
+        </div>
+      </div>`;
   }).join("");
 }
 function toggleWeightHistory() {
@@ -4817,6 +4839,55 @@ function toggleWeightHistory() {
 }
 document.getElementById("weightChart").addEventListener("click", toggleWeightHistory);
 document.getElementById("weightHistoryHint").addEventListener("click", toggleWeightHistory);
+
+// Edit/delete a logged measurement entry in place, keyed by its date (there's
+// at most one entry per date — see the dedupe in the log-weight handler).
+// Editing recomputes bodyFatPct from the edited waist/height, or drops it if
+// waist is cleared, so a corrected entry doesn't keep a stale estimate.
+document.getElementById("weightHistoryList").addEventListener("click", async (e) => {
+  const editDate = e.target.dataset.editMeasure;
+  if (editDate !== undefined) {
+    document.querySelectorAll("[data-measure-edit-panel]").forEach(p => {
+      if (p.dataset.measureEditPanel !== editDate) p.classList.add("hidden");
+    });
+    document.querySelector(`[data-measure-edit-panel="${editDate}"]`).classList.toggle("hidden");
+    return;
+  }
+  const saveDate = e.target.dataset.saveMeasure;
+  if (saveDate !== undefined) {
+    const panel = document.querySelector(`[data-measure-edit-panel="${saveDate}"]`);
+    const idx = state.measurements.findIndex(m => m.date === saveDate);
+    if (idx === -1) return;
+    const getVal = (field) => panel.querySelector(`[data-mfield="${field}"]`).value;
+    const weightVal = parseFloat(getVal("weight"));
+    const neckVal = parseFloat(getVal("neck"));
+    const waistVal = parseFloat(getVal("waist"));
+    const entry = { ...state.measurements[idx] };
+    if (!isNaN(weightVal)) entry.weight = weightVal;
+    if (!isNaN(neckVal)) entry.neck = neckVal; else delete entry.neck;
+    if (!isNaN(waistVal)) {
+      entry.waist = waistVal;
+      const heightIn = state.settings.heightInches;
+      const bf = heightIn ? relativeFatMassPct(waistVal, heightIn) : null;
+      if (bf != null) entry.bodyFatPct = Math.round(bf * 10) / 10;
+      else delete entry.bodyFatPct;
+    } else {
+      delete entry.waist;
+      delete entry.bodyFatPct;
+    }
+    state.measurements[idx] = entry;
+    await persistNow();
+    renderProgressCharts();
+    renderCelebrations();
+    return;
+  }
+  const delDate = e.target.dataset.delMeasure;
+  if (delDate === undefined) return;
+  state.measurements = state.measurements.filter(m => m.date !== delDate);
+  await persistNow();
+  renderProgressCharts();
+  renderCelebrations();
+});
 
 // Shares computeWeightTrend() with computeMacroSuggestion (same regression,
 // same flagged-day exclusion) so the two never disagree about what your
