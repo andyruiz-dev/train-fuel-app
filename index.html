@@ -613,7 +613,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 06:10 CT";
+const APP_BUILD = "2026-10-04 06:20 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3500,6 +3500,22 @@ function advanceSkillRepSet(skill) {
   renderSkillTimerDisplay(skill);
 }
 
+// General-strength baseline worth having before starting each skill line.
+// Overcoming Gravity itself doesn't hand out a tidy "do N reps" entry test —
+// its own progressions are gated by hold-time/rep thresholds *within* the
+// ladder (exactly what the rung/streak system above already does). These
+// are the baseline numbers the OG-influenced calisthenics community
+// commonly trains to before starting each line, shown as a readiness
+// reference only — nothing here blocks or unlocks anything.
+const SKILL_PREREQUISITES = {
+  handstand: "Comfortable wall handstand hold (~30s) and solid overhead pressing (10 pike push-ups) — handstand readiness is mostly wrist/shoulder conditioning, not a pull/push-up max.",
+  lsit: "Tucked L-sit or ring support hold for 20s+, plus baseline core/hip-flexor control.",
+  planche: "~15-20 strict push-ups and a comfortable straight-arm support hold — planche leans hardest on pushing strength and wrist conditioning.",
+  backLever: "Dead hang 30s+ and 5-8 strict pull-ups — back lever starts from a German hang, so comfortable straight-arm hanging matters most.",
+  frontLever: "8-10 strict pull-ups and a solid tucked hold already — front lever leans on pulling strength more than any other skill here.",
+  muscleUp: "8-10 strict pull-ups AND 8-10 dips, both with control — muscle-up needs both halves of that strength before the transition is worth drilling.",
+};
+
 function renderSkillPractice() {
   const container = document.getElementById("skillPracticeList");
   if (!container) return;
@@ -3517,6 +3533,7 @@ function renderSkillPractice() {
       <div class="list-item" style="flex-direction:column; align-items:stretch;">
         <div class="name">${SKILL_DISPLAY_NAMES[skill]} — rung ${rung}${atMax ? " (mastered)" : ` of ${maxRung}`}</div>
         <div class="meta">${current.name}${atMax ? "" : ` · ${streak}/${REQUIRED_SKILL_STREAK} sessions toward next rung`}</div>
+        ${rung === 1 ? `<div class="meta" style="margin-top:2px; opacity:.75;">Suggested base strength: ${SKILL_PREREQUISITES[skill]}</div>` : ""}
         ${atMax ? "" : `<div class="meta" style="margin-top:2px;">${prescription.text}</div>`}
         ${howToHtml(`skill-${skill}`, current.name, current.cue || "")}
         ${atMax
