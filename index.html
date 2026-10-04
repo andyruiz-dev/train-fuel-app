@@ -599,7 +599,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 04:10 CT";
+const APP_BUILD = "2026-10-04 04:25 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -2614,6 +2614,44 @@ function currentPhaseFor(program) {
   return { phase, weekNumber };
 }
 
+// Hard guarantee layer on top of the AI's warmup/cooldown picks: the prompt
+// already asks the AI to vary from last session, but that's a request, not
+// a rule, and it was ignored often enough in practice (the AI defaults to
+// the same "textbook" item for a given muscle group) that a code-level
+// check is needed too — the same pattern already used for swap fallback.
+// Only overrides a pick if a genuinely unused alternative exists; if the
+// whole mobility pool was already used last session, the repeat is allowed
+// rather than forced into something worse.
+function enforceWarmupCooldownVariety(result) {
+  const lastNames = new Set((state.lastWarmupCooldownNames || []).map(n => n.toLowerCase()));
+  if (!lastNames.size) return result;
+  const mobilityPool = exercises.filter(e => e.muscle_group === "mobility");
+  const usedThisWorkout = new Set();
+  const fix = (item) => {
+    if (!item || !item.name) return item;
+    const nameLower = item.name.toLowerCase();
+    if (!lastNames.has(nameLower)) {
+      usedThisWorkout.add(nameLower);
+      return item;
+    }
+    const alt = mobilityPool.find(
+      (e) => !lastNames.has(e.name.toLowerCase()) && !usedThisWorkout.has(e.name.toLowerCase())
+    );
+    if (!alt) {
+      usedThisWorkout.add(nameLower);
+      return item; // no unused alternative left — allow the repeat
+    }
+    usedThisWorkout.add(alt.name.toLowerCase());
+    return {
+      name: alt.name,
+      detail: item.detail || (isHoldExercise(alt.id) ? "hold 20-30s" : "30-45s"),
+    };
+  };
+  result.warmup = (result.warmup || []).map(fix);
+  result.cooldown = (result.cooldown || []).map(fix);
+  return result;
+}
+
 async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
   const recentFromHistory = (state.logs || []).slice(-15).map(l => l.exercise);
   const recentNames = [...new Set([...avoidNames, ...recentFromHistory])].join(", ");
@@ -2760,7 +2798,11 @@ superset_group is a letter shared by paired exercises, or null if standalone.`;
     body: JSON.stringify({ system, prompt, max_tokens: 2000 }),
   });
   const text = data.content?.[0]?.text || "{}";
-  const result = extractJson(text);
+  // enforceWarmupCooldownVariety is the hard backstop: the prompt above asks
+  // the AI to vary from last session, but that's advisory, so this forces a
+  // genuinely different pick when one is available rather than trusting the
+  // AI followed the instruction.
+  const result = enforceWarmupCooldownVariety(extractJson(text));
   // Remembered so the NEXT generation's prompt (above) can nudge away from
   // repeating the same warmup/cool-down items — callers already persist
   // state right after calling this, so no separate save needed here.
