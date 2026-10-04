@@ -1167,6 +1167,7 @@ async function loadExercises() {
   if (WORKER_URL) {
     try {
       exercises = await apiFetch("/api/exercises", { method: "GET" });
+      const builtinIds = new Set(BUILTIN_EXERCISES.map(e => e.id));
       const existingById = new Map(exercises.map(e => [e.id, e]));
       const toSync = BUILTIN_EXERCISES.filter(e => {
         const existing = existingById.get(e.id);
@@ -1175,6 +1176,17 @@ async function loadExercises() {
         return existing.name !== e.name || existing.muscle_group !== e.muscle_group ||
                existing.equipment !== e.equipment || existing.cue !== e.cue;
       });
+      // The D1-backed store is additive by default — syncing above only
+      // ever inserts/updates rows for ids still in BUILTIN_EXERCISES, so an
+      // exercise renamed or removed from the library in code (e.g. the
+      // bar->rings conversion) left its old row sitting in D1 forever,
+      // still served by every GET. That's how a stale "Pull-up"/"Toes to
+      // bar" kept reappearing in newly-generated workouts no matter how
+      // many times the cache was cleared or the library edited — the data
+      // itself was never pruned. Only ever prunes rows tagged source
+      // "builtin" (never a person's own custom exercises) whose id no
+      // longer exists in the current BUILTIN_EXERCISES.
+      const toPrune = exercises.filter(e => e.source === "builtin" && !builtinIds.has(e.id));
       for (const ex of toSync) {
         await apiFetch("/api/exercises", {
           method: "POST",
@@ -1182,7 +1194,10 @@ async function loadExercises() {
           body: JSON.stringify({ ...ex, source: "builtin" }),
         });
       }
-      if (toSync.length) exercises = await apiFetch("/api/exercises", { method: "GET" });
+      for (const ex of toPrune) {
+        await apiFetch("/api/exercises/" + ex.id, { method: "DELETE" });
+      }
+      if (toSync.length || toPrune.length) exercises = await apiFetch("/api/exercises", { method: "GET" });
       return;
     } catch (e) { /* fall through to local */ }
   }
