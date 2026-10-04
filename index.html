@@ -599,7 +599,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 04:45 CT";
+const APP_BUILD = "2026-10-04 04:58 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1089,6 +1089,33 @@ const EXERCISE_LEVEL_MAP = {
   "parallette-shoulder-tap": 3, "parallette-l-sit-compression": 5,
   "ab-wheel-rollout-kneeling": 4, "ab-wheel-rollout-standing": 5,
 };
+
+// Genuine gymnastics-strength SKILLS — a static balance/compression hold or
+// a technique-dependent transition, not just "a harder rep exercise of the
+// same pattern." Per Steven Low's Overcoming Gravity and the r/bodyweight
+// fitness recommended-routine FAQ, these take months of dedicated, separate
+// practice and aren't something a rep-based level number can honestly
+// certify as "ready." So instead of trusting the numeric level cap for
+// these specific moves, they're excluded from auto-generation ENTIRELY,
+// regardless of level — the only way to get one into a workout is picking
+// it by hand from the manual swap panel's "Progressions" bucket, which is
+// a deliberate, self-assessed choice (exactly how skill work is actually
+// supposed to be approached), not something the app auto-assigns.
+const SKILL_EXERCISE_IDS = new Set([
+  // handstand line (freestanding balance)
+  "wall-handstand-hold", "parallette-handstand-hold", "handstand-pushup", "handstand-walk",
+  // L-sit line (compression hold)
+  "parallette-l-sit-tucked", "parallette-l-sit", "parallette-l-sit-compression",
+  "ring-lsit-tucked", "ring-lsit", "l-sit-pullup", "l-sit-archer-pullup",
+  // planche line (static press-to-horizontal hold)
+  "planche-lean", "tuck-planche",
+  // back lever / skin-the-cat line (shoulder-dependent static inversion)
+  "skin-the-cat", "tuck-back-lever", "ring-front-lever-tuck",
+  // muscle-up (technique-dependent transition, not pure strength)
+  "muscle-up-negative", "muscle-up",
+  // other balance/control skills
+  "elbow-lever", "dragon-flag",
+]);
 
 function levelOf(exerciseIdOrName) {
   // accepts either a library id or falls back to matching by name
@@ -2685,6 +2712,7 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
   // separate pass, so it composes with them instead of needing its own
   // fallback logic.
   const availableExercises = exercises.filter(e => {
+    if (SKILL_EXERCISE_IDS.has(e.id)) return false;
     if (state.travelMode && !TRAVEL_EQUIPMENT.has(e.equipment || "bodyweight")) return false;
     if (e.muscle_group === "push" || e.muscle_group === "pull") {
       const plane = planeOf(e.id, e.muscle_group);
@@ -2710,6 +2738,7 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
     planeFor[mg] = fallbackPlane;
     exercises.forEach(e => {
       if (e.muscle_group !== mg) return;
+      if (SKILL_EXERCISE_IDS.has(e.id)) return;
       if (state.travelMode && !TRAVEL_EQUIPMENT.has(e.equipment || "bodyweight")) return;
       const plane = planeOf(e.id, e.muscle_group);
       if (plane !== fallbackPlane) return;
