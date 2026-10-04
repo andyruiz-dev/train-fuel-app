@@ -616,7 +616,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 07:05 CT";
+const APP_BUILD = "2026-10-04 07:20 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -2794,6 +2794,50 @@ function currentPhaseFor(program) {
   return { phase, weekNumber };
 }
 
+// Which body region each mobility/warmup-cooldown exercise targets — lets
+// both the prompt's available list AND the variety backstop below restrict
+// picks to what's actually relevant for today's muscle groups, instead of
+// the AI's prompt instruction being the only thing keeping a leg stretch
+// off a push/pull day (a prompt instruction is a request, not a rule — see
+// enforceWarmupCooldownVariety's own history for why that distinction
+// matters here specifically: its variety-swap used to pull from the WHOLE
+// mobility pool with no region awareness, so it could silently replace a
+// correct upper-body pick with a leg stretch while fixing repetition).
+// "full" items suit any day (general spinal mobility, full-body dynamic
+// movement, cardio warmup) and any id missing from this map defaults to
+// "full" too, so an unclassified future addition never gets locked out.
+const MOBILITY_REGION_MAP = {
+  "arm-circles": "upper", "shoulder-dislocates-band": "upper", "wall-slides": "upper",
+  "scapular-wall-pushup": "upper", "doorway-chest-stretch": "upper", "thread-the-needle": "upper",
+  "wrist-circles": "upper", "wrist-flexor-stretch": "upper", "childs-pose-reach": "upper",
+  "neck-circles": "upper", "chin-tucks": "upper", "neck-lateral-stretch": "upper",
+  "prone-ytw-raise": "upper", "band-external-rotation": "upper", "wall-angels": "upper",
+  "thoracic-extension-chair": "upper", "seated-spinal-twist": "upper", "band-overhead-stretch": "upper",
+  "hip-90-90-stretch": "lower", "kneeling-hip-flexor-stretch": "lower", "ankle-circles": "lower",
+  "wall-ankle-mobilization": "lower", "deep-squat-hold": "lower", "pigeon-pose": "lower",
+  "standing-hamstring-stretch": "lower", "standing-quad-stretch": "lower", "wall-calf-stretch": "lower",
+  "figure-4-glute-stretch": "lower", "butterfly-stretch": "lower", "side-lunge-stretch": "lower",
+  "high-knees": "lower", "leg-swings-front": "lower", "leg-swings-side": "lower",
+  "calf-raises-dynamic": "lower",
+  "cat-cow": "full", "worlds-greatest-stretch": "full", "bird-dog": "full",
+  "jumping-jacks": "full", "scorpion-stretch": "full",
+};
+// Which mobility region(s) a day's slots call for — push/pull warm up and
+// cool down the shoulders/wrists/thoracic spine, legs/hinge/ruck warm up
+// and cool down the hips/ankles/hamstrings. "full" is always included since
+// those items suit any day regardless of what's being trained.
+const MUSCLE_GROUP_TO_MOBILITY_REGION = {
+  push: "upper", pull: "upper", legs: "lower", hinge: "lower", core: "full", ruck: "lower",
+};
+function allowedMobilityRegions(slots) {
+  const regions = new Set(["full"]);
+  (slots || []).forEach(s => {
+    const r = MUSCLE_GROUP_TO_MOBILITY_REGION[s.muscle_group];
+    if (r) regions.add(r);
+  });
+  return regions;
+}
+
 // Hard guarantee layer on top of the AI's warmup/cooldown picks: the prompt
 // already asks the AI to vary from last session, but that's a request, not
 // a rule, and it was ignored often enough in practice (the AI defaults to
@@ -2802,10 +2846,13 @@ function currentPhaseFor(program) {
 // Only overrides a pick if a genuinely unused alternative exists; if the
 // whole mobility pool was already used last session, the repeat is allowed
 // rather than forced into something worse.
-function enforceWarmupCooldownVariety(result) {
+function enforceWarmupCooldownVariety(result, allowedRegions) {
   const lastNames = new Set((state.lastWarmupCooldownNames || []).map(n => n.toLowerCase()));
   if (!lastNames.size) return result;
-  const mobilityPool = exercises.filter(e => e.muscle_group === "mobility");
+  const regions = allowedRegions || new Set(["upper", "lower", "full"]); // no day info — don't restrict
+  const mobilityPool = exercises.filter(e =>
+    e.muscle_group === "mobility" && regions.has(MOBILITY_REGION_MAP[e.id] || "full")
+  );
   const usedThisWorkout = new Set();
   const fix = (item) => {
     if (!item || !item.name) return item;
@@ -2912,11 +2959,16 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
         ? `, ${planeOf(e.id, e.muscle_group) === "h" ? "horizontal" : "vertical"}` : "";
       return `${e.name} (${e.muscle_group}${planeTag}, ${e.equipment || "bodyweight"}${isHoldExercise(e.id) ? ", ISOMETRIC HOLD" : ""})`;
     }).join("; ");
-  const mobilityList = exercises.filter(e => e.muscle_group === "mobility")
-    .map(e => `${e.name}${isHoldExercise(e.id) ? " (hold)" : " (dynamic)"}`).join("; ");
   const { phase, weekNumber } = currentPhaseFor(program);
   const isDeload = phase?.deload_weeks?.includes(weekNumber);
   const day = phase?.days?.[dayIndex] || phase?.days?.[0];
+  // Restrict what the AI even SEES to today's relevant body region(s) —
+  // stronger than the prompt instruction alone, same guarantee-over-request
+  // pattern used elsewhere (skill-ladder gating, the variety backstop below).
+  const todayMobilityRegions = allowedMobilityRegions(day?.slots);
+  const mobilityList = exercises.filter(e =>
+    e.muscle_group === "mobility" && todayMobilityRegions.has(MOBILITY_REGION_MAP[e.id] || "full")
+  ).map(e => `${e.name}${isHoldExercise(e.id) ? " (hold)" : " (dynamic)"}`).join("; ");
   const recoveryCaution = isLosingTooFast();
   const system = `You pick specific exercises from a provided library to fill a day's
 muscle-group slots, prioritizing variety from recent sessions while keeping the
@@ -2953,9 +3005,10 @@ each other, and don't superset more than two exercises together.
 ${isDeload ? "This is a DELOAD week for this phase — reduce sets and/or reps by roughly 30-40% across all exercises." : ""}
 ${recoveryCaution ? "RECOVERY CAUTION: recent weight loss is outpacing the target rate, a sign recovery capacity may be compromised. Favor holding at the current level's difficulty rather than the hardest variant available for that level, and avoid adding extra intensity techniques (drop sets, extra tempo/pause) this session." : ""}
 Also include a short warmup and cool-down, selected from the mobility library
-below — not invented — targeted to the SPECIFIC muscle groups in today's slots
-(not generic): a push/pull day should lean on shoulder/wrist/thoracic items, a
-legs/hinge day should lean on hip/ankle items. Warmup: 2-3 items marked
+below — not invented. The list below has ALREADY been filtered to only items
+relevant to today's muscle groups (so every item in it is a safe, on-topic
+pick), but still choose ones that make sense for the SPECIFIC slots today
+rather than generic. Warmup: 2-3 items marked
 (dynamic) from the list (~3-4 minutes total). Cool-down: 1-2 items marked
 (hold) from the list, for the muscles just worked (~2 minutes total). All
 mobility library items are already bodyweight-only, so this works anywhere
@@ -2992,7 +3045,7 @@ superset_group is a letter shared by paired exercises, or null if standalone.`;
   // the AI to vary from last session, but that's advisory, so this forces a
   // genuinely different pick when one is available rather than trusting the
   // AI followed the instruction.
-  const result = enforceWarmupCooldownVariety(extractJson(text));
+  const result = enforceWarmupCooldownVariety(extractJson(text), todayMobilityRegions);
   // Remembered so the NEXT generation's prompt (above) can nudge away from
   // repeating the same warmup/cool-down items — callers already persist
   // state right after calling this, so no separate save needed here.
