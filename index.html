@@ -479,6 +479,7 @@
 
   <!-- SETTINGS -->
   <section id="tab-settings" class="tab-panel hidden">
+    <div class="meta" style="text-align:center; margin-bottom:10px;" id="appBuildInfo"></div>
     <div class="card">
       <h2>Cloud sync</h2>
       <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
@@ -567,6 +568,7 @@
         <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="targetFat" placeholder="65"></div>
       </div>
       <button class="secondary" id="saveTargetsBtn" style="margin-top:10px;">Save targets</button>
+      <div id="macroSuggestionHistory" style="margin-top:10px;"></div>
     </div>
   </section>
 
@@ -588,6 +590,13 @@
    settings/imports survive a refresh, a cache clear, or a new
    device — the old app only had localStorage.
    ============================================================ */
+
+// Bumped by hand on every shipped change (not auto-generated — there's no
+// build step). Shown in Settings so it's possible to tell, in two seconds,
+// whether a given device is actually running a fix or just looks like it
+// might be — instead of guessing from symptoms or trusting a claim that a
+// push "should" have propagated by now.
+const APP_BUILD = "2026-10-03 19:40 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -719,6 +728,7 @@ async function loadState() {
   if (!state.settings.macroTargets) state.settings.macroTargets = { calories: 2300, protein: 160, carbs: 200, fat: 70 };
   if (typeof state.travelMode !== "boolean") state.travelMode = false;
   if (typeof state.macroSuggestionAppliedAt !== "string") state.macroSuggestionAppliedAt = "";
+  if (!Array.isArray(state.macroSuggestionHistory)) state.macroSuggestionHistory = [];
 }
 
 function saveStateLocal() {
@@ -1519,19 +1529,91 @@ function computeMacroSuggestion() {
 
 async function applyMacroSuggestion(delta) {
   const t = state.settings.macroTargets;
-  t.calories = Math.max(0, (t.calories || 0) + delta);
-  t.carbs = Math.max(0, (t.carbs || 0) + Math.round(delta / 4));
+  const caloriesBefore = t.calories || 0;
+  const carbsBefore = t.carbs || 0;
+  const carbDelta = Math.round(delta / 4);
+  t.calories = Math.max(0, caloriesBefore + delta);
+  t.carbs = Math.max(0, carbsBefore + carbDelta);
   // Record that this was acted on — computeMacroSuggestion() is purely a
   // function of the current weight trend, with no memory of its own, so
   // without this the exact same suggestion (and "Apply suggestion" button)
   // just reappeared on the very next render, letting the same ~125 cal
   // get applied repeatedly before the trend had any chance to reflect it.
   state.macroSuggestionAppliedAt = new Date().toISOString();
+  // Full before/after record, not just the delta — lets undoLastMacroSuggestion
+  // restore the exact prior numbers rather than re-deriving them, and lets a
+  // person see exactly what changed and when instead of having to trust it
+  // happened correctly. Capped at the most recent 10 so this can't grow
+  // forever.
+  state.macroSuggestionHistory = state.macroSuggestionHistory || [];
+  state.macroSuggestionHistory.push({
+    id: `macsug-${Date.now()}`,
+    appliedAt: state.macroSuggestionAppliedAt,
+    deltaCalories: delta,
+    deltaCarbs: carbDelta,
+    caloriesBefore, caloriesAfter: t.calories,
+    carbsBefore, carbsAfter: t.carbs,
+  });
+  if (state.macroSuggestionHistory.length > 10) {
+    state.macroSuggestionHistory = state.macroSuggestionHistory.slice(-10);
+  }
   await persistNow();
   renderMacroSummary();
   renderWeeklyReview();
+  renderMacroSuggestionHistory();
   document.getElementById("targetCalories").value = t.calories;
   document.getElementById("targetCarbs").value = t.carbs;
+}
+
+// Reverses the most recent logged application, restoring the exact
+// before-values rather than re-deriving them. Only offered (see
+// renderMacroSuggestionHistory) when the current targets still match that
+// entry's after-values — i.e. nothing else has touched calories/carbs since
+// — so this can't silently clobber a manual edit made after the fact.
+async function undoLastMacroSuggestion() {
+  const history = state.macroSuggestionHistory || [];
+  const last = history[history.length - 1];
+  if (!last) return;
+  const t = state.settings.macroTargets;
+  t.calories = last.caloriesBefore;
+  t.carbs = last.carbsBefore;
+  state.macroSuggestionHistory = history.slice(0, -1);
+  // Clear the cooldown too — an undone application shouldn't count as "I
+  // already decided this week," so the real suggestion can be offered again.
+  const stillHasHistory = state.macroSuggestionHistory.length > 0;
+  state.macroSuggestionAppliedAt = stillHasHistory
+    ? state.macroSuggestionHistory[state.macroSuggestionHistory.length - 1].appliedAt
+    : "";
+  await persistNow();
+  renderMacroSummary();
+  renderWeeklyReview();
+  renderMacroSuggestionHistory();
+  document.getElementById("targetCalories").value = t.calories;
+  document.getElementById("targetCarbs").value = t.carbs;
+}
+
+function renderMacroSuggestionHistory() {
+  const el = document.getElementById("macroSuggestionHistory");
+  if (!el) return;
+  const history = state.macroSuggestionHistory || [];
+  if (!history.length) { el.innerHTML = ""; return; }
+  const last = history[history.length - 1];
+  const t = state.settings.macroTargets || {};
+  // Only safe to undo if nothing has changed the targets since this entry
+  // was applied (a manual Save targets edit in between would make
+  // "restore to caloriesBefore" wrong, since caloriesBefore predates that edit).
+  const canUndo = t.calories === last.caloriesAfter && t.carbs === last.carbsAfter;
+  const fmtDelta = (n) => (n > 0 ? "+" : "") + n;
+  const when = new Date(last.appliedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  el.innerHTML = `
+    <div class="meta" style="margin-top:4px; padding-top:10px; border-top:1px solid var(--border);">
+      Last suggestion applied ${when}: ${fmtDelta(last.deltaCalories)} cal, ${fmtDelta(last.deltaCarbs)}g carbs
+      (${last.caloriesBefore} → ${last.caloriesAfter} cal).
+    </div>
+    ${canUndo ? `<button class="danger-link" id="undoMacroSuggestionBtn" style="margin-top:6px;">Undo this</button>` : `<div class="meta" style="margin-top:4px;">(Targets changed manually since — undo disabled to avoid overwriting that.)</div>`}
+  `;
+  const undoBtn = document.getElementById("undoMacroSuggestionBtn");
+  if (undoBtn) undoBtn.addEventListener("click", undoLastMacroSuggestion);
 }
 
 // A suggestion stays "already applied" for 7 days — one review cycle —
@@ -5245,6 +5327,8 @@ async function init() {
   document.getElementById("targetCarbs").value = t.carbs || "";
   document.getElementById("targetFat").value = t.fat || "";
   syncTravelModeLabel();
+  document.getElementById("appBuildInfo").textContent = `Build: ${APP_BUILD}`;
+  renderMacroSuggestionHistory();
   // Restore whichever tab was open before, now that all panels' content is
   // actually populated — done here rather than at top-level so a restored
   // Food/Today/Progress tab isn't briefly empty while init() is still running.
