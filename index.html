@@ -616,7 +616,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 06:50 CT";
+const APP_BUILD = "2026-10-04 06:58 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3416,6 +3416,17 @@ function exerciseAtSkillRung(skill, rung) {
 // there for general push/pull bucketing, even though it's rung 2 of an
 // 8-rung handstand line). Rest is deliberately long (skill work is about
 // quality of the attempt, not fatiguing the pattern).
+// Rungs that are a practiced MOTION (a kick-up, a walk-up, a distance
+// attempt) rather than a strength movement you grind reps on — "reps"
+// implies the wrong thing here (don't rush 5 of these back-to-back; walk
+// up, reset, go again with full attention each time), so these get
+// "attempts" in the UI instead. Everything else that isn't a hold (actual
+// handstand push-ups, explosive pull-ups, muscle-up negatives) is a real
+// strength rep and keeps "reps".
+const ATTEMPT_EXERCISE_IDS = new Set([
+  "wall-walk-handstand-prep", "freestanding-handstand-practice", "handstand-walk",
+]);
+
 const SKILL_REST_SECONDS = 90;
 function skillPrescription(ex, rung, maxRung) {
   const sets = 3;
@@ -3424,7 +3435,8 @@ function skillPrescription(ex, rung, maxRung) {
     const [low, high] = rung <= third ? [15, 20] : rung <= third * 2 ? [20, 35] : [30, 60];
     return { sets, isHold: true, low, high, text: `${sets} sets × ${low}-${high}s hold · rest ${SKILL_REST_SECONDS}s between sets` };
   }
-  return { sets, isHold: false, low: 3, high: 5, text: `${sets} sets × 3-5 reps · rest ${SKILL_REST_SECONDS}s between sets` };
+  const unit = ATTEMPT_EXERCISE_IDS.has(ex.id) ? "attempts" : "reps";
+  return { sets, isHold: false, low: 3, high: 5, unit, text: `${sets} sets × 3-5 ${unit} · rest ${SKILL_REST_SECONDS}s between sets` };
 }
 
 // Per-skill timer state, kept outside `state` (this is session-local
@@ -3456,7 +3468,7 @@ function renderSkillTimerDisplay(skill) {
     el.innerHTML = `Rest<br><span style="font-size:20px;">${t.secondsLeft}s</span>`;
   } else if (t.phase === "reps") {
     btn.disabled = true;
-    el.innerHTML = `Set ${t.setNum} of ${t.sets} — do your reps, then:<br><button class="chip" data-skill-set-done="${skill}" style="margin-top:6px;">Set done</button>`;
+    el.innerHTML = `Set ${t.setNum} of ${t.sets} — do your ${t.unit || "reps"}, then:<br><button class="chip" data-skill-set-done="${skill}" style="margin-top:6px;">Set done</button>`;
   } else if (t.phase === "done") {
     btn.disabled = false;
     btn.textContent = "Start again";
@@ -3514,7 +3526,7 @@ function startSkillTimer(skill) {
   } else {
     // Rep/attempt-based rungs are self-paced for the actual work — the
     // timer only runs the rest between sets, advanced by the "Set done" tap.
-    skillTimerState[skill] = { phase: "reps", setNum: 1, sets: p.sets };
+    skillTimerState[skill] = { phase: "reps", setNum: 1, sets: p.sets, unit: p.unit };
   }
   renderSkillTimerDisplay(skill);
 }
