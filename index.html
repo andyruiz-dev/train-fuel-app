@@ -599,7 +599,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 04:58 CT";
+const APP_BUILD = "2026-10-04 05:20 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -736,6 +736,16 @@ async function loadState() {
   if (typeof state.dismissedTravelModeLegend !== "boolean") state.dismissedTravelModeLegend = false;
   if (!Array.isArray(state.lastWarmupCooldownNames)) state.lastWarmupCooldownNames = [];
   if (!state.maxStreaks || typeof state.maxStreaks !== "object") state.maxStreaks = {};
+  // Skill ladders (handstand/L-sit/planche/back lever/front lever/muscle-up)
+  // always start everyone at rung 1 regardless of general push/pull level —
+  // skill readiness isn't the same thing as strength level, so it doesn't
+  // inherit a head start from it.
+  if (!state.skillLevels || typeof state.skillLevels !== "object") {
+    state.skillLevels = { ...DEFAULT_SKILL_LEVELS };
+  } else {
+    state.skillLevels = { ...DEFAULT_SKILL_LEVELS, ...state.skillLevels };
+  }
+  if (!state.skillStreaks || typeof state.skillStreaks !== "object") state.skillStreaks = {};
 }
 
 function saveStateLocal() {
@@ -799,7 +809,11 @@ const BUILTIN_EXERCISES = [
   { id: "one-arm-pushup-assisted", name: "One-arm push-up (assisted)", muscle_group: "push", equipment: "bodyweight", cue: "Other hand lightly on a ball/step for balance only." },
   { id: "pike-pushup", name: "Pike push-up", muscle_group: "push", equipment: "bodyweight", cue: "Hips high, crown of head toward floor." },
   { id: "decline-pike-pushup", name: "Decline pike push-up", muscle_group: "push", equipment: "bodyweight", cue: "Feet elevated, more load on shoulders." },
-  { id: "wall-handstand-hold", name: "Wall handstand hold", muscle_group: "push", equipment: "bodyweight", cue: "Chest or back to wall, brace and hold." },
+  { id: "wall-handstand-hold", name: "Wall handstand hold", muscle_group: "push", equipment: "bodyweight", cue: "Chest to wall, brace and hold — rung 1 of the handstand line." },
+  { id: "wall-handstand-hold-back", name: "Wall handstand hold (facing away)", muscle_group: "push", equipment: "bodyweight", cue: "Back to wall, heels light against it — less visual/tactile feedback than facing in, harder to balance." },
+  { id: "freestanding-handstand-practice", name: "Freestanding handstand kick-ups", muscle_group: "push", equipment: "bodyweight", cue: "Near a wall as a spotter, kick up to a brief freestanding balance and catch yourself before falling — attempts, not a held hold." },
+  { id: "freestanding-handstand-hold", name: "Freestanding handstand hold", muscle_group: "push", equipment: "bodyweight", cue: "No wall — small finger and wrist pressure adjustments to balance, build hold time gradually." },
+  { id: "handstand-pushup-negative", name: "Wall handstand push-up negative", muscle_group: "push", equipment: "bodyweight", cue: "Chest to wall, lower for a slow 4-5 count, then walk back down rather than pressing up — eccentric only." },
   { id: "handstand-pushup", name: "Wall handstand push-up", muscle_group: "push", equipment: "bodyweight", cue: "Chest to wall, controlled descent, press to lockout." },
   { id: "ring-pushup-easy", name: "Ring push-up (feet forward)", muscle_group: "push", equipment: "rings", cue: "Body angled upright — easier version to learn ring stability." },
   { id: "ring-pushup", name: "Ring push-up", muscle_group: "push", equipment: "rings", cue: "Elbows at 45°, turn rings out at lockout." },
@@ -872,9 +886,15 @@ const BUILTIN_EXERCISES = [
   { id: "toes-to-rings", name: "Toes to rings", muscle_group: "core", equipment: "rings", cue: "Control the swing, touch feet to the rings with control." },
   { id: "ring-plank", name: "Ring plank", muscle_group: "core", equipment: "rings", cue: "Rings add instability — brace harder than a floor plank." },
   { id: "ring-pike", name: "Ring pike", muscle_group: "core", equipment: "rings", cue: "Feet in rings, pike hips up keeping legs straight." },
-  { id: "ring-lsit-tucked", name: "Ring L-sit (tucked)", muscle_group: "core", equipment: "rings", cue: "Knees tucked to chest — easier lever than full L-sit." },
+  { id: "ring-lsit-tucked", name: "Ring L-sit (tucked)", muscle_group: "core", equipment: "rings", cue: "Knees tucked to chest — easier lever than full L-sit. Rung 1 of the L-sit line." },
+  { id: "advanced-tuck-lsit", name: "Advanced tuck L-sit", muscle_group: "core", equipment: "rings", cue: "Knees tucked but hips lifted higher, shins closer to parallel with the floor — more hip-flexor/compression demand than a basic tuck." },
+  { id: "one-leg-lsit", name: "One-leg L-sit", muscle_group: "core", equipment: "rings", cue: "One leg extended straight out, the other stays tucked — alternate which leg extends." },
   { id: "ring-lsit", name: "Ring L-sit", muscle_group: "core", equipment: "rings", cue: "Press rings down, legs straight out in front." },
-  { id: "ring-front-lever-tuck", name: "Tuck front lever", muscle_group: "core", equipment: "rings", cue: "Knees tucked tight, body horizontal, hollow the chest." },
+  { id: "ring-front-lever-tuck", name: "Tuck front lever", muscle_group: "core", equipment: "rings", cue: "Knees tucked tight, body horizontal, hollow the chest. Rung 1 of the front lever line." },
+  { id: "advanced-tuck-front-lever", name: "Advanced tuck front lever", muscle_group: "core", equipment: "rings", cue: "Hips more open than a basic tuck, knees still bent but body more horizontal." },
+  { id: "single-leg-front-lever", name: "Single-leg front lever", muscle_group: "core", equipment: "rings", cue: "One leg extended straight, the other tucked — alternate which leg extends." },
+  { id: "straddle-front-lever", name: "Straddle front lever", muscle_group: "core", equipment: "rings", cue: "Legs wide and straight, body horizontal — straddle shortens the lever arm versus a full front lever." },
+  { id: "full-front-lever", name: "Full front lever", muscle_group: "core", equipment: "rings", cue: "Legs together and straight, body fully horizontal — the end goal of the front lever line." },
   { id: "db-weighted-situp", name: "Weighted sit-up", muscle_group: "core", equipment: "dumbbell", cue: "Hold weight at chest, control the descent." },
   { id: "band-pallof-press", name: "Pallof press", muscle_group: "core", equipment: "band", cue: "Resist rotation — press straight out and back." },
 
@@ -893,15 +913,21 @@ const BUILTIN_EXERCISES = [
   // parallel-bar-dip removed — same movement as ring-dip above, just on a
   // fixed bar instead of rings; merged into ring-dip rather than kept as a
   // separate equipment: "bar or rings" duplicate.
-  { id: "planche-lean", name: "Planche lean", muscle_group: "push", equipment: "bodyweight", cue: "Hands by hips, shift shoulders past hands, keep arms locked." },
+  { id: "planche-lean", name: "Planche lean", muscle_group: "push", equipment: "bodyweight", cue: "Hands by hips, shift shoulders past hands, keep arms locked — rung 1 of the planche line." },
   { id: "tuck-planche", name: "Tuck planche", muscle_group: "push", equipment: "bodyweight", cue: "Knees tucked tight to chest, feet off floor, hips level with shoulders." },
+  { id: "advanced-tuck-planche", name: "Advanced tuck planche", muscle_group: "push", equipment: "bodyweight", cue: "Hips raised higher than a basic tuck, knees still in but body more horizontal, shoulders further past the hands." },
+  { id: "straddle-planche", name: "Straddle planche", muscle_group: "push", equipment: "bodyweight", cue: "Legs wide and straight, body horizontal — the wide straddle shortens the lever arm versus a full planche." },
+  { id: "full-planche", name: "Full planche", muscle_group: "push", equipment: "bodyweight", cue: "Legs together and straight, fully horizontal, arms locked — the end goal of the planche line, often takes years." },
 
   // ---- pull: row variety, muscle-up line, back lever ----
   { id: "archer-row", name: "Archer row", muscle_group: "pull", equipment: "rings", cue: "Pull toward one hand, other arm stays long and straight." },
-  { id: "skin-the-cat", name: "Skin the cat", muscle_group: "pull", equipment: "rings", cue: "Slow and controlled through the shoulders, stop if it pinches." },
+  { id: "german-hang", name: "German hang", muscle_group: "pull", equipment: "rings", cue: "From a hang, rotate the shoulders through until arms are overhead and the body hangs below — deep shoulder stretch, go slow, back off if it pinches. Rung 1 of the back lever line." },
+  { id: "skin-the-cat", name: "Skin the cat", muscle_group: "pull", equipment: "rings", cue: "From a German hang, roll back up and over to support, slow and controlled through the shoulders, stop if it pinches." },
   { id: "muscle-up-negative", name: "Muscle-up negative", muscle_group: "pull", equipment: "rings", cue: "Start at the top, lower through the transition as slowly as possible." },
   { id: "muscle-up", name: "Muscle-up", muscle_group: "pull", equipment: "rings", cue: "Pull high and fast, roll over the transition, avoid kipping early on." },
   { id: "tuck-back-lever", name: "Tuck back lever", muscle_group: "pull", equipment: "rings", cue: "Knees tucked, body inverted and horizontal, control the entry and exit." },
+  { id: "straddle-back-lever", name: "Straddle back lever", muscle_group: "pull", equipment: "rings", cue: "Legs wide and straight, body inverted and horizontal — straddle shortens the lever arm versus a full back lever." },
+  { id: "full-back-lever", name: "Full back lever", muscle_group: "pull", equipment: "rings", cue: "Legs together and straight, body fully horizontal and inverted — the end goal of the back lever line." },
 
   // ---- legs: calf work was missing entirely, plus cossack squat ----
   { id: "calf-raise", name: "Calf raise", muscle_group: "legs", equipment: "bodyweight", cue: "Full range, pause at the top, control the descent." },
@@ -1088,34 +1114,80 @@ const EXERCISE_LEVEL_MAP = {
   "parallette-handstand-hold": 4, "parallette-l-sit-tucked": 2, "parallette-l-sit": 4,
   "parallette-shoulder-tap": 3, "parallette-l-sit-compression": 5,
   "ab-wheel-rollout-kneeling": 4, "ab-wheel-rollout-standing": 5,
+  // new: skill-ladder rungs (handstand / L-sit / planche / back lever /
+  // front lever) — these numbers are just for Library browsing and the
+  // manual swap-panel bucketing; actual auto-generation eligibility for
+  // these ids goes through SKILL_LADDER_MAP's own rung gate below, not
+  // this number, since the whole point is they shouldn't borrow readiness
+  // from the general push/pull level.
+  "wall-handstand-hold-back": 4, "freestanding-handstand-practice": 4,
+  "freestanding-handstand-hold": 5, "handstand-pushup-negative": 5,
+  "advanced-tuck-planche": 5, "straddle-planche": 5, "full-planche": 5,
+  "german-hang": 3, "straddle-back-lever": 5, "full-back-lever": 5,
+  "advanced-tuck-lsit": 3, "one-leg-lsit": 4,
+  "advanced-tuck-front-lever": 5, "single-leg-front-lever": 5,
+  "straddle-front-lever": 5, "full-front-lever": 5,
 };
 
-// Genuine gymnastics-strength SKILLS — a static balance/compression hold or
-// a technique-dependent transition, not just "a harder rep exercise of the
-// same pattern." Per Steven Low's Overcoming Gravity and the r/bodyweight
-// fitness recommended-routine FAQ, these take months of dedicated, separate
-// practice and aren't something a rep-based level number can honestly
-// certify as "ready." So instead of trusting the numeric level cap for
-// these specific moves, they're excluded from auto-generation ENTIRELY,
-// regardless of level — the only way to get one into a workout is picking
-// it by hand from the manual swap panel's "Progressions" bucket, which is
-// a deliberate, self-assessed choice (exactly how skill work is actually
-// supposed to be approached), not something the app auto-assigns.
-const SKILL_EXERCISE_IDS = new Set([
-  // handstand line (freestanding balance)
-  "wall-handstand-hold", "parallette-handstand-hold", "handstand-pushup", "handstand-walk",
-  // L-sit line (compression hold)
-  "parallette-l-sit-tucked", "parallette-l-sit", "parallette-l-sit-compression",
-  "ring-lsit-tucked", "ring-lsit", "l-sit-pullup", "l-sit-archer-pullup",
-  // planche line (static press-to-horizontal hold)
-  "planche-lean", "tuck-planche",
-  // back lever / skin-the-cat line (shoulder-dependent static inversion)
-  "skin-the-cat", "tuck-back-lever", "ring-front-lever-tuck",
-  // muscle-up (technique-dependent transition, not pure strength)
-  "muscle-up-negative", "muscle-up",
-  // other balance/control skills
-  "elbow-lever", "dragon-flag",
-]);
+// Real multi-rung SKILL LADDERS for the gymnastics-strength lines that
+// Steven Low's Overcoming Gravity (and the r/bodyweightfitness recommended-
+// routine FAQ) treat as genuinely separate progressions, not just "a harder
+// rep exercise of the same pattern" — handstand, L-sit, planche, back
+// lever, front lever, muscle-up. Each id maps to {skill, rung}: rung 1 is
+// the entry point everyone starts at (see state.skillLevels — deliberately
+// NOT inherited from general push/pull level, since skill readiness isn't
+// the same thing as strength), and a given rung is only offered to the
+// auto-generator once state.skillLevels[skill] has reached it — gating on
+// actual sustained performance on THIS specific ladder (applyWorkoutResults,
+// REQUIRED_SKILL_STREAK), never on how strong the person's push/pull is
+// generally. Multiple ids can share a rung (equipment alternates at the
+// same real difficulty, e.g. a parallette vs. rings version).
+const SKILL_LADDER_MAP = {
+  // handstand line
+  "wall-handstand-hold": { skill: "handstand", rung: 1 },
+  "wall-handstand-hold-back": { skill: "handstand", rung: 2 },
+  "parallette-handstand-hold": { skill: "handstand", rung: 2 },
+  "freestanding-handstand-practice": { skill: "handstand", rung: 3 },
+  "freestanding-handstand-hold": { skill: "handstand", rung: 4 },
+  "handstand-pushup-negative": { skill: "handstand", rung: 5 },
+  "handstand-pushup": { skill: "handstand", rung: 6 },
+  "handstand-walk": { skill: "handstand", rung: 7 },
+  // L-sit line
+  "parallette-l-sit-tucked": { skill: "lsit", rung: 1 },
+  "ring-lsit-tucked": { skill: "lsit", rung: 1 },
+  "advanced-tuck-lsit": { skill: "lsit", rung: 2 },
+  "one-leg-lsit": { skill: "lsit", rung: 3 },
+  "parallette-l-sit": { skill: "lsit", rung: 4 },
+  "ring-lsit": { skill: "lsit", rung: 4 },
+  "parallette-l-sit-compression": { skill: "lsit", rung: 5 },
+  "l-sit-pullup": { skill: "lsit", rung: 5 },
+  "l-sit-archer-pullup": { skill: "lsit", rung: 6 },
+  // planche line
+  "planche-lean": { skill: "planche", rung: 1 },
+  "tuck-planche": { skill: "planche", rung: 2 },
+  "advanced-tuck-planche": { skill: "planche", rung: 3 },
+  "straddle-planche": { skill: "planche", rung: 4 },
+  "full-planche": { skill: "planche", rung: 5 },
+  // back lever line
+  "german-hang": { skill: "backLever", rung: 1 },
+  "skin-the-cat": { skill: "backLever", rung: 2 },
+  "tuck-back-lever": { skill: "backLever", rung: 3 },
+  "straddle-back-lever": { skill: "backLever", rung: 4 },
+  "full-back-lever": { skill: "backLever", rung: 5 },
+  // front lever line
+  "ring-front-lever-tuck": { skill: "frontLever", rung: 1 },
+  "advanced-tuck-front-lever": { skill: "frontLever", rung: 2 },
+  "single-leg-front-lever": { skill: "frontLever", rung: 3 },
+  "straddle-front-lever": { skill: "frontLever", rung: 4 },
+  "full-front-lever": { skill: "frontLever", rung: 5 },
+  // muscle-up line
+  "muscle-up-negative": { skill: "muscleUp", rung: 1 },
+  "muscle-up": { skill: "muscleUp", rung: 2 },
+};
+// Highest real rung per skill line, so leveling up never overshoots the
+// ladder even if a streak completes past the last-defined rung.
+const SKILL_MAX_RUNG = { handstand: 7, lsit: 6, planche: 5, backLever: 5, frontLever: 5, muscleUp: 2 };
+const DEFAULT_SKILL_LEVELS = { handstand: 1, lsit: 1, planche: 1, backLever: 1, frontLever: 1, muscleUp: 1 };
 
 function levelOf(exerciseIdOrName) {
   // accepts either a library id or falls back to matching by name
@@ -1137,16 +1209,20 @@ const EXERCISE_PLANE_MAP = {
   "pseudo-planche-pushup": "h", "one-arm-pushup-assisted": "h", "ring-pushup-easy": "h",
   "ring-pushup": "h", "ring-archer-pushup": "h", "ring-typewriter-pushup": "h",
   "db-floor-press": "h", "planche-lean": "h", "tuck-planche": "h",
+  "advanced-tuck-planche": "h", "straddle-planche": "h", "full-planche": "h",
   "plyo-pushup": "h", "clapping-pushup": "h", "one-arm-pushup": "h", "elbow-lever": "h",
   // push - vertical (overhead press / dip line, presses along the body's long axis)
   "pike-pushup": "v", "decline-pike-pushup": "v", "wall-handstand-hold": "v", "handstand-pushup": "v",
+  "wall-handstand-hold-back": "v", "freestanding-handstand-practice": "v",
+  "freestanding-handstand-hold": "v", "handstand-pushup-negative": "v",
   "ring-dip-supported": "v", "ring-dip": "v", "ring-dip-weighted": "v", "db-overhead-press": "v",
   "ring-support-hold": "v", "bench-dip": "v", "ring-negative-dip": "v",
   "handstand-walk": "v",
   // pull - horizontal (rows)
   "ring-row-easy": "h", "ring-row": "h", "ring-row-feet-elevated": "h",
   "band-pull-apart": "h", "db-single-arm-row": "h", "db-renegade-row": "h", "archer-row": "h",
-  "tuck-back-lever": "h", "ring-pullover": "h",
+  "tuck-back-lever": "h", "ring-pullover": "h", "german-hang": "h",
+  "straddle-back-lever": "h", "full-back-lever": "h",
   // pull - vertical (the actual pull-up ladder)
   "dead-hang": "v", "active-hang": "v", "scap-pull": "v", "band-assisted-pullup": "v",
   "negative-pullup": "v", "chinup": "v",
@@ -1177,6 +1253,14 @@ const HOLD_EXERCISE_IDS = new Set([
   "hollow-hold-tucked", "hollow-hold",
   "ring-support-hold", "planche-lean", "tuck-planche", "tuck-back-lever",
   "reverse-plank", "copenhagen-plank", "elbow-lever",
+  // new skill-ladder rungs that are also static holds (the negative/practice
+  // rungs — handstand-pushup-negative, freestanding-handstand-practice —
+  // are reps, not holds, so they're deliberately left out of this set)
+  "wall-handstand-hold-back", "freestanding-handstand-hold", "german-hang",
+  "straddle-back-lever", "full-back-lever", "advanced-tuck-planche",
+  "straddle-planche", "full-planche", "advanced-tuck-lsit", "one-leg-lsit",
+  "advanced-tuck-front-lever", "single-leg-front-lever",
+  "straddle-front-lever", "full-front-lever",
   "wheel-bridge", "full-bridge",
   "doorway-chest-stretch", "wrist-flexor-stretch", "childs-pose-reach",
   "hip-90-90-stretch", "kneeling-hip-flexor-stretch", "deep-squat-hold",
@@ -2712,8 +2796,21 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
   // separate pass, so it composes with them instead of needing its own
   // fallback logic.
   const availableExercises = exercises.filter(e => {
-    if (SKILL_EXERCISE_IDS.has(e.id)) return false;
     if (state.travelMode && !TRAVEL_EQUIPMENT.has(e.equipment || "bodyweight")) return false;
+    // Skill-ladder exercises (handstand/L-sit/planche/back lever/front
+    // lever/muscle-up) are gated purely by their own rung vs.
+    // state.skillLevels — NOT by the general push/pull plane level, and
+    // NOT restricted to today's chosen h/v plane either, since they're a
+    // separate track layered on top of normal strength work rather than
+    // part of the plane-alternation rotation.
+    const ladder = SKILL_LADDER_MAP[e.id];
+    if (ladder) {
+      const ok = ladder.rung <= (state.skillLevels[ladder.skill] || 1);
+      if (ok && (e.muscle_group === "push" || e.muscle_group === "pull")) {
+        (e.muscle_group === "push" ? planeFilteredPush : planeFilteredPull).push(e);
+      }
+      return ok;
+    }
     if (e.muscle_group === "push" || e.muscle_group === "pull") {
       const plane = planeOf(e.id, e.muscle_group);
       if (plane !== planeFor[e.muscle_group]) return false;
@@ -2738,7 +2835,7 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
     planeFor[mg] = fallbackPlane;
     exercises.forEach(e => {
       if (e.muscle_group !== mg) return;
-      if (SKILL_EXERCISE_IDS.has(e.id)) return;
+      if (SKILL_LADDER_MAP[e.id]) return; // already included above regardless of plane
       if (state.travelMode && !TRAVEL_EQUIPMENT.has(e.equipment || "bodyweight")) return;
       const plane = planeOf(e.id, e.muscle_group);
       if (plane !== fallbackPlane) return;
@@ -3480,6 +3577,52 @@ async function applyWorkoutResults(results) {
     // filter, progress charts) keeps behaving sensibly without a rewrite.
     state.progressLevels[mg] = Math.max(state.planeLevels[`${mg}_h`] || 1, state.planeLevels[`${mg}_v`] || 1);
     state.lastPlaneServed[mg] = plane;
+  });
+
+  // Skill ladders (handstand/L-sit/planche/back lever/front lever/
+  // muscle-up) — a completely separate progression axis from push/pull/core
+  // level, per Overcoming Gravity: these advance ONLY on sustained
+  // performance of the actual rung being worked, never by borrowing
+  // readiness from general strength. Requires REQUIRED_SKILL_STREAK
+  // consecutive max sessions (stricter than the general 2, since OG treats
+  // skill acquisition as slower than rep-strength gains) on the CURRENT
+  // rung specifically — a result only counts if its exercise maps to the
+  // rung state.skillLevels[skill] is already at, so manually swapping to a
+  // different/harder rung can't accidentally skip ahead. Unlike the
+  // strength ladders above, a miss resets the streak but never regresses
+  // the rung — a bad hold attempt doesn't mean you un-learn what you'd
+  // already built toward it, it just means you're not ready for the next
+  // one yet.
+  state.skillLevels = state.skillLevels || { ...DEFAULT_SKILL_LEVELS };
+  state.skillStreaks = state.skillStreaks || {};
+  const REQUIRED_SKILL_STREAK = 3;
+  const bySkillGroup = {};
+  results.forEach(r => {
+    const libEx = exercises.find(x => x.name === r.exercise.name);
+    const ladder = libEx && SKILL_LADDER_MAP[libEx.id];
+    if (!ladder) return;
+    // Only counts toward advancing THIS skill if it's actually today's
+    // current rung — a result logged against an easier or harder rung
+    // (e.g. after a manual swap) doesn't move the ladder.
+    if (ladder.rung !== (state.skillLevels[ladder.skill] || 1)) return;
+    if (!bySkillGroup[ladder.skill]) bySkillGroup[ladder.skill] = [];
+    bySkillGroup[ladder.skill].push(r.result);
+  });
+  Object.entries(bySkillGroup).forEach(([skill, outcomes]) => {
+    if (outcomes.includes("missed")) {
+      state.skillStreaks[skill] = 0;
+      return;
+    }
+    if (outcomes.every(o => o === "max") && !holdProgression) {
+      const streak = (state.skillStreaks[skill] || 0) + 1;
+      if (streak >= REQUIRED_SKILL_STREAK) {
+        const cap = SKILL_MAX_RUNG[skill] || 5;
+        state.skillLevels[skill] = Math.min(cap, (state.skillLevels[skill] || 1) + 1);
+        state.skillStreaks[skill] = 0;
+      } else {
+        state.skillStreaks[skill] = streak;
+      }
+    }
   });
 
   // Ring strap setting — a separate, continuous axis from the level above,
