@@ -596,7 +596,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-03 19:40 CT";
+const APP_BUILD = "2026-10-04 03:50 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -729,6 +729,7 @@ async function loadState() {
   if (typeof state.travelMode !== "boolean") state.travelMode = false;
   if (typeof state.macroSuggestionAppliedAt !== "string") state.macroSuggestionAppliedAt = "";
   if (!Array.isArray(state.macroSuggestionHistory)) state.macroSuggestionHistory = [];
+  if (typeof state.dismissedExerciseLegend !== "boolean") state.dismissedExerciseLegend = false;
 }
 
 function saveStateLocal() {
@@ -2960,18 +2961,33 @@ function renderTodayWorkout(workout) {
       </div>
     </details>` : "";
 
+  // Shown until explicitly dismissed, not just once per session — someone
+  // who already knows what "level"/"straps"/the result chips mean shouldn't
+  // have to see this every single day just to get to their exercises.
+  const legendHtml = state.dismissedExerciseLegend ? "" : `
+        <div class="meta" style="margin-bottom:4px;">"Level" is a 1-5 difficulty tier (1 = easiest variation in the library, 5 = hardest); horizontal/vertical marks which push or pull pattern it trains (e.g. push-ups vs. overhead presses — see Settings for your level per pattern); "straps" is your ring-strap length setting, shown on ring exercises only.</div>
+        <div class="meta" style="margin-bottom:4px;">After a set: "Hit max reps" means you could've done more with good form, "As prescribed" means you did the planned amount, "Missed reps" means you couldn't finish them with good form. Stop any set early if form breaks down or something hurts — none of this is about pushing to failure.</div>
+        <button class="danger-link" id="dismissExerciseLegendBtn" style="margin-bottom:8px;">Got it, don't show this again</button>`;
+
   const workoutHtml = `
     <details class="exercise-group">
       <summary>Today's exercises</summary>
       <div style="padding-top:6px;">
-        <div class="meta" style="margin-bottom:4px;">"Level" is a 1-5 difficulty tier (1 = easiest variation in the library, 5 = hardest); horizontal/vertical marks which push or pull pattern it trains (e.g. push-ups vs. overhead presses — see Settings for your level per pattern); "straps" is your ring-strap length setting, shown on ring exercises only.</div>
-        <div class="meta" style="margin-bottom:8px;">After a set: "Hit max reps" means you could've done more with good form, "As prescribed" means you did the planned amount, "Missed reps" means you couldn't finish them with good form. Stop any set early if form breaks down or something hurts — none of this is about pushing to failure.</div>
+        ${legendHtml}
         ${unitsHtml}
       </div>
     </details>`;
 
   box.innerHTML = warmupHtml + workoutHtml + cooldownHtml + `<button id="completeWorkoutBtn" style="background:none; border:none; color:var(--accent); font-size:13px; cursor:pointer; padding:10px 0; display:block;">Complete workout without guided session ▸</button>`;
   document.getElementById("completeWorkoutBtn").addEventListener("click", completeWorkout);
+  const dismissLegendBtn = document.getElementById("dismissExerciseLegendBtn");
+  if (dismissLegendBtn) {
+    dismissLegendBtn.addEventListener("click", async () => {
+      state.dismissedExerciseLegend = true;
+      await persistNow();
+      renderTodayWorkout(workout);
+    });
+  }
 }
 
 // Called from the rest-day card's "Skip rest" button. Generates the NEXT
