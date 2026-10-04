@@ -718,6 +718,7 @@ async function loadState() {
   if (typeof state.welcomeBackDismissedDate !== "string") state.welcomeBackDismissedDate = "";
   if (!state.settings.macroTargets) state.settings.macroTargets = { calories: 2300, protein: 160, carbs: 200, fat: 70 };
   if (typeof state.travelMode !== "boolean") state.travelMode = false;
+  if (typeof state.macroSuggestionAppliedAt !== "string") state.macroSuggestionAppliedAt = "";
 }
 
 function saveStateLocal() {
@@ -1520,11 +1521,28 @@ async function applyMacroSuggestion(delta) {
   const t = state.settings.macroTargets;
   t.calories = Math.max(0, (t.calories || 0) + delta);
   t.carbs = Math.max(0, (t.carbs || 0) + Math.round(delta / 4));
+  // Record that this was acted on — computeMacroSuggestion() is purely a
+  // function of the current weight trend, with no memory of its own, so
+  // without this the exact same suggestion (and "Apply suggestion" button)
+  // just reappeared on the very next render, letting the same ~125 cal
+  // get applied repeatedly before the trend had any chance to reflect it.
+  state.macroSuggestionAppliedAt = new Date().toISOString();
   await persistNow();
   renderMacroSummary();
   renderWeeklyReview();
   document.getElementById("targetCalories").value = t.calories;
   document.getElementById("targetCarbs").value = t.carbs;
+}
+
+// A suggestion stays "already applied" for 7 days — one review cycle —
+// regardless of how many times this renders in between, so trimming/adding
+// calories can't be double-applied before the next weigh-in trend actually
+// reflects the change.
+function daysSinceMacroSuggestionApplied() {
+  if (!state.macroSuggestionAppliedAt) return null;
+  const appliedMs = new Date(state.macroSuggestionAppliedAt).getTime();
+  if (Number.isNaN(appliedMs)) return null;
+  return (Date.now() - appliedMs) / (24 * 60 * 60 * 1000);
 }
 
 const REASON_SUGGESTIONS = {
@@ -2187,6 +2205,7 @@ function renderWeeklyReview() {
   recentLogs.forEach(l => { if (counts[l.result] !== undefined) counts[l.result]++; });
 
   const suggestion = computeMacroSuggestion();
+  const daysSinceApplied = daysSinceMacroSuggestionApplied();
   const checkInSummary = computeWeightCheckInSummary();
 
   // Any suggestion that isn't the plain "on pace, no change" default is
@@ -2230,7 +2249,11 @@ function renderWeeklyReview() {
     <div style="${sectionLabelStyle}">Nutrition</div>
     ${suggestion ? `
       <div class="meta">${suggestion.message}</div>
-      ${suggestion.deltaCalories !== 0 ? `<button class="secondary" id="applyMacroSuggestionBtn" style="margin-top:8px; width:100%;">Apply suggestion</button>` : ""}
+      ${suggestion.deltaCalories !== 0 ? (
+        daysSinceApplied !== null && daysSinceApplied < 7
+          ? `<div class="meta" style="margin-top:8px;">Applied ${daysSinceApplied < 1 ? "today" : Math.floor(daysSinceApplied) === 1 ? "1 day ago" : Math.floor(daysSinceApplied) + " days ago"} — next suggestion available in ${Math.max(1, Math.ceil(7 - daysSinceApplied))} day${Math.ceil(7 - daysSinceApplied) === 1 ? "" : "s"}.</div>`
+          : `<button class="secondary" id="applyMacroSuggestionBtn" style="margin-top:8px; width:100%;">Apply suggestion</button>`
+      ) : ""}
     ` : `<div class="meta">Log at least two weigh-ins about a week apart to get a calorie-pace suggestion here.</div>`}
     ${checkInSummary?.up.length ? `
       <div class="meta" style="margin-top:10px;">
@@ -2258,9 +2281,8 @@ function renderWeeklyReview() {
     ${state.weekAdjustment ? `<button class="secondary" id="resetWeekBtn" style="margin-top:6px; width:100%;">${resetWeekLabel}</button>` : ""}
   `;
 
-  if (suggestion && suggestion.deltaCalories !== 0) {
-    document.getElementById("applyMacroSuggestionBtn").addEventListener("click", () => applyMacroSuggestion(suggestion.deltaCalories));
-  }
+  const applyBtn = document.getElementById("applyMacroSuggestionBtn");
+  if (applyBtn) applyBtn.addEventListener("click", () => applyMacroSuggestion(suggestion.deltaCalories));
 
   document.getElementById("weeklyReviewLogsToggle").addEventListener("click", () => {
     weeklyReviewLogsOpen = !weeklyReviewLogsOpen;
