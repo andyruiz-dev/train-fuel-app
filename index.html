@@ -616,7 +616,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 07:20 CT";
+const APP_BUILD = "2026-10-04 07:28 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3765,14 +3765,23 @@ async function swapWarmupCooldownItem(type, idx) {
       .filter((x) => x !== original)
       .map(x => x.name.toLowerCase())
   );
-  const mobilityPool = exercises.filter(e => e.muscle_group === "mobility");
+  // Same region restriction as generateTodayWorkout/enforceWarmupCooldownVariety
+  // — currentWorkout.exercises already carries each slot's muscle_group, the
+  // same shape allowedMobilityRegions expects, so this stays in sync with the
+  // actual day instead of maintaining a second notion of "today's groups."
+  const allowedRegions = allowedMobilityRegions(currentWorkout.exercises);
+  const mobilityPool = exercises.filter(e =>
+    e.muscle_group === "mobility" && allowedRegions.has(MOBILITY_REGION_MAP[e.id] || "full")
+  );
   const mobilityList = mobilityPool
     .map(e => `${e.name}${isHoldExercise(e.id) ? " (hold)" : " (dynamic)"}`).join("; ");
   const system = `You pick a single alternative ${isWarmup ? "dynamic warmup movement" : "static cool-down stretch"}
-from the mobility library below — not invented — for the given muscle groups,
-something different from the one being replaced AND different from everything
-already listed as in use today (no duplicates within the same warmup/cool-down).
-All library items are already bodyweight-only. Respond with ONLY valid JSON:
+from the mobility library below — not invented. The list has ALREADY been
+filtered to only items relevant to today's muscle groups, so every item in it
+is a safe pick; just choose one that's different from the one being replaced
+AND different from everything already listed as in use today (no duplicates
+within the same warmup/cool-down). All library items are already
+bodyweight-only. Respond with ONLY valid JSON:
 {"name": "exact name from mobility library", "detail": "string, e.g. ${isWarmup ? "30s each side" : "hold 20s"}"}`;
   const prompt = `Mobility library: ${mobilityList}.
 Muscle groups today: ${muscleGroups}. Replacing: "${original.name}" (${original.detail || ""}).
