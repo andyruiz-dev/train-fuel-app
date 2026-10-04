@@ -599,7 +599,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 03:52 CT";
+const APP_BUILD = "2026-10-04 04:10 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -734,6 +734,7 @@ async function loadState() {
   if (!Array.isArray(state.macroSuggestionHistory)) state.macroSuggestionHistory = [];
   if (typeof state.dismissedExerciseLegend !== "boolean") state.dismissedExerciseLegend = false;
   if (typeof state.dismissedTravelModeLegend !== "boolean") state.dismissedTravelModeLegend = false;
+  if (!Array.isArray(state.lastWarmupCooldownNames)) state.lastWarmupCooldownNames = [];
 }
 
 function saveStateLocal() {
@@ -987,6 +988,17 @@ const BUILTIN_EXERCISES = [
   { id: "bird-dog", name: "Bird dog", muscle_group: "mobility", equipment: "bodyweight", cue: "Opposite arm and leg extend together, hips stay level, brief hold each side." },
   { id: "thoracic-extension-chair", name: "Thoracic extension over a chair", muscle_group: "mobility", equipment: "bodyweight", cue: "Upper back over the chair edge, hands behind head, extend gently." },
 
+  // ---- more mobility variety, added so the warmup/cool-down picks don't
+  // feel like the same handful on repeat ----
+  { id: "jumping-jacks", name: "Jumping jacks", muscle_group: "mobility", equipment: "bodyweight", cue: "Easy pace, just raising heart rate and body temp — not for speed." },
+  { id: "high-knees", name: "High knees", muscle_group: "mobility", equipment: "bodyweight", cue: "Quick, light steps, drive knees to about hip height." },
+  { id: "leg-swings-front", name: "Leg swings (front-to-back)", muscle_group: "mobility", equipment: "bodyweight", cue: "Hold something for balance, swing from the hip, let range build gradually." },
+  { id: "leg-swings-side", name: "Leg swings (side-to-side)", muscle_group: "mobility", equipment: "bodyweight", cue: "Hold something for balance, swing across the body and back, stay tall." },
+  { id: "calf-raises-dynamic", name: "Calf raises (dynamic)", muscle_group: "mobility", equipment: "bodyweight", cue: "Rise onto toes and lower with control, full range each rep." },
+  { id: "scorpion-stretch", name: "Scorpion stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Face down, reach one foot across and up toward the opposite hand, alternate sides." },
+  { id: "seated-spinal-twist", name: "Seated spinal twist", muscle_group: "mobility", equipment: "bodyweight", cue: "Sit tall, rotate from the ribcage, both sides, hands light on the floor or knee." },
+  { id: "band-overhead-stretch", name: "Band overhead stretch", muscle_group: "mobility", equipment: "band", cue: "Hold the band wide overhead, gently reach back and down to open the shoulders." },
+
   // ---- from the Kavadlo brothers' (Al & Danny) well-documented progressions —
   // real gaps confirmed against their published exercise lists ----
   // (archer push-up/pull-up and toes to bar already exist above — those three
@@ -1143,7 +1155,7 @@ const HOLD_EXERCISE_IDS = new Set([
   "pigeon-pose", "standing-hamstring-stretch",
   "neck-lateral-stretch", "standing-quad-stretch", "wall-calf-stretch",
   "figure-4-glute-stretch", "butterfly-stretch", "side-lunge-stretch",
-  "thoracic-extension-chair",
+  "thoracic-extension-chair", "seated-spinal-twist", "band-overhead-stretch",
   "parallette-handstand-hold", "parallette-l-sit-tucked", "parallette-l-sit",
   "parallette-l-sit-compression",
 ]);
@@ -2720,8 +2732,12 @@ legs/hinge day should lean on hip/ankle items. Warmup: 2-3 items marked
 (hold) from the list, for the muscles just worked (~2 minutes total). All
 mobility library items are already bodyweight-only, so this works anywhere
 including while traveling. Genuinely quick — this is a 20-25 minute session
-overall.
+overall. Prefer different warmup/cool-down items than last session where a
+good alternative exists for the same muscle groups, rather than defaulting
+to the same handful every time — see "Last session's warmup/cool-down"
+below.
 Mobility library: ${mobilityList}
+Last session's warmup/cool-down (vary from these if reasonable alternates fit today's muscle groups): ${(state.lastWarmupCooldownNames || []).join(", ") || "none yet"}.
 If a slot below includes an exercise_name, that's what the person's original
 program specifically prescribed — use that exact exercise if it appears in
 the available list below, rather than substituting a different one for that
@@ -2744,7 +2760,15 @@ superset_group is a letter shared by paired exercises, or null if standalone.`;
     body: JSON.stringify({ system, prompt, max_tokens: 2000 }),
   });
   const text = data.content?.[0]?.text || "{}";
-  return extractJson(text);
+  const result = extractJson(text);
+  // Remembered so the NEXT generation's prompt (above) can nudge away from
+  // repeating the same warmup/cool-down items — callers already persist
+  // state right after calling this, so no separate save needed here.
+  state.lastWarmupCooldownNames = [
+    ...(result.warmup || []).map(w => w.name),
+    ...(result.cooldown || []).map(c => c.name),
+  ].filter(Boolean);
+  return result;
 }
 
 let currentWorkout = null;
@@ -2950,18 +2974,25 @@ function renderTodayWorkout(workout) {
     return `<div class="card" style="margin-bottom:10px;">${exerciseCardHtml(e, i)}</div>`;
   }).join("");
 
+  // Mobility items carry a coaching cue in the library same as any other
+  // exercise, but it never made it into the generated warmup/cooldown JSON
+  // (the AI only returns {name, detail}) — so this card showed a bare name
+  // with no way to know how to actually do it short of looking it up
+  // elsewhere mid-workout. Looked up by name here instead, reusing the same
+  // howToHtml()/demo-link pattern the main exercise list already has.
+  const mobilityCue = (name) => exercises.find(e => e.name === name)?.cue || "";
   const warmupHtml = (workout.warmup && workout.warmup.length) ? `
     <details class="exercise-group" style="margin-bottom:10px;">
       <summary>Warmup (~3-4 min)</summary>
       <div style="padding-top:6px;">
-        ${workout.warmup.map((w, i) => `<div class="list-item"><div><div class="name">${w.name}</div><div class="meta">${w.detail || ""}</div></div><button class="danger-link" style="color:var(--accent);" data-warmcool-swap="warmup:${i}">Swap</button></div>`).join("")}
+        ${workout.warmup.map((w, i) => `<div class="list-item" style="flex-direction:column; align-items:stretch;"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div class="name">${w.name}</div><div class="meta">${w.detail || ""}</div></div><button class="danger-link" style="color:var(--accent);" data-warmcool-swap="warmup:${i}">Swap</button></div>${howToHtml(`warmup-${i}`, w.name, mobilityCue(w.name))}</div>`).join("")}
       </div>
     </details>` : "";
   const cooldownHtml = (workout.cooldown && workout.cooldown.length) ? `
     <details class="exercise-group" style="margin-top:10px;">
       <summary>Cool-down (~2 min)</summary>
       <div style="padding-top:6px;">
-        ${workout.cooldown.map((c, i) => `<div class="list-item"><div><div class="name">${c.name}</div><div class="meta">${c.detail || ""}</div></div><button class="danger-link" style="color:var(--accent);" data-warmcool-swap="cooldown:${i}">Swap</button></div>`).join("")}
+        ${workout.cooldown.map((c, i) => `<div class="list-item" style="flex-direction:column; align-items:stretch;"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div class="name">${c.name}</div><div class="meta">${c.detail || ""}</div></div><button class="danger-link" style="color:var(--accent);" data-warmcool-swap="cooldown:${i}">Swap</button></div>${howToHtml(`cooldown-${i}`, c.name, mobilityCue(c.name))}</div>`).join("")}
       </div>
     </details>` : "";
 
@@ -3207,15 +3238,29 @@ async function swapWarmupCooldownItem(type, idx) {
   const original = list[idx];
   const muscleGroups = [...new Set(currentWorkout.exercises.map(e => e.muscle_group))].join(", ");
   const isWarmup = type === "warmup";
-  const mobilityList = exercises.filter(e => e.muscle_group === "mobility")
+  // Every name currently showing in TODAY'S warmup AND cool-down, not just
+  // the single slot being replaced — the prompt used to only mention the one
+  // item being swapped out, so the AI had no idea two other warmup slots
+  // already had "Arm circles" and would happily hand back a third, or just
+  // re-suggest something already sitting in cool-down. That's the "swap
+  // ends up duplicating" bug.
+  const alreadyUsed = new Set(
+    [...(currentWorkout.warmup || []), ...(currentWorkout.cooldown || [])]
+      .filter((x) => x !== original)
+      .map(x => x.name.toLowerCase())
+  );
+  const mobilityPool = exercises.filter(e => e.muscle_group === "mobility");
+  const mobilityList = mobilityPool
     .map(e => `${e.name}${isHoldExercise(e.id) ? " (hold)" : " (dynamic)"}`).join("; ");
   const system = `You pick a single alternative ${isWarmup ? "dynamic warmup movement" : "static cool-down stretch"}
 from the mobility library below — not invented — for the given muscle groups,
-something different from the one being replaced. All library items are already
-bodyweight-only. Respond with ONLY valid JSON:
+something different from the one being replaced AND different from everything
+already listed as in use today (no duplicates within the same warmup/cool-down).
+All library items are already bodyweight-only. Respond with ONLY valid JSON:
 {"name": "exact name from mobility library", "detail": "string, e.g. ${isWarmup ? "30s each side" : "hold 20s"}"}`;
   const prompt = `Mobility library: ${mobilityList}.
-Muscle groups today: ${muscleGroups}. Replacing: "${original.name}" (${original.detail || ""}).`;
+Muscle groups today: ${muscleGroups}. Replacing: "${original.name}" (${original.detail || ""}).
+Already in use today — do not repeat any of these: ${[...alreadyUsed].join(", ") || "none"}.`;
   try {
     const data = await apiFetch("/api/generate", {
       method: "POST",
@@ -3223,7 +3268,20 @@ Muscle groups today: ${muscleGroups}. Replacing: "${original.name}" (${original.
       body: JSON.stringify({ system, prompt, max_tokens: 200 }),
     });
     const text = data.content?.[0]?.text || "{}";
-    currentWorkout[type][idx] = extractJson(text);
+    let picked = extractJson(text);
+    // Hard guarantee, not just a prompt ask — if the model still hands back
+    // a name already in use (or something outside the library entirely),
+    // fall back to the first unused, valid mobility item instead of
+    // trusting it blindly.
+    const isValidUnused = picked?.name && mobilityPool.some(e => e.name === picked.name) &&
+      !alreadyUsed.has(picked.name.toLowerCase());
+    if (!isValidUnused) {
+      const fallback = mobilityPool.find(e => !alreadyUsed.has(e.name.toLowerCase()) && e.name !== original.name);
+      if (fallback) {
+        picked = { name: fallback.name, detail: isWarmup ? "30-45s" : (isHoldExercise(fallback.id) ? "hold 20-30s" : "30-45s") };
+      }
+    }
+    currentWorkout[type][idx] = picked;
   } catch (err) {
     alert("Couldn't get an alternative: " + err.message);
     return;
