@@ -205,6 +205,20 @@
           <button class="secondary" id="minimumDayBtn" style="margin-top:8px; width:100%;" disabled>Not feeling it? Do the minimum</button>
         </div>
       </details>
+
+      <details class="exercise-group" style="margin-top:10px;">
+        <summary>Skill practice</summary>
+        <div style="padding-top:6px;">
+          <p class="meta" style="margin-top:0;">
+            Handstand, L-sit, planche, back lever, front lever, and muscle-up each track their own
+            progression, separate from today's auto-generated workout — practice on your own
+            schedule (Overcoming Gravity recommends skill work done fresh, a few times a week), log
+            your attempt here, and the right exercise moves up on its own once you've actually
+            earned it. Each rung needs 3 solid sessions in a row before the next one unlocks.
+          </p>
+          <div id="skillPracticeList"></div>
+        </div>
+      </details>
     </div>
     <div id="sessionPanel" class="hidden"></div>
   </section>
@@ -599,7 +613,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 05:20 CT";
+const APP_BUILD = "2026-10-04 05:40 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1188,6 +1202,34 @@ const SKILL_LADDER_MAP = {
 // ladder even if a streak completes past the last-defined rung.
 const SKILL_MAX_RUNG = { handstand: 7, lsit: 6, planche: 5, backLever: 5, frontLever: 5, muscleUp: 2 };
 const DEFAULT_SKILL_LEVELS = { handstand: 1, lsit: 1, planche: 1, backLever: 1, frontLever: 1, muscleUp: 1 };
+const SKILL_DISPLAY_NAMES = { handstand: "Handstand", lsit: "L-sit", planche: "Planche", backLever: "Back lever", frontLever: "Front lever", muscleUp: "Muscle-up" };
+const REQUIRED_SKILL_STREAK = 3;
+
+// Shared by applyWorkoutResults (when a skill move happens to land in the
+// auto-generated workout) AND the dedicated skill-practice section (ad-hoc
+// logging, independent of any workout) — one rule either way. See
+// applyWorkoutResults for the full rationale (3-in-a-row, miss resets the
+// streak but never regresses the rung).
+function applySkillResult(skill, result) {
+  state.skillLevels = state.skillLevels || { ...DEFAULT_SKILL_LEVELS };
+  state.skillStreaks = state.skillStreaks || {};
+  if (result === "missed") {
+    state.skillStreaks[skill] = 0;
+    return;
+  }
+  if (result === "max" && !isLosingTooFast()) {
+    const streak = (state.skillStreaks[skill] || 0) + 1;
+    if (streak >= REQUIRED_SKILL_STREAK) {
+      const cap = SKILL_MAX_RUNG[skill] || 5;
+      state.skillLevels[skill] = Math.min(cap, (state.skillLevels[skill] || 1) + 1);
+      state.skillStreaks[skill] = 0;
+    } else {
+      state.skillStreaks[skill] = streak;
+    }
+  }
+  // "hold" (partial) result: no-op, same as the general strength rule —
+  // doesn't erase progress toward the next rung, doesn't fake-advance it.
+}
 
 function levelOf(exerciseIdOrName) {
   // accepts either a library id or falls back to matching by name
@@ -3328,6 +3370,67 @@ function buildYoutubeUrl(name) {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(name + " exercise proper form tutorial")}`;
 }
 
+// The exercise currently sitting at a skill's rung — may be more than one
+// id at the same rung (equipment alternates); the first match is shown as
+// the primary pick, the rest are just as valid if that's what's on hand.
+function exerciseAtSkillRung(skill, rung) {
+  return exercises.find(e => {
+    const l = SKILL_LADDER_MAP[e.id];
+    return l && l.skill === skill && l.rung === rung;
+  });
+}
+
+function renderSkillPractice() {
+  const container = document.getElementById("skillPracticeList");
+  if (!container) return;
+  const skills = ["handstand", "lsit", "planche", "backLever", "frontLever", "muscleUp"];
+  container.innerHTML = skills.map(skill => {
+    const rung = state.skillLevels?.[skill] || 1;
+    const maxRung = SKILL_MAX_RUNG[skill] || 5;
+    const atMax = rung >= maxRung;
+    const current = exerciseAtSkillRung(skill, rung);
+    if (!current) return "";
+    const streak = state.skillStreaks?.[skill] || 0;
+    return `
+      <div class="list-item" style="flex-direction:column; align-items:stretch;">
+        <div class="name">${SKILL_DISPLAY_NAMES[skill]} — rung ${rung}${atMax ? " (mastered)" : ` of ${maxRung}`}</div>
+        <div class="meta">${current.name}${atMax ? "" : ` · ${streak}/${REQUIRED_SKILL_STREAK} sessions toward next rung`}</div>
+        ${howToHtml(`skill-${skill}`, current.name, current.cue || "")}
+        ${atMax
+          ? `<div class="meta" style="margin-top:6px;">Top of the ladder — nothing further to unlock.</div>`
+          : `<div class="row" style="margin-top:8px;">
+              <div class="chip result-chip" data-skill-log="${skill}" data-result="max">Hit max reps</div>
+              <div class="chip result-chip" data-skill-log="${skill}" data-result="hold">As prescribed</div>
+              <div class="chip result-chip" data-skill-log="${skill}" data-result="missed">Missed reps</div>
+            </div>`}
+      </div>`;
+  }).join("");
+}
+
+async function logSkillPractice(skill, result) {
+  const rung = state.skillLevels?.[skill] || 1;
+  const current = exerciseAtSkillRung(skill, rung);
+  if (!current) return;
+  applySkillResult(skill, result);
+  state.logs = state.logs || [];
+  state.logs.push({ date: new Date().toISOString(), exercise: current.name, muscle_group: current.muscle_group, result });
+  await persistNow();
+  renderSkillPractice();
+}
+
+document.getElementById("skillPracticeList").addEventListener("click", async (e) => {
+  if (handleSwapInfoClick(e)) return;
+  const howtoBtn = e.target.closest("[data-howto-open]");
+  if (howtoBtn) {
+    document.querySelector(`[data-howto-panel="${howtoBtn.dataset.howtoOpen}"]`)?.classList.toggle("hidden");
+    return;
+  }
+  const logBtn = e.target.closest("[data-skill-log]");
+  if (logBtn) {
+    await logSkillPractice(logBtn.dataset.skillLog, logBtn.dataset.result);
+  }
+});
+
 function swapAlternatesHtml(currentExercise, uidPrefix) {
   const currentLevel = levelOf(currentExercise.name);
   // While travel mode is on, don't offer a swap to equipment that's not
@@ -3595,7 +3698,6 @@ async function applyWorkoutResults(results) {
   // one yet.
   state.skillLevels = state.skillLevels || { ...DEFAULT_SKILL_LEVELS };
   state.skillStreaks = state.skillStreaks || {};
-  const REQUIRED_SKILL_STREAK = 3;
   const bySkillGroup = {};
   results.forEach(r => {
     const libEx = exercises.find(x => x.name === r.exercise.name);
@@ -3608,21 +3710,12 @@ async function applyWorkoutResults(results) {
     if (!bySkillGroup[ladder.skill]) bySkillGroup[ladder.skill] = [];
     bySkillGroup[ladder.skill].push(r.result);
   });
+  // applySkillResult (module-level, shared with the dedicated skill-
+  // practice section below) is the single source of truth for the
+  // 3-in-a-row rule — kept in sync here instead of duplicating the logic.
   Object.entries(bySkillGroup).forEach(([skill, outcomes]) => {
-    if (outcomes.includes("missed")) {
-      state.skillStreaks[skill] = 0;
-      return;
-    }
-    if (outcomes.every(o => o === "max") && !holdProgression) {
-      const streak = (state.skillStreaks[skill] || 0) + 1;
-      if (streak >= REQUIRED_SKILL_STREAK) {
-        const cap = SKILL_MAX_RUNG[skill] || 5;
-        state.skillLevels[skill] = Math.min(cap, (state.skillLevels[skill] || 1) + 1);
-        state.skillStreaks[skill] = 0;
-      } else {
-        state.skillStreaks[skill] = streak;
-      }
-    }
+    if (outcomes.includes("missed")) { applySkillResult(skill, "missed"); return; }
+    if (outcomes.every(o => o === "max")) applySkillResult(skill, "max");
   });
 
   // Ring strap setting — a separate, continuous axis from the level above,
@@ -3665,6 +3758,7 @@ async function applyWorkoutResults(results) {
   await persistNow();
   renderProgressCharts();
   renderCelebrations();
+  renderSkillPractice();
 }
 
 async function completeWorkout() {
@@ -5630,6 +5724,7 @@ async function init() {
   await loadPrograms();
   renderExercises();
   renderPrograms();
+  renderSkillPractice();
   renderCelebrations();
   renderFlagsBanner();
   renderCoachNote();
