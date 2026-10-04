@@ -195,7 +195,10 @@
             <span>✈️ Travel mode</span>
             <span id="travelModeState" style="color:var(--text-muted); font-size:12px; font-family:var(--font-mono);">Off</span>
           </div>
-          <p class="meta" style="margin-top:0; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border);">Generates a bodyweight-only workout — rings are still available as a swap if you brought them, but nothing else (no dumbbell, band, parallettes, or ab wheel). Turning it on or off regenerates today's exercises.</p>
+          <div id="travelModeExplainer" style="margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border);">
+            <p class="meta" style="margin-top:0; margin-bottom:4px;">Generates a bodyweight-only workout — rings are still available as a swap if you brought them, but nothing else (no dumbbell, band, parallettes, or ab wheel). Turning it on or off regenerates today's exercises.</p>
+            <button class="danger-link" id="dismissTravelModeLegendBtn">Got it, don't show this again</button>
+          </div>
           <div id="recoveryCautionNote"></div>
           <div id="todayWorkout" class="empty">Pick an active program first.</div>
           <button class="primary" id="startSessionBtn" style="margin-top:10px; width:100%;" disabled>Start guided session</button>
@@ -596,7 +599,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 03:50 CT";
+const APP_BUILD = "2026-10-04 03:52 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -730,6 +733,7 @@ async function loadState() {
   if (typeof state.macroSuggestionAppliedAt !== "string") state.macroSuggestionAppliedAt = "";
   if (!Array.isArray(state.macroSuggestionHistory)) state.macroSuggestionHistory = [];
   if (typeof state.dismissedExerciseLegend !== "boolean") state.dismissedExerciseLegend = false;
+  if (typeof state.dismissedTravelModeLegend !== "boolean") state.dismissedTravelModeLegend = false;
 }
 
 function saveStateLocal() {
@@ -5151,6 +5155,15 @@ function syncTravelModeLabel() {
   el.textContent = state.travelMode ? "On" : "Off";
   el.style.color = state.travelMode ? "var(--accent)" : "var(--text-muted)";
 }
+function syncTravelModeLegendVisibility() {
+  const el = document.getElementById("travelModeExplainer");
+  if (el) el.classList.toggle("hidden", state.dismissedTravelModeLegend);
+}
+document.getElementById("dismissTravelModeLegendBtn").addEventListener("click", async () => {
+  state.dismissedTravelModeLegend = true;
+  await persistNow();
+  syncTravelModeLegendVisibility();
+});
 document.getElementById("travelModeToggle").addEventListener("click", async () => {
   state.travelMode = !state.travelMode;
   syncTravelModeLabel();
@@ -5343,6 +5356,7 @@ async function init() {
   document.getElementById("targetCarbs").value = t.carbs || "";
   document.getElementById("targetFat").value = t.fat || "";
   syncTravelModeLabel();
+  syncTravelModeLegendVisibility();
   document.getElementById("appBuildInfo").textContent = `Build: ${APP_BUILD}`;
   renderMacroSuggestionHistory();
   // Restore whichever tab was open before, now that all panels' content is
