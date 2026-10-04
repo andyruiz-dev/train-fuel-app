@@ -613,7 +613,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 05:40 CT";
+const APP_BUILD = "2026-10-04 06:10 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3380,9 +3380,130 @@ function exerciseAtSkillRung(skill, rung) {
   });
 }
 
+// Static prescription per exercise — skill-practice items aren't
+// AI-generated (they're fixed rungs), so this is a straightforward,
+// level-scaled sets/hold-or-reps/rest prescription instead of something
+// that needs an API call. Hold time scales with the exercise's own display
+// level the same way the rest of the app already scales holds (level 1-2
+// short, 3-4 medium, 5 longer). Rest is deliberately long (skill work is
+// about quality of the attempt, not fatiguing the pattern).
+const SKILL_REST_SECONDS = 90;
+function skillPrescription(ex) {
+  const sets = 3;
+  if (isHoldExercise(ex.id)) {
+    const lvl = levelOf(ex.id);
+    const [low, high] = lvl <= 2 ? [15, 20] : lvl <= 4 ? [20, 35] : [30, 60];
+    return { sets, isHold: true, low, high, text: `${sets} sets × ${low}-${high}s hold · rest ${SKILL_REST_SECONDS}s between sets` };
+  }
+  return { sets, isHold: false, low: 3, high: 5, text: `${sets} sets × 3-5 reps · rest ${SKILL_REST_SECONDS}s between sets` };
+}
+
+// Per-skill timer state, kept outside `state` (this is session-local
+// practice UI, not data worth persisting) — keyed by skill name, holding
+// the running setInterval id and where the set/rest cycle currently is.
+const skillTimerState = {};
+
+function stopSkillTimer(skill) {
+  const t = skillTimerState[skill];
+  if (t?.timer) clearInterval(t.timer);
+  delete skillTimerState[skill];
+}
+function stopAllSkillTimers() {
+  Object.keys(skillTimerState).forEach(stopSkillTimer);
+}
+
+function renderSkillTimerDisplay(skill) {
+  const el = document.querySelector(`[data-skill-timer="${skill}"]`);
+  const btn = document.querySelector(`[data-skill-start="${skill}"]`);
+  if (!el || !btn) return;
+  const t = skillTimerState[skill];
+  if (!t) { el.classList.add("hidden"); el.innerHTML = ""; btn.textContent = "Start"; btn.disabled = false; return; }
+  el.classList.remove("hidden");
+  if (t.phase === "hold") {
+    btn.disabled = true;
+    el.innerHTML = `Set ${t.setNum} of ${t.sets} — hold<br><span style="font-size:20px;">${t.secondsLeft}s</span>`;
+  } else if (t.phase === "rest") {
+    btn.disabled = true;
+    el.innerHTML = `Rest<br><span style="font-size:20px;">${t.secondsLeft}s</span>`;
+  } else if (t.phase === "reps") {
+    btn.disabled = true;
+    el.innerHTML = `Set ${t.setNum} of ${t.sets} — do your reps, then:<br><button class="chip" data-skill-set-done="${skill}" style="margin-top:6px;">Set done</button>`;
+  } else if (t.phase === "done") {
+    btn.disabled = false;
+    btn.textContent = "Start again";
+    el.innerHTML = `Sets complete — log your result below.`;
+  }
+}
+
+function tickHoldTimer(skill) {
+  const t = skillTimerState[skill];
+  if (!t) return;
+  t.secondsLeft--;
+  if (t.secondsLeft <= 0) {
+    if (t.phase === "hold") {
+      if (t.setNum >= t.sets) { finishSkillTimer(skill); return; }
+      t.phase = "rest";
+      t.secondsLeft = SKILL_REST_SECONDS;
+    } else if (t.phase === "rest") {
+      t.setNum++;
+      t.phase = "hold";
+      t.secondsLeft = t.holdSeconds;
+    }
+  }
+  renderSkillTimerDisplay(skill);
+}
+
+function tickRepRestTimer(skill) {
+  const t = skillTimerState[skill];
+  if (!t) return;
+  t.secondsLeft--;
+  if (t.secondsLeft <= 0) {
+    clearInterval(t.timer);
+    t.setNum++;
+    t.phase = "reps";
+  }
+  renderSkillTimerDisplay(skill);
+}
+
+function finishSkillTimer(skill) {
+  const t = skillTimerState[skill];
+  if (t?.timer) clearInterval(t.timer);
+  skillTimerState[skill] = { phase: "done", sets: t.sets, setNum: t.sets };
+  renderSkillTimerDisplay(skill);
+}
+
+function startSkillTimer(skill) {
+  const rung = state.skillLevels?.[skill] || 1;
+  const ex = exerciseAtSkillRung(skill, rung);
+  if (!ex) return;
+  const p = skillPrescription(ex);
+  stopSkillTimer(skill);
+  if (p.isHold) {
+    const holdSeconds = Math.round((p.low + p.high) / 2);
+    skillTimerState[skill] = { phase: "hold", setNum: 1, sets: p.sets, secondsLeft: holdSeconds, holdSeconds };
+    skillTimerState[skill].timer = setInterval(() => tickHoldTimer(skill), 1000);
+  } else {
+    // Rep/attempt-based rungs are self-paced for the actual work — the
+    // timer only runs the rest between sets, advanced by the "Set done" tap.
+    skillTimerState[skill] = { phase: "reps", setNum: 1, sets: p.sets };
+  }
+  renderSkillTimerDisplay(skill);
+}
+
+function advanceSkillRepSet(skill) {
+  const t = skillTimerState[skill];
+  if (!t || t.phase !== "reps") return;
+  if (t.setNum >= t.sets) { finishSkillTimer(skill); return; }
+  t.phase = "rest";
+  t.secondsLeft = SKILL_REST_SECONDS;
+  t.timer = setInterval(() => tickRepRestTimer(skill), 1000);
+  renderSkillTimerDisplay(skill);
+}
+
 function renderSkillPractice() {
   const container = document.getElementById("skillPracticeList");
   if (!container) return;
+  stopAllSkillTimers();
   const skills = ["handstand", "lsit", "planche", "backLever", "frontLever", "muscleUp"];
   container.innerHTML = skills.map(skill => {
     const rung = state.skillLevels?.[skill] || 1;
@@ -3391,14 +3512,18 @@ function renderSkillPractice() {
     const current = exerciseAtSkillRung(skill, rung);
     if (!current) return "";
     const streak = state.skillStreaks?.[skill] || 0;
+    const prescription = skillPrescription(current);
     return `
       <div class="list-item" style="flex-direction:column; align-items:stretch;">
         <div class="name">${SKILL_DISPLAY_NAMES[skill]} — rung ${rung}${atMax ? " (mastered)" : ` of ${maxRung}`}</div>
         <div class="meta">${current.name}${atMax ? "" : ` · ${streak}/${REQUIRED_SKILL_STREAK} sessions toward next rung`}</div>
+        ${atMax ? "" : `<div class="meta" style="margin-top:2px;">${prescription.text}</div>`}
         ${howToHtml(`skill-${skill}`, current.name, current.cue || "")}
         ${atMax
           ? `<div class="meta" style="margin-top:6px;">Top of the ladder — nothing further to unlock.</div>`
-          : `<div class="row" style="margin-top:8px;">
+          : `<button class="secondary" data-skill-start="${skill}" style="margin-top:8px; width:100%;">Start</button>
+            <div class="hidden" data-skill-timer="${skill}" style="margin-top:8px; text-align:center; font-family:var(--font-mono);"></div>
+            <div class="row" style="margin-top:8px;">
               <div class="chip result-chip" data-skill-log="${skill}" data-result="max">Hit max reps</div>
               <div class="chip result-chip" data-skill-log="${skill}" data-result="hold">As prescribed</div>
               <div class="chip result-chip" data-skill-log="${skill}" data-result="missed">Missed reps</div>
@@ -3423,6 +3548,16 @@ document.getElementById("skillPracticeList").addEventListener("click", async (e)
   const howtoBtn = e.target.closest("[data-howto-open]");
   if (howtoBtn) {
     document.querySelector(`[data-howto-panel="${howtoBtn.dataset.howtoOpen}"]`)?.classList.toggle("hidden");
+    return;
+  }
+  const startBtn = e.target.closest("[data-skill-start]");
+  if (startBtn) {
+    startSkillTimer(startBtn.dataset.skillStart);
+    return;
+  }
+  const setDoneBtn = e.target.closest("[data-skill-set-done]");
+  if (setDoneBtn) {
+    advanceSkillRepSet(setDoneBtn.dataset.skillSetDone);
     return;
   }
   const logBtn = e.target.closest("[data-skill-log]");
