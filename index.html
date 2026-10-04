@@ -616,7 +616,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 06:58 CT";
+const APP_BUILD = "2026-10-04 07:05 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -2866,19 +2866,14 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
   const availableExercises = exercises.filter(e => {
     if (state.travelMode && !TRAVEL_EQUIPMENT.has(e.equipment || "bodyweight")) return false;
     // Skill-ladder exercises (handstand/L-sit/planche/back lever/front
-    // lever/muscle-up) are gated purely by their own rung vs.
-    // state.skillLevels — NOT by the general push/pull plane level, and
-    // NOT restricted to today's chosen h/v plane either, since they're a
-    // separate track layered on top of normal strength work rather than
-    // part of the plane-alternation rotation.
-    const ladder = SKILL_LADDER_MAP[e.id];
-    if (ladder) {
-      const ok = ladder.rung <= (state.skillLevels[ladder.skill] || 1);
-      if (ok && (e.muscle_group === "push" || e.muscle_group === "pull")) {
-        (e.muscle_group === "push" ? planeFilteredPush : planeFilteredPull).push(e);
-      }
-      return ok;
-    }
+    // lever/muscle-up) are deliberately NEVER auto-generated into a
+    // workout — they live only in the dedicated Skill practice section,
+    // done on your own schedule when fresh. Overcoming Gravity recommends
+    // skill work fresh, not bolted onto an already-fatiguing session, and
+    // the ladder's own 3-in-a-row streak gate depends on that — a skill
+    // move randomly landing mid-workout after you're already gassed would
+    // be an unfair test and could stall real progress on a technicality.
+    if (SKILL_LADDER_MAP[e.id]) return false;
     if (e.muscle_group === "push" || e.muscle_group === "pull") {
       const plane = planeOf(e.id, e.muscle_group);
       if (plane !== planeFor[e.muscle_group]) return false;
@@ -2903,7 +2898,7 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
     planeFor[mg] = fallbackPlane;
     exercises.forEach(e => {
       if (e.muscle_group !== mg) return;
-      if (SKILL_LADDER_MAP[e.id]) return; // already included above regardless of plane
+      if (SKILL_LADDER_MAP[e.id]) return; // skill-ladder exercises never auto-generate — see above
       if (state.travelMode && !TRAVEL_EQUIPMENT.has(e.equipment || "bodyweight")) return;
       const plane = planeOf(e.id, e.muscle_group);
       if (plane !== fallbackPlane) return;
