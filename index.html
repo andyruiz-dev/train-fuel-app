@@ -409,7 +409,7 @@
             <input type="text" inputmode="decimal" id="neckInput" placeholder="Neck (in, optional)" style="flex:1;">
             <input type="text" inputmode="decimal" id="waistInput" placeholder="Waist (in, optional)" style="flex:1;">
           </div>
-          <div class="meta" style="margin-top:4px;">Add neck + waist occasionally for a body-fat % estimate (Navy method) — measure your neck just below the Adam's apple and your waist at the belly button, both snug but not pulled tight. This can tell "recomposition" (building muscle while losing fat, so the scale stays flat even though your body's changing) apart from an actual stall. Needs your height set once in Settings.</div>
+          <div class="meta" style="margin-top:4px;">Add waist occasionally for a body-fat % estimate (Relative Fat Mass method) — measure at the belly button, snug but not pulled tight. This can tell "recomposition" (building muscle while losing fat, so the scale stays flat even though your body's changing) apart from an actual stall. Needs your height set once in Settings. Neck is optional and just tracked alongside — it isn't used in the estimate.</div>
           <button class="secondary" id="logWeightBtn" style="margin-top:10px;">Log weight</button>
           <div id="weightCheckInPanel" class="hidden" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
             <div class="meta" id="weightCheckInMessage" style="margin-bottom:8px;"></div>
@@ -562,7 +562,7 @@
     </div>
     <div class="card">
       <h2>Body composition</h2>
-      <p class="meta" style="margin-bottom:10px;">Height is only needed if you log neck/waist measurements for a Navy method body-fat % estimate. Goals (optional) power the start → goal forecast shown on the Body composition card.</p>
+      <p class="meta" style="margin-bottom:10px;">Height is only needed if you log a waist measurement for a Relative Fat Mass body-fat % estimate. Goals (optional) power the start → goal forecast shown on the Body composition card.</p>
       <div class="field"><div class="field-label">Height (in)</div><input type="text" inputmode="decimal" id="heightInches" placeholder="70"></div>
       <div class="row" style="margin-top:8px;">
         <div class="field"><div class="field-label">Goal weight (lb)</div><input type="text" inputmode="decimal" id="goalWeightInput" placeholder="optional"></div>
@@ -616,7 +616,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 08:05 CT";
+const APP_BUILD = "2026-10-04 09:50 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1526,16 +1526,16 @@ function renderProgramPreview(program) {
 //      shouldn't anchor the "what's my real trend" calculation. Falls back
 //      to including them (noting how many) rather than refusing to answer
 //      if excluding them leaves too little data.
-// Navy method body-fat % estimate, male formula (the app has no notion of
-// sex elsewhere, so this is the one variant implemented — the female
-// formula additionally needs hip circumference and a different constant
-// set). All inputs in inches. Returns null for missing/non-positive inputs
-// or a waist<=neck measurement, which the formula can't make sense of.
-function navyBodyFatPct(waistIn, neckIn, heightIn) {
-  if (!(waistIn > 0) || !(neckIn > 0) || !(heightIn > 0)) return null;
-  const diff = waistIn - neckIn;
-  if (diff <= 0) return null;
-  return 495 / (1.0324 - 0.19077 * Math.log10(diff) + 0.15456 * Math.log10(heightIn)) - 450;
+// Relative Fat Mass (RFM) body-fat % estimate, male formula (the app has no
+// notion of sex elsewhere, so this is the one variant implemented — the
+// female formula uses 76 instead of 64). Published 2018 (Woolcott & Bergman),
+// validated against DEXA scans; unlike the Navy method it depends only on
+// waist-to-height ratio, not a waist-minus-neck difference, so it doesn't
+// score a thicker neck as leaner and tracks abdominal fat more realistically.
+// All inputs in inches. Returns null for missing/non-positive inputs.
+function relativeFatMassPct(waistIn, heightIn) {
+  if (!(waistIn > 0) || !(heightIn > 0)) return null;
+  return 64 - 20 * (heightIn / waistIn);
 }
 
 // Mirrors computeWeightTrend's regression approach, but over bodyFatPct
@@ -1713,7 +1713,7 @@ function computeMacroSuggestion() {
     const bf = computeBodyFatTrend();
     if (bf && bf.ptsPerWeek <= -0.1) {
       return {
-        message: `Scale is ~flat (${Math.abs(pctPerWeek).toFixed(2)}%/week${excludedNote}), but body-fat is trending down (${bf.ptsPerWeek.toFixed(2)} pts/week, Navy method) — looks like a recomposition, not a stall. Holding macros steady rather than cutting.`,
+        message: `Scale is ~flat (${Math.abs(pctPerWeek).toFixed(2)}%/week${excludedNote}), but body-fat is trending down (${bf.ptsPerWeek.toFixed(2)} pts/week, RFM method) — looks like a recomposition, not a stall. Holding macros steady rather than cutting.`,
         deltaCalories: 0,
       };
     }
@@ -4672,11 +4672,11 @@ function renderBodyFatSummary() {
     // — show the value itself rather than falling back to the "log it"
     // prompt the person already acted on.
     const dateStr = new Date(bf.latestDate).toLocaleDateString(undefined, { month: "short", day: "numeric" });
-    html += `<div class="meta" style="margin-top:8px;">Body fat (Navy method): ${bf.latest}% as of ${dateStr} — log it again with a future weigh-in to start seeing a trend.</div>`;
+    html += `<div class="meta" style="margin-top:8px;">Body fat (RFM method): ${bf.latest}% as of ${dateStr} — log it again with a future weigh-in to start seeing a trend.</div>`;
     if (clearFlagType("bodyFatTrend")) { persistNow(); renderFlagsBanner(); }
   } else {
     const trendWord = bf.ptsPerWeek <= -0.1 ? "trending down" : bf.ptsPerWeek >= 0.1 ? "trending up" : "holding steady";
-    const message = `Body fat (Navy method): ${bf.latest}% as of ${new Date(bf.latestDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })} — ${trendWord} (${bf.ptsPerWeek >= 0 ? "+" : ""}${bf.ptsPerWeek.toFixed(2)} pts/week).`;
+    const message = `Body fat (RFM method): ${bf.latest}% as of ${new Date(bf.latestDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })} — ${trendWord} (${bf.ptsPerWeek >= 0 ? "+" : ""}${bf.ptsPerWeek.toFixed(2)} pts/week).`;
     html += `<div class="meta" style="margin-top:8px;">${message}</div>`;
 
     const bfg = computeBodyFatGoalForecast();
@@ -4943,13 +4943,13 @@ document.getElementById("logWeightBtn").addEventListener("click", async () => {
   const entry = { date, weight };
   if (!isNaN(neckVal)) entry.neck = neckVal;
   if (!isNaN(waistVal)) entry.waist = waistVal;
-  if (!isNaN(neckVal) && !isNaN(waistVal)) {
+  if (!isNaN(waistVal)) {
     const heightIn = state.settings.heightInches;
     if (heightIn) {
-      const bf = navyBodyFatPct(waistVal, neckVal, heightIn);
+      const bf = relativeFatMassPct(waistVal, heightIn);
       if (bf != null) entry.bodyFatPct = Math.round(bf * 10) / 10;
     } else {
-      alert("Add your height in Settings → Body composition to get a body-fat estimate from these — weight is saved either way.");
+      alert("Add your height in Settings → Body composition to get a body-fat estimate from this — weight is saved either way.");
     }
   }
 
