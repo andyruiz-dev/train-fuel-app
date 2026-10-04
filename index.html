@@ -599,7 +599,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 04:25 CT";
+const APP_BUILD = "2026-10-04 04:45 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -735,6 +735,7 @@ async function loadState() {
   if (typeof state.dismissedExerciseLegend !== "boolean") state.dismissedExerciseLegend = false;
   if (typeof state.dismissedTravelModeLegend !== "boolean") state.dismissedTravelModeLegend = false;
   if (!Array.isArray(state.lastWarmupCooldownNames)) state.lastWarmupCooldownNames = [];
+  if (!state.maxStreaks || typeof state.maxStreaks !== "object") state.maxStreaks = {};
 }
 
 function saveStateLocal() {
@@ -3378,6 +3379,17 @@ async function applyWorkoutResults(results) {
   const oldLevels = { ...state.progressLevels };
   state.planeLevels = state.planeLevels || { push_h: 1, push_v: 1, pull_h: 1, pull_v: 1 };
   state.lastPlaneServed = state.lastPlaneServed || { push: null, pull: null };
+  // Requires 2 CONSECUTIVE max-reps sessions (not one) before a muscle
+  // group/plane advances a difficulty tier. One strong session used to be
+  // enough to jump a full level — on this user's own log, that meant going
+  // from "intermediate" start to push level 5 (the hardest tier, things
+  // like a full handstand push-up or weighted ring dip) in about a week,
+  // which is far faster than real strength progression and is why genuinely
+  // advanced moves (parallette handstand hold, skin the cat) started
+  // showing up almost immediately. A miss still drops a level right away
+  // and resets the streak — only the way UP got more conservative.
+  state.maxStreaks = state.maxStreaks || {};
+  const REQUIRED_MAX_STREAK = 2;
 
   // legs/hinge/core/ruck keep the simple flat level. push/pull are handled
   // separately below, per-plane, instead of as one flat number.
@@ -3392,8 +3404,15 @@ async function applyWorkoutResults(results) {
     const cur = state.progressLevels[mg] || 1;
     if (outcomes.includes("missed")) {
       state.progressLevels[mg] = Math.max(1, cur - 1);
+      state.maxStreaks[mg] = 0;
     } else if (outcomes.every(o => o === "max") && !holdProgression) {
-      state.progressLevels[mg] = Math.min(5, cur + 1);
+      const streak = (state.maxStreaks[mg] || 0) + 1;
+      if (streak >= REQUIRED_MAX_STREAK) {
+        state.progressLevels[mg] = Math.min(5, cur + 1);
+        state.maxStreaks[mg] = 0;
+      } else {
+        state.maxStreaks[mg] = streak;
+      }
     }
   });
 
@@ -3417,8 +3436,15 @@ async function applyWorkoutResults(results) {
     const cur = state.planeLevels[key] || 1;
     if (outcomes.includes("missed")) {
       state.planeLevels[key] = Math.max(1, cur - 1);
+      state.maxStreaks[key] = 0;
     } else if (outcomes.every(o => o === "max") && !holdProgression) {
-      state.planeLevels[key] = Math.min(5, cur + 1);
+      const streak = (state.maxStreaks[key] || 0) + 1;
+      if (streak >= REQUIRED_MAX_STREAK) {
+        state.planeLevels[key] = Math.min(5, cur + 1);
+        state.maxStreaks[key] = 0;
+      } else {
+        state.maxStreaks[key] = streak;
+      }
     }
     // Keep the flat push/pull number in sync as the higher of its two
     // planes, purely so other UI that still reads it (swap picker, library
