@@ -616,7 +616,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 07:28 CT";
+const APP_BUILD = "2026-10-04 08:05 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1548,16 +1548,25 @@ function computeBodyFatTrend(windowDays = 60) {
     .filter(m => typeof m.bodyFatPct === "number")
     .slice()
     .sort((a, b) => new Date(a.date) - new Date(b.date));
-  if (ms.length < 2) return null;
+  if (ms.length < 1) return null;
+  const latestEntry = ms[ms.length - 1];
+  // Not enough points (or not enough), or not enough — still report the most
+  // recent reading with ptsPerWeek: null rather than hiding it entirely. A
+  // first-ever neck+waist log is real data the person just entered; showing
+  // the same "log neck + waist" prompt they just acted on reads as if
+  // nothing happened. The trend line itself genuinely needs 2+ points
+  // spanning a real window, which callers check via ptsPerWeek === null.
+  const notEnoughForTrend = { ptsPerWeek: null, days: 0, n: ms.length, latest: latestEntry.bodyFatPct, latestDate: latestEntry.date };
+  if (ms.length < 2) return notEnoughForTrend;
 
   const cutoff = Date.now() - windowDays * 24 * 60 * 60 * 1000;
   const windowSet = ms.filter(m => new Date(m.date).getTime() >= cutoff);
   const set = windowSet.length >= 2 ? windowSet : ms.slice(-2);
-  if (set.length < 2) return null;
+  if (set.length < 2) return notEnoughForTrend;
 
   const first = set[0], last = set[set.length - 1];
   const days = (new Date(last.date) - new Date(first.date)) / (24 * 60 * 60 * 1000);
-  if (days < 5) return null;
+  if (days < 5) return notEnoughForTrend;
 
   const t0 = new Date(set[0].date).getTime();
   const xs = set.map(m => (new Date(m.date).getTime() - t0) / (24 * 60 * 60 * 1000));
@@ -1568,7 +1577,7 @@ function computeBodyFatTrend(windowDays = 60) {
   const num = xs.reduce((sum, x, i) => sum + (x - meanX) * (ys[i] - meanY), 0);
   const den = xs.reduce((sum, x) => sum + (x - meanX) ** 2, 0);
   const slopePerDay = den === 0 ? 0 : num / den; // percentage points per day
-  return { ptsPerWeek: slopePerDay * 7, days, n, latest: last.bodyFatPct, latestDate: last.date };
+  return { ptsPerWeek: slopePerDay * 7, days, n, latest: latestEntry.bodyFatPct, latestDate: latestEntry.date };
 }
 
 function computeWeightTrend(windowDays = 14) {
@@ -4657,6 +4666,13 @@ function renderBodyFatSummary() {
   const bf = computeBodyFatTrend();
   if (!bf) {
     html += `<div class="meta" style="margin-top:8px;">Log neck + waist with a weigh-in to get a body-fat estimate here.</div>`;
+    if (clearFlagType("bodyFatTrend")) { persistNow(); renderFlagsBanner(); }
+  } else if (bf.ptsPerWeek === null) {
+    // Have a real reading, just not enough points/span yet for a trend line
+    // — show the value itself rather than falling back to the "log it"
+    // prompt the person already acted on.
+    const dateStr = new Date(bf.latestDate).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    html += `<div class="meta" style="margin-top:8px;">Body fat (Navy method): ${bf.latest}% as of ${dateStr} — log it again with a future weigh-in to start seeing a trend.</div>`;
     if (clearFlagType("bodyFatTrend")) { persistNow(); renderFlagsBanner(); }
   } else {
     const trendWord = bf.ptsPerWeek <= -0.1 ? "trending down" : bf.ptsPerWeek >= 0.1 ? "trending up" : "holding steady";
