@@ -632,7 +632,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 19:55 CT";
+const APP_BUILD = "2026-10-04 20:10 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1646,6 +1646,12 @@ const ROLLING_AVG_DAYS = 7;
 const BLOAT_WAIST_DELTA_IN = 0.5;
 const BLOAT_WEIGHT_FLAT_LB = 1.0;
 const BLOAT_TAGS = ["High sodium", "Alcohol", "New food", "Poor sleep", "Late/big meal", "Restaurant/takeout"];
+
+// "2026-10-04" is date-only; new Date() reads it as UTC midnight, which shows
+// as the previous day in US time zones. Format it as a local calendar date.
+function formatDateOnly(d) {
+  return new Date(`${d}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -4765,7 +4771,7 @@ function renderBodyFatSummary() {
   if (!wg) {
     html += `<div class="meta">Log a weigh-in to start tracking toward a goal.</div>`;
   } else {
-    const startStr = `${wg.startWeight} lb (${new Date(wg.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })})`;
+    const startStr = `${wg.startWeight} lb (${formatDateOnly(wg.startDate)})`;
     if (!wg.goalWeight) {
       html += `<div class="meta">Weight: start ${startStr} → now ${wg.currentWeight} lb.</div>`;
       html += `<div class="meta">Set a goal weight in Settings to see a forecast.</div>`;
@@ -4792,12 +4798,12 @@ function renderBodyFatSummary() {
     // Have a real reading, just not enough points/span yet for a trend line
     // — show the value itself rather than falling back to the "log it"
     // prompt the person already acted on.
-    const dateStr = new Date(bf.latestDate).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    const dateStr = formatDateOnly(bf.latestDate);
     html += `<div class="meta" style="margin-top:8px;">Body fat (RFM method): ${bf.latest}% as of ${dateStr} — log it again with a future weigh-in to start seeing a trend.</div>`;
     if (clearFlagType("bodyFatTrend")) { persistNow(); renderFlagsBanner(); }
   } else {
     const trendWord = bf.ptsPerWeek <= -0.1 ? "trending down" : bf.ptsPerWeek >= 0.1 ? "trending up" : "holding steady";
-    const message = `Body fat (RFM method): ${bf.latest}% as of ${new Date(bf.latestDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })} — ${trendWord} (${bf.ptsPerWeek >= 0 ? "+" : ""}${bf.ptsPerWeek.toFixed(2)} pts/week).`;
+    const message = `Body fat (RFM method): ${bf.latest}% as of ${formatDateOnly(bf.latestDate)} — ${trendWord} (${bf.ptsPerWeek >= 0 ? "+" : ""}${bf.ptsPerWeek.toFixed(2)} pts/week).`;
     html += `<div class="meta" style="margin-top:8px;">${message}</div>`;
 
     const bfg = computeBodyFatGoalForecast();
