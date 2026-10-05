@@ -632,7 +632,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-05 07:55 CT";
+const APP_BUILD = "2026-10-05 12:55 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -5247,6 +5247,13 @@ document.getElementById("logWeightBtn").addEventListener("click", async () => {
     }
   }
 
+  // Never silently replace an existing entry for this date — that's how a
+  // stale date box once overwrote a previous day's reading.
+  const existingForDate = state.measurements.find(m => m.date === date);
+  if (existingForDate && !confirm(`You already have an entry for ${date} (${existingForDate.weight} lb). Replace it with ${weight} lb? (Use Edit in the history list to just fix a value.)`)) {
+    return;
+  }
+
   // Flag before saving so the day counts toward bloat patterns even if the
   // follow-up tag prompt below is skipped.
   const bloat = detectBloatDay(entry, state.measurements);
@@ -5357,7 +5364,21 @@ document.getElementById("weightCheckInSkipBtn").addEventListener("click", () => 
   renderWeighInDetailsState();
 });
 
-document.getElementById("measurementDateInput").value = localDateStr();
+// The date box defaults to today, but the app can stay open overnight — a
+// morning weigh-in then silently landed on yesterday's date and replaced
+// that day's entry. Re-sync the default whenever the app comes back into
+// view, but only if the box still holds the old auto-filled date (never
+// overwrite a date you picked yourself).
+let measurementDateAuto = localDateStr();
+function refreshMeasurementDateDefault() {
+  const el = document.getElementById("measurementDateInput");
+  const today = localDateStr();
+  if (!el.value || el.value === measurementDateAuto) el.value = today;
+  measurementDateAuto = today;
+}
+document.getElementById("measurementDateInput").value = measurementDateAuto;
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshMeasurementDateDefault(); });
+window.addEventListener("focus", refreshMeasurementDateDefault);
 // ---- guided session ----
 let session = null;
 
