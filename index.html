@@ -431,6 +431,11 @@
       <details id="bodyCompDetails">
         <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Body composition</summary>
         <div id="bodyFatSummary" style="margin-top:10px;">Log neck + waist with a weigh-in to get a body-fat estimate here.</div>
+        <div id="bodyFatChartBlock" class="hidden" style="margin-top:14px;">
+          <div class="meta" style="margin-bottom:4px;">Body fat (%)</div>
+          <div id="bodyFatChart"></div>
+          <div class="meta" id="bodyFatAvgLine" style="margin-top:6px;"></div>
+        </div>
         <div id="waistTrendBlock" style="margin-top:14px;">
           <div class="meta" style="margin-bottom:4px;">Waist (in)</div>
           <div id="waistChart" class="empty">Log waist on a couple of days to see it here.</div>
@@ -627,7 +632,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 19:40 CT";
+const APP_BUILD = "2026-10-04 19:55 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -4860,6 +4865,21 @@ function renderWaistTrend(measurementsAsc) {
   renderAvgLine("waistAvgLine", withWaist, "waist", "in");
 }
 
+// Same chart + 7-day average as waist. Hidden (no nag text) until there are
+// 2+ body-fat readings, since the summary above already explains how to get one.
+function renderBodyFatChart(measurementsAsc) {
+  const block = document.getElementById("bodyFatChartBlock");
+  if (!block) return;
+  const withBf = measurementsAsc.filter(m => typeof m.bodyFatPct === "number");
+  block.classList.toggle("hidden", withBf.length < 2);
+  if (withBf.length < 2) return;
+  renderLineChart("bodyFatChart", withBf.map(m => ({ label: m.date.slice(5), value: m.bodyFatPct })), {
+    yLabel: "%",
+    avg: rollingAverageSeries(withBf, "bodyFatPct"),
+  });
+  renderAvgLine("bodyFatAvgLine", withBf, "bodyFatPct", "%");
+}
+
 function renderBloatPatterns() {
   const el = document.getElementById("bloatPatterns");
   if (!el) return;
@@ -4890,6 +4910,7 @@ function renderProgressCharts() {
   });
   renderAvgLine("weightAvgLine", measurements, "weight", "lb");
   renderWaistTrend(measurements);
+  renderBodyFatChart(measurements);
   renderBloatPatterns();
   renderBodyFatSummary();
   renderWeightHistoryList();
