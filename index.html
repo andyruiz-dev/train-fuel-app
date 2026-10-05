@@ -632,7 +632,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 20:25 CT";
+const APP_BUILD = "2026-10-05 07:55 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -5206,11 +5206,19 @@ const DECREASE_REASONS = ["Illness", "Dehydration/low water intake", "Big workou
 // lists exist) rather than a second taxonomy — see renderDailyCheckin above.
 const ALL_CHECKIN_TAGS = [...new Set([...INCREASE_REASONS, ...DECREASE_REASONS])];
 
+// Exclusive "nothing to report" chip shared by the up/down and bloat prompts.
+// Selecting it clears every other chip; saving it records noReason:true instead
+// of a reason, so it never counts as a pattern or excludes the day from the
+// weight trend (both of which key off a non-empty reasons list).
+const CHECKIN_NONE = "__none__";
+function checkInChipsHtml(reasons) {
+  return reasons.map(r => `<div class="chip" data-reason="${r}">${r}</div>`).join("")
+    + `<div class="chip" data-reason="${CHECKIN_NONE}">Nothing unusual — all tracked</div>`;
+}
+
 function renderCheckInChips(direction) {
   const reasons = direction === "up" ? INCREASE_REASONS : DECREASE_REASONS;
-  document.getElementById("weightCheckInChips").innerHTML = reasons.map(r =>
-    `<div class="chip" data-reason="${r}">${r}</div>`
-  ).join("");
+  document.getElementById("weightCheckInChips").innerHTML = checkInChipsHtml(reasons);
 }
 
 document.getElementById("logWeightBtn").addEventListener("click", async () => {
@@ -5273,8 +5281,7 @@ document.getElementById("logWeightBtn").addEventListener("click", async () => {
     pendingCheckInMeasurementIdx = state.measurements.findIndex(m => m.date === date);
     pendingCheckInDirection = null;
     activeCheckInReasons.clear();
-    document.getElementById("weightCheckInChips").innerHTML = BLOAT_TAGS.map(r =>
-      `<div class="chip" data-reason="${r}">${r}</div>`).join("");
+    document.getElementById("weightCheckInChips").innerHTML = checkInChipsHtml(BLOAT_TAGS);
     document.getElementById("weightCheckInFood").classList.remove("hidden");
     document.getElementById("weightCheckInMessage").textContent =
       `Waist is up ${bloat.waistUp.toFixed(1)}in vs your recent average with weight about the same — often bloating or water. Anything different yesterday? (optional, pick any)`;
@@ -5298,25 +5305,42 @@ document.getElementById("logWeightBtn").addEventListener("click", async () => {
 document.getElementById("weightCheckInChips").addEventListener("click", (e) => {
   const chip = e.target.closest("[data-reason]");
   if (!chip) return;
-  chip.classList.toggle("active");
   const reason = chip.dataset.reason;
-  if (activeCheckInReasons.has(reason)) activeCheckInReasons.delete(reason);
+  const wasActive = activeCheckInReasons.has(reason);
+  if (reason === CHECKIN_NONE) {
+    // Exclusive: picking it clears everything else; tapping again just unpicks it.
+    activeCheckInReasons.clear();
+    document.querySelectorAll("#weightCheckInChips .chip").forEach(c => c.classList.remove("active"));
+    if (!wasActive) { activeCheckInReasons.add(CHECKIN_NONE); chip.classList.add("active"); }
+    return;
+  }
+  // Picking a real reason drops "nothing unusual".
+  if (activeCheckInReasons.delete(CHECKIN_NONE)) {
+    const noneChip = document.querySelector(`#weightCheckInChips [data-reason="${CHECKIN_NONE}"]`);
+    if (noneChip) noneChip.classList.remove("active");
+  }
+  chip.classList.toggle("active");
+  if (wasActive) activeCheckInReasons.delete(reason);
   else activeCheckInReasons.add(reason);
 });
 
 document.getElementById("weightCheckInSaveBtn").addEventListener("click", async () => {
   if (pendingCheckInMeasurementIdx !== null && state.measurements[pendingCheckInMeasurementIdx]) {
     const m = state.measurements[pendingCheckInMeasurementIdx];
+    const none = activeCheckInReasons.has(CHECKIN_NONE);
+    const picked = [...activeCheckInReasons].filter(r => r !== CHECKIN_NONE);
     if (pendingCheckInIsBloat) {
       // Kept separate from reasons/checkInDirection so bloat days never feed
       // the weight-pace maths or the up/down weigh-in reason counts.
-      m.bloatTags = [...activeCheckInReasons];
+      m.bloatTags = picked;
+      if (none) m.noReason = true; else delete m.noReason;
       const food = document.getElementById("weightCheckInFood").value.trim();
       if (food) m.bloatFoods = food.slice(0, 120); else delete m.bloatFoods;
       pendingCheckInIsBloat = false;
     } else {
-      m.reasons = [...activeCheckInReasons];
+      m.reasons = picked;
       m.checkInDirection = pendingCheckInDirection;
+      if (none) m.noReason = true; else delete m.noReason;
     }
     await persistNow();
     renderReasonPatterns();
