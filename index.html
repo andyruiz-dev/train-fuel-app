@@ -409,7 +409,10 @@
             <input type="text" inputmode="decimal" id="neckInput" placeholder="Neck (in, optional)" style="flex:1;">
             <input type="text" inputmode="decimal" id="waistInput" placeholder="Waist (in, optional)" style="flex:1;">
           </div>
-          <div class="meta" style="margin-top:4px;">Add waist occasionally for a body-fat % estimate (Relative Fat Mass method) — measure at the belly button, snug but not pulled tight. This can tell "recomposition" (building muscle while losing fat, so the scale stays flat even though your body's changing) apart from an actual stall. Needs your height set once in Settings. Neck is optional and just tracked alongside — it isn't used in the estimate.</div>
+          <div id="waistExplainer">
+            <div class="meta" style="margin-top:4px;">Add waist occasionally for a body-fat % estimate (Relative Fat Mass method) — measure at the belly button, snug but not pulled tight. This can tell "recomposition" (building muscle while losing fat, so the scale stays flat even though your body's changing) apart from an actual stall. Needs your height set once in Settings. Neck is optional and just tracked alongside — it isn't used in the estimate.</div>
+            <button class="danger-link" id="dismissWaistExplainerBtn" style="margin-top:4px;">Got it, don't show this again</button>
+          </div>
           <button class="secondary" id="logWeightBtn" style="margin-top:10px;">Log weight</button>
           <div id="weightCheckInPanel" class="hidden" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
             <div class="meta" id="weightCheckInMessage" style="margin-bottom:8px;"></div>
@@ -428,7 +431,7 @@
       <details id="bodyCompDetails">
         <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Body composition</summary>
         <div id="bodyFatSummary" style="margin-top:10px;">Log neck + waist with a weigh-in to get a body-fat estimate here.</div>
-        <div style="margin-top:14px;">
+        <div id="waistTrendBlock" style="margin-top:14px;">
           <div class="meta" style="margin-bottom:4px;">Waist (in)</div>
           <div id="waistChart" class="empty">Log waist on a couple of days to see it here.</div>
           <div class="meta" id="waistAvgLine" style="margin-top:6px;"></div>
@@ -624,7 +627,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 19:25 CT";
+const APP_BUILD = "2026-10-04 19:40 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -760,6 +763,8 @@ async function loadState() {
   if (typeof state.dismissedExerciseLegend !== "boolean") state.dismissedExerciseLegend = false;
   if (typeof state.dismissedTravelModeLegend !== "boolean") state.dismissedTravelModeLegend = false;
   if (typeof state.dismissedSkillPracticeIntro !== "boolean") state.dismissedSkillPracticeIntro = false;
+  if (typeof state.dismissedWaistExplainer !== "boolean") state.dismissedWaistExplainer = false;
+  if (typeof state.dismissedWaistEmptyHint !== "boolean") state.dismissedWaistEmptyHint = false;
   if (!Array.isArray(state.lastWarmupCooldownNames)) state.lastWarmupCooldownNames = [];
   if (!state.maxStreaks || typeof state.maxStreaks !== "object") state.maxStreaks = {};
   // Skill ladders (handstand/L-sit/planche/back lever/front lever/muscle-up)
@@ -4835,12 +4840,18 @@ function renderWaistTrend(measurementsAsc) {
   const withWaist = measurementsAsc.filter(m => typeof m.waist === "number");
   const chartEl = document.getElementById("waistChart");
   if (!chartEl) return;
+  const block = document.getElementById("waistTrendBlock");
   if (withWaist.length < 2) {
-    chartEl.className = "empty";
-    chartEl.textContent = "Log waist on a couple of days to see it here.";
     document.getElementById("waistAvgLine").textContent = "";
+    // Dismissed => hide the whole empty block; it returns on its own once
+    // there are 2+ waist readings to chart.
+    if (block) block.classList.toggle("hidden", !!state.dismissedWaistEmptyHint);
+    chartEl.className = "empty";
+    chartEl.innerHTML = `Log waist on a couple of days to see it here.
+      <div><button class="danger-link" data-dismiss-waist-hint="1" style="margin-top:6px;">Got it, don't show this again</button></div>`;
     return;
   }
+  if (block) block.classList.remove("hidden");
   chartEl.className = "";
   renderLineChart("waistChart", withWaist.map(m => ({ label: m.date.slice(5), value: m.waist })), {
     yLabel: "in",
@@ -6107,6 +6118,21 @@ document.getElementById("dismissTravelModeLegendBtn").addEventListener("click", 
   await persistNow();
   syncTravelModeLegendVisibility();
 });
+function syncWaistExplainerVisibility() {
+  const el = document.getElementById("waistExplainer");
+  if (el) el.classList.toggle("hidden", state.dismissedWaistExplainer);
+}
+document.getElementById("dismissWaistExplainerBtn").addEventListener("click", async () => {
+  state.dismissedWaistExplainer = true;
+  await persistNow();
+  syncWaistExplainerVisibility();
+});
+document.getElementById("waistChart").addEventListener("click", async (e) => {
+  if (!e.target.dataset.dismissWaistHint) return;
+  state.dismissedWaistEmptyHint = true;
+  await persistNow();
+  renderProgressCharts();
+});
 function syncSkillPracticeIntroVisibility() {
   const el = document.getElementById("skillPracticeIntro");
   if (el) el.classList.toggle("hidden", state.dismissedSkillPracticeIntro);
@@ -6311,6 +6337,7 @@ async function init() {
   syncTravelModeLabel();
   syncTravelModeLegendVisibility();
   syncSkillPracticeIntroVisibility();
+  syncWaistExplainerVisibility();
   document.getElementById("appBuildInfo").textContent = `Build: ${APP_BUILD}`;
   renderMacroSuggestionHistory();
   // Restore whichever tab was open before, now that all panels' content is
