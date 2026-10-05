@@ -431,16 +431,6 @@
       <details id="bodyCompDetails">
         <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Body composition</summary>
         <div id="bodyFatSummary" style="margin-top:10px;">Log neck + waist with a weigh-in to get a body-fat estimate here.</div>
-        <div id="bodyFatChartBlock" class="hidden" style="margin-top:14px;">
-          <div class="meta" style="margin-bottom:4px;">Body fat (%)</div>
-          <div id="bodyFatChart"></div>
-          <div class="meta" id="bodyFatAvgLine" style="margin-top:6px;"></div>
-        </div>
-        <div id="waistTrendBlock" style="margin-top:14px;">
-          <div class="meta" style="margin-bottom:4px;">Waist (in)</div>
-          <div id="waistChart" class="empty">Log waist on a couple of days to see it here.</div>
-          <div class="meta" id="waistAvgLine" style="margin-top:6px;"></div>
-        </div>
       </details>
     </div>
 
@@ -483,6 +473,16 @@
       <div class="meta" id="weightAvgLine" style="margin-top:6px;"></div>
       <div class="meta" id="weightHistoryHint" style="margin-top:6px; cursor:pointer;"></div>
       <div id="weightHistoryList" class="hidden" style="margin-top:8px;"></div>
+    </div>
+    <div class="card hidden" id="bodyFatChartBlock">
+      <h2>Body-fat trend</h2>
+      <div id="bodyFatChart"></div>
+      <div class="meta" id="bodyFatAvgLine" style="margin-top:6px;"></div>
+    </div>
+    <div class="card" id="waistTrendBlock">
+      <h2>Waist trend</h2>
+      <div id="waistChart" class="empty">Log waist on a couple of days to see it here.</div>
+      <div class="meta" id="waistAvgLine" style="margin-top:6px;"></div>
     </div>
     <div class="card">
       <h2>Weight-loss pace</h2>
@@ -632,7 +632,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 20:10 CT";
+const APP_BUILD = "2026-10-04 20:25 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
