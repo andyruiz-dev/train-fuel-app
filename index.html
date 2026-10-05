@@ -414,6 +414,7 @@
           <div id="weightCheckInPanel" class="hidden" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
             <div class="meta" id="weightCheckInMessage" style="margin-bottom:8px;"></div>
             <div class="row" id="weightCheckInChips"></div>
+            <input type="text" id="weightCheckInFood" class="hidden" placeholder="Anything specific you ate? (optional)" style="margin-top:10px;">
             <div class="row" style="margin-top:10px;">
               <button class="secondary" id="weightCheckInSaveBtn" style="flex:1;">Save</button>
               <button class="danger-link" id="weightCheckInSkipBtn" style="flex:1;">Skip</button>
@@ -427,6 +428,11 @@
       <details id="bodyCompDetails">
         <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Body composition</summary>
         <div id="bodyFatSummary" style="margin-top:10px;">Log neck + waist with a weigh-in to get a body-fat estimate here.</div>
+        <div style="margin-top:14px;">
+          <div class="meta" style="margin-bottom:4px;">Waist (in)</div>
+          <div id="waistChart" class="empty">Log waist on a couple of days to see it here.</div>
+          <div class="meta" id="waistAvgLine" style="margin-top:6px;"></div>
+        </div>
       </details>
     </div>
 
@@ -466,6 +472,7 @@
     <div class="card">
       <h2>Weight trend</h2>
       <div id="weightChart" class="empty" style="cursor:pointer;">Log a few measurements to see a trend.</div>
+      <div class="meta" id="weightAvgLine" style="margin-top:6px;"></div>
       <div class="meta" id="weightHistoryHint" style="margin-top:6px; cursor:pointer;"></div>
       <div id="weightHistoryList" class="hidden" style="margin-top:8px;"></div>
     </div>
@@ -494,6 +501,7 @@
       </p>
       <div id="reasonPatterns" class="empty">Not enough repeated reasons yet to spot a pattern.</div>
       <div class="meta" id="reasonPatternsHint" style="margin-top:6px; cursor:pointer;"></div>
+      <div id="bloatPatterns" style="margin-top:14px;"></div>
     </div>
   </section>
 
@@ -616,7 +624,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-04 10:05 CT";
+const APP_BUILD = "2026-10-04 19:25 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1615,6 +1623,91 @@ function computeWeightTrend(windowDays = 14) {
   const pctPerWeek = (slopePerDay * 7 / meanY) * 100;
 
   return { pctPerWeek, lbPerWeek: slopePerDay * 7, days, n, excludedFlagged };
+}
+
+// ---- 7-day rolling averages + "bloat day" detection ----
+// Averages are display-only (the pace/trend maths above is untouched). A
+// "bloat day" is waist clearly up vs. its own recent baseline while scale
+// weight is flat — a common water/sodium/bloating signature. Detection needs
+// a real baseline (2+ prior waist readings in the previous 7 days), so it
+// stays quiet until daily logging has built one.
+const DAY_MS = 24 * 60 * 60 * 1000;
+const ROLLING_AVG_DAYS = 7;
+const BLOAT_WAIST_DELTA_IN = 0.5;
+const BLOAT_WEIGHT_FLAT_LB = 1.0;
+const BLOAT_TAGS = ["High sodium", "Alcohol", "New food", "Poor sleep", "Late/big meal", "Restaurant/takeout"];
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function meanOf(arr) {
+  return arr.reduce((a, b) => a + b, 0) / arr.length;
+}
+
+// entries: ascending by date, each already known to have a numeric `field`.
+// Returns an array aligned with entries: mean of the entries within the
+// trailing window (inclusive of that day), or null when fewer than 2 points.
+function rollingAverageSeries(entries, field, days = ROLLING_AVG_DAYS) {
+  return entries.map(e => {
+    const t = new Date(e.date).getTime();
+    const win = entries.filter(x => {
+      const xt = new Date(x.date).getTime();
+      return xt <= t && xt > t - days * DAY_MS;
+    });
+    return win.length >= 2 ? meanOf(win.map(x => x[field])) : null;
+  });
+}
+
+// Latest 7-day mean vs. the 7 days before it. previous is null if that
+// earlier window has no data.
+function weekOverWeek(entries, field, days = ROLLING_AVG_DAYS) {
+  if (!entries.length) return null;
+  const latestT = new Date(entries[entries.length - 1].date).getTime();
+  const cur = entries.filter(e => new Date(e.date).getTime() > latestT - days * DAY_MS);
+  const prev = entries.filter(e => {
+    const t = new Date(e.date).getTime();
+    return t <= latestT - days * DAY_MS && t > latestT - 2 * days * DAY_MS;
+  });
+  return {
+    current: meanOf(cur.map(e => e[field])),
+    nCurrent: cur.length,
+    previous: prev.length ? meanOf(prev.map(e => e[field])) : null,
+  };
+}
+
+function detectBloatDay(entry, allEntries) {
+  if (typeof entry.waist !== "number" || typeof entry.weight !== "number") return null;
+  const t = new Date(entry.date).getTime();
+  const prior = (allEntries || []).filter(m => {
+    if (m.date === entry.date) return false;
+    const mt = new Date(m.date).getTime();
+    return mt < t && mt >= t - ROLLING_AVG_DAYS * DAY_MS;
+  });
+  const waists = prior.filter(m => typeof m.waist === "number").map(m => m.waist);
+  const weights = prior.filter(m => typeof m.weight === "number").map(m => m.weight);
+  if (waists.length < 2 || weights.length < 2) return null;
+  const waistUp = entry.waist - meanOf(waists);
+  const weightDiff = entry.weight - meanOf(weights);
+  if (waistUp >= BLOAT_WAIST_DELTA_IN && Math.abs(weightDiff) <= BLOAT_WEIGHT_FLAT_LB) {
+    return { waistUp, weightDiff };
+  }
+  return null;
+}
+
+// Counts only — a tag that shows up often can simply be common in your week,
+// so this reports co-occurrence and says so, never cause.
+function computeBloatPatterns() {
+  const days = (state.measurements || []).filter(m => m.bloatFlag)
+    .slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+  if (!days.length) return null;
+  const counts = {};
+  days.forEach(m => (m.bloatTags || []).forEach(t => { counts[t] = (counts[t] || 0) + 1; }));
+  const tags = Object.entries(counts).map(([tag, count]) => ({ tag, count }))
+    .filter(x => x.count >= 2).sort((a, b) => b.count - a.count);
+  const foods = days.filter(m => m.bloatFoods).slice(-5).reverse()
+    .map(m => ({ date: m.date, text: m.bloatFoods }));
+  return { total: days.length, tags, foods };
 }
 
 // Start → goal → forecast for the Body composition card. "Start" is always
@@ -4037,7 +4130,7 @@ async function completeWorkout() {
 }
 
 // ---- progress charts ----
-function renderLineChart(containerId, points, { yLabel = "" } = {}) {
+function renderLineChart(containerId, points, { yLabel = "", avg = null } = {}) {
   const el = document.getElementById(containerId);
   if (!points.length) { el.innerHTML = '<div class="empty">Not enough data yet.</div>'; return; }
   const w = 300, h = 140, pad = 24;
@@ -4051,12 +4144,30 @@ function renderLineChart(containerId, points, { yLabel = "" } = {}) {
     return { x, y, label: p.label, value: p.value };
   });
   const pathD = coords.map((c, i) => `${i === 0 ? "M" : "L"}${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(" ");
+  // Optional rolling-average overlay: dashed line through the non-null
+  // points of `avg` (aligned by index with `points`). Means always sit inside
+  // the min/max of the raw values, so the same y-scale holds.
+  let avgSvg = "";
+  if (avg && avg.filter(v => v != null).length >= 2) {
+    let started = false;
+    const avgD = avg.map((v, i) => {
+      if (v == null) return "";
+      const x = pad + i * stepX;
+      const y = h - pad - ((v - min) / range) * (h - pad * 2);
+      const cmd = started ? "L" : "M";
+      started = true;
+      return `${cmd}${x.toFixed(1)},${y.toFixed(1)}`;
+    }).filter(Boolean).join(" ");
+    avgSvg = `<path d="${avgD}" fill="none" style="stroke:var(--gold);" stroke-width="2" stroke-dasharray="5 4"/>
+      <text x="${w - pad}" y="14" font-size="11" style="fill:var(--gold);" text-anchor="end">- - 7-day avg</text>`;
+  }
   const dots = coords.map(c => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3" fill="#0F6E63"/>`).join("");
   const firstLabel = coords[0]?.label || "";
   const lastLabel = coords[coords.length - 1]?.label || "";
   el.innerHTML = `
     <svg width="100%" viewBox="0 0 ${w} ${h + 20}" style="overflow:visible;">
       <path d="${pathD}" fill="none" stroke="#0F6E63" stroke-width="2"/>
+      ${avgSvg}
       ${dots}
       <text x="${pad}" y="${h + 16}" font-size="11" fill="#6B6A63">${firstLabel}</text>
       <text x="${w - pad}" y="${h + 16}" font-size="11" fill="#6B6A63" text-anchor="end">${lastLabel}</text>
@@ -4703,10 +4814,72 @@ function renderBodyFatSummary() {
   el.innerHTML = html;
 }
 
+// "7-day avg: 202.1 lb (down 0.6 vs the week before)". Needs 2+ readings in
+// the latest week; the comparison is only added when the prior week has data.
+function renderAvgLine(elId, entries, field, unit) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const w = weekOverWeek(entries, field);
+  if (!w || w.nCurrent < 2) { el.textContent = ""; return; }
+  let text = `7-day avg: ${w.current.toFixed(1)} ${unit}`;
+  if (w.previous != null) {
+    const d = w.current - w.previous;
+    text += Math.abs(d) < 0.05
+      ? " (same as the week before)"
+      : ` (${d > 0 ? "up" : "down"} ${Math.abs(d).toFixed(1)} vs the week before)`;
+  }
+  el.textContent = text;
+}
+
+function renderWaistTrend(measurementsAsc) {
+  const withWaist = measurementsAsc.filter(m => typeof m.waist === "number");
+  const chartEl = document.getElementById("waistChart");
+  if (!chartEl) return;
+  if (withWaist.length < 2) {
+    chartEl.className = "empty";
+    chartEl.textContent = "Log waist on a couple of days to see it here.";
+    document.getElementById("waistAvgLine").textContent = "";
+    return;
+  }
+  chartEl.className = "";
+  renderLineChart("waistChart", withWaist.map(m => ({ label: m.date.slice(5), value: m.waist })), {
+    yLabel: "in",
+    avg: rollingAverageSeries(withWaist, "waist"),
+  });
+  renderAvgLine("waistAvgLine", withWaist, "waist", "in");
+}
+
+function renderBloatPatterns() {
+  const el = document.getElementById("bloatPatterns");
+  if (!el) return;
+  const p = computeBloatPatterns();
+  if (!p) { el.innerHTML = ""; return; }
+  let html = `<div class="name">Bloat days</div>
+    <div class="meta">Waist up ${BLOAT_WAIST_DELTA_IN}in+ vs your recent average while the scale stayed flat — ${p.total} so far.</div>`;
+  if (p.total < 3) {
+    html += `<div class="meta" style="margin-top:6px;">Need a few more before any pattern means much.</div>`;
+  } else if (p.tags.length) {
+    html += p.tags.map(t =>
+      `<div class="meta" style="margin-top:6px;">${escapeHtml(t.tag)} — on ${t.count} of ${p.total} bloat days</div>`).join("");
+    html += `<div class="meta" style="margin-top:6px; font-style:italic;">A pattern, not proof — a tag that shows up a lot can just be common in your week.</div>`;
+  }
+  if (p.foods.length) {
+    html += `<div class="meta" style="margin-top:8px;">Foods you noted:</div>` + p.foods.map(f =>
+      `<div class="meta">${escapeHtml(f.date.slice(5))}: ${escapeHtml(f.text)}</div>`).join("");
+  }
+  el.innerHTML = html;
+}
+
 function renderProgressCharts() {
   renderJourneyStats();
   const measurements = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
-  renderLineChart("weightChart", measurements.map(m => ({ label: m.date.slice(5), value: m.weight })), { yLabel: "lb" });
+  renderLineChart("weightChart", measurements.map(m => ({ label: m.date.slice(5), value: m.weight })), {
+    yLabel: "lb",
+    avg: rollingAverageSeries(measurements, "weight"),
+  });
+  renderAvgLine("weightAvgLine", measurements, "weight", "lb");
+  renderWaistTrend(measurements);
+  renderBloatPatterns();
   renderBodyFatSummary();
   renderWeightHistoryList();
   renderRecoveryStatus();
@@ -4875,6 +5048,9 @@ document.getElementById("weightHistoryList").addEventListener("click", async (e)
       delete entry.waist;
       delete entry.bodyFatPct;
     }
+    // A corrected waist/weight can change whether this was a bloat day.
+    if (detectBloatDay(entry, state.measurements)) entry.bloatFlag = true;
+    else delete entry.bloatFlag;
     state.measurements[idx] = entry;
     await persistNow();
     renderProgressCharts();
@@ -4983,6 +5159,7 @@ document.getElementById("recoveryStatusHint").addEventListener("click", toggleRe
 
 let pendingCheckInMeasurementIdx = null;
 let pendingCheckInDirection = null;
+let pendingCheckInIsBloat = false;
 const activeCheckInReasons = new Set();
 
 const INCREASE_REASONS = ["Traveling", "Poor sleep", "Missed workout", "Missed cross-training", "Didn't track food", "Alcohol", "Stress"];
@@ -5024,6 +5201,11 @@ document.getElementById("logWeightBtn").addEventListener("click", async () => {
     }
   }
 
+  // Flag before saving so the day counts toward bloat patterns even if the
+  // follow-up tag prompt below is skipped.
+  const bloat = detectBloatDay(entry, state.measurements);
+  if (bloat) entry.bloatFlag = true;
+
   state.measurements = state.measurements.filter(m => m.date !== date);
   state.measurements.push(entry);
   checkWeightMilestones();
@@ -5042,7 +5224,24 @@ document.getElementById("logWeightBtn").addEventListener("click", async () => {
     if (pctDrop >= 1.5) direction = "down"; // only flag decreases large enough to look unusual
   }
 
-  if (direction) {
+  document.getElementById("weightCheckInFood").classList.add("hidden");
+  document.getElementById("weightCheckInFood").value = "";
+  pendingCheckInIsBloat = false;
+
+  if (bloat) {
+    // Bloat takes priority over the up/down prompt: weight is flat here, and
+    // the tags below are what the pattern-finder learns from.
+    pendingCheckInIsBloat = true;
+    pendingCheckInMeasurementIdx = state.measurements.findIndex(m => m.date === date);
+    pendingCheckInDirection = null;
+    activeCheckInReasons.clear();
+    document.getElementById("weightCheckInChips").innerHTML = BLOAT_TAGS.map(r =>
+      `<div class="chip" data-reason="${r}">${r}</div>`).join("");
+    document.getElementById("weightCheckInFood").classList.remove("hidden");
+    document.getElementById("weightCheckInMessage").textContent =
+      `Waist is up ${bloat.waistUp.toFixed(1)}in vs your recent average with weight about the same — often bloating or water. Anything different yesterday? (optional, pick any)`;
+    document.getElementById("weightCheckInPanel").classList.remove("hidden");
+  } else if (direction) {
     pendingCheckInMeasurementIdx = state.measurements.findIndex(m => m.date === date);
     pendingCheckInDirection = direction;
     activeCheckInReasons.clear();
@@ -5069,10 +5268,21 @@ document.getElementById("weightCheckInChips").addEventListener("click", (e) => {
 
 document.getElementById("weightCheckInSaveBtn").addEventListener("click", async () => {
   if (pendingCheckInMeasurementIdx !== null && state.measurements[pendingCheckInMeasurementIdx]) {
-    state.measurements[pendingCheckInMeasurementIdx].reasons = [...activeCheckInReasons];
-    state.measurements[pendingCheckInMeasurementIdx].checkInDirection = pendingCheckInDirection;
+    const m = state.measurements[pendingCheckInMeasurementIdx];
+    if (pendingCheckInIsBloat) {
+      // Kept separate from reasons/checkInDirection so bloat days never feed
+      // the weight-pace maths or the up/down weigh-in reason counts.
+      m.bloatTags = [...activeCheckInReasons];
+      const food = document.getElementById("weightCheckInFood").value.trim();
+      if (food) m.bloatFoods = food.slice(0, 120); else delete m.bloatFoods;
+      pendingCheckInIsBloat = false;
+    } else {
+      m.reasons = [...activeCheckInReasons];
+      m.checkInDirection = pendingCheckInDirection;
+    }
     await persistNow();
     renderReasonPatterns();
+    renderBloatPatterns();
     renderWeeklyReview();
   }
   document.getElementById("weightCheckInPanel").classList.add("hidden");
@@ -5080,6 +5290,7 @@ document.getElementById("weightCheckInSaveBtn").addEventListener("click", async 
 });
 
 document.getElementById("weightCheckInSkipBtn").addEventListener("click", () => {
+  pendingCheckInIsBloat = false;
   document.getElementById("weightCheckInPanel").classList.add("hidden");
   renderWeighInDetailsState();
 });
