@@ -632,7 +632,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-05 12:55 CT";
+const APP_BUILD = "2026-10-05 13:40 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1067,6 +1067,15 @@ const BUILTIN_EXERCISES = [
   { id: "seated-spinal-twist", name: "Seated spinal twist", muscle_group: "mobility", equipment: "bodyweight", cue: "Sit tall, rotate from the ribcage, both sides, hands light on the floor or knee." },
   { id: "band-overhead-stretch", name: "Band overhead stretch", muscle_group: "mobility", equipment: "band", cue: "Hold the band wide overhead, gently reach back and down to open the shoulders." },
 
+  // ---- shoulder-balance set: for uneven shoulder height / one-sided tightness.
+  // All bodyweight, all done on BOTH sides (give the lower/weaker side an
+  // extra round). Warm-ups are the dynamic ones, cool-downs the holds. ----
+  { id: "open-book-rotation", name: "Side-lying open book", muscle_group: "mobility", equipment: "bodyweight", cue: "On your side, knees stacked, open the top arm back toward the floor behind you following it with your eyes. Both sides, an extra round on the tighter one." },
+  { id: "scapular-shrug-depress", name: "Scapular shrugs and presses down", muscle_group: "mobility", equipment: "bodyweight", cue: "Arms at your sides, shrug the shoulders up, then press them down away from the ears. Slow, watch for one side moving less." },
+  { id: "scapular-pushup-floor", name: "Scapular push-up", muscle_group: "mobility", equipment: "bodyweight", cue: "In a plank with straight arms, let the chest sink between the shoulder blades, then push the floor away and round the upper back. Arms stay straight." },
+  { id: "cross-body-shoulder-stretch", name: "Cross-body shoulder stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Pull one arm across the chest with the other hand, shoulders level. Both sides, hold each." },
+  { id: "levator-scapulae-stretch", name: "Levator scapulae stretch", muscle_group: "mobility", equipment: "bodyweight", cue: "Turn the nose toward one armpit, let the head's weight (or a light hand) tip it down, opposite shoulder stays low. Both sides, easy pressure only." },
+
   // ---- from the Kavadlo brothers' (Al & Danny) well-documented progressions —
   // real gaps confirmed against their published exercise lists ----
   // (archer push-up/pull-up and toes to bar already exist above — those three
@@ -1350,6 +1359,7 @@ const HOLD_EXERCISE_IDS = new Set([
   "neck-lateral-stretch", "standing-quad-stretch", "wall-calf-stretch",
   "figure-4-glute-stretch", "butterfly-stretch", "side-lunge-stretch",
   "thoracic-extension-chair", "seated-spinal-twist", "band-overhead-stretch",
+  "cross-body-shoulder-stretch", "levator-scapulae-stretch",
   "parallette-handstand-hold", "parallette-l-sit-tucked", "parallette-l-sit",
   "parallette-l-sit-compression",
   // new true-beginner rung-1 holds (wall-walk-handstand-prep and
@@ -2931,6 +2941,8 @@ const MOBILITY_REGION_MAP = {
   "neck-circles": "upper", "chin-tucks": "upper", "neck-lateral-stretch": "upper",
   "prone-ytw-raise": "upper", "band-external-rotation": "upper", "wall-angels": "upper",
   "thoracic-extension-chair": "upper", "seated-spinal-twist": "upper", "band-overhead-stretch": "upper",
+  "open-book-rotation": "upper", "scapular-shrug-depress": "upper", "scapular-pushup-floor": "upper",
+  "cross-body-shoulder-stretch": "upper", "levator-scapulae-stretch": "upper",
   "hip-90-90-stretch": "lower", "kneeling-hip-flexor-stretch": "lower", "ankle-circles": "lower",
   "wall-ankle-mobilization": "lower", "deep-squat-hold": "lower", "pigeon-pose": "lower",
   "standing-hamstring-stretch": "lower", "standing-quad-stretch": "lower", "wall-calf-stretch": "lower",
@@ -2944,6 +2956,14 @@ const MOBILITY_REGION_MAP = {
 // cool down the shoulders/wrists/thoracic spine, legs/hinge/ruck warm up
 // and cool down the hips/ankles/hamstrings. "full" is always included since
 // those items suit any day regardless of what's being trained.
+// Shoulder-balance mobility items (added for uneven shoulder height). On days
+// with upper-body slots the AI is nudged to include one in the warm-up and one
+// in the cool-down when they fit — a preference, not a rule, so variety and
+// the region filter still win.
+const SHOULDER_BALANCE_IDS = [
+  "open-book-rotation", "scapular-shrug-depress", "scapular-pushup-floor",
+  "cross-body-shoulder-stretch", "levator-scapulae-stretch",
+];
 const MUSCLE_GROUP_TO_MOBILITY_REGION = {
   push: "upper", pull: "upper", legs: "lower", hinge: "lower", core: "full", ruck: "lower",
 };
@@ -3136,6 +3156,7 @@ good alternative exists for the same muscle groups, rather than defaulting
 to the same handful every time — see "Last session's warmup/cool-down"
 below.
 Mobility library: ${mobilityList}
+${todayMobilityRegions.has("upper") ? `The person has one shoulder sitting lower than the other, so on this upper-body day, when it fits, include one shoulder-balance item in the warmup (a dynamic one) and one in the cool-down (a hold) from: ${exercises.filter(e => SHOULDER_BALANCE_IDS.includes(e.id)).map(e => e.name).join("; ")}. Still vary them session to session.` : ""}
 Last session's warmup/cool-down (vary from these if reasonable alternates fit today's muscle groups): ${(state.lastWarmupCooldownNames || []).join(", ") || "none yet"}.
 If a slot below includes an exercise_name, that's what the person's original
 program specifically prescribed — use that exact exercise if it appears in
