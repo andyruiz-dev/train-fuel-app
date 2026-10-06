@@ -632,7 +632,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-05 13:40 CT";
+const APP_BUILD = "2026-10-05 20:25 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -2984,6 +2984,25 @@ function allowedMobilityRegions(slots) {
 // Only overrides a pick if a genuinely unused alternative exists; if the
 // whole mobility pool was already used last session, the repeat is allowed
 // rather than forced into something worse.
+// Staples for the uneven-shoulder / desk-and-driving posture work: added to
+// every upper-body day by code (not left to the AI) and exempt from the
+// "vary from last session" swap, since repeating these is the point.
+const SHOULDER_STAPLE_WARMUP_ID = "wall-slides";
+const SHOULDER_STAPLE_COOLDOWN_ID = "levator-scapulae-stretch";
+function ensureShoulderStaples(result, allowedRegions) {
+  if (!allowedRegions || !allowedRegions.has("upper")) return result;
+  const add = (listKey, id, detail) => {
+    const ex = exercises.find(e => e.id === id);
+    if (!ex) return;
+    const list = result[listKey] = result[listKey] || [];
+    if (list.some(i => i && i.name && i.name.toLowerCase() === ex.name.toLowerCase())) return;
+    list.push({ name: ex.name, detail });
+  };
+  add("warmup", SHOULDER_STAPLE_WARMUP_ID, "10 slow reps");
+  add("cooldown", SHOULDER_STAPLE_COOLDOWN_ID, "hold 30s each side, extra round on the tight side");
+  return result;
+}
+
 function enforceWarmupCooldownVariety(result, allowedRegions) {
   const lastNames = new Set((state.lastWarmupCooldownNames || []).map(n => n.toLowerCase()));
   if (!lastNames.size) return result;
@@ -2995,7 +3014,9 @@ function enforceWarmupCooldownVariety(result, allowedRegions) {
   const fix = (item) => {
     if (!item || !item.name) return item;
     const nameLower = item.name.toLowerCase();
-    if (!lastNames.has(nameLower)) {
+    const isStaple = [SHOULDER_STAPLE_WARMUP_ID, SHOULDER_STAPLE_COOLDOWN_ID]
+      .some(id => exercises.find(e => e.id === id)?.name.toLowerCase() === nameLower);
+    if (isStaple || !lastNames.has(nameLower)) {
       usedThisWorkout.add(nameLower);
       return item;
     }
@@ -3156,7 +3177,7 @@ good alternative exists for the same muscle groups, rather than defaulting
 to the same handful every time — see "Last session's warmup/cool-down"
 below.
 Mobility library: ${mobilityList}
-${todayMobilityRegions.has("upper") ? `The person has one shoulder sitting lower than the other, so on this upper-body day, when it fits, include one shoulder-balance item in the warmup (a dynamic one) and one in the cool-down (a hold) from: ${exercises.filter(e => SHOULDER_BALANCE_IDS.includes(e.id)).map(e => e.name).join("; ")}. Still vary them session to session.` : ""}
+${todayMobilityRegions.has("upper") ? `The person has one shoulder sitting lower than the other (desk and driving posture). Wall slides (warmup) and Levator scapulae stretch (cool-down) are added automatically every upper-body day, so do NOT list them yourself. In addition, when it fits, include one more shoulder-balance item in the warmup (dynamic) or cool-down (hold) from: ${exercises.filter(e => SHOULDER_BALANCE_IDS.includes(e.id) && e.id !== SHOULDER_STAPLE_COOLDOWN_ID).map(e => e.name).join("; ")}. Rotate that extra one session to session.` : ""}
 Last session's warmup/cool-down (vary from these if reasonable alternates fit today's muscle groups): ${(state.lastWarmupCooldownNames || []).join(", ") || "none yet"}.
 If a slot below includes an exercise_name, that's what the person's original
 program specifically prescribed — use that exact exercise if it appears in
@@ -3184,7 +3205,10 @@ superset_group is a letter shared by paired exercises, or null if standalone.`;
   // the AI to vary from last session, but that's advisory, so this forces a
   // genuinely different pick when one is available rather than trusting the
   // AI followed the instruction.
-  const result = enforceWarmupCooldownVariety(extractJson(text), todayMobilityRegions);
+  const result = ensureShoulderStaples(
+    enforceWarmupCooldownVariety(extractJson(text), todayMobilityRegions),
+    todayMobilityRegions
+  );
   // Remembered so the NEXT generation's prompt (above) can nudge away from
   // repeating the same warmup/cool-down items — callers already persist
   // state right after calling this, so no separate save needed here.
