@@ -632,7 +632,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-05 20:25 CT";
+const APP_BUILD = "2026-10-05 20:40 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -2985,12 +2985,14 @@ function allowedMobilityRegions(slots) {
 // whole mobility pool was already used last session, the repeat is allowed
 // rather than forced into something worse.
 // Staples for the uneven-shoulder / desk-and-driving posture work: added to
-// every upper-body day by code (not left to the AI) and exempt from the
+// every upper-body day (and hip ones on every lower-body day) by code (not left to the AI) and exempt from the
 // "vary from last session" swap, since repeating these is the point.
 const SHOULDER_STAPLE_WARMUP_ID = "wall-slides";
 const SHOULDER_STAPLE_COOLDOWN_ID = "levator-scapulae-stretch";
+const HIP_STAPLE_WARMUP_ID = "glute-bridge";
+const HIP_STAPLE_COOLDOWN_ID = "kneeling-hip-flexor-stretch";
 function ensureShoulderStaples(result, allowedRegions) {
-  if (!allowedRegions || !allowedRegions.has("upper")) return result;
+  if (!allowedRegions) return result;
   const add = (listKey, id, detail) => {
     const ex = exercises.find(e => e.id === id);
     if (!ex) return;
@@ -2998,8 +3000,15 @@ function ensureShoulderStaples(result, allowedRegions) {
     if (list.some(i => i && i.name && i.name.toLowerCase() === ex.name.toLowerCase())) return;
     list.push({ name: ex.name, detail });
   };
-  add("warmup", SHOULDER_STAPLE_WARMUP_ID, "10 slow reps");
-  add("cooldown", SHOULDER_STAPLE_COOLDOWN_ID, "hold 30s each side, extra round on the tight side");
+  if (allowedRegions.has("upper")) {
+    add("warmup", SHOULDER_STAPLE_WARMUP_ID, "10 slow reps");
+    add("cooldown", SHOULDER_STAPLE_COOLDOWN_ID, "hold 30s each side, extra round on the tight side");
+  }
+  // Desk + driving staples for leg / hinge / ruck / full-body days.
+  if (allowedRegions.has("lower")) {
+    add("warmup", HIP_STAPLE_WARMUP_ID, "12 slow reps, squeeze at the top");
+    add("cooldown", HIP_STAPLE_COOLDOWN_ID, "hold 30s each side");
+  }
   return result;
 }
 
@@ -3014,7 +3023,7 @@ function enforceWarmupCooldownVariety(result, allowedRegions) {
   const fix = (item) => {
     if (!item || !item.name) return item;
     const nameLower = item.name.toLowerCase();
-    const isStaple = [SHOULDER_STAPLE_WARMUP_ID, SHOULDER_STAPLE_COOLDOWN_ID]
+    const isStaple = [SHOULDER_STAPLE_WARMUP_ID, SHOULDER_STAPLE_COOLDOWN_ID, HIP_STAPLE_WARMUP_ID, HIP_STAPLE_COOLDOWN_ID]
       .some(id => exercises.find(e => e.id === id)?.name.toLowerCase() === nameLower);
     if (isStaple || !lastNames.has(nameLower)) {
       usedThisWorkout.add(nameLower);
