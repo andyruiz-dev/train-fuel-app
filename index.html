@@ -632,7 +632,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-05 20:40 CT";
+const APP_BUILD = "2026-10-05 20:55 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -2991,7 +2991,7 @@ const SHOULDER_STAPLE_WARMUP_ID = "wall-slides";
 const SHOULDER_STAPLE_COOLDOWN_ID = "levator-scapulae-stretch";
 const HIP_STAPLE_WARMUP_ID = "glute-bridge";
 const HIP_STAPLE_COOLDOWN_ID = "kneeling-hip-flexor-stretch";
-function ensureShoulderStaples(result, allowedRegions) {
+function ensureShoulderStaples(result, allowedRegions, slots) {
   if (!allowedRegions) return result;
   const add = (listKey, id, detail) => {
     const ex = exercises.find(e => e.id === id);
@@ -3005,7 +3005,9 @@ function ensureShoulderStaples(result, allowedRegions) {
     add("cooldown", SHOULDER_STAPLE_COOLDOWN_ID, "hold 30s each side, extra round on the tight side");
   }
   // Desk + driving staples for leg / hinge / ruck / full-body days.
-  if (allowedRegions.has("lower")) {
+  // Core-only days (no upper/lower region of their own) get the hip pair too.
+  const coreDay = !allowedRegions.has("upper") && (slots || []).some(sl => sl && sl.muscle_group === "core");
+  if (allowedRegions.has("lower") || coreDay) {
     add("warmup", HIP_STAPLE_WARMUP_ID, "12 slow reps, squeeze at the top");
     add("cooldown", HIP_STAPLE_COOLDOWN_ID, "hold 30s each side");
   }
@@ -3216,7 +3218,8 @@ superset_group is a letter shared by paired exercises, or null if standalone.`;
   // AI followed the instruction.
   const result = ensureShoulderStaples(
     enforceWarmupCooldownVariety(extractJson(text), todayMobilityRegions),
-    todayMobilityRegions
+    todayMobilityRegions,
+    day?.slots
   );
   // Remembered so the NEXT generation's prompt (above) can nudge away from
   // repeating the same warmup/cool-down items — callers already persist
