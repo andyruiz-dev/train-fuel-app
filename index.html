@@ -632,7 +632,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-05 20:55 CT";
+const APP_BUILD = "2026-10-07 08:55 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -750,7 +750,7 @@ async function loadState() {
   if (!state.ringStrap) {
     state.ringStrap = { push: null };
   }
-  if (typeof state.weekAdjustment !== "number") state.weekAdjustment = 0;
+  state.weekAdjustment = 0; // retired: week number is calendar-driven now
   if (!state.settings) state.settings = {};
   if (!state.settings.startingLevels) {
     state.settings.startingLevels = { push: "beginner", pull: "beginner", legs: "beginner", hinge: "beginner", core: "beginner", ruck: "beginner" };
@@ -1989,7 +1989,7 @@ function renderWelcomeBackBanner() {
   el.classList.remove("hidden");
   el.innerHTML = `
     <div class="card">
-      <div class="meta" style="color:var(--text);">Welcome back — it's been ${gap} days. Nothing's changed or been lost; your program picked up right where you left off.</div>
+      <div class="meta" style="color:var(--text);"><strong>Welcome back.</strong> ${gap} days away — that's just life, and showing up again is the part that counts. Nothing's lost and nothing is owed: your program picks up right where you are, and today's workout is ready whenever you are.</div>
       <button class="danger-link" id="dismissWelcomeBackBtn" style="margin-top:6px;">Dismiss</button>
     </div>`;
   document.getElementById("dismissWelcomeBackBtn").addEventListener("click", async () => {
@@ -2630,20 +2630,6 @@ function renderWeeklyReview() {
     <div class="list-item"><div class="name">${new Date(l.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · ${l.exercise}</div><div class="meta">${l.result}</div></div>
   `).join("") : `<div class="empty">Nothing logged this week yet.</div>`) : "";
 
-  // Plain-language version of the week offset — "offset -2" means nothing
-  // without already knowing this is a +/-1-per-tap counter from
-  // Repeat/Advance. Says what it actually does instead: how many weeks your
-  // program's week-of-phase number has been held back from (or pushed ahead
-  // of) what your actual start date would normally put you at.
-  let resetWeekLabel = "";
-  if (state.weekAdjustment) {
-    const n = Math.abs(state.weekAdjustment);
-    const weekWord = n === 1 ? "week" : "weeks";
-    resetWeekLabel = state.weekAdjustment < 0
-      ? `Reset — you're training as if it's ${n} ${weekWord} earlier than your actual start date`
-      : `Reset — you're training as if it's ${n} ${weekWord} ahead of your actual start date`;
-  }
-
   const sectionLabelStyle = "font-size:11px; text-transform:uppercase; letter-spacing:0.6px; color:var(--text-muted); margin-top:14px; margin-bottom:4px;";
   el.innerHTML = `
     <div style="${sectionLabelStyle} margin-top:0;">Training week</div>
@@ -2678,14 +2664,6 @@ function renderWeeklyReview() {
         <div class="meta" style="margin-top:6px;">${c.reason} (${c.count})${c.suggestion ? ` — ${c.suggestion}` : ""}</div>
       `).join("")}
     ` : ""}
-
-    <div style="${sectionLabelStyle}">Week adjustment</div>
-    <div class="meta">Behind on your plan? Repeat this week. Ahead of schedule? Advance a week. (Doesn't change your program start date — just this week's number.)</div>
-    <div class="row" style="margin-top:6px;">
-      <button class="secondary" id="repeatWeekBtn" style="flex:1;">Repeat this week</button>
-      <button class="secondary" id="advanceWeekBtn" style="flex:1;">Advance a week</button>
-    </div>
-    ${state.weekAdjustment ? `<button class="secondary" id="resetWeekBtn" style="margin-top:6px; width:100%;">${resetWeekLabel}</button>` : ""}
   `;
 
   const applyBtn = document.getElementById("applyMacroSuggestionBtn");
@@ -2694,32 +2672,6 @@ function renderWeeklyReview() {
   document.getElementById("weeklyReviewLogsToggle").addEventListener("click", () => {
     weeklyReviewLogsOpen = !weeklyReviewLogsOpen;
     renderWeeklyReview();
-  });
-
-  document.getElementById("repeatWeekBtn").addEventListener("click", async () => {
-    const keepDayIndex = state.pendingWorkout?.dayIndex;
-    state.weekAdjustment = (state.weekAdjustment || 0) - 1;
-    state.pendingWorkout = null;
-    await persistNow();
-    renderWeeklyReview();
-    if (program) ensureWorkoutReady(program, keepDayIndex);
-  });
-  document.getElementById("advanceWeekBtn").addEventListener("click", async () => {
-    const keepDayIndex = state.pendingWorkout?.dayIndex;
-    state.weekAdjustment = (state.weekAdjustment || 0) + 1;
-    state.pendingWorkout = null;
-    await persistNow();
-    renderWeeklyReview();
-    if (program) ensureWorkoutReady(program, keepDayIndex);
-  });
-  const resetBtn = document.getElementById("resetWeekBtn");
-  if (resetBtn) resetBtn.addEventListener("click", async () => {
-    const keepDayIndex = state.pendingWorkout?.dayIndex;
-    state.weekAdjustment = 0;
-    state.pendingWorkout = null;
-    await persistNow();
-    renderWeeklyReview();
-    if (program) ensureWorkoutReady(program, keepDayIndex);
   });
 }
 
@@ -2912,7 +2864,9 @@ numbers WITHIN that phase's range that should be lighter.`;
 function computeWeekNumber() {
   const startDate = state.settings?.startDate ? new Date(state.settings.startDate) : new Date();
   const raw = Math.floor((Date.now() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1;
-  return Math.max(1, raw + (state.weekAdjustment || 0));
+  // Calendar-driven only. The old Repeat/Advance week adjustment was removed;
+  // missing days never holds the program back (the app welcomes you back instead).
+  return Math.max(1, raw);
 }
 
 function currentPhaseFor(program) {
