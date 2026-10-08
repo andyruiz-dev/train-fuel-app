@@ -539,7 +539,7 @@
     </div>
     <div class="card">
       <h2>Program start date</h2>
-      <p class="meta" style="margin-bottom:10px;">Sets which week of your program's phases you're currently on. Change this if your actual start date was different — see "This week" on the Coach tab if the week number looks wrong (it also has Repeat/Advance/Reset controls for a one-off adjustment, without changing this date).</p>
+      <p class="meta" style="margin-bottom:10px;">Only used by programs paced by the calendar. Programs paced by workouts (the default) ignore it. Your progress there is the workout count on the Coach tab.</p>
       <input type="date" id="startDateInput">
     </div>
     <div class="card">
@@ -632,7 +632,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-07 20:15 CT";
+const APP_BUILD = "2026-10-07 20:30 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
