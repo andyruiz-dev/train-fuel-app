@@ -632,7 +632,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-07 08:55 CT";
+const APP_BUILD = "2026-10-07 20:15 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -751,6 +751,18 @@ async function loadState() {
     state.ringStrap = { push: null };
   }
   state.weekAdjustment = 0; // retired: week number is calendar-driven now
+  if (!state.programProgress || typeof state.programProgress !== "object") state.programProgress = {};
+  // One-time conversion for the program that was already running before
+  // pace-by-workouts existed: switch it to workout-count pacing and seed the
+  // count from the distinct days with logged sessions since its start date,
+  // so the person lands where they actually are, not back at workout 0.
+  if (state.activeProgramId && !state.programProgress[state.activeProgramId]) {
+    const startMs = state.settings?.startDate ? new Date(state.settings.startDate + "T00:00:00").getTime() : 0;
+    const days = new Set((state.logs || [])
+      .filter(l => new Date(l.date).getTime() >= startMs)
+      .map(l => new Date(l.date).toDateString()));
+    state.programProgress[state.activeProgramId] = { mode: "count", completed: days.size };
+  }
   if (!state.settings) state.settings = {};
   if (!state.settings.startingLevels) {
     state.settings.startingLevels = { push: "beginner", pull: "beginner", legs: "beginner", hinge: "beginner", core: "beginner", ruck: "beginner" };
@@ -1509,9 +1521,11 @@ function renderPrograms() {
     <div class="list-item" style="flex-direction:column; align-items:stretch;">
       <div class="name">${p.name}</div>
       <div class="meta">${p.duration_weeks} weeks · ${p.source}${state.activeProgramId === p.id ? " · active" : ""}</div>
+      <div class="meta">${getProgramPace(p).mode === "count" ? `Paced by workouts · ${getProgramPace(p).completed} of ${totalProgramWorkouts(p)} done` : "Paced by calendar"}</div>
       <div class="row" style="margin-top:10px;">
         <button class="secondary" data-preview-program="${p.id}" style="padding:6px 10px; font-size:13px;">Preview</button>
         <button class="secondary" data-use-program="${p.id}" style="padding:6px 10px; font-size:13px;">Use</button>
+        <button class="secondary" data-pace-program="${p.id}" style="padding:6px 10px; font-size:13px;">${getProgramPace(p).mode === "count" ? "Switch to calendar pace" : "Switch to workout pace"}</button>
         <button class="danger-link" data-del-program="${p.id}" style="margin-left:auto;">Delete</button>
       </div>
       <div class="preview-panel hidden" data-preview-panel="${p.id}" style="margin-top:10px;"></div>
@@ -2597,13 +2611,29 @@ let weeklyReviewLogsOpen = false;
 function renderWeeklyReview() {
   const el = document.getElementById("weeklyReview");
   const program = programs.find(p => p.id === state.activeProgramId);
-  const weekNumber = computeWeekNumber();
+  const weekNumber = computeWeekNumber(program);
   let phaseLabel = "no active program";
   let deloadNote = "";
   if (program) {
     const { phase } = currentPhaseFor(program);
     phaseLabel = phase?.phase || "n/a";
     if (phase?.deload_weeks?.includes(weekNumber)) deloadNote = " · deload week";
+  }
+
+  let paceLine = `Week ${weekNumber} · ${phaseLabel}${deloadNote}`;
+  let paceNote = "";
+  if (program) {
+    const pace = getProgramPace(program);
+    if (pace.mode === "count") {
+      const total = totalProgramWorkouts(program);
+      if (pace.completed >= total) {
+        paceLine = `${total} of ${total} workouts done · ${phaseLabel}`;
+        paceNote = "Program complete. Nice work. Generate a new one whenever you're ready.";
+      } else {
+        paceLine = `Workout ${pace.completed + 1} of ${total} · Week ${weekNumber} · ${phaseLabel}${deloadNote}`;
+        paceNote = `${pace.completed} completed so far. Paced by workouts, not the calendar.`;
+      }
+    }
   }
 
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
@@ -2633,7 +2663,8 @@ function renderWeeklyReview() {
   const sectionLabelStyle = "font-size:11px; text-transform:uppercase; letter-spacing:0.6px; color:var(--text-muted); margin-top:14px; margin-bottom:4px;";
   el.innerHTML = `
     <div style="${sectionLabelStyle} margin-top:0;">Training week</div>
-    <div class="meta">Week ${weekNumber} · ${phaseLabel}${deloadNote}</div>
+    <div class="meta">${paceLine}</div>
+    ${paceNote ? `<div class="meta" style="margin-top:4px;">${paceNote}</div>` : ""}
     ${deloadNote ? `<div class="meta" style="margin-top:4px;">Deload = a planned lighter week built into your program so your body can recover — sets and reps are automatically reduced, no action needed from you.</div>` : ""}
     <div class="meta" id="weeklyReviewLogsToggle" style="margin-top:6px; cursor:pointer;">Last 7 days: ${recentLogs.length} exercises logged
     (${counts.max} hit max, ${counts.hold} as prescribed, ${counts.missed} missed) · ${weeklyReviewLogsOpen ? "hide" : "see"} which</div>
@@ -2861,17 +2892,50 @@ numbers WITHIN that phase's range that should be lighter.`;
   return program;
 }
 
-function computeWeekNumber() {
+// ---- program pacing ----
+// Each program is paced either by workouts completed ("count", the default —
+// "workout 14 of 72", no calendar, falling behind is impossible) or by the
+// calendar ("calendar", the original start-date behavior). Stored per program
+// in state.programProgress[programId] = { mode, completed }.
+function getProgramPace(program) {
+  const e = program && state.programProgress ? state.programProgress[program.id] : null;
+  return { mode: e?.mode === "calendar" ? "calendar" : "count", completed: e?.completed || 0 };
+}
+function phaseForWeek(program, week) {
+  const phases = program?.structure?.phases || [];
+  return phases.find(p => week >= p.week_start && week <= p.week_end) || phases[phases.length - 1] || phases[0];
+}
+function programMaxWeek(program) {
+  return Math.max(1, ...((program?.structure?.phases || []).map(p => p.week_end || 0)));
+}
+// A "week" in count mode = one full pass through that phase's day template.
+function workoutsInWeek(program, week) {
+  return Math.max(1, (phaseForWeek(program, week)?.days || []).length);
+}
+function totalProgramWorkouts(program) {
+  let t = 0;
+  for (let w = 1; w <= programMaxWeek(program); w++) t += workoutsInWeek(program, w);
+  return t;
+}
+function weekForCompleted(program, completed) {
+  const maxWeek = programMaxWeek(program);
+  let rem = completed, w = 1;
+  while (w < maxWeek && rem >= workoutsInWeek(program, w)) { rem -= workoutsInWeek(program, w); w++; }
+  return w;
+}
+function computeWeekNumber(program) {
+  if (program && getProgramPace(program).mode === "count") {
+    return weekForCompleted(program, getProgramPace(program).completed);
+  }
   const startDate = state.settings?.startDate ? new Date(state.settings.startDate) : new Date();
   const raw = Math.floor((Date.now() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1;
-  // Calendar-driven only. The old Repeat/Advance week adjustment was removed;
-  // missing days never holds the program back (the app welcomes you back instead).
+  // Calendar-driven only; the old Repeat/Advance offset was removed.
   return Math.max(1, raw);
 }
 
 function currentPhaseFor(program) {
   const phases = program.structure.phases || [];
-  const weekNumber = computeWeekNumber();
+  const weekNumber = computeWeekNumber(program);
   const phase = phases.find(p => weekNumber >= p.week_start && weekNumber <= p.week_end) || phases[phases.length - 1] || phases[0];
   return { phase, weekNumber };
 }
@@ -4136,6 +4200,16 @@ async function applyWorkoutResults(results) {
 
   checkWorkoutMilestones(oldLevels);
 
+  if (state.pendingWorkout && !state.pendingWorkout.completed) {
+    // A prescribed session finished — advances count-paced programs.
+    const pid = state.pendingWorkout.programId;
+    if (pid && state.programProgress) {
+      const prog = programs.find(p => p.id === pid);
+      if (prog && getProgramPace(prog).mode === "count") {
+        state.programProgress[pid] = { mode: "count", completed: getProgramPace(prog).completed + 1 };
+      }
+    }
+  }
   if (state.pendingWorkout) state.pendingWorkout.completed = true;
   await persistNow();
   renderProgressCharts();
@@ -6132,6 +6206,18 @@ document.getElementById("programList").addEventListener("click", async (e) => {
   const previewId = e.target.dataset.previewProgram;
   const useId = e.target.dataset.useProgram;
   const delId = e.target.dataset.delProgram;
+  const paceId = e.target.dataset.paceProgram;
+  if (paceId) {
+    const prog = programs.find(p => p.id === paceId);
+    if (!prog) return;
+    const cur = getProgramPace(prog);
+    state.programProgress = state.programProgress || {};
+    // Keep the completed count either way, so switching back never loses it.
+    state.programProgress[paceId] = { mode: cur.mode === "count" ? "calendar" : "count", completed: cur.completed };
+    await persistNow();
+    renderPrograms();
+    return;
+  }
   if (previewId) {
     const panel = document.querySelector(`[data-preview-panel="${previewId}"]`);
     const isHidden = panel.classList.contains("hidden");
