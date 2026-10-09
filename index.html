@@ -632,7 +632,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-07 20:40 CT";
+const APP_BUILD = "2026-10-09 11:55 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -4706,7 +4706,7 @@ document.getElementById("foodPhotoInput").addEventListener("change", async (e) =
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         image: { media_type: uploadBlob.type || file.type || "image/jpeg", data: base64 },
-        note,
+        note: note ? `${note} (If this lists several foods, return one combined total for the whole meal. Always answer with the JSON object only.)` : note,
       }),
     });
     if (!resp.ok) {
@@ -4715,7 +4715,21 @@ document.getElementById("foodPhotoInput").addEventListener("change", async (e) =
     }
     const data = await resp.json();
     const text = data.content?.[0]?.text || "{}";
-    const est = extractJson(text);
+    // The model sometimes answers in prose (or wraps the JSON in commentary)
+    // when a note is attached, e.g. when the note lists several foods or asks
+    // something. Pull the first {...} object out of whatever came back before
+    // giving up, and if there's still nothing usable, show what it actually
+    // said rather than a bare JSON parse error.
+    let est;
+    try {
+      est = extractJson(text);
+    } catch (parseErr) {
+      const m = text.match(/\{[\s\S]*?\}/);
+      try { est = m ? JSON.parse(m[0]) : null; } catch (e2) { est = null; }
+      if (!est || typeof est !== "object") {
+        throw new Error("the AI replied with text instead of an estimate: \"" + text.trim().slice(0, 160) + "\"");
+      }
+    }
     scanBaseValues = { calories: est.calories || 0, protein: est.protein || 0, carbs: est.carbs || 0, fat: est.fat || 0 };
     document.getElementById("scanName").value = est.name || "";
     document.getElementById("scanServings").value = "1";
