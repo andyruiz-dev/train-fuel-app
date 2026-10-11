@@ -317,6 +317,19 @@
               <div class="chip" data-months="9">9 months</div>
               <div class="chip" data-months="12">12 months</div>
             </div>
+            <div class="meta" style="margin-top:12px;">Training days per week</div>
+            <div class="row" id="daysChips">
+              <div class="chip" data-days="3">3</div>
+              <div class="chip active" data-days="4">4</div>
+              <div class="chip" data-days="5">5</div>
+              <div class="chip" data-days="6">6</div>
+            </div>
+            <div class="meta" style="margin-top:12px;">Session length (with warm-up and cool-down)</div>
+            <div class="row" id="minutesChips">
+              <div class="chip" data-minutes="25-35">25-35 min</div>
+              <div class="chip active" data-minutes="35-45">35-45 min</div>
+              <div class="chip" data-minutes="45-60">45-60 min</div>
+            </div>
             <div style="margin-top:12px;">
               <input type="text" id="programFocus" placeholder="Focus, e.g. rings + rucking, upper body strength">
             </div>
@@ -625,7 +638,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-11 19:20 CT";
+const APP_BUILD = "2026-10-11 20:05 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -2873,7 +2886,7 @@ function balanceProgramStructure(structure) {
     // rest day per phase (clearing the lightest training day) BEFORE the
     // group-floor backfill below, so any slots lost here get naturally
     // redistributed by that step rather than the two fighting each other.
-    if (days.length > 0 && !days.some(d => d.slots.length === 0)) {
+    if (days.length >= 7 && !days.some(d => d.slots.length === 0)) {
       const lightest = days.slice().sort((a, b) => a.slots.length - b.slots.length)[0];
       console.warn(`balanceProgramStructure: phase "${phase.phase}" had no rest day — clearing "${lightest.day}" to force one`);
       lightest.slots = [];
@@ -2904,7 +2917,10 @@ function balanceProgramStructure(structure) {
   return structure;
 }
 
-async function generateProgram(months, focus) {
+async function generateProgram(months, focus, opts = {}) {
+  const days = opts.days || 4;
+  const minutes = opts.minutes || "35-45";
+  const slotsPerDay = minutes === "25-35" ? "4-5" : minutes === "45-60" ? "6-7" : "5-6";
   const weeks = months * 4;
   const system = `You design structured fitness programs as pure muscle-group slot
 plans, never fixed exercise names — that lets the app swap in different exercises
@@ -2919,7 +2935,17 @@ Output JSON exactly in this shape:
 Use as many phases as make sense for ${weeks} weeks (roughly one phase per 4-8 weeks),
 with each phase's day/slot template reflecting that phase's focus and difficulty
 (e.g. higher reps early, lower reps + more sets later). deload_weeks lists week
-numbers WITHIN that phase's range that should be lighter.`;
+numbers WITHIN that phase's range that should be lighter.
+SESSION DESIGN (this matters more than anything above): the person wants fat
+loss and conditioning, not token workouts. Each phase's "days" array must list
+EXACTLY ${days} training days per week and NO rest-day entries (the app handles
+rest). Every training day is a full ${minutes}-minute session including a short
+warm-up and cool-down, so give each day ${slotsPerDay} slots (3-4 sets each),
+arranged as back-to-back pairs (push with pull, legs with hinge, core with
+anything) that will be done as supersets with short rest, so the heart rate
+stays up. Prefer full-body or upper/lower days over single-muscle days, and give
+every day at least one leg or hinge slot. Spread push, pull, legs, hinge and core
+across the ${days} days so each is trained at least twice a week where possible.`;
   const data = await apiFetch("/api/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -2927,6 +2953,7 @@ numbers WITHIN that phase's range that should be lighter.`;
   });
   const text = data.content?.[0]?.text || "{}";
   const structure = balanceProgramStructure(extractJson(text));
+  structure.session = { days, minutes };
   const program = {
     id: "prog-" + Date.now(),
     name: structure.name || `${months}-month program`,
@@ -2960,7 +2987,8 @@ function programMaxWeek(program) {
 }
 // A "week" in count mode = one full pass through that phase's day template.
 function workoutsInWeek(program, week) {
-  return Math.max(1, (phaseForWeek(program, week)?.days || []).length);
+  // Only days with exercises count; a rest-day entry in the template isn't a workout.
+  return Math.max(1, (phaseForWeek(program, week)?.days || []).filter(d => (d.slots || []).length > 0).length);
 }
 function totalProgramWorkouts(program) {
   let t = 0;
@@ -3259,8 +3287,7 @@ rather than generic. Warmup: 2-3 items marked
 (dynamic) from the list (~3-4 minutes total). Cool-down: 1-2 items marked
 (hold) from the list, for the muscles just worked (~2 minutes total). All
 mobility library items are already bodyweight-only, so this works anywhere
-including while traveling. Genuinely quick — this is a 20-25 minute session
-overall. Prefer different warmup/cool-down items than last session where a
+including while traveling. ${program?.structure?.session ? `This is a ${program.structure.session.minutes}-minute session overall, so give the person a full, efficient workout (follow the slots below; pair them as supersets with short rest).` : "Genuinely quick — this is a 20-25 minute session overall."} Prefer different warmup/cool-down items than last session where a
 good alternative exists for the same muscle groups, rather than defaulting
 to the same handful every time — see "Last session's warmup/cool-down"
 below.
@@ -5716,6 +5743,11 @@ function playBeep() {
 // round by round (A set 1, B set 1, A set 2, B set 2, ...) with a short
 // transition between partners and a full rest only after each complete round.
 function buildSessionQueue(exs) {
+  // Programs built with a session length (circuit-style) use shorter rests so
+  // the heart rate stays up: 45s after a superset round, 60s after a solo set.
+  // Older programs keep the original 90s.
+  const activeSessionProgram = programs.find(p => p.id === state.activeProgramId);
+  const sessionRest = activeSessionProgram?.structure?.session ? { round: 45, solo: 60 } : { round: 90, solo: 90 };
   const queue = [];
   const seenGroups = new Set();
   exs.forEach((e, i) => {
@@ -5731,7 +5763,7 @@ function buildSessionQueue(exs) {
           queue.push({
             exIndex: m.exIndex, name: m.name, muscle_group: m.muscle_group,
             reps: m.reps, setNum: round + 1, totalSets: m.sets,
-            restAfter: isLastInRound ? 90 : 15,
+            restAfter: isLastInRound ? sessionRest.round : 15,
             supersetLabel: `Superset ${e.superset_group} · ${mi + 1} of ${members.length}`,
           });
         });
@@ -5741,7 +5773,7 @@ function buildSessionQueue(exs) {
         queue.push({
           exIndex: i, name: e.name, muscle_group: e.muscle_group,
           reps: e.reps, setNum: s + 1, totalSets: e.sets,
-          restAfter: 90, supersetLabel: null,
+          restAfter: sessionRest.solo, supersetLabel: null,
         });
       }
     }
@@ -6240,13 +6272,29 @@ document.getElementById("durationChips").addEventListener("click", (e) => {
   selectedMonths = parseInt(chip.dataset.months, 10);
 });
 
+let selectedDays = 4, selectedMinutes = "35-45";
+document.getElementById("daysChips").addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  document.querySelectorAll("#daysChips .chip").forEach(c => c.classList.remove("active"));
+  chip.classList.add("active");
+  selectedDays = parseInt(chip.dataset.days, 10);
+});
+document.getElementById("minutesChips").addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  document.querySelectorAll("#minutesChips .chip").forEach(c => c.classList.remove("active"));
+  chip.classList.add("active");
+  selectedMinutes = chip.dataset.minutes;
+});
+
 // ---- generate program ----
 document.getElementById("generateProgramBtn").addEventListener("click", async (e) => {
   const btn = e.target;
   const focus = document.getElementById("programFocus").value.trim();
   btn.disabled = true; btn.textContent = "Generating…";
   try {
-    const program = await generateProgram(selectedMonths, focus);
+    const program = await generateProgram(selectedMonths, focus, { days: selectedDays, minutes: selectedMinutes });
     await loadPrograms();
     renderPrograms();
     alert(`"${program.name}" saved to your library — it'll stay there until you delete it.`);
