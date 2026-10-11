@@ -230,49 +230,17 @@
   <section id="tab-food" class="tab-panel hidden">
     <div class="card">
       <details class="exercise-group">
-        <summary>Today's macros</summary>
+        <summary>Today &amp; this week</summary>
         <div style="padding-top:6px;">
           <div id="proteinRemaining" style="text-align:center; margin-bottom:12px;"></div>
           <div id="macroSummary"></div>
+          <div id="weeklyIntake" style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border);"></div>
+          <button class="danger-link" id="markTodayPartialBtn" style="margin-top:8px; color:var(--accent);"></button>
         </div>
       </details>
     </div>
     <div class="card">
-      <details class="exercise-group">
-        <summary>Quick-add protein</summary>
-        <div style="padding-top:6px;">
-          <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
-            Low-prep staples for closing the gap — tap to log instantly.
-          </p>
-          <div class="row" id="quickProteinChips"></div>
-        </div>
-      </details>
-    </div>
-    <div class="card">
-      <details class="exercise-group">
-        <summary>Log known macros</summary>
-        <div style="padding-top:6px;">
-          <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
-            Already know the exact numbers off a label or scale? Skip the photo.
-          </p>
-          <input type="text" id="manualName" placeholder="Food name" style="margin-bottom:8px;">
-          <div class="row">
-            <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="manualCalories"></div>
-            <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="manualProtein"></div>
-          </div>
-          <div class="row" style="margin-top:8px;">
-            <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="manualCarbs"></div>
-            <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="manualFat"></div>
-          </div>
-          <button class="primary" id="saveManualBtn" style="margin-top:10px; width:100%;">Add to log</button>
-        </div>
-      </details>
-    </div>
-    <div class="card">
-      <h2>Scan a photo</h2>
-      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
-        AI estimates food and macros from the photo — review and adjust before saving.
-      </p>
+      <h2>Add food</h2>
       <input type="text" id="scanNote" placeholder="Optional note (e.g. 'turkey not chicken', 'half portion')" style="margin-bottom:10px;">
       <div class="file-drop" id="foodPhotoDrop">Tap to take or choose a photo</div>
       <input type="file" id="foodPhotoInput" accept="image/*" capture="environment" style="display:none;">
@@ -293,12 +261,37 @@
         </div>
         <button class="primary" id="saveScanBtn" style="margin-top:10px;">Add to log</button>
       </div>
+      <details class="exercise-group" style="margin-top:14px;">
+        <summary>Quick add</summary>
+        <div style="padding-top:6px;">
+          <div class="meta" style="margin-bottom:6px;">Protein staples. Tap to log instantly.</div>
+          <div class="row" id="quickProteinChips"></div>
+          <div class="meta" style="margin:12px 0 6px;">Drinks</div>
+          <div class="row" id="quickDrinkChips"></div>
+        </div>
+      </details>
+      <details class="exercise-group" style="margin-top:6px;">
+        <summary>Know the exact numbers?</summary>
+        <div style="padding-top:6px;">
+          <input type="text" id="manualName" placeholder="Food name" style="margin-bottom:8px;">
+          <div class="row">
+            <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="manualCalories"></div>
+            <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="manualProtein"></div>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="manualCarbs"></div>
+            <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="manualFat"></div>
+          </div>
+          <button class="primary" id="saveManualBtn" style="margin-top:10px; width:100%;">Add to log</button>
+        </div>
+      </details>
     </div>
     <div class="card">
       <details class="exercise-group">
         <summary>Food log</summary>
         <div style="padding-top:6px;">
           <input type="date" id="foodLogDate" style="margin-bottom:8px;">
+          <div id="foodLogPartialRow" style="margin-bottom:8px;"></div>
           <div id="foodLogList" class="empty">Nothing logged for this day.</div>
         </div>
       </details>
@@ -632,7 +625,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-11 18:10 CT";
+const APP_BUILD = "2026-10-11 19:00 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -769,6 +762,7 @@ async function loadState() {
   }
   if (!state.cardioLogs) state.cardioLogs = [];
   if (!state.foodLogs) state.foodLogs = [];
+  if (!state.foodDayFlags || typeof state.foodDayFlags !== "object") state.foodDayFlags = {};
   if (!state.milestonesSeen) state.milestonesSeen = { weightLbs: [], workoutDays: [] };
   if (!state.celebrations) state.celebrations = [];
   if (!state.flags) state.flags = [];
@@ -2671,6 +2665,10 @@ function renderWeeklyReview() {
     if (phase?.deload_weeks?.includes(weekNumber)) deloadNote = " · deload week";
   }
 
+  const wi = computeWeeklyIntake();
+  const weeklyIntakeLine = wi.counted >= 3
+    ? `<div class="meta" style="margin-bottom:6px;">7-day average intake: ${wi.avg} cal/day${state.settings?.macroTargets?.calories ? ` (target ${state.settings.macroTargets.calories})` : ""} · ${wi.counted} of 7 days counted.</div>`
+    : "";
   let paceLine = `Week ${weekNumber} · ${phaseLabel}${deloadNote}`;
   let paceNote = "";
   if (program) {
@@ -2722,6 +2720,7 @@ function renderWeeklyReview() {
     ${logsDetailHtml}
 
     <div style="${sectionLabelStyle}">Nutrition</div>
+    ${weeklyIntakeLine}
     ${suggestion ? `
       <div class="meta">${suggestion.message}</div>
       ${suggestion.deltaCalories !== 0 ? (
@@ -4434,6 +4433,27 @@ document.getElementById("quickProteinChips").addEventListener("click", async (e)
 });
 
 
+// ---- quick-add drinks ----
+// Typical per-serving values, deliberately round. Tagged alcohol:true so the
+// log can tell drinks apart later; they count toward calories like anything else.
+const QUICK_DRINKS = [
+  { name: "Beer (12 oz)", calories: 150, protein: 1, carbs: 13, fat: 0 },
+  { name: "Wine (5 oz)", calories: 125, protein: 0, carbs: 4, fat: 0 },
+  { name: "Liquor (1.5 oz)", calories: 100, protein: 0, carbs: 0, fat: 0 },
+  { name: "Cocktail", calories: 200, protein: 0, carbs: 15, fat: 0 },
+  { name: "Hard seltzer", calories: 100, protein: 0, carbs: 2, fat: 0 },
+];
+function renderQuickDrinkChips() {
+  const el = document.getElementById("quickDrinkChips");
+  if (!el) return;
+  el.innerHTML = QUICK_DRINKS.map((f, i) => `<div class="chip" data-quick-drink="${i}">${f.name} · ${f.calories}</div>`).join("");
+}
+document.getElementById("quickDrinkChips").addEventListener("click", async (e) => {
+  const chip = e.target.closest("[data-quick-drink]");
+  if (!chip) return;
+  await addFoodEntry({ ...QUICK_DRINKS[parseInt(chip.dataset.quickDrink, 10)], source: "quick", alcohol: true });
+});
+
 // toISOString() returns the UTC date, but todaysFoodLogs/foodLogsForDate filter
 // using toDateString() (local time) — in US timezones during evening hours,
 // the UTC date is already "tomorrow", so defaulting date inputs to the UTC
@@ -4463,6 +4483,73 @@ function hasLoggedWorkoutToday() {
   const today = localDateStr();
   return (state.logs || []).some(l => localDateStr(new Date(l.date)) === today);
 }
+
+// ---- weekly intake average + "not fully tracked" days ----
+// The scale responds to what you eat over weeks, not on any single day, so the
+// number worth watching is the 7-day average, not a daily pass/fail. Averages
+// use the last 7 COMPLETED days (today is still in progress), skip days with
+// nothing logged, and skip any day you've marked as not fully tracked, so a
+// travel or partial-log day can't drag the average down.
+function dayKeyOf(date) { return localDateStr(date instanceof Date ? date : new Date(date)); }
+function isDayMarkedPartial(dateStr) { return !!(state.foodDayFlags && state.foodDayFlags[dateStr]); }
+function computeWeeklyIntake(now = new Date()) {
+  const byDay = {};
+  (state.foodLogs || []).forEach(f => {
+    const k = dayKeyOf(f.date);
+    byDay[k] = (byDay[k] || 0) + (f.calories || 0);
+  });
+  const counted = [];
+  let partial = 0, untracked = 0;
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    const k = dayKeyOf(d);
+    if (isDayMarkedPartial(k)) { partial++; continue; }
+    if (byDay[k] === undefined) { untracked++; continue; }
+    counted.push(byDay[k]);
+  }
+  const avg = counted.length ? Math.round(counted.reduce((a, b) => a + b, 0) / counted.length) : null;
+  return { avg, counted: counted.length, partial, untracked };
+}
+function renderWeeklyIntake() {
+  const el = document.getElementById("weeklyIntake");
+  if (!el) return;
+  const t = (state.settings.macroTargets || {}).calories;
+  const w = computeWeeklyIntake();
+  const notCounted = w.partial + w.untracked;
+  let html = `<div class="field-label" style="text-transform:uppercase; letter-spacing:0.6px;">7-day average</div>`;
+  if (w.counted < 3) {
+    html += `<div class="meta" style="margin-top:6px;">Needs at least 3 tracked days out of the last 7 to show an average (${w.counted} so far). Days you skip or mark as not fully tracked are left out, so nothing here counts against you.</div>`;
+  } else {
+    html += macroBar("Calories per day", w.avg, t);
+    const diff = t ? w.avg - t : null;
+    html += `<div class="meta" style="margin-top:6px;">${diff === null ? "" : (Math.abs(diff) <= 75 ? "About on target. " : diff > 0 ? `${diff} cal/day above target. ` : `${Math.abs(diff)} cal/day below target. `)}Based on ${w.counted} of the last 7 days${notCounted ? ` (${notCounted} left out: not tracked or marked partial)` : ""}.</div>`;
+  }
+  el.innerHTML = html;
+}
+async function toggleDayPartial(dateStr) {
+  state.foodDayFlags = state.foodDayFlags || {};
+  if (state.foodDayFlags[dateStr]) delete state.foodDayFlags[dateStr];
+  else state.foodDayFlags[dateStr] = "partial";
+  await persistNow();
+  renderMacroSummary();
+  renderFoodLogList();
+}
+function renderPartialControls() {
+  const todayStr = localDateStr();
+  const btn = document.getElementById("markTodayPartialBtn");
+  if (btn) btn.textContent = isDayMarkedPartial(todayStr) ? "Today is marked as not fully tracked. Undo" : "Mark today as not fully tracked";
+  const row = document.getElementById("foodLogPartialRow");
+  const dateInput = document.getElementById("foodLogDate");
+  if (row && dateInput) {
+    const d = dateInput.value || todayStr;
+    row.innerHTML = `<button class="danger-link" style="color:var(--accent);" data-toggle-partial="${d}">${isDayMarkedPartial(d) ? "Marked as not fully tracked. Undo" : "Mark this day as not fully tracked"}</button>`;
+  }
+}
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-toggle-partial]");
+  if (t) toggleDayPartial(t.dataset.togglePartial);
+});
+document.getElementById("markTodayPartialBtn").addEventListener("click", () => toggleDayPartial(localDateStr()));
 
 function macroBar(label, value, target) {
   const pct = target ? Math.min(100, Math.round((value / target) * 100)) : 0;
@@ -4501,12 +4588,15 @@ function renderMacroSummary() {
     macroBar("Protein (g)", totals.protein, t.protein) +
     macroBar("Carbs (g)", totals.carbs, t.carbs) +
     macroBar("Fat (g)", totals.fat, t.fat);
+  renderWeeklyIntake();
+  renderPartialControls();
 }
 
 function renderFoodLogList() {
   const el = document.getElementById("foodLogList");
   const dateInput = document.getElementById("foodLogDate");
   const selectedDate = dateInput.value || localDateStr();
+  renderPartialControls();
   const dayLogs = foodLogsForDate(selectedDate);
   if (!dayLogs.length) { el.innerHTML = '<div class="empty">Nothing logged for this day.</div>'; return; }
   el.innerHTML = dayLogs.map((f, i) => {
@@ -6564,6 +6654,7 @@ async function init() {
   renderStartingLevelSettings();
   renderMacroSummary();
   renderQuickProteinChips();
+  renderQuickDrinkChips();
   document.getElementById("foodLogDate").value = localDateStr();
   renderFoodLogList();
   if (state.settings?.startDate) document.getElementById("startDateInput").value = state.settings.startDate;
