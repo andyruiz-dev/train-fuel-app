@@ -632,7 +632,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-11 17:50 CT";
+const APP_BUILD = "2026-10-11 18:10 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1549,7 +1549,7 @@ function renderProgramPreview(program) {
 }
 
 // Compares actual weight trend from logged measurements against a target
-// recomp pace (0.5-0.75% bodyweight/week). Suggests a calorie nudge — from
+// recomp pace (0.25-0.5% bodyweight/week). Suggests a calorie nudge — from
 // carbs only — rather than changing anything automatically.
 // Shared weight-trend calculation used by both the macro-calorie suggestion
 // and the Recovery status breakdown. Two fixes over the original per-caller
@@ -1834,7 +1834,10 @@ function computeMacroSuggestionRaw(windowDays = 14) {
   const trend = computeWeightTrend(windowDays);
   if (!trend) return null;
   const { pctPerWeek, excludedFlagged } = trend;
-  const targetMin = -0.75, targetMax = -0.5; // % per week, negative = loss
+  // Slow-and-steady recomp pace for bodyweight training: 0.25-0.5% of body
+  // weight per week (about 0.5-1 lb at 200 lb). Faster than this prompts an
+  // add-back, slower a trim, and both only after the 4-week baseline rules.
+  const targetMin = -0.5, targetMax = -0.25; // % per week, negative = loss
   const excludedNote = excludedFlagged ? ` (excluding ${excludedFlagged} flagged day${excludedFlagged === 1 ? "" : "s"})` : "";
 
   if (pctPerWeek > targetMax) {
@@ -4077,8 +4080,10 @@ function parseRepRange(repsStr) {
 // recomp target (0.5-0.75%/week) — a recovery-capacity warning sign, not
 // something to reward with a harder program.
 function isLosingTooFast() {
-  const suggestion = computeMacroSuggestionRaw(14);
-  return !!(suggestion && suggestion.deltaCalories > 0);
+  // Safety signal, deliberately independent of the macro-suggestion range:
+  // still the original 0.75%/week line.
+  const trend = computeWeightTrend(14);
+  return !!(trend && trend.pctPerWeek < -0.75);
 }
 
 async function applyWorkoutResults(results) {
@@ -5263,7 +5268,7 @@ document.getElementById("weightHistoryList").addEventListener("click", async (e)
 // card needs. The Today-tab banner only ever appears once caution is already
 // active — this is for seeing how close you are before that happens.
 function computeRecoveryStatus() {
-  const targetMin = -0.75, targetMax = -0.5; // % bodyweight/week, negative = loss
+  const targetMin = -0.75, targetMax = -0.25; // % bodyweight/week, negative = loss (caution line stays at -0.75)
   const trend = computeWeightTrend(14);
   if (!trend) {
     const ms = state.measurements || [];
