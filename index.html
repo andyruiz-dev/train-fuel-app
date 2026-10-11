@@ -632,7 +632,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-09 11:55 CT";
+const APP_BUILD = "2026-10-11 17:50 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1826,8 +1826,12 @@ function formatWeeksFromNow(weeks) {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
-function computeMacroSuggestion() {
-  const trend = computeWeightTrend(14);
+// The raw pace check, with no waiting rules. Used directly only where a
+// safety signal matters (isLosingTooFast). Anything that nudges the person's
+// calories goes through computeMacroSuggestion() below, which holds back
+// until there's a real, steady baseline.
+function computeMacroSuggestionRaw(windowDays = 14) {
+  const trend = computeWeightTrend(windowDays);
   if (!trend) return null;
   const { pctPerWeek, excludedFlagged } = trend;
   const targetMin = -0.75, targetMax = -0.5; // % per week, negative = loss
@@ -1864,6 +1868,50 @@ function computeMacroSuggestion() {
     };
   }
   return { message: `On pace at ${Math.abs(pctPerWeek).toFixed(2)}%/week${excludedNote} — right in the ${Math.abs(targetMax)}-${Math.abs(targetMin)}% recomp target range. No change suggested.`, deltaCalories: 0 };
+}
+
+// ---- when macro suggestions are allowed ----
+// Calorie targets only get a suggested change after a full 4 weeks of steady
+// weigh-ins, and then at most once per 4 weeks. Week-to-week scale moves are
+// mostly water, and chasing them produces a yo-yo of cutting then adding that
+// is hard on both progress and your relationship with food. So: no nudges
+// while the baseline is still forming, and a long pause after any change so
+// it has time to show up in the trend.
+const MACRO_BASELINE_DAYS = 28;
+const MACRO_MIN_WEIGHINS = 20; // of those 28 days
+function macroSuggestionReadiness() {
+  const now = Date.now();
+  const cutoff = now - MACRO_BASELINE_DAYS * DAY_MS;
+  const ms = (state.measurements || []).filter(m => typeof m.weight === "number");
+  const inWindow = ms.filter(m => new Date(m.date + "T00:00:00").getTime() >= cutoff);
+  const earliest = ms.length ? Math.min(...ms.map(m => new Date(m.date + "T00:00:00").getTime())) : null;
+  const daysCovered = earliest == null ? 0 : Math.min(MACRO_BASELINE_DAYS, Math.floor((now - earliest) / DAY_MS) + 1);
+  const sinceApplied = daysSinceMacroSuggestionApplied();
+  if (sinceApplied !== null && sinceApplied < MACRO_BASELINE_DAYS) {
+    return { ready: false, reason: "cooldown", daysCovered, weighIns: inWindow.length, daysLeft: Math.max(1, Math.ceil(MACRO_BASELINE_DAYS - sinceApplied)), sinceApplied };
+  }
+  if (daysCovered < MACRO_BASELINE_DAYS || inWindow.length < MACRO_MIN_WEIGHINS) {
+    return { ready: false, reason: "baseline", daysCovered, weighIns: inWindow.length };
+  }
+  return { ready: true, daysCovered, weighIns: inWindow.length };
+}
+
+function computeMacroSuggestion() {
+  const r = macroSuggestionReadiness();
+  if (!r.ready) {
+    if (r.reason === "cooldown") {
+      const d = Math.floor(r.sinceApplied);
+      return {
+        message: `Your last calorie change was ${d < 1 ? "today" : d === 1 ? "1 day ago" : d + " days ago"}. It takes about 4 weeks to show up in your trend, so nothing new is suggested yet. Next check in ${r.daysLeft} day${r.daysLeft === 1 ? "" : "s"}.`,
+        deltaCalories: 0, gated: true,
+      };
+    }
+    return {
+      message: `Building your baseline: ${r.weighIns} weigh-ins over ${r.daysCovered} of ${MACRO_BASELINE_DAYS} days so far. No calorie changes are suggested until there's about 4 weeks of steady data, because day-to-day and week-to-week moves are mostly water.`,
+      deltaCalories: 0, gated: true,
+    };
+  }
+  return computeMacroSuggestionRaw(MACRO_BASELINE_DAYS);
 }
 
 async function applyMacroSuggestion(delta) {
@@ -2674,8 +2722,8 @@ function renderWeeklyReview() {
     ${suggestion ? `
       <div class="meta">${suggestion.message}</div>
       ${suggestion.deltaCalories !== 0 ? (
-        daysSinceApplied !== null && daysSinceApplied < 7
-          ? `<div class="meta" style="margin-top:8px;">Applied ${daysSinceApplied < 1 ? "today" : Math.floor(daysSinceApplied) === 1 ? "1 day ago" : Math.floor(daysSinceApplied) + " days ago"} — next suggestion available in ${Math.max(1, Math.ceil(7 - daysSinceApplied))} day${Math.ceil(7 - daysSinceApplied) === 1 ? "" : "s"}.</div>`
+        daysSinceApplied !== null && daysSinceApplied < MACRO_BASELINE_DAYS
+          ? `<div class="meta" style="margin-top:8px;">Applied ${daysSinceApplied < 1 ? "today" : Math.floor(daysSinceApplied) === 1 ? "1 day ago" : Math.floor(daysSinceApplied) + " days ago"} — next suggestion available in ${Math.max(1, Math.ceil(MACRO_BASELINE_DAYS - daysSinceApplied))} day${Math.ceil(MACRO_BASELINE_DAYS - daysSinceApplied) === 1 ? "" : "s"}.</div>`
           : `<button class="secondary" id="applyMacroSuggestionBtn" style="margin-top:8px; width:100%;">Apply suggestion</button>`
       ) : ""}
     ` : `<div class="meta">Log at least two weigh-ins about a week apart to get a calorie-pace suggestion here.</div>`}
@@ -4029,7 +4077,7 @@ function parseRepRange(repsStr) {
 // recomp target (0.5-0.75%/week) — a recovery-capacity warning sign, not
 // something to reward with a harder program.
 function isLosingTooFast() {
-  const suggestion = computeMacroSuggestion();
+  const suggestion = computeMacroSuggestionRaw(14);
   return !!(suggestion && suggestion.deltaCalories > 0);
 }
 
