@@ -638,7 +638,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-11 20:35 CT";
+const APP_BUILD = "2026-10-11 20:50 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -4649,6 +4649,10 @@ function renderFoodLogList() {
         </div>
         <div class="hidden" data-edit-panel="${realIndex}" style="margin-top:8px;">
           <input type="text" data-field="name" value="${f.name.replace(/"/g,'&quot;')}" placeholder="Food name" style="margin-bottom:8px;">
+          <div class="field" style="margin-bottom:8px;">
+            <div class="field-label">Servings (scales the numbers below)</div>
+            <input type="text" inputmode="decimal" data-servings="${realIndex}" value="1" data-base="${f.calories || 0},${f.protein || 0},${f.carbs || 0},${f.fat || 0}">
+          </div>
           <div class="row">
             <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" data-field="calories" value="${f.calories}"></div>
             <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" data-field="protein" value="${f.protein}"></div>
@@ -4664,6 +4668,19 @@ function renderFoodLogList() {
 }
 
 document.getElementById("foodLogDate").addEventListener("change", renderFoodLogList);
+
+// Editing servings rescales the macro fields from the values the panel opened
+// with (not from each other), so typing 2, then 1.5, never compounds.
+document.getElementById("foodLogList").addEventListener("input", (e) => {
+  const input = e.target.closest("[data-servings]");
+  if (!input) return;
+  const servings = parseFloat(input.value);
+  if (!(servings >= 0)) return;
+  const [cal, pro, carb, fat] = input.dataset.base.split(",").map(Number);
+  const panel = input.closest("[data-edit-panel]");
+  const set = (field, v) => { panel.querySelector(`[data-field="${field}"]`).value = Math.round(v * servings); };
+  set("calories", cal); set("protein", pro); set("carbs", carb); set("fat", fat);
+});
 
 document.getElementById("foodLogList").addEventListener("click", async (e) => {
   const repeatIdx = e.target.dataset.repeatFood;
