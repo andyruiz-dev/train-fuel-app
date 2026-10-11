@@ -638,7 +638,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-11 20:05 CT";
+const APP_BUILD = "2026-10-11 20:35 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -4470,14 +4470,15 @@ document.getElementById("quickProteinChips").addEventListener("click", async (e)
 
 
 // ---- quick-add drinks ----
-// Typical per-serving values, deliberately round. Tagged alcohol:true so the
+// Typical per-serving values, deliberately round (IPAs run higher: roughly 6-7% ABV is about 190-210 cal per 12 oz). Tagged alcohol:true so the
 // log can tell drinks apart later; they count toward calories like anything else.
 const QUICK_DRINKS = [
-  { name: "Beer (12 oz)", calories: 150, protein: 1, carbs: 13, fat: 0 },
+  { name: "IPA pint (16 oz)", calories: 270, protein: 2, carbs: 20, fat: 0 },
+  { name: "IPA (12 oz)", calories: 200, protein: 1, carbs: 15, fat: 0 },
+  { name: "Lager (12 oz)", calories: 150, protein: 1, carbs: 13, fat: 0 },
   { name: "Wine (5 oz)", calories: 125, protein: 0, carbs: 4, fat: 0 },
   { name: "Liquor (1.5 oz)", calories: 100, protein: 0, carbs: 0, fat: 0 },
   { name: "Cocktail", calories: 200, protein: 0, carbs: 15, fat: 0 },
-  { name: "Hard seltzer", calories: 100, protein: 0, carbs: 2, fat: 0 },
 ];
 function renderQuickDrinkChips() {
   const el = document.getElementById("quickDrinkChips");
@@ -4714,12 +4715,45 @@ document.getElementById("foodLogList").addEventListener("click", async (e) => {
   renderFoodLogList();
 });
 
+// Small confirmation toast so a tap on a quick-add chip visibly registers.
+// Undo removes exactly the entry that was just added.
+let toastTimer = null;
+function showToast(message, onUndo) {
+  let el = document.getElementById("appToast");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "appToast";
+    el.style.cssText = "position:fixed; left:16px; right:16px; bottom:96px; z-index:50; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; background:var(--surface-2); color:var(--text); border:1px solid var(--accent); border-radius:6px; font-size:14px; box-shadow:0 4px 16px rgba(0,0,0,0.4);";
+    document.body.appendChild(el);
+  }
+  el.innerHTML = `<span>${escapeHtml(message)}</span>${onUndo ? `<button class="danger-link" id="appToastUndo" style="color:var(--accent); padding:0;">Undo</button>` : ""}`;
+  el.style.display = "flex";
+  if (onUndo) {
+    document.getElementById("appToastUndo").addEventListener("click", async () => {
+      el.style.display = "none";
+      await onUndo();
+    }, { once: true });
+  }
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.style.display = "none"; }, 4500);
+}
+
 async function addFoodEntry(entry) {
-  state.foodLogs.push({ date: new Date().toISOString(), ...entry });
+  const record = { date: new Date().toISOString(), ...entry };
+  state.foodLogs.push(record);
   await persistNow();
   renderMacroSummary();
   renderFoodLogList();
   renderQuickProteinChips();
+  showToast(`Added ${record.name} · ${record.calories || 0} cal`, async () => {
+    const i = state.foodLogs.indexOf(record);
+    if (i === -1) return;
+    state.foodLogs.splice(i, 1);
+    await persistNow();
+    renderMacroSummary();
+    renderFoodLogList();
+    renderQuickProteinChips();
+  });
 }
 
 // -- photo scan --
