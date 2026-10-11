@@ -241,6 +241,7 @@
     </div>
     <div class="card">
       <h2>Add food</h2>
+      <div id="foodNow" style="margin-bottom:12px;"></div>
       <input type="text" id="scanNote" placeholder="Optional note (e.g. 'turkey not chicken', 'half portion')" style="margin-bottom:10px;">
       <div class="file-drop" id="foodPhotoDrop">Tap to take or choose a photo</div>
       <input type="file" id="foodPhotoInput" accept="image/*" capture="environment" style="display:none;">
@@ -638,7 +639,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-11 20:50 CT";
+const APP_BUILD = "2026-10-11 21:20 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -776,6 +777,7 @@ async function loadState() {
   if (!state.cardioLogs) state.cardioLogs = [];
   if (!state.foodLogs) state.foodLogs = [];
   if (!state.foodDayFlags || typeof state.foodDayFlags !== "object") state.foodDayFlags = {};
+  if (!state.foodDayClosed || typeof state.foodDayClosed !== "object") state.foodDayClosed = {};
   if (!state.milestonesSeen) state.milestonesSeen = { weightLbs: [], workoutDays: [] };
   if (!state.celebrations) state.celebrations = [];
   if (!state.flags) state.flags = [];
@@ -4588,6 +4590,114 @@ document.addEventListener("click", (e) => {
 });
 document.getElementById("markTodayPartialBtn").addEventListener("click", () => toggleDayPartial(localDateStr()));
 
+// ---- "right now" status: last meal, gentle nudge, end-of-day ----
+const BANANA = { name: "Banana", calories: 105, protein: 1, carbs: 27, fat: 0 };
+const APPLE = { name: "Apple", calories: 95, protein: 0, carbs: 25, fat: 0 };
+// Quick pairings: a protein staple (resolved from QUICK_PROTEIN_FOODS so it
+// picks up the person's own logged versions) plus a piece of fruit.
+const SNACK_COMBOS = [
+  { protein: "Whey protein shake", extra: BANANA },
+  { protein: "Greek yogurt (1 cup)", extra: BANANA },
+  { protein: "Cottage cheese (1 cup)", extra: BANANA },
+  { protein: "Protein bar", extra: APPLE },
+  { protein: "2 hard-boiled eggs", extra: BANANA },
+];
+function timeLabel(d) { return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
+function gapLabel(ms) {
+  const mins = Math.max(0, Math.round(ms / 60000));
+  if (mins < 60) return `${mins} min`;
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return m ? `${h} h ${m} min` : `${h} h`;
+}
+function lastFoodEntry() {
+  const logs = (state.foodLogs || []).filter(f => f.date);
+  if (!logs.length) return null;
+  return logs.reduce((a, b) => (new Date(b.date) > new Date(a.date) ? b : a));
+}
+function comboItems(c) {
+  const base = (typeof resolvedQuickProteinFoods !== "undefined" ? resolvedQuickProteinFoods : QUICK_PROTEIN_FOODS).find(f => f.name === c.protein)
+    || QUICK_PROTEIN_FOODS.find(f => f.name === c.protein);
+  return base ? [base, c.extra] : null;
+}
+// Pure so it can be tested: given the clock and logs, what (if anything) to nudge.
+function foodNudge(now = new Date()) {
+  const todayStr = localDateStr(now);
+  if (state.foodDayClosed && state.foodDayClosed[todayStr]) return null;
+  if (isDayMarkedPartial(todayStr)) return null;
+  const last = lastFoodEntry();
+  if (!last) return null;
+  const hour = now.getHours();
+  if (hour < 7 || hour >= 21) return null;
+  const gapMs = now - new Date(last.date);
+  const ateToday = localDateStr(new Date(last.date)) === todayStr;
+  if (!ateToday && hour < 10) return null; // breakfast not expected yet
+  if (gapMs < 5 * 3600000) return null;
+  const t = state.settings.macroTargets || {};
+  const totals = todaysFoodLogs().reduce((n, f) => n + (f.calories || 0), 0);
+  const calLeft = (t.calories || 0) - totals;
+  if (t.calories && calLeft < 150) return null; // already at or near target
+  const options = SNACK_COMBOS.map(c => ({ c, items: comboItems(c) })).filter(o => o.items)
+    .map(o => ({ ...o, cal: o.items.reduce((n, i) => n + i.calories, 0), pro: o.items.reduce((n, i) => n + i.protein, 0) }))
+    .filter(o => !t.calories || o.cal <= calLeft)
+    .sort((a, b) => b.pro - a.pro).slice(0, 2);
+  if (!options.length) return null;
+  return { gapMs, last, ateToday, options };
+}
+function renderFoodNow() {
+  const el = document.getElementById("foodNow");
+  if (!el) return;
+  const now = new Date();
+  const todayStr = localDateStr(now);
+  const closedAt = state.foodDayClosed && state.foodDayClosed[todayStr];
+  const todays = todaysFoodLogs();
+  const last = lastFoodEntry();
+  let html = "";
+  if (closedAt) {
+    const cal = todays.reduce((n, f) => n + (f.calories || 0), 0);
+    const pro = todays.reduce((n, f) => n + (f.protein || 0), 0);
+    html = `<div class="meta" style="color:var(--text);"><strong>Tracking ended for today</strong> at ${timeLabel(new Date(closedAt))}. ${cal} cal · ${pro} g protein logged. Nothing more to log.</div>
+      <button class="danger-link" data-food-reopen style="color:var(--accent); margin-top:6px;">Reopen today</button>`;
+  } else {
+    if (last) html += `<div class="meta">Last ate ${timeLabel(new Date(last.date))} · ${gapLabel(now - new Date(last.date))} ago</div>`;
+    const n = foodNudge(now);
+    if (n) {
+      html += `<div class="meta" style="margin-top:8px; color:var(--text);">${gapLabel(n.gapMs)} since your last logged meal${n.ateToday ? "" : " (nothing logged yet today)"}. You may be busy, so here are two quick options:</div>`;
+      html += n.options.map((o, i) => `<button class="secondary" data-food-combo="${i}" style="margin-top:8px; width:100%; text-align:left;">${o.items.map(x => x.name).join(" + ")} · ${o.cal} cal · ${o.pro} g protein. Tap to add</button>`).join("");
+    }
+    if (todays.length) html += `<button class="danger-link" data-food-end style="color:var(--accent); margin-top:10px;">End tracking for today</button>`;
+  }
+  el.innerHTML = html;
+}
+document.getElementById("foodNow").addEventListener("click", async (e) => {
+  if (e.target.closest("[data-food-end]")) {
+    state.foodDayClosed = state.foodDayClosed || {};
+    state.foodDayClosed[localDateStr()] = new Date().toISOString();
+    await persistNow();
+    renderFoodNow();
+    showToast("Tracking ended for today. Nothing more to log.", async () => {
+      delete state.foodDayClosed[localDateStr()];
+      await persistNow();
+      renderFoodNow();
+    });
+    return;
+  }
+  if (e.target.closest("[data-food-reopen]")) {
+    delete state.foodDayClosed[localDateStr()];
+    await persistNow();
+    renderFoodNow();
+    return;
+  }
+  const combo = e.target.closest("[data-food-combo]");
+  if (combo) {
+    const n = foodNudge();
+    const o = n && n.options[parseInt(combo.dataset.foodCombo, 10)];
+    if (!o) return;
+    await addFoodEntries(o.items.map(i => ({ ...i, source: "quick" })), o.items.map(i => i.name).join(" + "));
+  }
+});
+setInterval(renderFoodNow, 60000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) renderFoodNow(); });
+
 function macroBar(label, value, target) {
   const pct = target ? Math.min(100, Math.round((value / target) * 100)) : 0;
   return `
@@ -4627,6 +4737,7 @@ function renderMacroSummary() {
     macroBar("Fat (g)", totals.fat, t.fat);
   renderWeeklyIntake();
   renderPartialControls();
+  renderFoodNow();
 }
 
 function renderFoodLogList() {
@@ -4634,14 +4745,14 @@ function renderFoodLogList() {
   const dateInput = document.getElementById("foodLogDate");
   const selectedDate = dateInput.value || localDateStr();
   renderPartialControls();
-  const dayLogs = foodLogsForDate(selectedDate);
+  const dayLogs = foodLogsForDate(selectedDate).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
   if (!dayLogs.length) { el.innerHTML = '<div class="empty">Nothing logged for this day.</div>'; return; }
   el.innerHTML = dayLogs.map((f, i) => {
     const realIndex = state.foodLogs.indexOf(f);
     return `
       <div class="list-item" style="flex-direction:column; align-items:stretch; border-bottom:none;">
         <div class="name">${f.name}</div>
-        <div class="meta">${f.calories} cal · ${f.protein}p · ${f.carbs}c · ${f.fat}f</div>
+        <div class="meta">${timeLabel(new Date(f.date))} · ${f.calories} cal · ${f.protein}p · ${f.carbs}c · ${f.fat}f</div>
         <div class="row" style="margin-top:8px;">
           <button class="danger-link" style="color:var(--accent);" data-repeat-food="${realIndex}">+1 serving</button>
           <button class="danger-link" style="color:var(--accent);" data-edit-food="${realIndex}">Edit</button>
@@ -4649,6 +4760,10 @@ function renderFoodLogList() {
         </div>
         <div class="hidden" data-edit-panel="${realIndex}" style="margin-top:8px;">
           <input type="text" data-field="name" value="${f.name.replace(/"/g,'&quot;')}" placeholder="Food name" style="margin-bottom:8px;">
+          <div class="field" style="margin-bottom:8px;">
+            <div class="field-label">Time eaten</div>
+            <input type="time" data-field="time" value="${String(new Date(f.date).getHours()).padStart(2, "0")}:${String(new Date(f.date).getMinutes()).padStart(2, "0")}">
+          </div>
           <div class="field" style="margin-bottom:8px;">
             <div class="field-label">Servings (scales the numbers below)</div>
             <input type="text" inputmode="decimal" data-servings="${realIndex}" value="1" data-base="${f.calories || 0},${f.protein || 0},${f.carbs || 0},${f.fat || 0}">
@@ -4711,8 +4826,17 @@ document.getElementById("foodLogList").addEventListener("click", async (e) => {
     const panel = document.querySelector(`[data-edit-panel="${saveIdx}"]`);
     const idx = parseInt(saveIdx, 10);
     const getVal = (field) => panel.querySelector(`[data-field="${field}"]`).value;
+    let newDate = state.foodLogs[idx].date;
+    const timeVal = getVal("time");
+    if (/^\d{2}:\d{2}$/.test(timeVal)) {
+      const d = new Date(state.foodLogs[idx].date);
+      const [hh, mm] = timeVal.split(":").map(Number);
+      d.setHours(hh, mm, 0, 0);
+      newDate = d.toISOString();
+    }
     state.foodLogs[idx] = {
       ...state.foodLogs[idx],
+      date: newDate,
       name: getVal("name").trim() || state.foodLogs[idx].name,
       calories: parseInt(getVal("calories"), 10) || 0,
       protein: parseInt(getVal("protein"), 10) || 0,
@@ -4755,22 +4879,30 @@ function showToast(message, onUndo) {
   toastTimer = setTimeout(() => { el.style.display = "none"; }, 4500);
 }
 
-async function addFoodEntry(entry) {
-  const record = { date: new Date().toISOString(), ...entry };
-  state.foodLogs.push(record);
+async function addFoodEntries(entries, label) {
+  const todayStr = localDateStr();
+  if (state.foodDayClosed && state.foodDayClosed[todayStr]) {
+    if (!confirm("You ended tracking for today. Add this anyway and reopen the day?")) return false;
+    delete state.foodDayClosed[todayStr];
+  }
+  const records = entries.map(e => ({ date: new Date().toISOString(), ...e }));
+  records.forEach(r => state.foodLogs.push(r));
   await persistNow();
   renderMacroSummary();
   renderFoodLogList();
   renderQuickProteinChips();
-  showToast(`Added ${record.name} · ${record.calories || 0} cal`, async () => {
-    const i = state.foodLogs.indexOf(record);
-    if (i === -1) return;
-    state.foodLogs.splice(i, 1);
+  const cal = records.reduce((n, r) => n + (r.calories || 0), 0);
+  showToast(`Added ${label || (records.length === 1 ? records[0].name : records.length + " items")} · ${cal} cal`, async () => {
+    records.forEach(r => { const i = state.foodLogs.indexOf(r); if (i !== -1) state.foodLogs.splice(i, 1); });
     await persistNow();
     renderMacroSummary();
     renderFoodLogList();
     renderQuickProteinChips();
   });
+  return true;
+}
+async function addFoodEntry(entry) {
+  return addFoodEntries([entry]);
 }
 
 // -- photo scan --
