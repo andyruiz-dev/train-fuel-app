@@ -625,7 +625,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-11 19:00 CT";
+const APP_BUILD = "2026-10-11 19:20 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3061,12 +3061,21 @@ const HIP_STAPLE_WARMUP_ID = "glute-bridge";
 const HIP_STAPLE_COOLDOWN_ID = "kneeling-hip-flexor-stretch";
 function ensureShoulderStaples(result, allowedRegions, slots) {
   if (!allowedRegions) return result;
-  const add = (listKey, id, detail) => {
-    const ex = exercises.find(e => e.id === id);
+  // A staple never duplicates something already in today's main work. If it
+  // would (e.g. glute bridge as both the warm-up and a working set), the
+  // fallback goes in instead.
+  const inMain = (name) => (result.exercises || []).some(i => i && i.name && i.name.toLowerCase() === name.toLowerCase());
+  const add = (listKey, id, detail, fallbackId, fallbackDetail) => {
+    let ex = exercises.find(e => e.id === id);
+    let d = detail;
+    if (ex && inMain(ex.name)) {
+      ex = fallbackId ? exercises.find(e => e.id === fallbackId) : null;
+      d = fallbackDetail;
+    }
     if (!ex) return;
     const list = result[listKey] = result[listKey] || [];
     if (list.some(i => i && i.name && i.name.toLowerCase() === ex.name.toLowerCase())) return;
-    list.push({ name: ex.name, detail });
+    list.push({ name: ex.name, detail: d });
   };
   if (allowedRegions.has("upper")) {
     add("warmup", SHOULDER_STAPLE_WARMUP_ID, "10 slow reps");
@@ -3076,7 +3085,7 @@ function ensureShoulderStaples(result, allowedRegions, slots) {
   // Core-only days (no upper/lower region of their own) get the hip pair too.
   const coreDay = !allowedRegions.has("upper") && (slots || []).some(sl => sl && sl.muscle_group === "core");
   if (allowedRegions.has("lower") || coreDay) {
-    add("warmup", HIP_STAPLE_WARMUP_ID, "12 slow reps, squeeze at the top");
+    add("warmup", HIP_STAPLE_WARMUP_ID, "12 slow reps, squeeze at the top", "worlds-greatest-stretch", "5 per side, slow");
     add("cooldown", HIP_STAPLE_COOLDOWN_ID, "hold 30s each side");
   }
   return result;
