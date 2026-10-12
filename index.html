@@ -639,7 +639,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-12 19:30 CT";
+const APP_BUILD = "2026-10-12 20:00 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -763,7 +763,10 @@ async function loadState() {
   // pace-by-workouts existed: switch it to workout-count pacing and seed the
   // count from the distinct days with logged sessions since its start date,
   // so the person lands where they actually are, not back at workout 0.
-  if (state.activeProgramId && !state.programProgress[state.activeProgramId]) {
+  // Only for a true legacy state (no program has any progress entry yet). A
+  // brand-new program added later must start at 0, not inherit the old
+  // program's logged days — that bug put a new program at workout 12.
+  if (state.activeProgramId && !state.programProgress[state.activeProgramId] && Object.keys(state.programProgress).length === 0) {
     const startMs = state.settings?.startDate ? new Date(state.settings.startDate + "T00:00:00").getTime() : 0;
     const days = new Set((state.logs || [])
       .filter(l => new Date(l.date).getTime() >= startMs)
