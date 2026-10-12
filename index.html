@@ -639,7 +639,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-12 09:05 CT";
+const APP_BUILD = "2026-10-12 09:15 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1678,7 +1678,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const ROLLING_AVG_DAYS = 7;
 const BLOAT_WAIST_DELTA_IN = 0.5;
 const BLOAT_WEIGHT_FLAT_LB = 1.0;
-const BLOAT_TAGS = ["High sodium", "Alcohol", "New food", "Poor sleep", "Late/big meal", "Restaurant/takeout", "No BM yet / irregular"];
+const BLOAT_TAGS = ["High sodium", "Alcohol", "New food", "Poor sleep", "Late/big meal", "Restaurant/takeout", "No BM in 2+ days"];
 
 // "2026-10-04" is date-only; new Date() reads it as UTC midnight, which shows
 // as the previous day in US time zones. Format it as a local calendar date.
@@ -2033,7 +2033,7 @@ const REASON_SUGGESTIONS = {
   "Missed cross-training": "A short walk still counts, even if it's not the full planned distance.",
   "Didn't track food": "Logging roughly (Quick-add/manual entry) beats not logging at all on your busiest days.",
   "Alcohol": "Alcohol adds calories and can affect sleep/recovery quality on top of that.",
-  "No BM yet / irregular": "Scale weight includes what's still in your gut. A heavier morning before you've gone is common and usually evens out, so it isn't fat gained. Fiber, water and a walk help.",
+  "No BM in 2+ days": "A couple of days without going adds gut weight to the scale. It usually evens out once things move, so it isn't fat gained. Fiber, water and a walk help; travel and alcohol often cause it.",
   "Stress": "Stress affects both appetite and water retention — a change here isn't necessarily fat gained or lost.",
   "Illness": "Weight loss from being sick isn't the kind of progress to chase — let this one reset once you're recovered.",
   "Dehydration/low water intake": "A large drop from dehydration is water, not fat — rehydrating usually reverses it within a day or two.",
@@ -5670,7 +5670,7 @@ let pendingCheckInDirection = null;
 let pendingCheckInIsBloat = false;
 const activeCheckInReasons = new Set();
 
-const INCREASE_REASONS = ["Traveling", "Poor sleep", "Missed workout", "Missed cross-training", "Didn't track food", "Alcohol", "Stress", "No BM yet / irregular"];
+const INCREASE_REASONS = ["Traveling", "Poor sleep", "Missed workout", "Missed cross-training", "Didn't track food", "Alcohol", "Stress", "No BM in 2+ days"];
 const DECREASE_REASONS = ["Illness", "Dehydration/low water intake", "Big workout", "Didn't eat much", "Traveling", "Stress"];
 // Daily check-in reuses this same tag vocabulary (defined here, after both
 // lists exist) rather than a second taxonomy — see renderDailyCheckin above.
