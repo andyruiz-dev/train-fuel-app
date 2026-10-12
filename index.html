@@ -639,7 +639,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-12 18:05 CT";
+const APP_BUILD = "2026-10-12 19:00 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3157,6 +3157,37 @@ function enforceWarmupCooldownVariety(result, allowedRegions) {
   return result;
 }
 
+// Hard backstop for main-exercise variety. The prompt only ASKS the AI to
+// avoid recently used exercises, and with a small pool at your current level
+// it often repeats them (e.g. the same box squat two days running). This swaps
+// any exercise that was in your last session for a same-muscle-group
+// alternative from the level-filtered list, preferring ones you haven't done
+// lately. If there's no alternative, the original stays.
+function enforceMainVariety(result, available, lastSessionNames, recentNames) {
+  if (!result || !Array.isArray(result.exercises)) return result;
+  const avoid = new Set([...lastSessionNames].map(n => String(n).toLowerCase()));
+  const recent = new Set([...recentNames].map(n => String(n).toLowerCase()));
+  const used = new Set(result.exercises.map(e => String(e.name || "").toLowerCase()));
+  result.exercises.forEach((e) => {
+    const nm = String(e.name || "").toLowerCase();
+    if (!avoid.has(nm)) return;
+    const wasHold = isHoldExercise(e.name);
+    const pool = (available || []).filter(c =>
+      c.muscle_group === e.muscle_group &&
+      isHoldExercise(c.name) === wasHold &&
+      !used.has(c.name.toLowerCase()) &&
+      !avoid.has(c.name.toLowerCase()));
+    if (!pool.length) return;
+    const fresh = pool.filter(c => !recent.has(c.name.toLowerCase()));
+    const pick = (fresh.length ? fresh : pool)[0];
+    used.delete(nm);
+    used.add(pick.name.toLowerCase());
+    e.name = pick.name;
+    e.muscle_group = pick.muscle_group;
+  });
+  return result;
+}
+
 async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
   const recentFromHistory = (state.logs || []).slice(-15).map(l => l.exercise);
   const recentNames = [...new Set([...avoidNames, ...recentFromHistory])].join(", ");
@@ -3323,8 +3354,16 @@ superset_group is a letter shared by paired exercises, or null if standalone.`;
   // the AI to vary from last session, but that's advisory, so this forces a
   // genuinely different pick when one is available rather than trusting the
   // AI followed the instruction.
+  const lastLogDate = (state.logs || []).length ? state.logs[state.logs.length - 1].date : null;
+  const lastSessionNames = new Set([
+    ...avoidNames,
+    ...(lastLogDate ? state.logs.filter(l => l.date === lastLogDate).map(l => l.exercise) : []),
+  ]);
   const result = ensureShoulderStaples(
-    enforceWarmupCooldownVariety(extractJson(text), todayMobilityRegions),
+    enforceMainVariety(
+      enforceWarmupCooldownVariety(extractJson(text), todayMobilityRegions),
+      availableExercises, lastSessionNames, new Set(recentFromHistory)
+    ),
     todayMobilityRegions,
     day?.slots
   );
