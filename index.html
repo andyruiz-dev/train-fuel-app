@@ -639,7 +639,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-12 19:00 CT";
+const APP_BUILD = "2026-10-12 19:30 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3157,6 +3157,28 @@ function enforceWarmupCooldownVariety(result, allowedRegions) {
   return result;
 }
 
+// The AI sometimes returns more exercises than the day has slots (two push
+// picks for one push slot, say), which quietly adds volume beyond the
+// planned session length. Keep exactly the slots the program prescribes:
+// walk the exercises in order and drop any muscle group's extras. A superset
+// left with a single member goes back to standalone.
+function enforceSlotCount(result, slots) {
+  if (!result || !Array.isArray(result.exercises) || !Array.isArray(slots) || !slots.length) return result;
+  const want = {};
+  slots.forEach(sl => { want[sl.muscle_group] = (want[sl.muscle_group] || 0) + 1; });
+  if (result.exercises.length <= slots.length) return result;
+  const kept = [];
+  result.exercises.forEach(e => {
+    if ((want[e.muscle_group] || 0) > 0) { want[e.muscle_group]--; kept.push(e); }
+  });
+  if (!kept.length) return result;
+  const groupCounts = {};
+  kept.forEach(e => { if (e.superset_group) groupCounts[e.superset_group] = (groupCounts[e.superset_group] || 0) + 1; });
+  kept.forEach(e => { if (e.superset_group && groupCounts[e.superset_group] < 2) e.superset_group = null; });
+  result.exercises = kept;
+  return result;
+}
+
 // Hard backstop for main-exercise variety. The prompt only ASKS the AI to
 // avoid recently used exercises, and with a small pool at your current level
 // it often repeats them (e.g. the same box squat two days running). This swaps
@@ -3221,6 +3243,7 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
   // fallback logic.
   const availableExercises = exercises.filter(e => {
     if (state.travelMode && !TRAVEL_EQUIPMENT.has(e.equipment || "bodyweight")) return false;
+    if (e.equipment === "weighted vest") return false; // not owned
     // Skill-ladder exercises (handstand/L-sit/planche/back lever/front
     // lever/muscle-up) are deliberately NEVER auto-generated into a
     // workout — they live only in the dedicated Skill practice section,
@@ -3360,10 +3383,10 @@ superset_group is a letter shared by paired exercises, or null if standalone.`;
     ...(lastLogDate ? state.logs.filter(l => l.date === lastLogDate).map(l => l.exercise) : []),
   ]);
   const result = ensureShoulderStaples(
-    enforceMainVariety(
+    enforceSlotCount(enforceMainVariety(
       enforceWarmupCooldownVariety(extractJson(text), todayMobilityRegions),
       availableExercises, lastSessionNames, new Set(recentFromHistory)
-    ),
+    ), day?.slots),
     todayMobilityRegions,
     day?.slots
   );
