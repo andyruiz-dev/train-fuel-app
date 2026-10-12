@@ -639,7 +639,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-12 11:40 CT";
+const APP_BUILD = "2026-10-12 17:40 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -6182,6 +6182,12 @@ function renderSession() {
       <div class="card">
         <h2>Rest</h2>
         <div id="restClock" style="font-size:36px; font-weight:600; text-align:center; margin:14px 0; font-family:var(--font-mono);">${formatTime(remaining)}</div>
+        <div style="padding:10px 12px; margin-bottom:10px; border:1px solid var(--border); border-radius:8px;">
+          <div class="meta" style="text-transform:uppercase; letter-spacing:0.6px; font-size:11px;">Up next${step.supersetLabel ? " · " + step.supersetLabel : ""}</div>
+          <div class="name" style="margin-top:2px;">${step.name}</div>
+          <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · ${isHoldExercise(step.name) ? "target " + (parseRepRange(step.reps).max || parseRepRange(step.reps).min || 20) + "s hold" : step.reps + " reps"}</div>
+          ${stepCueHtml}
+        </div>
         <button class="secondary" id="skipRestBtn" style="width:100%;">Skip rest</button>
       </div>`;
     document.getElementById("skipRestBtn").addEventListener("click", () => {
