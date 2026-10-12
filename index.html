@@ -639,7 +639,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-12 17:40 CT";
+const APP_BUILD = "2026-10-12 18:05 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3580,8 +3580,17 @@ function renderTodayWorkout(workout) {
       </div>
     </details>`;
 
-  box.innerHTML = warmupHtml + workoutHtml + cooldownHtml + `<button id="completeWorkoutBtn" style="background:none; border:none; color:var(--accent); font-size:13px; cursor:pointer; padding:10px 0; display:block;">Complete workout without guided session ▸</button>`;
+  const resumeSnap = loadSessionSnapshot();
+  const resumeHtml = resumeSnap ? `
+    <div class="card" style="border-color:var(--accent); margin-bottom:10px;">
+      <div class="name">Session in progress</div>
+      <div class="meta">You were ${resumeSnap.session.pos} of ${resumeSnap.session.queue.length} sets in when the app closed. Your finished sets were kept.</div>
+      <button class="primary" id="resumeSessionBtn" style="margin-top:8px; width:100%;">Resume where I left off</button>
+    </div>` : "";
+  box.innerHTML = resumeHtml + warmupHtml + workoutHtml + cooldownHtml + `<button id="completeWorkoutBtn" style="background:none; border:none; color:var(--accent); font-size:13px; cursor:pointer; padding:10px 0; display:block;">Complete workout without guided session ▸</button>`;
   document.getElementById("completeWorkoutBtn").addEventListener("click", completeWorkout);
+  const resumeBtnEl = document.getElementById("resumeSessionBtn");
+  if (resumeBtnEl) resumeBtnEl.addEventListener("click", resumeSessionFromSnapshot);
   const dismissLegendBtn = document.getElementById("dismissExerciseLegendBtn");
   if (dismissLegendBtn) {
     dismissLegendBtn.addEventListener("click", async () => {
@@ -4304,6 +4313,7 @@ async function applyWorkoutResults(results) {
     }
   }
   if (state.pendingWorkout) state.pendingWorkout.completed = true;
+  clearSessionSnapshot();
   await persistNow();
   renderProgressCharts();
   renderCelebrations();
@@ -4311,14 +4321,24 @@ async function applyWorkoutResults(results) {
 }
 
 async function completeWorkout() {
-  const items = document.querySelectorAll("#todayWorkout .list-item");
+  // Only the main exercise cards carry data-ex-index. Warm-up and cool-down
+  // rows are also .list-item, and counting them produced an undefined
+  // exercise that made the whole save fail silently.
+  const items = document.querySelectorAll("#todayWorkout .list-item[data-ex-index]");
   const results = [];
   items.forEach((item) => {
     const idx = parseInt(item.dataset.exIndex, 10);
+    const ex = currentWorkout.exercises[idx];
+    if (!ex) return;
     const active = item.querySelector(".result-chip.active");
-    results.push({ exercise: currentWorkout.exercises[idx], result: active ? active.dataset.result : "hold" });
+    results.push({ exercise: ex, result: active ? active.dataset.result : "hold" });
   });
-  await applyWorkoutResults(results);
+  try {
+    await applyWorkoutResults(results);
+  } catch (err) {
+    alert("Couldn't log the workout: " + err.message);
+    return;
+  }
   renderTodayWorkout(currentWorkout);
   alert("Logged. Levels updated where you hit or missed the rep range.");
 }
@@ -5884,6 +5904,48 @@ window.addEventListener("focus", refreshMeasurementDateDefault);
 // ---- guided session ----
 let session = null;
 
+// The guided session lives in memory, so a pull-to-refresh or a low-memory
+// kill used to wipe it mid-workout. Keep a small snapshot after every step
+// and offer to resume it from the Today tab.
+const SESSION_SNAPSHOT_KEY = "tf_session_snapshot";
+function saveSessionSnapshot() {
+  try {
+    if (!session) { localStorage.removeItem(SESSION_SNAPSHOT_KEY); return; }
+    const pw = state.pendingWorkout;
+    if (!pw || pw.completed) return;
+    localStorage.setItem(SESSION_SNAPSHOT_KEY, JSON.stringify({
+      programId: pw.programId, dayIndex: pw.dayIndex, savedAt: Date.now(),
+      session: { ...session, timerId: null, holding: false },
+    }));
+  } catch (e) {}
+}
+function clearSessionSnapshot() { try { localStorage.removeItem(SESSION_SNAPSHOT_KEY); } catch (e) {} }
+function loadSessionSnapshot() {
+  try {
+    const snap = JSON.parse(localStorage.getItem(SESSION_SNAPSHOT_KEY) || "null");
+    const pw = state.pendingWorkout;
+    if (!snap || !pw || pw.completed) return null;
+    if (snap.programId !== pw.programId || snap.dayIndex !== pw.dayIndex) return null;
+    if (Date.now() - snap.savedAt > 12 * 60 * 60 * 1000) return null;
+    if (!snap.session || !Array.isArray(snap.session.queue)) return null;
+    return snap;
+  } catch (e) { return null; }
+}
+function resumeSessionFromSnapshot() {
+  const snap = loadSessionSnapshot();
+  if (!snap) return;
+  session = { ...snap.session, timerId: null, holding: false };
+  if (session.resting) {
+    if (session.restEndTime > Date.now()) session.timerId = setInterval(tickRest, 1000);
+    else session.resting = false;
+  }
+  document.getElementById("todayWorkout").classList.add("hidden");
+  document.getElementById("startSessionBtn").classList.add("hidden");
+  document.getElementById("minimumDayBtn").classList.add("hidden");
+  document.getElementById("genWorkoutBtn").classList.add("hidden");
+  renderSession();
+}
+
 function formatTime(s) {
   const m = Math.floor(s / 60), sec = s % 60;
   return `${m}:${sec.toString().padStart(2, "0")}`;
@@ -5936,7 +5998,7 @@ function renderSessionSummary(summary, opts = {}) {
       <button class="primary" id="sessionSummaryDoneBtn" style="width:100%;">Done</button>
     </div>`;
   document.getElementById("sessionSummaryDoneBtn").addEventListener("click", () => {
-    session = null;
+    session = null; clearSessionSnapshot();
     panel.classList.add("hidden");
     document.getElementById("todayWorkout").classList.remove("hidden");
     document.getElementById("startSessionBtn").classList.remove("hidden");
@@ -6128,7 +6190,7 @@ function renderWarmupCooldownStep(phase) {
   });
   document.getElementById("endSessionBtn").addEventListener("click", () => {
     if (!confirm("End session early? Remaining exercises won't be logged.")) return;
-    session = null;
+    session = null; clearSessionSnapshot();
     document.getElementById("sessionPanel").classList.add("hidden");
     document.getElementById("todayWorkout").classList.remove("hidden");
     document.getElementById("startSessionBtn").classList.remove("hidden");
@@ -6138,6 +6200,7 @@ function renderWarmupCooldownStep(phase) {
 }
 
 function renderSession() {
+  saveSessionSnapshot();
   const panel = document.getElementById("sessionPanel");
   if (!session) { panel.classList.add("hidden"); panel.innerHTML = ""; return; }
   panel.classList.remove("hidden");
@@ -6201,7 +6264,7 @@ function renderSession() {
   const endSessionHandler = () => {
     document.getElementById("endSessionBtn").addEventListener("click", () => {
       if (!confirm("End session early? Remaining exercises won't be logged.")) return;
-      session = null;
+      session = null; clearSessionSnapshot();
       document.getElementById("sessionPanel").classList.add("hidden");
       document.getElementById("todayWorkout").classList.remove("hidden");
       document.getElementById("startSessionBtn").classList.remove("hidden");
