@@ -639,7 +639,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-12 09:15 CT";
+const APP_BUILD = "2026-10-12 11:40 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -4919,7 +4919,38 @@ document.getElementById("scanServings").addEventListener("input", (e) => {
   document.getElementById("scanFat").value = Math.round(scanBaseValues.fat * servings);
 });
 
-document.getElementById("foodPhotoDrop").addEventListener("click", () => document.getElementById("foodPhotoInput").click());
+// Opening the camera sends the phone to its camera app, and Android may kill
+// this PWA in the background to free memory. When that happens the page just
+// reloads and the photo never arrives, with no error. Leave a breadcrumb
+// before opening the camera and check for it on startup, so a reload shows
+// a plain explanation (and keeps the typed note) instead of silence.
+function scanBreadcrumb(action, value) {
+  try {
+    if (action === "set") sessionStorage.setItem("scanPendingAt", String(Date.now()));
+    else if (action === "clear") sessionStorage.removeItem("scanPendingAt");
+    else if (action === "note") sessionStorage.setItem("scanNote", value || "");
+  } catch (e) {}
+}
+function checkScanInterrupted() {
+  try {
+    const at = parseInt(sessionStorage.getItem("scanPendingAt") || "", 10);
+    if (!at) return;
+    sessionStorage.removeItem("scanPendingAt");
+    if (Date.now() - at > 15 * 60 * 1000) return;
+    const note = sessionStorage.getItem("scanNote") || "";
+    if (note) document.getElementById("scanNote").value = note;
+    const el = document.getElementById("foodScanStatus");
+    el.style.display = "block";
+    el.textContent = "The app restarted while the camera was open (the phone ran low on memory), so the photo never reached the scan. Tap the box to retake it. Closing other apps first helps, and your note was kept.";
+  } catch (e) {}
+}
+document.getElementById("foodPhotoDrop").addEventListener("click", () => {
+  scanBreadcrumb("note", document.getElementById("scanNote").value);
+  scanBreadcrumb("set");
+  document.getElementById("foodPhotoInput").click();
+});
+// The camera was closed without taking a photo: not an interruption.
+document.getElementById("foodPhotoInput").addEventListener("cancel", () => scanBreadcrumb("clear"));
 // Full-resolution camera photos (often 8-12+ MP) can exhaust memory when
 // converted to base64 directly, especially on Android. Downscale via canvas
 // first — plenty of detail survives for a food ID/macro estimate at 1200px.
@@ -5045,6 +5076,7 @@ async function getUploadBlob(file, maxBytes = 3 * 1024 * 1024) {
 }
 
 document.getElementById("foodPhotoInput").addEventListener("change", async (e) => {
+  scanBreadcrumb("clear");
   const file = e.target.files[0];
   if (!file) return;
   const statusEl = document.getElementById("foodScanStatus");
@@ -6923,6 +6955,7 @@ async function init() {
     const restoreBtn = document.querySelector(`.tab-btn[data-tab="${lastActiveTab}"]`);
     if (restoreBtn) restoreBtn.click();
   }
+  checkScanInterrupted();
 }
 init();
 
