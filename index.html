@@ -243,8 +243,9 @@
       <h2>Add food</h2>
       <div id="foodNow" style="margin-bottom:12px;"></div>
       <input type="text" id="scanNote" placeholder="Optional note (e.g. 'turkey not chicken', 'half portion')" style="margin-bottom:10px;">
-      <div class="file-drop" id="foodPhotoDrop">Tap to take or choose a photo</div>
-      <input type="file" id="foodPhotoInput" accept="image/*" capture="environment" style="display:none;">
+      <div class="file-drop" id="foodPhotoDrop">Tap to take a photo</div>
+      <button class="danger-link" id="foodPhotoChoose" style="color:var(--accent); margin-top:6px;">or choose one from your gallery</button>
+      <input type="file" id="foodPhotoInput" accept="image/*" style="display:none;">
       <div id="foodScanStatus" class="empty" style="display:none; margin-top:8px;"></div>
       <div id="foodScanReview" class="hidden" style="margin-top:10px;">
         <input type="text" id="scanName" placeholder="Food name" style="margin-bottom:8px;">
@@ -639,7 +640,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-12 20:00 CT";
+const APP_BUILD = "2026-10-13 17:40 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -5029,11 +5030,6 @@ function checkScanInterrupted() {
     el.textContent = "The app restarted while the camera was open (the phone ran low on memory), so the photo never reached the scan. Tap the box to retake it. Closing other apps first helps, and your note was kept.";
   } catch (e) {}
 }
-document.getElementById("foodPhotoDrop").addEventListener("click", () => {
-  scanBreadcrumb("note", document.getElementById("scanNote").value);
-  scanBreadcrumb("set");
-  document.getElementById("foodPhotoInput").click();
-});
 // The camera was closed without taking a photo: not an interruption.
 document.getElementById("foodPhotoInput").addEventListener("cancel", () => scanBreadcrumb("clear"));
 // Full-resolution camera photos (often 8-12+ MP) can exhaust memory when
@@ -5160,10 +5156,7 @@ async function getUploadBlob(file, maxBytes = 3 * 1024 * 1024) {
   throw new Error("Couldn't shrink this photo enough to upload safely. Try a different photo, or use manual entry below.");
 }
 
-document.getElementById("foodPhotoInput").addEventListener("change", async (e) => {
-  scanBreadcrumb("clear");
-  const file = e.target.files[0];
-  if (!file) return;
+async function scanFoodBlob(file) {
   const statusEl = document.getElementById("foodScanStatus");
   statusEl.style.display = "block";
   statusEl.textContent = "Analyzing photo…";
@@ -5225,6 +5218,73 @@ document.getElementById("foodPhotoInput").addEventListener("change", async (e) =
   } catch (err) {
     statusEl.textContent = "Scan failed: " + err.message;
   }
+}
+
+document.getElementById("foodPhotoInput").addEventListener("change", (e) => {
+  scanBreadcrumb("clear");
+  const file = e.target.files[0];
+  e.target.value = ""; // allow picking the same photo again
+  if (file) scanFoodBlob(file);
+});
+
+// ---- In-app camera ----
+// Launching the phone's camera app is what gets this app killed for memory
+// on Android. Capturing from a live preview inside the page keeps the app in
+// the foreground the whole time. Falls back to the file picker if the camera
+// can't be opened (no permission, no camera, unsupported browser).
+let cameraStream = null;
+function closeCamera() {
+  if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
+  const ov = document.getElementById("cameraOverlay");
+  if (ov) ov.remove();
+}
+async function openCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error("no camera api");
+  cameraStream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: { ideal: "environment" }, width: { ideal: 1600 }, height: { ideal: 1600 } },
+    audio: false,
+  });
+  const ov = document.createElement("div");
+  ov.id = "cameraOverlay";
+  ov.style.cssText = "position:fixed; inset:0; z-index:9999; background:#000; display:flex; flex-direction:column;";
+  ov.innerHTML = `
+    <video id="cameraVideo" autoplay playsinline muted style="flex:1; min-height:0; width:100%; object-fit:cover;"></video>
+    <div style="display:flex; gap:12px; padding:16px; padding-bottom:max(16px, env(safe-area-inset-bottom)); background:#000;">
+      <button class="secondary" id="cameraCancelBtn" style="flex:1;">Cancel</button>
+      <button class="primary" id="cameraSnapBtn" style="flex:2;">Take photo</button>
+    </div>`;
+  document.body.appendChild(ov);
+  const video = document.getElementById("cameraVideo");
+  video.srcObject = cameraStream;
+  document.getElementById("cameraCancelBtn").addEventListener("click", closeCamera);
+  document.getElementById("cameraSnapBtn").addEventListener("click", async () => {
+    const w = video.videoWidth, h = video.videoHeight;
+    if (!w || !h) return; // preview not ready yet
+    const scale = Math.min(1, 1400 / Math.max(w, h));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(w * scale);
+    canvas.height = Math.round(h * scale);
+    canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise(r => canvas.toBlob(r, "image/jpeg", 0.85));
+    closeCamera();
+    if (blob) scanFoodBlob(blob);
+  });
+}
+document.getElementById("foodPhotoDrop").addEventListener("click", async () => {
+  try {
+    await openCamera();
+  } catch (err) {
+    closeCamera();
+    // Camera unavailable or blocked: use the phone's picker instead.
+    scanBreadcrumb("note", document.getElementById("scanNote").value);
+    scanBreadcrumb("set");
+    document.getElementById("foodPhotoInput").click();
+  }
+});
+document.getElementById("foodPhotoChoose").addEventListener("click", () => {
+  scanBreadcrumb("note", document.getElementById("scanNote").value);
+  scanBreadcrumb("set");
+  document.getElementById("foodPhotoInput").click();
 });
 
 document.getElementById("saveScanBtn").addEventListener("click", async () => {
