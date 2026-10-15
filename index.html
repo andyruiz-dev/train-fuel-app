@@ -640,7 +640,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-15 12:50 CT";
+const APP_BUILD = "2026-10-15 13:05 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -2352,11 +2352,11 @@ document.getElementById("saveDailyCheckinBtn").addEventListener("click", async (
 // logs — same-day AND next-day — to find real patterns, in the spirit of
 // WHOOP Journal / Built With Science+: "associated with," never "caused
 // by"; every finding shows its entry counts rather than acting like a
-// black-box verdict; and the evidence bar is a flat minimum-group-size (3
-// days with the tag, 3 without it) rather than a fixed lookback window,
+// black-box verdict; and the evidence bar is a flat minimum-group-size (5
+// days with the tag, 5 without it) rather than a fixed lookback window,
 // since logging is sparser here than on a wearable — all history counts,
 // not just the last 90 days.
-const COACH_MIN_GROUP = 3;
+const COACH_MIN_GROUP = 5;
 
 function addDays(dateStr, n) {
   const d = new Date(dateStr + "T00:00:00");
@@ -2578,7 +2578,7 @@ function renderCoachNote() {
     : `<div class="meta">${
         result.totalCheckins === 0
           ? "Still gathering enough days to spot real patterns — check back once you've logged a few daily check-ins."
-          : `Logged ${result.totalCheckins} daily check-in${result.totalCheckins === 1 ? "" : "s"} so far — keep going and patterns will start showing up here once there's enough matched data (roughly 3 days with and without a given reason).`
+          : `Logged ${result.totalCheckins} daily check-in${result.totalCheckins === 1 ? "" : "s"} so far — keep going and patterns will start showing up here once there's enough matched data (roughly 5 days with and without a given reason).`
       }</div>`;
   el.innerHTML = body + `<button class="secondary" id="dismissCoachNote" style="margin-top:6px; width:100%;">Got it</button>`;
   document.getElementById("dismissCoachNote").addEventListener("click", async () => {
