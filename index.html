@@ -400,7 +400,7 @@
     <div id="startHereBanner" class="hidden"></div>
     <div id="morningChecklist" class="hidden"></div>
     <div id="flagsBanner" class="hidden"></div>
-    <div class="card">
+    <div class="card" id="coachNoteCard">
       <h2>Coach's note</h2>
       <div id="coachNote" class="meta">Still gathering enough days to spot real patterns — check back once you've logged a bit more.</div>
     </div>
@@ -640,7 +640,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-15 12:30 CT";
+const APP_BUILD = "2026-10-15 12:50 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -783,6 +783,7 @@ async function loadState() {
   if (!state.foodDayFlags || typeof state.foodDayFlags !== "object") state.foodDayFlags = {};
   if (!state.foodDayClosed || typeof state.foodDayClosed !== "object") state.foodDayClosed = {};
   if (!state.coachTeaserDismissed || typeof state.coachTeaserDismissed !== "object") state.coachTeaserDismissed = null;
+  if (!state.coachNoteDismissed || typeof state.coachNoteDismissed !== "object") state.coachNoteDismissed = null;
   if (!state.milestonesSeen) state.milestonesSeen = { weightLbs: [], workoutDays: [] };
   if (!state.celebrations) state.celebrations = [];
   if (!state.flags) state.flags = [];
@@ -2556,16 +2557,35 @@ function renderMorningChecklist() {
 function renderCoachNote() {
   const el = document.getElementById("coachNote");
   if (!el) return;
+  const card = document.getElementById("coachNoteCard");
   const result = computeCoachInsights();
-  if (!result.insights.length) {
-    el.innerHTML = `<div class="meta">${
-      result.totalCheckins === 0
-        ? "Still gathering enough days to spot real patterns — check back once you've logged a few daily check-ins."
-        : `Logged ${result.totalCheckins} daily check-in${result.totalCheckins === 1 ? "" : "s"} so far — keep going and patterns will start showing up here once there's enough matched data (roughly 3 days with and without a given reason).`
-    }</div>`;
-    return;
+  // "Got it" hides the card for a week. Keyed on the findings with their
+  // numbers stripped: the same findings stay quiet as counts tick up, while
+  // a different finding (or a week passing) brings the card back.
+  const key = result.insights.length
+    ? result.insights.map(i => String(i).replace(/[0-9.%]+/g, "#")).join("|")
+    : "placeholder";
+  const dis = state.coachNoteDismissed;
+  if (card) {
+    if (dis && dis.key === key && Date.now() - dis.at < 7 * 24 * 60 * 60 * 1000) {
+      card.classList.add("hidden");
+      return;
+    }
+    card.classList.remove("hidden");
   }
-  el.innerHTML = result.insights.map(i => `<div class="meta" style="margin-bottom:8px;">${i}</div>`).join("");
+  const body = result.insights.length
+    ? result.insights.map(i => `<div class="meta" style="margin-bottom:8px;">${i}</div>`).join("")
+    : `<div class="meta">${
+        result.totalCheckins === 0
+          ? "Still gathering enough days to spot real patterns — check back once you've logged a few daily check-ins."
+          : `Logged ${result.totalCheckins} daily check-in${result.totalCheckins === 1 ? "" : "s"} so far — keep going and patterns will start showing up here once there's enough matched data (roughly 3 days with and without a given reason).`
+      }</div>`;
+  el.innerHTML = body + `<button class="secondary" id="dismissCoachNote" style="margin-top:6px; width:100%;">Got it</button>`;
+  document.getElementById("dismissCoachNote").addEventListener("click", async () => {
+    state.coachNoteDismissed = { key, at: Date.now() };
+    if (card) card.classList.add("hidden");
+    await persistNow();
+  });
 }
 
 // A condensed teaser on Today surfacing the single strongest Coach finding,
