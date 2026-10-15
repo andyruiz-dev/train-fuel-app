@@ -640,7 +640,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-13 17:40 CT";
+const APP_BUILD = "2026-10-15 12:30 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -782,6 +782,7 @@ async function loadState() {
   if (!state.foodLogs) state.foodLogs = [];
   if (!state.foodDayFlags || typeof state.foodDayFlags !== "object") state.foodDayFlags = {};
   if (!state.foodDayClosed || typeof state.foodDayClosed !== "object") state.foodDayClosed = {};
+  if (!state.coachTeaserDismissed || typeof state.coachTeaserDismissed !== "object") state.coachTeaserDismissed = null;
   if (!state.milestonesSeen) state.milestonesSeen = { weightLbs: [], workoutDays: [] };
   if (!state.celebrations) state.celebrations = [];
   if (!state.flags) state.flags = [];
@@ -2573,21 +2574,36 @@ function renderCoachNote() {
 // is a real, evidence-backed finding — unlike the Coach tab itself, this
 // does NOT show the "still gathering data" placeholder here, to avoid
 // nagging with an empty-handed banner every day before there's anything to
-// say. Not a dismissible flag: a correlation finding is a standing fact,
-// not a one-time event, so it just reflects current state like the other
-// banners above it rather than needing to be acknowledged away.
+// say. Can be dismissed with "Got it" (hidden for a week, or until a
+// different finding comes up) since it otherwise shows every day.
 function renderCoachTeaser() {
   const el = document.getElementById("coachTeaser");
   if (!el) return;
   const result = computeCoachInsights();
   if (!result.insights.length) { el.classList.add("hidden"); el.innerHTML = ""; return; }
+  // Dismissed for a week. Keyed on the finding with its numbers stripped, so
+  // the same finding stays quiet as its counts tick up, and a different
+  // finding (or a week passing) brings the card back.
+  const insightKey = String(result.insights[0]).replace(/[0-9.%]+/g, "#");
+  const dis = state.coachTeaserDismissed;
+  if (dis && dis.key === insightKey && Date.now() - dis.at < 7 * 24 * 60 * 60 * 1000) {
+    el.classList.add("hidden"); el.innerHTML = ""; return;
+  }
   el.classList.remove("hidden");
   el.innerHTML = `
     <div class="card" style="border-left-color:var(--accent);">
       <div class="meta" style="font-weight:600; color:var(--text); margin-bottom:6px;">🧠 Coach found something</div>
       <div class="meta" style="color:var(--text);">${result.insights[0]}</div>
-      <button class="secondary" id="openCoachFromTeaser" style="margin-top:8px;">See Coach tab</button>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button class="secondary" id="openCoachFromTeaser" style="flex:1;">See Coach tab</button>
+        <button class="secondary" id="dismissCoachTeaser" style="flex:1;">Got it</button>
+      </div>
     </div>`;
+  document.getElementById("dismissCoachTeaser").addEventListener("click", async () => {
+    state.coachTeaserDismissed = { key: insightKey, at: Date.now() };
+    el.classList.add("hidden"); el.innerHTML = "";
+    await persistNow();
+  });
   document.getElementById("openCoachFromTeaser").addEventListener("click", () => {
     const coachBtn = document.querySelector('.tab-btn[data-tab="coach"]');
     if (coachBtn) coachBtn.click();
