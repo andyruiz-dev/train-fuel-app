@@ -640,7 +640,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-20 18:30 CT";
+const APP_BUILD = "2026-10-20 18:50 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -927,6 +927,30 @@ const BUILTIN_EXERCISES = [
   { id: "towel-door-row", name: "Towel door row", muscle_group: "pull", equipment: "bodyweight", cue: "Loop a towel around a closed door's handle on your side, lean back and row. Check the door is shut and sturdy." },
   { id: "table-row", name: "Table row", muscle_group: "pull", equipment: "bodyweight", cue: "Lie under a sturdy table, grip the edge, keep your body straight and pull your chest up. Check the table first." },
 
+  // ---- more no-equipment options (fills thin spots in push / legs / hinge / core) ----
+  { id: "wall-pushup-feet-back", name: "Wall push-up (feet back)", muscle_group: "push", equipment: "bodyweight", cue: "Feet a couple of steps from the wall, body straight, chest to the wall." },
+  { id: "pike-pushup-hands-elevated", name: "Pike push-up (hands elevated)", muscle_group: "push", equipment: "bodyweight", cue: "Hands on a sturdy chair or bed, hips high, lower your head between your hands." },
+  { id: "staggered-pushup", name: "Staggered-hands push-up", muscle_group: "push", equipment: "bodyweight", cue: "One hand a palm-length ahead of the other, switch sides each set." },
+  { id: "tempo-pushup", name: "Push-up (3-second lower)", muscle_group: "push", equipment: "bodyweight", cue: "Count three on the way down, pause an instant, press up." },
+  { id: "hindu-pushup", name: "Hindu push-up", muscle_group: "push", equipment: "bodyweight", cue: "From pike, swoop chest forward and up toward cobra, then reverse back to pike." },
+  { id: "sit-to-stand", name: "Sit-to-stand (chair)", muscle_group: "legs", equipment: "bodyweight", cue: "Sit on a chair edge, stand without using your hands, lower slowly." },
+  { id: "step-up-low", name: "Step-up (low)", muscle_group: "legs", equipment: "bodyweight", cue: "Whole foot on a low step, drive through the heel, control the way down." },
+  { id: "reverse-lunge", name: "Reverse lunge", muscle_group: "legs", equipment: "bodyweight", cue: "Step back, back knee hovers just above the floor, drive through the front heel." },
+  { id: "step-up-high", name: "Step-up (high step)", muscle_group: "legs", equipment: "bodyweight", cue: "Knee-height step, push only through the top leg, no push-off from the floor foot." },
+  { id: "lateral-lunge", name: "Lateral lunge", muscle_group: "legs", equipment: "bodyweight", cue: "Step wide, sit back into one hip with the other leg straight, push back to center." },
+  { id: "skater-squat", name: "Skater squat", muscle_group: "legs", equipment: "bodyweight", cue: "Stand on one leg, sweep the other back and lower until your knee nearly touches the floor." },
+  { id: "hip-hinge-drill", name: "Hip hinge drill", muscle_group: "hinge", equipment: "bodyweight", cue: "Hands on hips, push hips back with a flat back and soft knees, stand tall." },
+  { id: "prone-leg-raise", name: "Prone leg raise", muscle_group: "hinge", equipment: "bodyweight", cue: "Face down, squeeze glutes and lift one straight leg a few inches, alternate." },
+  { id: "donkey-kick", name: "Donkey kick", muscle_group: "hinge", equipment: "bodyweight", cue: "On hands and knees, press one heel to the ceiling, hips level, no arching." },
+  { id: "glute-bridge-march", name: "Glute bridge march", muscle_group: "hinge", equipment: "bodyweight", cue: "Hold a high bridge, lift one foot at a time without letting your hips drop." },
+  { id: "towel-hamstring-curl", name: "Towel hamstring curl", muscle_group: "hinge", equipment: "bodyweight", cue: "Heels on a towel on a smooth floor, bridge up and slide your heels in and out." },
+  { id: "single-leg-towel-hamstring-curl", name: "Single-leg towel hamstring curl", muscle_group: "hinge", equipment: "bodyweight", cue: "One heel on a towel, other leg raised, bridge up and slide the heel in and out." },
+  { id: "v-up", name: "V-up", muscle_group: "core", equipment: "bodyweight", cue: "Lie flat, lift legs and chest together to meet in a V, lower with control." },
+  { id: "hollow-rock", name: "Hollow rock", muscle_group: "core", equipment: "bodyweight", cue: "Hold a hollow body shape and rock back and forth without losing it." },
+  { id: "plank-to-pike", name: "Plank to pike", muscle_group: "core", equipment: "bodyweight", cue: "From plank, lift hips high by pulling your feet toward your hands, then return." },
+  { id: "side-plank-leg-raise", name: "Side plank leg raise", muscle_group: "core", equipment: "bodyweight", cue: "In a side plank, lift the top leg and lower it slowly, hips stay high." },
+  { id: "long-lever-plank", name: "Long-lever plank", muscle_group: "core", equipment: "bodyweight", cue: "Plank with hands set well ahead of your shoulders, body straight, squeeze everything." },
+
   // ---- legs: wall sit -> bodyweight -> pistol -> rings-assisted ----
   { id: "wall-sit", name: "Wall sit", muscle_group: "legs", equipment: "bodyweight", cue: "Thighs parallel to floor, back flat against wall." },
   { id: "box-squat-high", name: "Box squat (high box)", muscle_group: "legs", equipment: "bodyweight", cue: "Sit back to the box, stand tall each rep." },
@@ -1168,6 +1192,11 @@ const EXERCISE_LEVEL_MAP = {
   "db-single-arm-row": 3, "db-renegade-row": 4, "weighted-pullup": 4,
   "towel-pull-apart": 1, "prone-t-raise": 1, "prone-y-raise": 1, "superman-pulldown": 2,
   "reverse-snow-angel": 2, "doorframe-row": 2, "backpack-row": 2, "towel-door-row": 3, "table-row": 3,
+  "wall-pushup-feet-back": 1, "pike-pushup-hands-elevated": 2, "staggered-pushup": 3, "tempo-pushup": 3, "hindu-pushup": 3,
+  "sit-to-stand": 1, "step-up-low": 1, "reverse-lunge": 2, "step-up-high": 2, "lateral-lunge": 2, "skater-squat": 4,
+  "hip-hinge-drill": 1, "prone-leg-raise": 1, "donkey-kick": 1, "glute-bridge-march": 2, "towel-hamstring-curl": 3,
+  "single-leg-towel-hamstring-curl": 4,
+  "v-up": 4, "hollow-rock": 4, "plank-to-pike": 4, "side-plank-leg-raise": 4, "long-lever-plank": 5,
   // legs
   "wall-sit": 1, "box-squat-high": 2, "bodyweight-squat": 3, "split-squat": 3,
   "bulgarian-split-squat": 4, "shrimp-squat": 5, "ring-assisted-pistol": 2,
@@ -1360,6 +1389,8 @@ const EXERCISE_PLANE_MAP = {
   "towel-pull-apart": "h", "prone-t-raise": "h", "doorframe-row": "h", "backpack-row": "h",
   "towel-door-row": "h", "table-row": "h",
   "prone-y-raise": "v", "superman-pulldown": "v", "reverse-snow-angel": "v",
+  "wall-pushup-feet-back": "h", "staggered-pushup": "h", "tempo-pushup": "h",
+  "pike-pushup-hands-elevated": "v", "hindu-pushup": "v",
   "tuck-back-lever": "h", "ring-pullover": "h", "german-hang": "h", "assisted-german-hang": "h",
   "straddle-back-lever": "h", "full-back-lever": "h",
   // pull - vertical (the actual pull-up ladder)
@@ -1392,7 +1423,7 @@ const HOLD_EXERCISE_IDS = new Set([
   "ring-plank", "ring-lsit-tucked", "ring-lsit", "ring-front-lever-tuck",
   "hollow-hold-tucked", "hollow-hold",
   "ring-support-hold", "planche-lean", "tuck-planche", "tuck-back-lever",
-  "reverse-plank", "copenhagen-plank", "elbow-lever",
+  "reverse-plank", "copenhagen-plank", "elbow-lever", "long-lever-plank",
   // new skill-ladder rungs that are also static holds (the negative/practice
   // rungs — handstand-pushup-negative, freestanding-handstand-practice —
   // are reps, not holds, so they're deliberately left out of this set)
