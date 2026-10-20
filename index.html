@@ -640,7 +640,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-15 13:05 CT";
+const APP_BUILD = "2026-10-20 18:30 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -910,6 +910,23 @@ const BUILTIN_EXERCISES = [
   { id: "db-renegade-row", name: "Renegade row", muscle_group: "pull", equipment: "dumbbell", cue: "Plank position, minimize hip sway as you row." },
   { id: "weighted-pullup", name: "Weighted pull-up", muscle_group: "pull", equipment: "dumbbell", cue: "Dumbbell between feet or on a belt, full range." },
 
+  // ---- pull: no equipment at all (for travel mode) ----
+  // Every pull above needs rings, a band or dumbbells, which left travel mode
+  // with no real bodyweight pull at all. These use only the floor, a towel, a
+  // sturdy door/doorframe/table, or a backpack. They are lighter than ring
+  // pulls (there's nothing hanging to pull your whole bodyweight against),
+  // so they hold your pulling and posture muscles in place on the road
+  // rather than building strength.
+  { id: "towel-pull-apart", name: "Towel pull-apart", muscle_group: "pull", equipment: "bodyweight", cue: "Hold a towel taut in both hands, pull it apart and squeeze your shoulder blades back." },
+  { id: "prone-t-raise", name: "Prone T raise", muscle_group: "pull", equipment: "bodyweight", cue: "Face down, arms out to the sides, lift arms with thumbs up and squeeze shoulder blades." },
+  { id: "prone-y-raise", name: "Prone Y raise", muscle_group: "pull", equipment: "bodyweight", cue: "Face down, arms overhead in a Y, lift arms off the floor without shrugging." },
+  { id: "superman-pulldown", name: "Superman pulldown", muscle_group: "pull", equipment: "bodyweight", cue: "Face down, arms overhead and lifted, pull elbows down to your ribs like a pulldown." },
+  { id: "reverse-snow-angel", name: "Reverse snow angel", muscle_group: "pull", equipment: "bodyweight", cue: "Face down, chest lifted, sweep straight arms from overhead down to your hips." },
+  { id: "doorframe-row", name: "Doorframe row", muscle_group: "pull", equipment: "bodyweight", cue: "Hold both sides of a sturdy doorframe, lean back with a straight body and row your chest to your hands." },
+  { id: "backpack-row", name: "Single-arm backpack row", muscle_group: "pull", equipment: "bodyweight", cue: "Pack loaded with water bottles or books. Flat back, pull elbow past hip, no twisting." },
+  { id: "towel-door-row", name: "Towel door row", muscle_group: "pull", equipment: "bodyweight", cue: "Loop a towel around a closed door's handle on your side, lean back and row. Check the door is shut and sturdy." },
+  { id: "table-row", name: "Table row", muscle_group: "pull", equipment: "bodyweight", cue: "Lie under a sturdy table, grip the edge, keep your body straight and pull your chest up. Check the table first." },
+
   // ---- legs: wall sit -> bodyweight -> pistol -> rings-assisted ----
   { id: "wall-sit", name: "Wall sit", muscle_group: "legs", equipment: "bodyweight", cue: "Thighs parallel to floor, back flat against wall." },
   { id: "box-squat-high", name: "Box squat (high box)", muscle_group: "legs", equipment: "bodyweight", cue: "Sit back to the box, stand tall each rep." },
@@ -1149,6 +1166,8 @@ const EXERCISE_LEVEL_MAP = {
   "ring-row": 3, "ring-row-feet-elevated": 4, "ring-pullup-assisted": 3,
   "ring-pullup": 4, "ring-archer-pullup": 5, "band-pull-apart": 1,
   "db-single-arm-row": 3, "db-renegade-row": 4, "weighted-pullup": 4,
+  "towel-pull-apart": 1, "prone-t-raise": 1, "prone-y-raise": 1, "superman-pulldown": 2,
+  "reverse-snow-angel": 2, "doorframe-row": 2, "backpack-row": 2, "towel-door-row": 3, "table-row": 3,
   // legs
   "wall-sit": 1, "box-squat-high": 2, "bodyweight-squat": 3, "split-squat": 3,
   "bulgarian-split-squat": 4, "shrimp-squat": 5, "ring-assisted-pistol": 2,
@@ -1338,6 +1357,9 @@ const EXERCISE_PLANE_MAP = {
   // pull - horizontal (rows)
   "ring-row-easy": "h", "ring-row": "h", "ring-row-feet-elevated": "h",
   "band-pull-apart": "h", "db-single-arm-row": "h", "db-renegade-row": "h", "archer-row": "h",
+  "towel-pull-apart": "h", "prone-t-raise": "h", "doorframe-row": "h", "backpack-row": "h",
+  "towel-door-row": "h", "table-row": "h",
+  "prone-y-raise": "v", "superman-pulldown": "v", "reverse-snow-angel": "v",
   "tuck-back-lever": "h", "ring-pullover": "h", "german-hang": "h", "assisted-german-hang": "h",
   "straddle-back-lever": "h", "full-back-lever": "h",
   // pull - vertical (the actual pull-up ladder)
@@ -2914,7 +2936,10 @@ async function ensureWorkoutReady(program, forceDayIndex) {
 // Module-level (not just inside generateTodayWorkout) so the swap panel can
 // apply the same restriction while travel mode is on, not just the initial
 // workout generation.
-const TRAVEL_EQUIPMENT = new Set(["bodyweight", "rings"]);
+// Travel mode builds bodyweight-only workouts. Rings are not used when
+// generating, but stay available in the Swap panel for when you did bring them.
+const TRAVEL_EQUIPMENT = new Set(["bodyweight"]);
+const TRAVEL_SWAP_EQUIPMENT = new Set(["bodyweight", "rings"]);
 
 const KNOWN_MUSCLE_GROUPS = ["push", "pull", "legs", "hinge", "core", "ruck"];
 const MUSCLE_GROUP_FLOOR = { push: 2, pull: 2, legs: 2, hinge: 2, core: 2 };
@@ -4078,7 +4103,7 @@ function swapAlternatesHtml(currentExercise, uidPrefix) {
   // so "swap" still means "what could I actually do right now."
   const alternates = exercises.filter(x =>
     x.muscle_group === currentExercise.muscle_group && x.name !== currentExercise.name &&
-    (!state.travelMode || TRAVEL_EQUIPMENT.has(x.equipment || "bodyweight"))
+    (!state.travelMode || TRAVEL_SWAP_EQUIPMENT.has(x.equipment || "bodyweight"))
   );
   const regressions = alternates.filter(x => levelOf(x.name) < currentLevel);
   const sameLevel = alternates.filter(x => levelOf(x.name) === currentLevel);
