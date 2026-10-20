@@ -195,6 +195,7 @@
             <span>✈️ Travel mode</span>
             <span id="travelModeState" style="color:var(--text-muted); font-size:12px; font-family:var(--font-mono);">Off</span>
           </div>
+          <a id="findBarLink" class="hidden" href="https://www.google.com/maps/search/?api=1&query=calisthenics+park+outdoor+gym+pull-up+bars" target="_blank" rel="noopener" style="display:block; color:var(--accent); font-size:14px; padding:2px 0 10px;">Find an outdoor gym or pull-up bar nearby ↗</a>
           <div id="travelModeExplainer" style="margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border);">
             <p class="meta" style="margin-top:0; margin-bottom:4px;">Generates a bodyweight-only workout — rings are still available as a swap if you brought them, but nothing else (no dumbbell, band, parallettes, or ab wheel). Turning it on or off regenerates today's exercises.</p>
             <button class="danger-link" id="dismissTravelModeLegendBtn">Got it, don't show this again</button>
@@ -640,7 +641,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-20 18:50 CT";
+const APP_BUILD = "2026-10-20 19:15 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -7001,6 +7002,8 @@ function syncTravelModeLabel() {
   const el = document.getElementById("travelModeState");
   el.textContent = state.travelMode ? "On" : "Off";
   el.style.color = state.travelMode ? "var(--accent)" : "var(--text-muted)";
+  const barLink = document.getElementById("findBarLink");
+  if (barLink) barLink.classList.toggle("hidden", !state.travelMode);
 }
 function syncTravelModeLegendVisibility() {
   const el = document.getElementById("travelModeExplainer");
