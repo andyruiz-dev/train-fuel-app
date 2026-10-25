@@ -666,7 +666,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-25 00:20 CT";
+const APP_BUILD = "2026-10-25 13:10 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1215,6 +1215,13 @@ const BUILTIN_EXERCISES = [
   { id: "kb-suitcase-carry", name: "Kettlebell suitcase carry", muscle_group: "core", equipment: "kettlebell", cue: "Hold the bell at your side like a suitcase and walk tall. Don't lean toward the bell; keep your shoulders level and ribs stacked. Switch hands halfway through the time." },
   { id: "kb-waiter-carry", name: "Waiter carry", muscle_group: "core", equipment: "kettlebell", cue: "Bell pressed overhead in one hand with wrist over elbow over shoulder. Walk slowly with ribs down and the shoulder packed. Switch hands halfway. If it drifts, bring it to the rack and finish there." },
   { id: "kb-turkish-getup", name: "Turkish get-up", muscle_group: "core", equipment: "kettlebell", cue: "Lie on your back with the bell pressed up, same-side knee bent. Roll to your elbow, then your hand, lift the hips, sweep the leg back to a kneel, stand. Reverse every step. Eyes on the bell. Learn it with a light object first (even a shoe on your fist)." },
+  { id: "kb-deadlift", name: "Kettlebell deadlift", muscle_group: "hinge", equipment: "kettlebell", cue: "Bell on the floor between your feet, just behind the line of your toes. Hinge back with hips high and a flat back, grip the handle with both hands, push the floor away and stand tall, squeezing your glutes. Lower by sending the hips back first. This is the foundation for the swing." },
+  { id: "kb-dead-high-pull", name: "Kettlebell dead high pull", muscle_group: "pull", equipment: "kettlebell", cue: "Bell on the floor. Hinge and grab it with one hand, drive the hips forward and pull the elbow up high and wide so the bell rises to chest height. Lower it to the floor and reset every rep. The hips do the work, not the arm. An easier way to learn the clean." },
+  { id: "kb-dead-snatch", name: "Kettlebell dead snatch", muscle_group: "pull", equipment: "kettlebell", cue: "Bell on the floor. Hinge and grab it, stand explosively, and as it rises pull it close to your body and punch your hand through to lock it overhead. Lower it to the rack, then back to the floor. Learn this before the swinging snatch." },
+  { id: "kb-snatch", name: "Kettlebell snatch", muscle_group: "pull", equipment: "kettlebell", cue: "A swing that finishes overhead in one motion. Hinge, swing back, drive the hips, keep the bell close as it rises, then punch through to a locked arm overhead. Lower it back down the same path. Learn the dead snatch first." },
+  { id: "kb-windmill", name: "Kettlebell windmill", muscle_group: "core", equipment: "kettlebell", cue: "Feet a little wider than your shoulders, turned slightly away from the bell side, arm locked overhead. Keep your eyes on the bell, push the hip out toward the bell side and hinge forward, sliding the free hand down the inside of the leg. Stand back up the same way. Start with no weight or a very light bell." },
+  { id: "kb-racked-squat", name: "Kettlebell racked squat", muscle_group: "legs", equipment: "kettlebell", cue: "One bell racked at your shoulder with the elbow tucked against your ribs. Squat deep with an upright torso, then stand. Switch sides each set. Harder than a goblet squat because the load is on one side." },
+  { id: "kb-push-press", name: "Kettlebell push press", muscle_group: "push", equipment: "kettlebell", cue: "From the rack, dip a few inches by bending the knees, then drive the legs and press the bell overhead in one motion. Lower it back to the rack. Lets you move heavier loads overhead than a strict press." },
 ];
 
 // Approximate difficulty level (1-5) per exercise, based on the progression
@@ -1225,6 +1232,8 @@ const EXERCISE_LEVEL_MAP = {
   "kb-swing": 2, "kb-swing-1h": 3, "kb-goblet-squat": 2, "kb-rack-reverse-lunge": 3, "kb-press-hk": 3,
   "kb-floor-press": 2, "kb-row": 2, "kb-clean": 3, "kb-sl-rdl": 3, "kb-suitcase-carry": 2,
   "kb-waiter-carry": 3, "kb-turkish-getup": 3,
+  "kb-deadlift": 1, "kb-dead-high-pull": 2, "kb-dead-snatch": 3, "kb-snatch": 4,
+  "kb-windmill": 3, "kb-racked-squat": 3, "kb-push-press": 3,
   // push
   "wall-pushup": 1, "incline-pushup-high": 1, "incline-pushup": 2, "knee-pushup": 2,
   "pushup": 3, "diamond-pushup": 3, "decline-pushup": 3, "archer-pushup": 4,
@@ -1416,6 +1425,7 @@ function levelOf(exerciseIdOrName) {
 // both tagged "pull" at some difficulty number.
 const EXERCISE_PLANE_MAP = {
   "kb-press-hk": "v", "kb-floor-press": "h", "kb-row": "h", "kb-clean": "v",
+  "kb-push-press": "v", "kb-dead-high-pull": "h", "kb-dead-snatch": "v", "kb-snatch": "v",
   // push - horizontal (push-up/planche line, presses away from the ground)
   "wall-pushup": "h", "incline-pushup-high": "h", "incline-pushup": "h", "knee-pushup": "h",
   "pushup": "h", "diamond-pushup": "h", "decline-pushup": "h", "archer-pushup": "h",
