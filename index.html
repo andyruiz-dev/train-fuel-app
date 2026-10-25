@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#15170F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Roboto+Mono:wght@500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
     --accent:#2FBFA6;
@@ -29,7 +29,7 @@
   }
   *{box-sizing:border-box;}
   body{
-    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    margin:0; font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     background:var(--bg); color:var(--text); padding-bottom:72px;
   }
   header{
@@ -137,25 +137,49 @@
   details.exercise-group[open] summary::after{content:"−";}
   details.exercise-group .list-item:first-child{padding-top:10px;}
   /* ---- Today hero ---- */
-  .tf-hero{background:var(--accent); color:#0B1512; border-radius:20px; padding:18px 18px 16px; margin:0 0 12px; display:flex; flex-direction:column; gap:14px; order:-1;}
+  /* Today screen, "Steady" look */
+  .tf-screen-head{padding:18px 4px 12px;}
+  .tf-kicker{font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase;}
+  .tf-screen-head h1{font-family:var(--font-display); font-size:30px; font-weight:600; margin:2px 0 0; line-height:1.1;}
+  .tf-pending{display:flex; justify-content:space-between; align-items:center; margin:0 0 12px; padding:10px 14px; border:1px solid var(--border); border-radius:10px; background:var(--surface); font-size:13px; color:var(--text-muted); cursor:pointer;}
+  .tf-pending b{color:var(--accent); font-size:18px;}
+  .tf-pending span::first-letter{text-transform:uppercase;}
+  nav.tabs .tab-btn{position:relative;}
+  nav.tabs .tab-btn.has-dot::after{content:""; position:absolute; top:8px; left:calc(50% + 8px); width:8px; height:8px; border-radius:50%; background:var(--gold);}
+  #tab-today > .card{background:none; border:0; padding:0; margin:0; display:flex; flex-direction:column;}
+  #todayWorkoutDetails{order:-1; margin-top:0 !important;}
+  #todayWorkoutDetails > summary{display:none;}
+  #tab-today > .card > details.exercise-group:not(#todayWorkoutDetails){order:1; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-top:10px;}
   .tf-today-col{display:flex; flex-direction:column;}
   .tf-today-col > .card{order:-2;}
-  #todayWorkout:has(.tf-hero){display:contents;}
-  .tf-hero-kicker{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .tf-bars{display:flex; flex-direction:column; gap:7px;}
-  .tf-bar{display:flex; align-items:center; gap:10px; font-family:var(--font-mono); font-size:11px; letter-spacing:.5px; text-transform:uppercase;}
-  .tf-bar-name{width:48px; flex:0 0 auto;}
-  .tf-bar-track{flex:1; height:8px; border-radius:4px; background:rgba(11,21,18,.16); overflow:hidden;}
-  .tf-bar-track i{display:block; height:100%; border-radius:4px; background:#0B1512;}
-  .tf-bar-n{width:18px; text-align:right; flex:0 0 auto;}
-  .tf-hero-main{flex:1; min-width:0;}
-  .tf-hero-kicker{font-family:var(--font-mono); font-size:11px; letter-spacing:1px; text-transform:uppercase; opacity:.8;}
-  .tf-hero-title{font-family:var(--font-display); font-weight:700; font-size:40px; line-height:.98; text-transform:uppercase; margin:8px 0 2px; overflow-wrap:anywhere;}
-  .tf-hero-sub{font-size:14px; font-weight:500; opacity:.85;}
-  .tf-hero-stats{display:flex; gap:8px; margin-top:14px;}
-  .tf-hero-stats div{flex:1; background:#0B1512; color:#EDEAE0; border-radius:12px; padding:8px 10px;}
-  .tf-hero-stats b{display:block; font-family:var(--font-display); font-size:22px; font-weight:600; line-height:1;}
-  .tf-hero-stats span{font-size:11px; color:#9B9C8E;}
+  #todayWorkout:has(.tf-hero){display:contents; color:var(--text);}
+  #todayWorkout > .empty{padding:16px 4px;}
+  .tf-hero{order:-1; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; margin:0 0 14px; display:flex; gap:16px; align-items:center;}
+  .tf-hero svg{flex:0 0 auto;}
+  .tf-hero-title{font-family:var(--font-display); font-weight:600; font-size:22px; line-height:1.15;}
+  .tf-hero-sub{font-size:13px; color:var(--text-muted); margin-top:6px;}
+  .tf-moves{display:flex; flex-direction:column; gap:8px; margin:6px 0 10px;}
+  .tf-moves-head{display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; padding:0 4px;}
+  .tf-mv{background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:10px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .tf-mv.ss{border-left-color:var(--gold); display:block;}
+  .tf-mv.fin{background:linear-gradient(90deg,#1B3A33,var(--surface)); border-color:var(--accent);}
+  .tf-mv-name{font-size:15px; font-weight:600;}
+  .tf-mv-det{font-size:12px; color:var(--text-muted); font-weight:400;}
+  .tf-mv-tag{font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--gold); margin-bottom:8px;}
+  .tf-mv.fin .tf-mv-tag{color:var(--accent); margin-bottom:2px;}
+  .tf-mv hr{border:0; height:1px; background:var(--border); margin:9px 0;}
+  .tf-pill{font-family:var(--font-mono); font-size:10px; color:#0F1A17; background:var(--accent); border-radius:99px; padding:4px 8px; flex:0 0 auto;}
+  #todayWorkout details.exercise-group{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin:0 0 10px;}
+  #startSessionBtn{order:1; position:sticky; bottom:66px; z-index:4; height:56px; border-radius:14px; font-size:20px; letter-spacing:1px; text-transform:uppercase; margin-top:10px; box-shadow:0 -14px 14px -4px var(--bg);}
+  #minimumDayBtn{order:2; background:none; border:0; color:var(--text-muted); font-family:Inter,sans-serif; font-size:13px; padding:12px 0 4px;}
+  #travelModeToggle{order:3; justify-content:center !important; gap:8px; font-family:Inter,sans-serif !important; font-size:13px !important; color:var(--text-muted); padding:6px 0 !important;}
+  #findBarLink, #travelModeExplainer{order:3;}
+  #travelModeExplainer{border-bottom:0 !important; margin-bottom:0 !important; padding-bottom:0 !important;}
+  #travelModeExplainer p{font-size:12px; line-height:1.5; color:var(--text-muted); text-align:center; margin:6px 0 4px;}
+  #travelModeExplainer button{display:block; margin:0 auto; font-size:12px;}
+  #tab-today details.exercise-group summary{text-transform:none;}
+  #genWorkoutBtn{order:4;}
+  .tf-today-col > div:first-child{order:4; justify-content:center !important;}
     /* ---- Guided session: full-screen "Block" look. Colour = state (teal = work, dark = rest/warm-up). ---- */
   #sessionPanel[data-sx]{position:fixed; inset:0; z-index:40; overflow-y:auto; padding:18px 22px 28px; display:flex; flex-direction:column; -webkit-overflow-scrolling:touch;}
   #sessionPanel[data-sx="work"], #sessionPanel[data-sx="emom"], #sessionPanel[data-sx="hold"]{background:var(--accent); color:#0B1512;}
@@ -199,6 +223,8 @@
 
   <!-- TODAY -->
   <section id="tab-today" class="tab-panel hidden">
+    <div class="tf-screen-head"><div class="tf-kicker" id="tfKicker"></div><h1>Today</h1></div>
+    <div id="tfPending" class="tf-pending hidden" role="button" tabindex="0"><span></span><b aria-hidden="true">›</b></div>
     <div id="coachTeaser" class="hidden"></div>
     <div id="welcomeBackBanner" class="hidden"></div>
     <div id="celebrationBanner" class="hidden"></div>
@@ -710,7 +736,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-25 19:05 CT";
+const APP_BUILD = "2026-10-25 19:55 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -2708,6 +2734,21 @@ function renderStartHereBanner() {
 // separate collapsed cards you had to already know to check — nothing
 // prompted for them as a set. Hides entirely once nothing's left for today,
 // rather than sitting there as a permanent "all done" fixture.
+// Today shows one thin line (only while something is pending) and the Coach tab gets a dot.
+// Both disappear once everything for the day is logged.
+function updatePendingIndicators(rows) {
+  const chip = document.getElementById("tfPending");
+  if (chip) {
+    if (rows.length) {
+      chip.classList.remove("hidden");
+      chip.querySelector("span").textContent = rows.map(r => r.label.toLowerCase()).join(" · ") + " still to do";
+    } else {
+      chip.classList.add("hidden");
+    }
+  }
+  const coachBtn = document.querySelector('nav.tabs .tab-btn[data-tab="coach"]');
+  if (coachBtn) coachBtn.classList.toggle("has-dot", rows.length > 0);
+}
 function renderMorningChecklist() {
   const el = document.getElementById("morningChecklist");
   if (!el) return;
@@ -2719,6 +2760,7 @@ function renderMorningChecklist() {
   if (!weighInPending && !checkinPending && !flagCount) {
     el.classList.add("hidden");
     el.innerHTML = "";
+    updatePendingIndicators([]);
     return;
   }
 
@@ -2727,6 +2769,7 @@ function renderMorningChecklist() {
   if (checkinPending) rows.push({ id: "clCheckin", label: "Daily check-in" });
   if (flagCount) rows.push({ id: "clFlags", label: `${flagCount} flag${flagCount === 1 ? "" : "s"} to review` });
 
+  updatePendingIndicators(rows);
   el.classList.remove("hidden");
   el.innerHTML = `
     <div class="card" style="border-left-color:var(--accent);">
@@ -2748,6 +2791,10 @@ function renderMorningChecklist() {
   if (flagsRow) flagsRow.addEventListener("click", () => goTo("flagsBanner", false));
 }
 
+document.getElementById("tfPending").addEventListener("click", () => {
+  const coachBtn = document.querySelector('nav.tabs .tab-btn[data-tab="coach"]');
+  if (coachBtn) coachBtn.click();
+});
 // Kettlebell progression hints, from two sources: how each bell exercise went
 // in your last few sessions (max / ok / missed), and a few plain words in your
 // open notes. Deliberately conservative: reps first, a heavier bell only after
@@ -3634,6 +3681,9 @@ function buildFixedWorkout(day, isDeload) {
     const sets = isDeload ? Math.max(2, Math.round(baseSets * 0.65)) : baseSets;
     out.push({ name: lib.name, muscle_group: lib.muscle_group, sets, reps, superset_group: f.sg || null, note: note || null, emom });
   });
+  // Letters in the stored program may not run in order of appearance (e.g. A, B, D, C); show A, B, C...
+  const letterMap = {}; let nextLetter = 0;
+  out.forEach(e => { if (e.superset_group) { if (!(e.superset_group in letterMap)) letterMap[e.superset_group] = String.fromCharCode(65 + nextLetter++); e.superset_group = letterMap[e.superset_group]; } });
   const pick = list => (list || []).map(([id, detail]) => {
     const m = exercises.find(x => x.id === id);
     return m ? { name: m.name, detail } : null;
@@ -3877,49 +3927,68 @@ function recentStressCaution(days = 3) {
   return "Stress logged recently — no pressure for the full session today. \"Do the minimum\" below still counts.";
 }
 
-// Sets per muscle group today, as plain bars (longest = full width). Typographic on purpose: it reads
-// at a glance on a phone and needs no anatomy drawing.
-function muscleBarsHtml(sets) {
-  const rows = Object.keys(sets || {}).filter(k => k && sets[k] > 0)
-    .sort((x, y) => sets[y] - sets[x]).slice(0, 6);
-  if (!rows.length) return "";
-  const top = Math.max(...rows.map(k => sets[k]));
-  const label = rows.map(k => `${k} ${sets[k]} sets`).join(", ");
-  return `<div class="tf-bars" role="img" aria-label="Sets by muscle group: ${escapeHtml(label)}">` +
-    rows.map(k => `<div class="tf-bar"><span class="tf-bar-name">${escapeHtml(String(k).charAt(0).toUpperCase() + String(k).slice(1))}</span><span class="tf-bar-track"><i style="width:${Math.max(8, Math.round(100 * sets[k] / top))}%"></i></span><span class="tf-bar-n">${sets[k]}</span></div>`).join("") +
-    `</div>`;
-}
+// Today "Steady" look: one card (progress ring + what today is) and an open list of the moves.
 function todayHeroHtml(workout) {
-  let kicker = "";
+  let week = 0, total = 0;
   try {
     const prog = programs.find(p => p.id === state.activeProgramId);
     if (prog && prog.structure && prog.structure.phases) {
-      const { phase, weekNumber } = currentPhaseFor(prog);
-      const total = Math.max(...prog.structure.phases.map(x => x.week_end || 0)) || null;
-      kicker = `Week ${weekNumber}${total ? " of " + total : ""} · ${escapeHtml(String(phase.phase || "").split(":")[0].replace(/\s+v\d+$/i, ""))}`;
+      week = currentPhaseFor(prog).weekNumber;
+      total = Math.max(...prog.structure.phases.map(x => x.week_end || 0)) || 0;
     }
   } catch (e) {}
-  const raw = String(workout.day || "Today's workout");
-  const ci = raw.indexOf(":");
-  const title = escapeHtml(ci > 0 ? raw.slice(0, ci) : raw);
-  const sub = ci > 0 ? escapeHtml(raw.slice(ci + 1).trim()) : "";
+  const title = escapeHtml(String(workout.day || "Today's workout"));
   const mins = estimateWorkoutMinutes(workout);
   const moves = (workout.exercises || []).length;
   const sets = (workout.exercises || []).reduce((a, e) => a + (e.sets || 0), 0);
-  const groups = {};
-  (workout.exercises || []).forEach(e => { groups[e.muscle_group] = (groups[e.muscle_group] || 0) + (e.sets || 0); });
-  return `<div class="tf-hero">
-    <div class="tf-hero-main">
-      <div class="tf-hero-kicker">${kicker || "Today"}</div>
+  const C = 2 * Math.PI * 31;
+  const frac = total ? Math.min(1, week / total) : 0;
+  const ring = `<svg width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="${total ? `Week ${week} of ${total}` : "Program progress"}">
+      <circle cx="38" cy="38" r="31" fill="none" stroke="#3A3F33" stroke-width="7"/>
+      <circle cx="38" cy="38" r="31" fill="none" stroke="#2FBFA6" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - frac)).toFixed(1)}" transform="rotate(-90 38 38)"/>
+      <text x="38" y="44" text-anchor="middle" font-family="Oswald, sans-serif" font-size="20" font-weight="600" fill="#EDEAE0">${week || "·"}</text>
+    </svg>`;
+  return `<div class="tf-hero">${ring}
+    <div style="flex:1; min-width:0;">
       <div class="tf-hero-title">${title}</div>
-      ${sub ? `<div class="tf-hero-sub">${sub}</div>` : ""}
-      <div class="tf-hero-stats"><div><b>${mins}</b><span>min</span></div><div><b>${moves}</b><span>moves</span></div><div><b>${sets}</b><span>sets</span></div></div>
+      <div class="tf-hero-sub">${mins} min · ${moves} moves · ${sets} sets</div>
     </div>
-    ${muscleBarsHtml(groups)}
   </div>`;
+}
+function todayKickerText() {
+  const d = new Date();
+  const day = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  let wk = "";
+  try {
+    const prog = programs.find(p => p.id === state.activeProgramId);
+    if (prog && prog.structure && prog.structure.phases) {
+      const w = currentPhaseFor(prog).weekNumber;
+      const total = Math.max(...prog.structure.phases.map(x => x.week_end || 0)) || 0;
+      wk = ` · Week ${w}${total ? " of " + total : ""}`;
+    }
+  } catch (e) {}
+  return day + wk;
+}
+function movesListHtml(workout) {
+  const ex = workout.exercises || [];
+  const det = (e) => `${e.sets} × ${escapeHtml(String(e.reps))}${isHoldExercise(e.name) ? " s hold" : ""}${e.note ? " · " + escapeHtml(String(e.note)) : ""}`;
+  const seen = new Set();
+  const rows = ex.map((e, i) => {
+    if (e.superset_group) {
+      if (seen.has(e.superset_group)) return "";
+      seen.add(e.superset_group);
+      const mem = ex.filter(x => x.superset_group === e.superset_group);
+      return `<div class="tf-mv ss"><div class="tf-mv-tag">SUPERSET ${escapeHtml(String(e.superset_group))}</div>` +
+        mem.map(x => `<div class="tf-mv-name">${escapeHtml(x.name)} <span class="tf-mv-det">· ${det(x)}</span></div>`).join("<hr>") + `</div>`;
+    }
+    const fin = e.emom && i === ex.length - 1;
+    return `<div class="tf-mv${fin ? " fin" : ""}"><div>${fin ? '<div class="tf-mv-tag">FINISHER</div>' : ""}<div class="tf-mv-name">${escapeHtml(e.name)}</div><div class="tf-mv-det">${det(e)}</div></div>${e.emom ? '<span class="tf-pill">EMOM</span>' : ""}</div>`;
+  }).join("");
+  return `<div class="tf-moves"><div class="tf-moves-head"><span>Workout · ${ex.length} moves</span></div>${rows}</div>`;
 }
 function renderTodayWorkout(workout) {
   currentWorkout = workout;
+  const kick = document.getElementById("tfKicker"); if (kick) kick.textContent = todayKickerText();
   const box = document.getElementById("todayWorkout");
   const sessionBtn = document.getElementById("startSessionBtn");
   const minDayBtn = document.getElementById("minimumDayBtn");
@@ -4115,7 +4184,7 @@ function renderTodayWorkout(workout) {
 
   const workoutHtml = `
     <details class="exercise-group">
-      <summary>Today's exercises</summary>
+      <summary>Swap or log moves</summary>
       <div style="padding-top:6px;">
         ${legendHtml}
         ${unitsHtml}
@@ -4129,7 +4198,7 @@ function renderTodayWorkout(workout) {
       <div class="meta">You were ${resumeSnap.session.pos} of ${resumeSnap.session.queue.length} sets in when the app closed. Your finished sets were kept.</div>
       <button class="primary" id="resumeSessionBtn" style="margin-top:8px; width:100%;">Resume where I left off</button>
     </div>` : "";
-  box.innerHTML = resumeHtml + todayHeroHtml(workout) + warmupHtml + workoutHtml + cooldownHtml + `<button id="completeWorkoutBtn" style="background:none; border:none; color:var(--accent); font-size:13px; cursor:pointer; padding:10px 0; display:block;">Complete workout without guided session ▸</button>`;
+  box.innerHTML = resumeHtml + todayHeroHtml(workout) + warmupHtml + movesListHtml(workout) + workoutHtml + cooldownHtml + `<button id="completeWorkoutBtn" style="background:none; border:none; color:var(--accent); font-size:13px; cursor:pointer; padding:10px 0; display:block;">Complete workout without guided session ▸</button>`;
   document.getElementById("completeWorkoutBtn").addEventListener("click", completeWorkout);
   const resumeBtnEl = document.getElementById("resumeSessionBtn");
   if (resumeBtnEl) resumeBtnEl.addEventListener("click", resumeSessionFromSnapshot);
