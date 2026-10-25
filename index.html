@@ -666,7 +666,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-25 14:00 CT";
+const APP_BUILD = "2026-10-25 15:10 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1221,6 +1221,8 @@ const BUILTIN_EXERCISES = [
   { id: "kb-snatch", name: "Kettlebell snatch", muscle_group: "pull", equipment: "kettlebell", cue: "A swing that finishes overhead in one motion. Hinge, swing back, drive the hips, keep the bell close as it rises, then punch through to a locked arm overhead. Lower it back down the same path. Learn the dead snatch first." },
   { id: "kb-windmill", name: "Kettlebell windmill", muscle_group: "core", equipment: "kettlebell", cue: "Feet a little wider than your shoulders, turned slightly away from the bell side, arm locked overhead. Keep your eyes on the bell, push the hip out toward the bell side and hinge forward, sliding the free hand down the inside of the leg. Stand back up the same way. Start with no weight or a very light bell." },
   { id: "kb-racked-squat", name: "Kettlebell racked squat", muscle_group: "legs", equipment: "kettlebell", cue: "One bell racked at your shoulder with the elbow tucked against your ribs. Squat deep with an upright torso, then stand. Switch sides each set. Harder than a goblet squat because the load is on one side." },
+  { id: "kb-complex", name: "Kettlebell complex", muscle_group: "hinge", equipment: "kettlebell", cue: "One round = 3 deadlifts, then 3 cleans, 3 presses and 3 racked squats, all with one hand on the bell and without putting it down. Switch arms each round. Start a new round every minute and rest in whatever time is left. Choose a bell you can press for 3 clean reps." },
+  { id: "bw-complex", name: "Bodyweight complex", muscle_group: "legs", equipment: "bodyweight", cue: "One round = 4 good mornings, 4 reverse lunges each side, 4 push-ups and 4 squats, back to back without stopping. Start a new round every minute and rest in whatever time is left. Used as the travel version of the kettlebell complex." },
   { id: "kb-push-press", name: "Kettlebell push press", muscle_group: "push", equipment: "kettlebell", cue: "From the rack, dip a few inches by bending the knees, then drive the legs and press the bell overhead in one motion. Lower it back to the rack. Lets you move heavier loads overhead than a strict press." },
 ];
 
@@ -1233,7 +1235,7 @@ const EXERCISE_LEVEL_MAP = {
   "kb-floor-press": 2, "kb-row": 2, "kb-clean": 3, "kb-sl-rdl": 3, "kb-suitcase-carry": 2,
   "kb-waiter-carry": 3, "kb-turkish-getup": 3,
   "kb-deadlift": 1, "kb-dead-high-pull": 2, "kb-dead-snatch": 3, "kb-snatch": 4,
-  "kb-windmill": 3, "kb-racked-squat": 3, "kb-push-press": 3,
+  "kb-windmill": 3, "kb-racked-squat": 3, "kb-push-press": 3, "kb-complex": 3, "bw-complex": 2,
   // push
   "wall-pushup": 1, "incline-pushup-high": 1, "incline-pushup": 2, "knee-pushup": 2,
   "pushup": 3, "diamond-pushup": 3, "decline-pushup": 3, "archer-pushup": 4,
@@ -3455,7 +3457,8 @@ function enforceMainVariety(result, available, lastSessionNames, recentNames) {
 // warm-up region logic work like any other program.
 const KB_TRAVEL = {
   "kb-swing":              { id: "hip-thrust-bw",          reps: "12-15" },
-  "kb-swing-1h":           { id: "single-leg-glute-bridge", reps: "10-12", note: "each side" },
+  "kb-swing-1h":           { id: "single-leg-glute-bridge", reps: "10-12", note: "each side", emom: false },
+  "kb-complex":            { id: "bw-complex",             reps: "4", note: "4 of each: good morning, lunge, push-up, squat", emom: true },
   "kb-goblet-squat":       { id: "box-squat-high",         reps: "10-12" },
   "kb-rack-reverse-lunge": { id: "reverse-lunge",          reps: "8-10", note: "each side" },
   "kb-press-hk":           { id: "pike-pushup-hands-elevated", reps: "6-8" },
@@ -3479,7 +3482,7 @@ function kbProgram() {
     day: name,
     slots: rows.map(r => ({ muscle_group: (BUILTIN_EXERCISES.find(x => x.id === r[0]) || {}).muscle_group, sets: r[1], reps: r[2] })),
     fixed: {
-      exercises: rows.map(r => ({ id: r[0], sets: r[1], reps: r[2], note: r[3] || null, sg: r[4] || null, tr: KB_TRAVEL[r[0]] || null })),
+      exercises: rows.map(r => ({ id: r[0], sets: r[1], reps: r[2], note: r[3] || null, sg: r[4] || null, emom: r[5] || null, tr: KB_TRAVEL[r[0]] || null })),
       warmup, cooldown,
     },
   });
@@ -3498,11 +3501,12 @@ function kbProgram() {
     ["kb-suitcase-carry", ca[0], ca[1], "seconds " + S, wm ? "C" : null], ...(wm ? [["kb-windmill", wm[0], wm[1], S + ", no weight to start", "C"]] : []),
     ["kb-turkish-getup", tg[0], tg[1], S],
   ], wuA, cdA);
-  const B = (sw, pl, lg, fp, rd, wc) => day("Bell B: hinge, pull, single leg", [
-    ["kb-swing-1h", sw[0], sw[1], EM + ", switch hands"],
+  const B = (sw, pl, lg, fp, rd, wc, cx) => day("Bell B: hinge, pull, single leg", [
+    ["kb-swing-1h", sw[0], sw[1], EM + ", switch hands", null, 60],
     [pl[0], pl[1], pl[2], S, "A"], ["kb-rack-reverse-lunge", lg[0], lg[1], S, "A"],
     ["kb-floor-press", fp[0], fp[1], S, "B"], ["kb-sl-rdl", rd[0], rd[1], S, "B"],
     ["kb-waiter-carry", wc[0], wc[1], "seconds " + S],
+    ...(cx ? [["kb-complex", cx[0], "3", "3 of each: deadlift, clean, press, squat. Switch arms each round", null, 60]] : []),
   ], wuB, cdB);
   const phase = (label, ws, we, dl, a, b) => ({ phase: label, week_start: ws, week_end: we, deload_weeks: [dl], days: [a, b, a, b].map(d => JSON.parse(JSON.stringify(d))) });
   return {
@@ -3519,10 +3523,10 @@ function kbProgram() {
           B([6, "10"], ["kb-dead-high-pull", 4, "5"], [3, "6"], [3, "8"], [3, "6"], [2, "20"])),
         phase("Build v2: more volume", 5, 8, 8,
           A([3, "8"], [4, "8"], [5, "15"], [5, "3"], [4, "8"], [3, "40"], [2, "4"], [2, "2"]),
-          B([7, "10"], ["kb-clean", 4, "5"], [3, "8"], [3, "8"], [3, "8"], [3, "25"])),
+          B([6, "10"], ["kb-clean", 4, "5"], [3, "8"], [3, "8"], [3, "8"], [2, "25"], [5])),
         phase("Strength v2: heavier and denser", 9, 12, 12,
           A([3, "8"], [4, "8"], [7, "10"], [5, "4"], [3, "10"], [3, "40"], [2, "5"], [2, "3"]),
-          B([7, "10"], ["kb-dead-snatch", 4, "5"], [3, "8"], [3, "10"], [3, "8"], [3, "30"])),
+          B([6, "10"], ["kb-dead-snatch", 4, "5"], [3, "8"], [3, "10"], [3, "8"], [2, "30"], [6])),
       ],
     },
   };
@@ -3543,7 +3547,7 @@ function estimateWorkoutMinutes(w) {
     const mates = e.superset_group ? w.exercises.map((x, j) => j).filter(j => w.exercises[j].superset_group === e.superset_group) : [i];
     mates.forEach(j => done.add(j));
     if (mates.length === 1) {
-      const per = /every minute/.test(e.note || "") ? 60 : secs(e) + 60;
+      const per = e.emom ? e.emom : (/every minute/.test(e.note || "") ? 60 : secs(e) + 60);
       t += per * e.sets;
     } else {
       const rounds = Math.max(...mates.map(j => w.exercises[j].sets));
@@ -3563,17 +3567,18 @@ function buildFixedWorkout(day, isDeload) {
   const out = [];
   (day.fixed.exercises || []).forEach(f => {
     let lib = exercises.find(x => x.id === f.id);
-    let reps = f.reps, note = f.note;
+    let reps = f.reps, note = f.note, emom = f.emom || null;
     if (state.travelMode && lib && lib.equipment === "kettlebell") {
       const sub = f.tr && exercises.find(x => x.id === f.tr.id);
       if (!sub) return;
       lib = sub; reps = f.tr.reps; note = f.tr.note || null;
+      emom = f.tr.emom === true ? (f.emom || 60) : null;
     }
     if (!lib || used.has(lib.name)) return;
     used.add(lib.name);
     const baseSets = state.travelMode && lib.equipment !== "kettlebell" && f.tr && f.tr.sets ? f.tr.sets : f.sets;
     const sets = isDeload ? Math.max(2, Math.round(baseSets * 0.65)) : baseSets;
-    out.push({ name: lib.name, muscle_group: lib.muscle_group, sets, reps, superset_group: f.sg || null, note: note || null });
+    out.push({ name: lib.name, muscle_group: lib.muscle_group, sets, reps, superset_group: f.sg || null, note: note || null, emom });
   });
   const pick = list => (list || []).map(([id, detail]) => {
     const m = exercises.find(x => x.id === id);
@@ -3623,6 +3628,7 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
   const availableExercises = exercises.filter(e => {
     if (state.travelMode && !TRAVEL_EQUIPMENT.has(e.equipment || "bodyweight")) return false;
     if (e.equipment === "weighted vest") return false; // not owned
+    if (e.id === "bw-complex") return false; // only used as the travel stand-in inside the kettlebell program
     // Skill-ladder exercises (handstand/L-sit/planche/back lever/front
     // lever/muscle-up) are deliberately NEVER auto-generated into a
     // workout — they live only in the dedicated Skill practice section,
@@ -4416,7 +4422,7 @@ function swapAlternatesHtml(currentExercise, uidPrefix) {
   // the road) — same TRAVEL_EQUIPMENT restriction generation itself uses,
   // so "swap" still means "what could I actually do right now."
   const alternates = exercises.filter(x =>
-    x.muscle_group === currentExercise.muscle_group && x.name !== currentExercise.name &&
+    x.muscle_group === currentExercise.muscle_group && x.name !== currentExercise.name && x.id !== "bw-complex" &&
     (!state.travelMode || TRAVEL_SWAP_EQUIPMENT.has(x.equipment || "bodyweight"))
   );
   const regressions = alternates.filter(x => levelOf(x.name) < currentLevel);
@@ -6437,6 +6443,15 @@ function resumeSessionFromSnapshot() {
   const snap = loadSessionSnapshot();
   if (!snap) return;
   session = { ...snap.session, timerId: null, holding: false };
+  if (session.emom && session.emom.startedAt) {
+    // Far past the end of the block (app was away a long time): don't credit rounds nobody can vouch for.
+    if (Date.now() - session.emom.startedAt > (session.emom.rounds * session.emom.interval + 120) * 1000) {
+      while (session.emom && session.emom.done < session.emom.rounds) emomRecordRound(false);
+      session.emom = null;
+    } else {
+      session.timerId = setInterval(tickEmom, 1000);
+    }
+  }
   if (session.resting) {
     if (session.restEndTime > Date.now()) session.timerId = setInterval(tickRest, 1000);
     else session.resting = false;
@@ -6554,7 +6569,7 @@ function buildSessionQueue(exs) {
       for (let s = 0; s < e.sets; s++) {
         queue.push({
           exIndex: i, name: e.name, muscle_group: e.muscle_group,
-          reps: e.reps, note: e.note || null, setNum: s + 1, totalSets: e.sets,
+          reps: e.reps, note: e.note || null, emom: e.emom || null, setNum: s + 1, totalSets: e.sets,
           restAfter: sessionRest.solo, supersetLabel: null,
         });
       }
@@ -6776,6 +6791,11 @@ function renderSession() {
     });
   };
 
+  if (step.emom) {
+    renderEmom(step, stepCueHtml);
+    return;
+  }
+
   if (isHoldExercise(step.name)) {
     const range = parseRepRange(step.reps);
     const targetSeconds = range.max || range.min || 20;
@@ -6905,6 +6925,108 @@ function recordSetAndAdvance(step, val) {
   }
 }
 
+// ---- EMOM block ("every minute on the minute") ----
+// An exercise flagged with emom (seconds per round) runs as one timed block
+// instead of separate sets with rests: a new round starts every interval and
+// whatever time is left is your rest. Timing comes from absolute timestamps, so
+// a locked screen or a refresh doesn't lose your place. Each finished round is
+// logged at the top of the rep range; stopping early logs the rest as 0 reps.
+function emomRecordRound(full) {
+  const em = session.emom, step = session.queue[session.pos];
+  if (!step) return;
+  const reps = full ? (parseRepRange(step.reps).max || parseRepRange(step.reps).min || 0) : 0;
+  if (!session.setsActual[step.exIndex]) session.setsActual[step.exIndex] = [];
+  session.setsActual[step.exIndex].push(reps);
+  session.pos++;
+  em.done++;
+}
+function emomFinish() {
+  clearInterval(session.timerId);
+  session.timerId = null;
+  session.emom = null;
+  if (session.pos >= session.queue.length) { renderSession(); return; }
+  startRest(session.queue[session.pos - 1].restAfter);
+}
+function emomStart() {
+  const em = session.emom;
+  em.startedAt = Date.now() + 3000; // 3-second lead-in to pick up the bell
+  clearInterval(session.timerId);
+  session.timerId = setInterval(tickEmom, 1000);
+  renderSession();
+}
+function tickEmom() {
+  if (!session || !session.emom || !session.emom.startedAt) return;
+  const em = session.emom, now = Date.now();
+  const clock = document.getElementById("emomClock"), label = document.getElementById("emomRound");
+  if (now < em.startedAt) {
+    if (clock) clock.textContent = Math.ceil((em.startedAt - now) / 1000);
+    if (label) label.textContent = "Get ready";
+    return;
+  }
+  const target = Math.min(em.rounds, Math.floor((now - em.startedAt) / (em.interval * 1000)));
+  let advanced = false;
+  while (em.done < target) { emomRecordRound(true); advanced = true; }
+  if (em.done >= em.rounds) { playBeep(); emomFinish(); return; }
+  if (advanced) {
+    playBeep();
+    try { if (navigator.vibrate) navigator.vibrate(200); } catch (e) {}
+    saveSessionSnapshot();
+  }
+  const roundEnd = em.startedAt + (em.done + 1) * em.interval * 1000;
+  if (clock) clock.textContent = Math.max(0, Math.ceil((roundEnd - now) / 1000));
+  if (label) label.textContent = `Round ${em.done + 1} of ${em.rounds}`;
+}
+function renderEmom(step, stepCueHtml) {
+  const panel = document.getElementById("sessionPanel");
+  if (!session.emom) {
+    session.emom = { rounds: step.totalSets - step.setNum + 1, interval: step.emom, startedAt: null, done: 0 };
+  }
+  const em = session.emom;
+  const what = `${step.reps} ${isHoldExercise(step.name) ? "seconds" : "reps"}${step.note ? " · " + step.note : ""}`;
+  if (!em.startedAt) {
+    panel.innerHTML = `
+      <div class="card">
+        <div class="meta" style="margin-bottom:4px;">Timed block · a new round every ${em.interval >= 60 && em.interval % 60 === 0 ? (em.interval / 60) + " minute" + (em.interval === 60 ? "" : "s") : em.interval + " seconds"}</div>
+        <h2>${step.name}</h2>
+        <div class="meta">${em.rounds} rounds · each round: ${what}</div>
+        ${stepCueHtml}
+        <div class="meta" style="margin-top:8px;">Finish the round, then rest in whatever time is left. A beep marks each new round. Pick up the bell, then tap Start.</div>
+        <button class="primary" id="emomStartBtn" style="margin-top:10px; width:100%;">Start (3-second countdown)</button>
+        <button class="danger-link" style="color:var(--accent); margin-top:8px;" data-quick-note="${escapeHtml(step.name)}">Note</button>
+        <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
+      </div>`;
+    document.getElementById("emomStartBtn").addEventListener("click", emomStart);
+  } else {
+    if (!session.timerId) session.timerId = setInterval(tickEmom, 1000);
+    panel.innerHTML = `
+      <div class="card">
+        <div class="meta" id="emomRound" style="margin-bottom:4px;">Round ${em.done + 1} of ${em.rounds}</div>
+        <h2>${step.name}</h2>
+        <div class="meta">Do now: ${what}</div>
+        <div id="emomClock" style="font-size:48px; font-weight:600; text-align:center; margin:14px 0; font-family:var(--font-mono);">${formatTime(em.interval)}</div>
+        ${stepCueHtml}
+        <button class="secondary" id="emomStopBtn" style="margin-top:10px; width:100%;">Stop block</button>
+        <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
+      </div>`;
+    document.getElementById("emomStopBtn").addEventListener("click", () => {
+      if (!confirm("Stop here? Rounds you haven't done will be logged as missed.")) return;
+      while (session.emom && session.emom.done < session.emom.rounds) emomRecordRound(false);
+      emomFinish();
+    });
+    tickEmom();
+  }
+  document.getElementById("endSessionBtn").addEventListener("click", () => {
+    if (!confirm("End session early? Remaining exercises won't be logged.")) return;
+    clearInterval(session.timerId);
+    session = null; clearSessionSnapshot();
+    document.getElementById("sessionPanel").classList.add("hidden");
+    document.getElementById("todayWorkout").classList.remove("hidden");
+    document.getElementById("startSessionBtn").classList.remove("hidden");
+    document.getElementById("minimumDayBtn").classList.remove("hidden");
+    document.getElementById("genWorkoutBtn").classList.remove("hidden");
+  });
+}
+
 function startHold(step, targetSeconds) {
   session.holding = true;
   session.holdTargetSeconds = targetSeconds;
@@ -6954,6 +7076,7 @@ document.addEventListener("visibilitychange", () => {
   if (document.visibilityState !== "visible" || !session) return;
   if (session.resting) tickRest();
   if (session.holding) tickHold();
+  if (session.emom && session.emom.startedAt) tickEmom();
 });
 
 async function finishSession() {
