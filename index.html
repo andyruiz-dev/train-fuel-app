@@ -137,6 +137,46 @@
   details.exercise-group[open] summary::after{content:"−";}
   details.exercise-group .list-item:first-child{padding-top:10px;}
   /* ---- Today hero ---- */
+  /* Progress screen, "Steady" look */
+  .tf-pg-hero{background:linear-gradient(135deg,#2FBFA6 0%,#1B8674 100%); color:#0B1512; border-radius:22px; padding:20px; display:flex; gap:18px; align-items:center; margin-bottom:14px;}
+  .tf-pg-hero .k{font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase;}
+  .tf-pg-hero .n{font-family:var(--font-display); font-size:34px; font-weight:700; line-height:1; margin-top:4px;}
+  .tf-pg-hero .n small{font-size:18px; font-weight:600;}
+  .tf-pg-hero .s{font-size:13px; font-weight:500; margin-top:4px;}
+  .tf-pg-hero .pill{margin-top:12px; display:inline-block; background:#0B1512; color:#EDEAE0; border-radius:99px; padding:6px 12px; font-size:12px; font-weight:600;}
+  .tf-stats{display:flex; gap:10px; margin-bottom:14px;}
+  .tf-stat{flex:1; min-width:0; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px;}
+  .tf-stat .l{font-size:11px; color:var(--text-muted);}
+  .tf-stat .v{font-family:var(--font-display); font-size:30px; font-weight:600; line-height:1.1; margin-top:4px;}
+  .tf-stat .v small{font-size:13px; color:var(--text-muted); font-weight:500;}
+  .tf-stat .p{margin-top:8px; font-size:11px; border-radius:99px; padding:3px 8px; font-weight:600; display:inline-block; background:#1B3A33; color:var(--accent);}
+  .tf-stat .p.gold{background:#3A2F18; color:var(--gold);}
+  .tf-pcard{background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:18px 16px; margin-bottom:14px;}
+  .tf-pcard .h{display:flex; justify-content:space-between; align-items:baseline; padding:0 2px;}
+  .tf-pcard .h b{font-family:var(--font-display); font-size:18px; font-weight:600;}
+  .tf-pcard .h span{font-size:12px; color:var(--text-muted);}
+  .tf-pcard .h span em{color:var(--text); font-style:normal; font-weight:600;}
+  .tf-axis{display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); margin-top:2px; padding:0 2px;}
+  .tf-empty{font-size:13px; color:var(--text-muted); padding:14px 2px 4px; line-height:1.5;}
+  .tf-empty button{margin-top:10px; height:36px; padding:0 14px; border-radius:10px; border:1px solid var(--accent); background:none; color:var(--accent); font-weight:600; font-size:13px; cursor:pointer;}
+  .tf-weeks{display:flex; flex-direction:column; gap:10px; margin-top:14px;}
+  .tf-wk{display:flex; align-items:center; gap:10px;}
+  .tf-wk .lab{width:46px; font-family:var(--font-mono); font-size:10px; color:var(--text-muted);}
+  .tf-wk .dots{display:flex; gap:9px; flex:1;}
+  .tf-wk .dots i{width:22px; height:22px; border-radius:50%; background:#252920; display:block;}
+  .tf-wk .dots i.on{background:var(--accent);}
+  .tf-wk .dots i.today{box-shadow:inset 0 0 0 2px var(--accent); background:none;}
+  .tf-wk .dots i.fut{background:none; box-shadow:inset 0 0 0 1px #2A2E24;}
+  .tf-wk .cnt{font-size:12px; color:var(--text-muted); width:18px; text-align:right;}
+  .tf-days{display:flex; gap:9px; margin-left:56px; margin-top:8px; font-family:var(--font-mono); font-size:10px; color:var(--text-muted);}
+  .tf-days span{width:22px; text-align:center;}
+  .tf-badges{display:flex; gap:10px; margin-top:14px;}
+  .tf-badge{flex:1; text-align:center; min-width:0;}
+  .tf-badge .c{width:54px; height:54px; border-radius:50%; margin:0 auto; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:20px; font-weight:700; color:#0B1512; background:var(--accent);}
+  .tf-badge .c.gold{background:var(--gold);}
+  .tf-badge .c.lock{background:none; border:2px dashed var(--border); color:#5A5F50;}
+  .tf-badge .t{font-size:11px; margin-top:6px; font-weight:600;}
+  .tf-badge .t.lock{color:var(--text-muted); font-weight:400;}
   /* Food screen, "Steady" look */
   .tf-hero-food{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; gap:16px; align-items:center; margin-bottom:10px;}
   .tf-hero-food svg{flex:0 0 auto;}
@@ -665,6 +705,11 @@
 
   <!-- PROGRESS -->
   <section id="tab-progress" class="tab-panel hidden">
+    <div class="tf-screen-head"><div class="tf-kicker" id="tfProgKicker"></div><h1>Progress</h1></div>
+    <div id="tfProgress"></div>
+    <details class="exercise-group tf-row" id="progressDetails" style="margin-top:14px;">
+      <summary>Details and history</summary>
+      <div style="margin-top:12px;">
     <div class="card">
       <h2>Your journey so far</h2>
       <div id="journeyStats"></div>
@@ -713,6 +758,8 @@
       <div class="meta" id="reasonPatternsHint" style="margin-top:6px; cursor:pointer;"></div>
       <div id="bloatPatterns" style="margin-top:14px;"></div>
     </div>
+      </div>
+    </details>
   </section>
 
   <!-- SETTINGS -->
@@ -805,6 +852,9 @@
         <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="targetCarbs" placeholder="255"></div>
         <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="targetFat" placeholder="65"></div>
       </div>
+      <div class="row" style="margin-top:8px;">
+        <div class="field"><div class="field-label">Workouts per week (goal line on Progress)</div><input type="text" inputmode="numeric" id="weeklyGoalInput" placeholder="3"></div>
+      </div>
       <button class="secondary" id="saveTargetsBtn" style="margin-top:10px;">Save targets</button>
       <div id="macroSuggestionHistory" style="margin-top:10px;"></div>
     </div>
@@ -834,7 +884,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-25 21:50 CT";
+const APP_BUILD = "2026-10-25 22:30 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -989,6 +1039,7 @@ async function loadState() {
   if (state.settings.proteinTargetSetTo145 !== true) { state.settings.macroTargets.protein = 145; state.settings.proteinTargetSetTo145 = true; }
   // One-time: the 20 g of protein dropped (about 80 cal) goes to carbs so total calories stay put.
   if (state.settings.carbsPlus20ForProtein145 !== true) { state.settings.macroTargets.carbs = (state.settings.macroTargets.carbs || 0) + 20; state.settings.carbsPlus20ForProtein145 = true; }
+  if (!(state.settings.weeklyWorkoutGoal > 0)) state.settings.weeklyWorkoutGoal = 3;
   if (typeof state.travelMode !== "boolean") state.travelMode = false;
   if (typeof state.macroSuggestionAppliedAt !== "string") state.macroSuggestionAppliedAt = "";
   if (!Array.isArray(state.macroSuggestionHistory)) state.macroSuggestionHistory = [];
@@ -1044,6 +1095,7 @@ function persist() {
 async function persistNow() {
   saveStateLocal();
   try { if (typeof renderMorningChecklist === "function") renderMorningChecklist(); } catch (e) {}
+  try { if (typeof renderProgressTop === "function") renderProgressTop(); } catch (e) {}
   clearTimeout(saveTimer);
   if (!WORKER_URL) return;
   try {
@@ -6161,6 +6213,8 @@ document.getElementById("saveTargetsBtn").addEventListener("click", async () => 
     carbs: parseInt(document.getElementById("targetCarbs").value, 10) || 0,
     fat: parseInt(document.getElementById("targetFat").value, 10) || 0,
   };
+  const wg = parseInt(document.getElementById("weeklyGoalInput").value, 10);
+  state.settings.weeklyWorkoutGoal = wg > 0 && wg <= 7 ? wg : 3;
   await persistNow();
   renderMacroSummary();
   alert("Targets saved.");
@@ -6362,7 +6416,194 @@ function renderBloatPatterns() {
   el.innerHTML = html;
 }
 
+// ---- Progress screen ("Steady" look): hero ring, stat tiles, weight line, consistency, milestones ----
+function renderProgressTop() {
+  const el = document.getElementById("tfProgress");
+  if (!el) return;
+  const esc = escapeHtml;
+  const now = new Date();
+  const dayStart = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const mondayOf = (d) => { const x = dayStart(d); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
+  const workoutDays = new Set((state.logs || []).map(l => dayStart(new Date(l.date)).getTime()));
+  const goal = state.settings?.weeklyWorkoutGoal || 3;
+  const program = programs.find(p => p.id === state.activeProgramId);
+  const totalDays = workoutDays.size;
+
+  // Kicker
+  let kicker = "";
+  let phaseName = "";
+  let weekNumber = 0, maxWeek = 0;
+  if (program && program.structure && program.structure.phases) {
+    const cp = currentPhaseFor(program);
+    weekNumber = cp.weekNumber; maxWeek = programMaxWeek(program);
+    phaseName = String(cp.phase?.phase || "").split(":")[0].replace(/\s+v\d+$/i, "");
+    kicker = `WEEK ${weekNumber} OF ${maxWeek}`;
+  }
+  const kEl = document.getElementById("tfProgKicker");
+  if (kEl) kEl.textContent = kicker || "YOUR PROGRESS";
+
+  // Hero ring: program completion (count mode) or weeks
+  let heroHtml = "";
+  if (program) {
+    const pace = getProgramPace(program);
+    const total = totalProgramWorkouts(program);
+    const done = pace.mode === "count" ? pace.completed : Math.max(0, (weekNumber - 1));
+    const denom = pace.mode === "count" ? total : maxWeek;
+    const frac = denom ? Math.min(1, done / denom) : 0;
+    const C = 2 * Math.PI * 52;
+    heroHtml = `<div class="tf-pg-hero">
+      <svg width="124" height="124" viewBox="0 0 124 124" role="img" aria-label="${done} of ${denom} ${pace.mode === "count" ? "workouts" : "weeks"} done">
+        <circle cx="62" cy="62" r="52" fill="none" stroke="rgba(11,21,18,.22)" stroke-width="12"/>
+        <circle cx="62" cy="62" r="52" fill="none" stroke="#0B1512" stroke-width="12" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - frac)).toFixed(1)}" transform="rotate(-90 62 62)"/>
+        <text x="62" y="68" text-anchor="middle" font-family="Oswald, sans-serif" font-size="36" font-weight="700" fill="#0B1512">${Math.round(frac * 100)}%</text>
+        <text x="62" y="86" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="9" fill="#0B1512" letter-spacing="1.5">OF PROGRAM</text>
+      </svg>
+      <div style="flex:1; min-width:0;">
+        <div class="k">${esc(phaseName || "Program")}</div>
+        <div class="n">${done}<small> / ${denom}</small></div>
+        <div class="s">${pace.mode === "count" ? "workouts done" : "weeks in"}</div>
+        <div class="pill">${Math.max(0, denom - done)} ${pace.mode === "count" ? "workouts" : "weeks"} to go</div>
+      </div>
+    </div>`;
+  }
+
+  // Weekly buckets (Mon-start), last 5 weeks incl. current
+  const thisMonday = mondayOf(now);
+  const weeks = [];
+  for (let i = 4; i >= 0; i--) {
+    const m = new Date(thisMonday); m.setDate(m.getDate() - 7 * i);
+    const days = [];
+    for (let d = 0; d < 7; d++) {
+      const x = new Date(m); x.setDate(m.getDate() + d);
+      days.push({ t: x.getTime(), done: workoutDays.has(x.getTime()), today: x.getTime() === dayStart(now).getTime(), future: x.getTime() > dayStart(now).getTime() });
+    }
+    weeks.push({ start: m, days, count: days.filter(x => x.done).length });
+  }
+  const fiveWeekTotal = weeks.reduce((n, w) => n + w.count, 0);
+  const best = weeks.reduce((b, w) => (w.count >= b.count ? w : b), weeks[0]);
+
+  // Weight
+  const ms = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+  let weightTile = `<div class="tf-stat"><div class="l">Weight</div><div class="v">·</div><div class="p gold">log 2 weigh-ins</div></div>`;
+  if (ms.length >= 2) {
+    const delta = ms[ms.length - 1].weight - ms[0].weight;
+    const down = delta <= 0;
+    const wkAgo = ms.filter(m => new Date(m.date + "T12:00:00").getTime() <= Date.now() - 7 * 86400000).pop();
+    const wkDelta = wkAgo ? ms[ms.length - 1].weight - wkAgo.weight : null;
+    weightTile = `<div class="tf-stat"><div class="l">Weight</div><div class="v" style="color:var(--accent);">${down ? "−" : "+"}${Math.abs(delta).toFixed(1)}<small> lb</small></div>${wkDelta === null ? `<div class="p">since start</div>` : `<div class="p">${wkDelta <= 0 ? "▼" : "▲"} ${Math.abs(wkDelta).toFixed(1)} / wk</div>`}</div>`;
+  }
+  const bestTile = `<div class="tf-stat"><div class="l">Best week</div><div class="v">${best.count}<small> ${best.count === 1 ? "workout" : "workouts"}</small></div><div class="p gold">${best.count ? "wk of " + best.start.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "none yet"}</div></div>`;
+  // Protein days hit in the last 7 completed-or-current days
+  const pTarget = state.settings?.macroTargets?.protein || 0;
+  let hit = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    const pro = foodLogsForDate(localDateStr(d)).reduce((n, f) => n + (f.protein || 0), 0);
+    if (pTarget && pro >= pTarget) hit++;
+  }
+  const proteinTile = `<div class="tf-stat"><div class="l">Protein</div><div class="v">${hit}<small> / 7</small></div><div class="p">days hit</div></div>`;
+
+  // Weight chart
+  let weightCard;
+  if (ms.length < 2) {
+    weightCard = `<div class="tf-pcard"><div class="h"><b>Weight</b></div><div class="tf-empty">Log a couple of weigh-ins and your trend line shows up here.<br><button type="button" data-goto-tab="coach">Go to Coach</button></div></div>`;
+  } else {
+    const pts = ms.filter(m => new Date(m.date + "T12:00:00").getTime() >= Date.now() - 35 * 86400000);
+    const use = pts.length >= 2 ? pts : ms.slice(-2);
+    const goalW = state.settings?.goalWeight || null;
+    const vals = use.map(m => m.weight);
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    if (goalW) { lo = Math.min(lo, goalW); hi = Math.max(hi, goalW); }
+    const pad = Math.max(1, (hi - lo) * 0.15); lo -= pad; hi += pad;
+    const W = 326, H = 150, top = 14, bot = 22;
+    const t0 = new Date(use[0].date + "T12:00:00").getTime(), t1 = new Date(use[use.length - 1].date + "T12:00:00").getTime();
+    const X = (m) => t1 === t0 ? W / 2 : ((new Date(m.date + "T12:00:00").getTime() - t0) / (t1 - t0)) * (W - 14);
+    const Y = (w) => top + (1 - (w - lo) / (hi - lo)) * (H - top - bot);
+    const line = use.map(m => `${X(m).toFixed(1)},${Y(m.weight).toFixed(1)}`).join(" ");
+    const last = use[use.length - 1];
+    const area = `M${X(use[0]).toFixed(1)},${Y(use[0].weight).toFixed(1)} ` + use.slice(1).map(m => `L${X(m).toFixed(1)},${Y(m.weight).toFixed(1)}`).join(" ") + ` L${X(last).toFixed(1)},${H - bot} L${X(use[0]).toFixed(1)},${H - bot} Z`;
+    const lx = X(last), ly = Y(last.weight);
+    const bubbleX = Math.min(Math.max(lx, 31), W - 31);
+    const avg7 = (() => { const r = ms.filter(m => new Date(m.date + "T12:00:00").getTime() >= Date.now() - 7 * 86400000); return r.length ? (r.reduce((a, m) => a + m.weight, 0) / r.length) : null; })();
+    const fmt = (m) => new Date(m.date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase();
+    weightCard = `<div class="tf-pcard">
+      <div class="h"><b>Weight</b>${avg7 ? `<span>7-day avg <em>${avg7.toFixed(1)} lb</em></span>` : ""}</div>
+      <svg width="100%" viewBox="0 0 ${W} ${H}" style="margin-top:8px; overflow:visible;" role="img" aria-label="Weight trend, latest ${last.weight} pounds">
+        <defs><linearGradient id="tfWg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2FBFA6" stop-opacity=".38"/><stop offset="1" stop-color="#2FBFA6" stop-opacity="0"/></linearGradient></defs>
+        <line x1="0" y1="${H - bot}" x2="${W}" y2="${H - bot}" stroke="#2A2E24"/>
+        ${goalW ? `<line x1="0" y1="${Y(goalW).toFixed(1)}" x2="${W}" y2="${Y(goalW).toFixed(1)}" stroke="#C79A45" stroke-width="1.5" stroke-dasharray="5 5"/><text x="${W - 4}" y="${(Y(goalW) - 5).toFixed(1)}" text-anchor="end" font-family="Roboto Mono, monospace" font-size="9" fill="#C79A45">GOAL ${goalW}</text>` : ""}
+        <path d="${area}" fill="url(#tfWg)"/>
+        <polyline fill="none" stroke="#2FBFA6" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="${line}"/>
+        <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="12" fill="#2FBFA6" fill-opacity=".2"/>
+        <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="6" fill="#2FBFA6" stroke="#20231C" stroke-width="2.5"/>
+        <rect x="${(bubbleX - 31).toFixed(1)}" y="${Math.max(0, ly - 40).toFixed(1)}" width="62" height="24" rx="12" fill="#EDEAE0"/>
+        <text x="${bubbleX.toFixed(1)}" y="${Math.max(16, ly - 24).toFixed(1)}" text-anchor="middle" font-family="Oswald, sans-serif" font-size="14" font-weight="600" fill="#0B1512">${last.weight}</text>
+      </svg>
+      <div class="tf-axis"><span>${fmt(use[0])}</span><span>TODAY</span></div>
+    </div>`;
+  }
+
+  // Consistency: small circles, one row per week
+  const dayNames = ["M", "T", "W", "T", "F", "S", "S"];
+  const consistencyCard = `<div class="tf-pcard">
+    <div class="h"><b>Consistency</b><span>last 5 weeks</span></div>
+    <div class="tf-weeks">${weeks.map(w => `<div class="tf-wk"><span class="lab">${w.start.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()}</span><span class="dots">${w.days.map(d => `<i class="${d.done ? "on" : d.today ? "today" : d.future ? "fut" : ""}"></i>`).join("")}</span><span class="cnt">${w.count}</span></div>`).join("")}</div>
+    <div class="tf-days">${dayNames.map(n => `<span>${n}</span>`).join("")}</div>
+    <div style="margin-top:14px; font-size:13px; color:var(--text-muted); padding:0 2px;"><span style="color:var(--text); font-weight:600;">${fiveWeekTotal} workout day${fiveWeekTotal === 1 ? "" : "s"}</span> in the last 5 weeks.</div>
+  </div>`;
+
+  // Milestones (derived from your data, same ladders the celebrations use)
+  const wLadder = [1, 10, 25, 50, 100, 150, 200];
+  const earnedW = wLadder.filter(m => totalDays >= m);
+  const nextW = wLadder.filter(m => totalDays < m);
+  const wShow = [...earnedW.slice(-1), ...nextW.slice(0, 2)];
+  const lost = ms.length >= 2 ? ms[0].weight - ms[ms.length - 1].weight : 0;
+  const lLadder = [5, 10, 15, 20, 25, 30];
+  const earnedL = lLadder.filter(m => lost >= m);
+  const nextL = lLadder.filter(m => lost < m);
+  const lShow = earnedL.length ? [earnedL[earnedL.length - 1]] : [nextL[0]];
+  const badge = (label, face, earned, gold) => `<div class="tf-badge"><div class="c${gold ? " gold" : ""}${earned ? "" : " lock"}">${face}</div><div class="t${earned ? "" : " lock"}">${label}</div></div>`;
+  const check = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0B1512" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+  const badges = wShow.map(m => badge(m === 1 ? "First workout" : `${m} workouts`, m === 1 ? check : m, totalDays >= m, false))
+    .concat(lShow.map(m => badge(`${m} lb down`, `−${m}`, lost >= m, true))).join("");
+  const milestonesCard = `<div class="tf-pcard"><div class="h"><b>Milestones</b></div><div class="tf-badges">${badges}</div></div>`;
+
+  // Workouts per week: thin stems with dots, dashed goal line
+  const maxC = Math.max(goal, ...weeks.map(w => w.count), 1);
+  const stemH = 84;
+  const cols = weeks.map((w, i) => {
+    const h = Math.round((w.count / maxC) * (stemH - 16));
+    const isBest = w === best && w.count > 0;
+    const isNow = i === weeks.length - 1;
+    const col = isBest ? "#C79A45" : (w.count >= goal ? "#2FBFA6" : "#5A5F50");
+    return `<div style="flex:1; height:${stemH}px; position:relative;">
+      <div style="position:absolute; left:50%; bottom:0; width:4px; margin-left:-2px; height:${h + 7}px; border-radius:2px; background:${col}; opacity:.45;"></div>
+      <div style="position:absolute; left:50%; bottom:${h}px; width:16px; height:16px; margin-left:-8px; border-radius:50%; background:${col};${isNow ? " box-shadow:0 0 0 4px rgba(47,191,166,.25);" : ""}"></div>
+      <div style="position:absolute; left:0; right:0; bottom:${h + 20}px; text-align:center; font-size:11px; color:${col === "#5A5F50" ? "var(--text-muted)" : col}; font-weight:600;">${w.count}</div>
+    </div>`;
+  }).join("");
+  const goalBottom = Math.round((goal / maxC) * (stemH - 16)) + 8;
+  const avgWk = (fiveWeekTotal / 5).toFixed(1);
+  const weeklyCard = `<div class="tf-pcard">
+    <div class="h"><b>Workouts per week</b><span>avg <em>${avgWk}</em> · goal ${goal}</span></div>
+    <div style="position:relative; margin-top:26px;">
+      <div style="position:absolute; left:0; right:0; bottom:${goalBottom}px; border-top:1.5px dashed rgba(199,154,69,.7);"></div>
+      <div style="display:flex; gap:12px;">${cols}</div>
+    </div>
+    <div style="display:flex; gap:12px; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); margin-top:8px;">${weeks.map((w, i) => `<span style="flex:1; text-align:center;${i === weeks.length - 1 ? " color:var(--accent);" : ""}">${w.start.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()}</span>`).join("")}</div>
+  </div>`;
+
+  el.innerHTML = heroHtml + `<div class="tf-stats">${weightTile}${bestTile}${proteinTile}</div>` + weightCard + consistencyCard + milestonesCard + weeklyCard;
+}
+document.getElementById("tfProgress").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-goto-tab]");
+  if (!b) return;
+  const t = document.querySelector(`nav.tabs .tab-btn[data-tab="${b.dataset.gotoTab}"]`);
+  if (t) t.click();
+});
+
 function renderProgressCharts() {
+  try { renderProgressTop(); } catch (e) { console.error("renderProgressTop", e); }
   renderJourneyStats();
   const measurements = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
   renderLineChart("weightChart", measurements.map(m => ({ label: m.date.slice(5), value: m.weight })), {
@@ -8196,6 +8437,7 @@ async function init() {
   document.getElementById("targetProtein").value = t.protein || "";
   document.getElementById("targetCarbs").value = t.carbs || "";
   document.getElementById("targetFat").value = t.fat || "";
+  document.getElementById("weeklyGoalInput").value = state.settings.weeklyWorkoutGoal || 3;
   syncTravelModeLabel();
   syncTravelModeLegendVisibility();
   syncSkillPracticeIntroVisibility();
