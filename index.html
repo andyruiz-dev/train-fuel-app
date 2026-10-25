@@ -666,7 +666,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-25 15:10 CT";
+const APP_BUILD = "2026-10-25 15:50 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -2708,23 +2708,27 @@ function renderMorningChecklist() {
 // in your last few sessions (max / ok / missed), and a few plain words in your
 // open notes. Deliberately conservative: reps first, a heavier bell only after
 // three straight top-rep sessions, and presses get extra patience because the
-// next bell size up is a big jump for them.
+// next bell size up is a big jump for them. The plan is to stay on one bell for
+// the whole 12 weeks: until the final week the Coach only ever says "add reps",
+// and the get-up (a skill lift) never prompts a bigger bell at all.
 const BELL_NEXT_SIZE = "44 lb (20 kg)";
 function computeBellCoach() {
   const bell = new Set((exercises || []).filter(e => e.equipment === "kettlebell").map(e => e.name));
   const byEx = {};
   (state.logs || []).forEach(l => { if (bell.has(l.exercise)) (byEx[l.exercise] = byEx[l.exercise] || []).push(l); });
   const out = [], light = [], lightPress = [];
+  const kbProg = (programs || []).find(p => p.id === state.activeProgramId);
+  const lateProgram = !!(kbProg && kbProg.structure && computeWeekNumber(kbProg) >= 12);
   Object.entries(byEx).forEach(([name, logs]) => {
     logs.sort((a, b) => new Date(a.date) - new Date(b.date));
     const last = logs.slice(-3).map(l => l.result);
     const hold = isHoldExercise(name);
     if (last[last.length - 1] === "missed") {
       out.push(`${name}: missed last time. Repeat the same bell and reps until you hit them. No need to change anything else.`);
-    } else if (last.length >= 3 && last.every(r => r === "max")) {
+    } else if (last.length >= 3 && last.every(r => r === "max") && lateProgram && !/get-up/i.test(name)) {
       (/press/i.test(name) ? lightPress : light).push(name);
     } else if (last.length >= 2 && last.slice(-2).every(r => r === "max")) {
-      out.push(`${name}: top reps two sessions in a row. Add ${hold ? "5 seconds" : "1-2 reps per set"} next time before changing the bell.`);
+      out.push(`${name}: top reps two sessions in a row. Add ${hold ? "5 seconds" : /get-up/i.test(name) ? "a rep, or slow it down" : "1-2 reps per set"} next time. Stay on the same bell.`);
     }
   });
   if (light.length) out.unshift(`You've hit top reps three sessions running on ${light.join(", ")}. The 35 lb bell is getting light for those; the next size up is ${BELL_NEXT_SIZE}.`);
@@ -2734,7 +2738,7 @@ function computeBellCoach() {
     const t = String(n.text || "").toLowerCase();
     const where = n.context ? ` (${n.context})` : "";
     if (/\b(hurt|hurts|pain|painful|sharp|pinch|pinches|tweak|tweaked)\b/.test(t)) out.push(`Your note${where} mentions pain. Back off that move, check your form, and if it keeps happening, get it looked at.`);
-    else if (/\b(too easy|easy|light|boring|breeze)\b/.test(t)) out.push(`Your note${where} says it felt easy. Add reps first; if it stays easy, that's the sign to go up in bell size.`);
+    else if (/\b(too easy|easy|light|boring|breeze)\b/.test(t)) out.push(`Your note${where} says it felt easy. Add reps first and keep the same bell for now.`);
     else if (/\b(too heavy|heavy|hard|struggl\w*|sloppy|shaky|grind\w*)\b/.test(t)) out.push(`Your note${where} says it felt hard. Hold the same reps and bell until they feel smooth.`);
   });
   return out;
