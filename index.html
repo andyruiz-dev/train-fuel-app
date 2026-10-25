@@ -137,6 +137,41 @@
   details.exercise-group[open] summary::after{content:"−";}
   details.exercise-group .list-item:first-child{padding-top:10px;}
   /* ---- Today hero ---- */
+  /* Coach screen, "Steady" look */
+  .tf-label{font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; padding:14px 4px 8px;}
+  #morningChecklist{display:none !important;}
+  .tf-tiles{display:flex; gap:10px; align-items:stretch;}
+  .tf-tile{flex:1; min-width:0; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px;}
+  .tf-tile.tf-pend{border:1.5px solid var(--accent);}
+  .tf-tile-tag{font-size:12px; color:var(--text-muted); font-weight:600;}
+  .tf-tile.tf-pend .tf-tile-tag{color:var(--accent);}
+  .tf-tile-big{display:flex; align-items:baseline; gap:6px; margin-top:6px;}
+  .tf-tile-big input{width:100%; min-width:0; background:none; border:0; border-bottom:1px solid var(--border); border-radius:0; padding:2px 0; font-family:var(--font-display); font-size:30px; font-weight:600; color:var(--text);}
+  .tf-tile-big span{font-size:14px; color:var(--text-muted);}
+  .tf-tile-q{font-size:14px; font-weight:600; margin-top:8px; line-height:1.2;}
+  .tf-tile-sub{font-size:12px; color:var(--text-muted); margin-top:4px;}
+  .tf-tile button.primary{margin-top:12px; height:38px; padding:0; border-radius:10px; font-family:Inter,sans-serif; font-size:14px; letter-spacing:0;}
+  .tf-tile .chip{flex:1; text-align:center; font-size:12px; padding:9px 0; border-radius:10px; margin-top:12px;}
+  .tf-tile .chip.active{background:var(--accent); border-color:var(--accent); color:#0F1A17; font-weight:600;}
+  #checkinTagChips .chip{flex:0 0 auto; margin-top:0; padding:8px 10px;}
+  .tf-more{margin-top:10px; font-size:12px; color:var(--text-muted);}
+  .tf-more summary{cursor:pointer; list-style:none; text-decoration:underline;}
+  .tf-panel{margin-top:10px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px;}
+  #tab-coach .card{background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:10px; padding:14px; margin:0 0 10px;}
+  #tab-coach #bellCoachCard{border-left-color:var(--gold);}
+  #tab-coach .card h2{font-family:Inter,sans-serif; font-size:12px; font-weight:500; color:var(--text-muted); letter-spacing:0; margin:0 0 6px;}
+  #coachNote, #bellCoach{font-family:Inter,sans-serif; font-size:15px; line-height:1.45; color:var(--text);}
+  .tf-week{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .tf-dots{display:flex; gap:8px;}
+  .tf-dots i{width:26px; height:26px; border-radius:50%; border:2px solid var(--border); display:block;}
+  .tf-dots i.on{background:var(--accent); border-color:var(--accent);}
+  .tf-dots i.today{border-color:var(--accent);}
+  .tf-week-n{text-align:right;}
+  .tf-week-n b{display:block; font-family:var(--font-display); font-size:24px; font-weight:600; line-height:1;}
+  .tf-week-n span{font-size:11px; color:var(--text-muted);}
+  details.tf-row{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px; margin:0 0 10px;}
+  details.tf-row summary{text-transform:none; font-family:Inter,sans-serif; font-size:15px; font-weight:600;}
+  #tab-coach #startHereBanner .card, #tab-coach #flagsBanner .card{margin-top:4px;}
   /* Today screen, "Steady" look */
   .tf-screen-head{padding:18px 4px 12px;}
   .tf-kicker{font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase;}
@@ -499,80 +534,82 @@
 
   <!-- COACH -->
   <section id="tab-coach" class="tab-panel">
+    <div class="tf-screen-head"><div class="tf-kicker" id="tfCoachKicker"></div><h1>Coach</h1></div>
     <div id="startHereBanner" class="hidden"></div>
     <div id="morningChecklist" class="hidden"></div>
     <div id="flagsBanner" class="hidden"></div>
+
+    <div class="tf-label">Today</div>
+    <div class="tf-tiles">
+      <div class="tf-tile tf-pend" id="weighInDetails">
+        <div class="tf-tile-tag">Weigh-in</div>
+        <div class="tf-tile-big"><input type="text" inputmode="decimal" id="weightInput" placeholder="—" aria-label="Weight in pounds"><span>lb</span></div>
+        <div class="tf-tile-sub" id="tfLastWeight">Last: none yet</div>
+        <button class="primary" id="logWeightBtn">Log weight</button>
+        <details class="tf-more">
+          <summary>More</summary>
+          <div class="field-label" style="margin-top:8px;">Date</div>
+          <input type="date" id="measurementDateInput">
+          <div class="field-label" style="margin-top:8px;">Neck (in, optional)</div>
+          <input type="text" inputmode="decimal" id="neckInput" placeholder="Neck">
+          <div class="field-label" style="margin-top:8px;">Waist (in, optional)</div>
+          <input type="text" inputmode="decimal" id="waistInput" placeholder="Waist">
+          <div id="waistExplainer">
+            <div class="meta" style="margin-top:6px;">Add waist now and then for a body-fat estimate (Relative Fat Mass). Measure at the belly button, snug but not tight. It helps tell building muscle from a real stall. Needs your height set once in Settings.</div>
+            <button class="danger-link" id="dismissWaistExplainerBtn" style="margin-top:4px;">Got it, don't show this again</button>
+          </div>
+        </details>
+      </div>
+      <div class="tf-tile tf-pend" id="dailyCheckinDetails">
+        <div class="tf-tile-tag">Check-in</div>
+        <div class="tf-tile-q">How's your energy?</div>
+        <div class="row" id="checkinEnergyChips" style="flex-wrap:nowrap; gap:6px;">
+          <div class="chip" data-energy="low">Low</div>
+          <div class="chip" data-energy="normal">Ok</div>
+          <div class="chip" data-energy="high">High</div>
+        </div>
+        <button class="primary" id="saveDailyCheckinBtn" style="margin-top:12px;">Save</button>
+        <details class="tf-more">
+          <summary>Anything going on?</summary>
+          <div class="row" id="checkinTagChips" style="flex-wrap:wrap; margin-top:8px;"></div>
+        </details>
+        <div class="tf-tile-sub" id="dailyCheckinSavedHint" style="margin-top:8px;"></div>
+      </div>
+    </div>
+
+    <div id="weightCheckInPanel" class="hidden tf-panel">
+      <div class="meta" id="weightCheckInMessage" style="margin-bottom:8px;"></div>
+      <div class="row" id="weightCheckInChips"></div>
+      <input type="text" id="weightCheckInFood" class="hidden" placeholder="Anything specific you ate? (optional)" style="margin-top:10px;">
+      <div class="row" style="margin-top:10px;">
+        <button class="secondary" id="weightCheckInSaveBtn" style="flex:1;">Save</button>
+        <button class="danger-link" id="weightCheckInSkipBtn" style="flex:1;">Skip</button>
+      </div>
+    </div>
+
+    <div class="tf-label">Your coach</div>
+    <div class="card" id="coachNoteCard">
+      <h2>Coach's note</h2>
+      <div id="coachNote" class="meta">Still gathering enough days to spot real patterns. Check back once you've logged a bit more.</div>
+    </div>
     <div class="card hidden" id="bellCoachCard">
       <h2>Kettlebell progress</h2>
       <div id="bellCoach" class="meta"></div>
     </div>
-    <div class="card" id="coachNoteCard">
-      <h2>Coach's note</h2>
-      <div id="coachNote" class="meta">Still gathering enough days to spot real patterns — check back once you've logged a bit more.</div>
-    </div>
 
-    <div class="card">
-      <details id="weighInDetails">
-        <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Log weight</summary>
-        <div style="margin-top:10px;">
-          <div class="row">
-            <input type="text" inputmode="decimal" id="weightInput" placeholder="Weight (lbs)" style="flex:1;">
-            <input type="date" id="measurementDateInput" style="flex:1;">
-          </div>
-          <div class="row" style="margin-top:8px;">
-            <input type="text" inputmode="decimal" id="neckInput" placeholder="Neck (in, optional)" style="flex:1;">
-            <input type="text" inputmode="decimal" id="waistInput" placeholder="Waist (in, optional)" style="flex:1;">
-          </div>
-          <div id="waistExplainer">
-            <div class="meta" style="margin-top:4px;">Add waist occasionally for a body-fat % estimate (Relative Fat Mass method) — measure at the belly button, snug but not pulled tight. This can tell "recomposition" (building muscle while losing fat, so the scale stays flat even though your body's changing) apart from an actual stall. Needs your height set once in Settings. Neck is optional and just tracked alongside — it isn't used in the estimate.</div>
-            <button class="danger-link" id="dismissWaistExplainerBtn" style="margin-top:4px;">Got it, don't show this again</button>
-          </div>
-          <button class="secondary" id="logWeightBtn" style="margin-top:10px;">Log weight</button>
-          <div id="weightCheckInPanel" class="hidden" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
-            <div class="meta" id="weightCheckInMessage" style="margin-bottom:8px;"></div>
-            <div class="row" id="weightCheckInChips"></div>
-            <input type="text" id="weightCheckInFood" class="hidden" placeholder="Anything specific you ate? (optional)" style="margin-top:10px;">
-            <div class="row" style="margin-top:10px;">
-              <button class="secondary" id="weightCheckInSaveBtn" style="flex:1;">Save</button>
-              <button class="danger-link" id="weightCheckInSkipBtn" style="flex:1;">Skip</button>
-            </div>
-          </div>
-        </div>
-      </details>
+    <div class="tf-label">This week</div>
+    <div class="tf-week">
+      <div class="tf-dots" id="tfWeekDots" role="img" aria-label="Workouts this week"></div>
+      <div class="tf-week-n"><b id="tfWeekCount">0</b><span>workouts</span></div>
     </div>
-
-    <div class="card">
-      <details id="bodyCompDetails">
-        <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Body composition</summary>
-        <div id="bodyFatSummary" style="margin-top:10px;">Log neck + waist with a weigh-in to get a body-fat estimate here.</div>
-      </details>
-    </div>
-
-    <div class="card" id="dailyCheckinCard">
-      <details id="dailyCheckinDetails">
-        <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Daily check-in</summary>
-        <div style="margin-top:10px;">
-          <p class="meta" style="margin-top:0;">Optional — quick signal so the Coach can spot patterns over time. Separate from the "what happened?" prompt that can pop up after an unusual weigh-in above — this one's for logging how you're doing every day, swing or no swing.</p>
-          <div class="meta" style="margin-top:10px; margin-bottom:4px;">Energy today</div>
-          <div class="row" id="checkinEnergyChips">
-            <div class="chip" data-energy="low">Low</div>
-            <div class="chip" data-energy="normal">Normal</div>
-            <div class="chip" data-energy="high">High</div>
-          </div>
-          <div class="meta" style="margin-top:10px; margin-bottom:4px;">Anything going on? (optional, pick any)</div>
-          <div class="row" id="checkinTagChips" style="flex-wrap:wrap;"></div>
-          <button class="secondary" id="saveDailyCheckinBtn" style="margin-top:10px; width:100%;">Save check-in</button>
-          <div class="meta" id="dailyCheckinSavedHint" style="margin-top:6px;"></div>
-        </div>
-      </details>
-    </div>
-
-    <div class="card">
-      <details id="weeklyReviewDetails">
-        <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">This week</summary>
-        <div id="weeklyReview" style="margin-top:10px;"></div>
-      </details>
-    </div>
+    <details class="exercise-group tf-row" id="weeklyReviewDetails">
+      <summary>Weekly review</summary>
+      <div id="weeklyReview" style="margin-top:10px;"></div>
+    </details>
+    <details class="exercise-group tf-row" id="bodyCompDetails">
+      <summary>Body composition</summary>
+      <div id="bodyFatSummary" style="margin-top:10px;">Log neck + waist with a weigh-in to get a body-fat estimate here.</div>
+    </details>
   </section>
 
   <!-- PROGRESS -->
@@ -746,7 +783,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-25 20:20 CT";
+const APP_BUILD = "2026-10-25 20:50 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -951,6 +988,7 @@ function persist() {
 // silently overwrites local state with an older remote copy.
 async function persistNow() {
   saveStateLocal();
+  try { if (typeof renderMorningChecklist === "function") renderMorningChecklist(); } catch (e) {}
   clearTimeout(saveTimer);
   if (!WORKER_URL) return;
   try {
@@ -2758,6 +2796,43 @@ function updatePendingIndicators(rows) {
   }
   const coachBtn = document.querySelector('nav.tabs .tab-btn[data-tab="coach"]');
   if (coachBtn) coachBtn.classList.toggle("has-dot", rows.length > 0);
+  renderCoachTop(rows);
+}
+// Coach screen: header line, which tiles still need doing, last weight, and the week dots.
+function renderCoachTop(rows) {
+  const left = rows.filter(r => r.id === "clWeighIn" || r.id === "clCheckin");
+  const kick = document.getElementById("tfCoachKicker");
+  if (kick) {
+    const d = new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+    kick.textContent = d + (left.length ? ` · ${left.length} check-in${left.length === 1 ? "" : "s"} left` : " · all caught up");
+  }
+  const wi = document.getElementById("weighInDetails"), ci = document.getElementById("dailyCheckinDetails");
+  if (wi) wi.classList.toggle("tf-pend", rows.some(r => r.id === "clWeighIn"));
+  if (ci) ci.classList.toggle("tf-pend", rows.some(r => r.id === "clCheckin"));
+  const last = document.getElementById("tfLastWeight");
+  if (last) {
+    const m = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date)).pop();
+    if (!m) last.textContent = "Last: none yet";
+    else if (m.date === localDateStr()) last.textContent = `Logged today: ${m.weight} lb`;
+    else last.textContent = `Last: ${m.weight} · ${new Date(m.date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+  }
+  const dots = document.getElementById("tfWeekDots");
+  if (dots) {
+    const now = new Date();
+    const mondayOffset = (now.getDay() + 6) % 7; // Mon = 0
+    const days = new Set((state.logs || []).map(l => new Date(l.date).toDateString()));
+    let n = 0, html = "";
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(now); d.setDate(now.getDate() - mondayOffset + i);
+      const done = days.has(d.toDateString());
+      if (done) n++;
+      html += `<i class="${done ? "on" : ""}${i === mondayOffset && !done ? " today" : ""}"></i>`;
+    }
+    dots.innerHTML = html;
+    const cnt = document.getElementById("tfWeekCount");
+    if (cnt) cnt.textContent = n;
+    dots.setAttribute("aria-label", `${n} workout${n === 1 ? "" : "s"} this week`);
+  }
 }
 function renderMorningChecklist() {
   const el = document.getElementById("morningChecklist");
