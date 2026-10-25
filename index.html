@@ -343,6 +343,16 @@
 
       <div class="card">
         <details class="exercise-group">
+          <summary>Kettlebell program (one bell)</summary>
+          <div style="padding-top:6px;">
+            <div class="meta">A 12-week A/B full-body plan: swings, goblet squats, presses, rows, cleans, carries and get-ups, with posture and hip warm-ups and cool-downs. Same exercises every time, so it won't shuffle. Travel mode swaps each bell move for a bodyweight one, so it works in a hotel room. Add it here, then tap Use under Saved programs.</div>
+            <button class="primary" id="addKbProgramBtn" style="margin-top:12px;">Add kettlebell program</button>
+          </div>
+        </details>
+      </div>
+
+      <div class="card">
+        <details class="exercise-group">
           <summary>Upload a program</summary>
           <div style="padding-top:6px;">
             <div class="file-drop" id="uploadDrop">Tap to choose PDF or photo files of an existing program</div>
@@ -390,6 +400,7 @@
           <div class="chip" data-equip="band">Band</div>
           <div class="chip" data-equip="parallettes">Parallettes</div>
           <div class="chip" data-equip="ab-wheel">Ab wheel</div>
+          <div class="chip" data-equip="kettlebell">Kettlebell</div>
         </div>
         <div id="exerciseList" style="margin-top:12px;" class="empty">Loading…</div>
       </div>
@@ -641,7 +652,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-20 19:15 CT";
+const APP_BUILD = "2026-10-24 23:05 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1171,12 +1182,33 @@ const BUILTIN_EXERCISES = [
   // ---- ab wheel: core ----
   { id: "ab-wheel-rollout-kneeling", name: "Ab wheel rollout (kneeling)", muscle_group: "core", equipment: "ab wheel", cue: "Hollow position throughout — roll out only as far as you can keep your back flat." },
   { id: "ab-wheel-rollout-standing", name: "Ab wheel rollout (standing)", muscle_group: "core", equipment: "ab wheel", cue: "Very advanced — brace hard, roll out from standing without the hips sagging or the back rounding." },
+
+  // ---- kettlebell (one bell): used by the built-in Kettlebell program. These
+  // progress by bell weight and reps, NOT by the bodyweight level system, so
+  // results on them never move your push/pull/legs/hinge/core levels
+  // (see isBellExercise in applyWorkoutResults). Travel mode hides them. ----
+  { id: "kb-swing", name: "Kettlebell swing", muscle_group: "hinge", equipment: "kettlebell", cue: "Bell on the floor a foot in front of you. Hike it back between your legs like a football snap, then snap your hips forward to float it to chest height. Arms are just hooks, the hips do the work. Flat back, stand tall and squeeze glutes at the top, don't squat it." },
+  { id: "kb-swing-1h", name: "One-hand kettlebell swing", muscle_group: "hinge", equipment: "kettlebell", cue: "Same hinge as the two-hand swing, one hand on the handle and the free arm out for balance. Keep your shoulders square so the bell doesn't twist you. Switch hands every set (or every few reps)." },
+  { id: "kb-goblet-squat", name: "Kettlebell goblet squat", muscle_group: "legs", equipment: "kettlebell", cue: "Hold the bell at your chest by the horns, elbows pointing down. Sit down between your knees with your chest tall, elbows brushing the inside of your knees at the bottom, then drive up." },
+  { id: "kb-rack-reverse-lunge", name: "Kettlebell rack reverse lunge", muscle_group: "legs", equipment: "kettlebell", cue: "Bell racked at one shoulder, elbow tucked. Step back into a lunge, back knee close to the floor and torso tall, drive through the front heel to stand. Do all reps on one side, then switch." },
+  { id: "kb-press-hk", name: "Kettlebell half-kneeling press", muscle_group: "push", equipment: "kettlebell", cue: "Kneel on the knee opposite the pressing arm, bell racked at the shoulder with the forearm vertical. Squeeze the glute of the kneeling leg and press straight up until your bicep is by your ear, then lower under control. Ribs down, don't lean back." },
+  { id: "kb-floor-press", name: "Kettlebell floor press", muscle_group: "push", equipment: "kettlebell", cue: "Lie on your back, knees bent, bell in one hand with the upper arm about 45 degrees from your body. Press straight up, lower until the back of your upper arm touches the floor, pause, press." },
+  { id: "kb-row", name: "Kettlebell bent-over row", muscle_group: "pull", equipment: "kettlebell", cue: "Hinge to a flat back with your free hand on your knee or a bench. Row the bell to your hip, elbow close to your ribs, squeeze the shoulder blade, lower slowly." },
+  { id: "kb-clean", name: "Kettlebell clean to rack", muscle_group: "pull", equipment: "kettlebell", cue: "Start like a one-hand swing. As the bell comes up, pull your elbow in tight and let the bell rotate around your hand to land softly in the rack at your shoulder, not slam your wrist. Learn it as a hinge then a pull; start light." },
+  { id: "kb-sl-rdl", name: "Kettlebell single-leg Romanian deadlift", muscle_group: "hinge", equipment: "kettlebell", cue: "Bell in the hand opposite your standing leg. Soft knee, hinge forward as the other leg reaches straight back, flat back and square hips. Squeeze the glute of the standing leg to come up." },
+  { id: "kb-suitcase-carry", name: "Kettlebell suitcase carry", muscle_group: "core", equipment: "kettlebell", cue: "Hold the bell at your side like a suitcase and walk tall. Don't lean toward the bell; keep your shoulders level and ribs stacked. Switch hands halfway through the time." },
+  { id: "kb-waiter-carry", name: "Waiter carry", muscle_group: "core", equipment: "kettlebell", cue: "Bell pressed overhead in one hand with wrist over elbow over shoulder. Walk slowly with ribs down and the shoulder packed. Switch hands halfway. If it drifts, bring it to the rack and finish there." },
+  { id: "kb-turkish-getup", name: "Turkish get-up", muscle_group: "core", equipment: "kettlebell", cue: "Lie on your back with the bell pressed up, same-side knee bent. Roll to your elbow, then your hand, lift the hips, sweep the leg back to a kneel, stand. Reverse every step. Eyes on the bell. Learn it with a light object first (even a shoe on your fist)." },
 ];
 
 // Approximate difficulty level (1-5) per exercise, based on the progression
 // ladder each muscle group was authored as. Used only client-side to group
 // the swap picker into regressions/same-level/progressions — not stored in D1.
 const EXERCISE_LEVEL_MAP = {
+  // kettlebell (one bell) — levels only order the swap picker; these never move your levels
+  "kb-swing": 2, "kb-swing-1h": 3, "kb-goblet-squat": 2, "kb-rack-reverse-lunge": 3, "kb-press-hk": 3,
+  "kb-floor-press": 2, "kb-row": 2, "kb-clean": 3, "kb-sl-rdl": 3, "kb-suitcase-carry": 2,
+  "kb-waiter-carry": 3, "kb-turkish-getup": 3,
   // push
   "wall-pushup": 1, "incline-pushup-high": 1, "incline-pushup": 2, "knee-pushup": 2,
   "pushup": 3, "diamond-pushup": 3, "decline-pushup": 3, "archer-pushup": 4,
@@ -1367,6 +1399,7 @@ function levelOf(exerciseIdOrName) {
 // e.g. a ring row and a dead hang as interchangeable just because they're
 // both tagged "pull" at some difficulty number.
 const EXERCISE_PLANE_MAP = {
+  "kb-press-hk": "v", "kb-floor-press": "h", "kb-row": "h", "kb-clean": "v",
   // push - horizontal (push-up/planche line, presses away from the ground)
   "wall-pushup": "h", "incline-pushup-high": "h", "incline-pushup": "h", "knee-pushup": "h",
   "pushup": "h", "diamond-pushup": "h", "decline-pushup": "h", "archer-pushup": "h",
@@ -1420,6 +1453,7 @@ function planeOf(exerciseIdOrName, muscleGroup) {
 
 // Static holds — their "reps" field represents seconds to hold, not a rep count.
 const HOLD_EXERCISE_IDS = new Set([
+  "kb-suitcase-carry", "kb-waiter-carry",
   "wall-sit", "dead-hang", "active-hang", "wall-handstand-hold", "plank", "side-plank",
   "ring-plank", "ring-lsit-tucked", "ring-lsit", "ring-front-lever-tuck",
   "hollow-hold-tucked", "hollow-hold",
@@ -1459,7 +1493,12 @@ function isHoldExercise(exerciseIdOrName) {
 // level plus which plane it's from, so it's visible which of the two
 // independent tracks a given exercise's difficulty is measured against.
 // Falls back to the flat level for every other muscle group.
+function isBellExercise(e) {
+  const x = typeof e === "string" ? exercises.find(i => i.name === e || i.id === e) : (e && e.equipment ? e : exercises.find(i => i.name === (e && e.name)));
+  return !!x && x.equipment === "kettlebell";
+}
 function levelLabelFor(e) {
+  if (isBellExercise(e)) return "kettlebell · progress by weight and reps";
   if (e.muscle_group !== "push" && e.muscle_group !== "pull") {
     return `level ${state.progressLevels?.[e.muscle_group] || 1}`;
   }
@@ -1536,6 +1575,7 @@ function equipmentBucket(equipment) {
   if (e.includes("parallette")) return "parallettes";
   if (e.includes("ab wheel")) return "ab-wheel";
   if (e.includes("dumbbell")) return "dumbbell";
+  if (e.includes("kettlebell")) return "kettlebell";
   if (e.includes("band")) return "band";
   return "bodyweight";
 }
@@ -1611,7 +1651,7 @@ function renderProgramPreview(program) {
       <div class="name">${ph.phase} · weeks ${ph.week_start}-${ph.week_end}${ph.deload_weeks?.length ? ` (deload: wk ${ph.deload_weeks.join(", ")})` : ""}</div>
       ${(ph.days || []).map(d => `
         <div class="meta" style="margin-top:6px;"><strong style="color:var(--text);">${d.day}</strong></div>
-        <div class="meta">${(d.slots || []).map(s => `${s.muscle_group} ${s.sets}×${s.reps}`).join(" · ")}</div>
+        <div class="meta">${d.fixed ? d.fixed.exercises.map(f => { const x = BUILTIN_EXERCISES.find(b => b.id === f.id); return `${x ? x.name : f.id} ${f.sets}×${f.reps}`; }).join(" · ") : (d.slots || []).map(s => `${s.muscle_group} ${s.sets}×${s.reps}`).join(" · ")}</div>
       `).join("")}
     </div>
   `).join("");
@@ -3307,7 +3347,107 @@ function enforceMainVariety(result, available, lastSessionNames, recentNames) {
   return result;
 }
 
+// ---- built-in Kettlebell program (one bell) ----
+// Unlike AI programs (muscle-group slots the generator fills), these days list
+// exact exercises ("fixed"): swings must be swings. Each bell move names a
+// bodyweight stand-in ("tr") used when Travel mode is on, so the same day still
+// works in a hotel room. Slots are kept alongside so pacing, previews and the
+// warm-up region logic work like any other program.
+const KB_TRAVEL = {
+  "kb-swing":              { id: "hip-thrust-bw",          reps: "12-15" },
+  "kb-swing-1h":           { id: "single-leg-glute-bridge", reps: "10-12", note: "each side" },
+  "kb-goblet-squat":       { id: "box-squat-high",         reps: "10-12" },
+  "kb-rack-reverse-lunge": { id: "reverse-lunge",          reps: "8-10", note: "each side" },
+  "kb-press-hk":           { id: "pike-pushup-hands-elevated", reps: "6-8" },
+  "kb-floor-press":        { id: "pushup",                 reps: "8-12" },
+  "kb-row":                { id: "backpack-row",           reps: "8-12" },
+  "kb-clean":              { id: "doorframe-row",          reps: "8-12" },
+  "kb-sl-rdl":             { id: "glute-bridge-march",     reps: "8-10", note: "each side" },
+  "kb-suitcase-carry":     { id: "side-plank",             reps: "20-30", note: "each side" },
+  "kb-waiter-carry":       { id: "side-plank",             reps: "20-30", note: "each side" },
+  "kb-turkish-getup":      { id: "dead-bug",               reps: "8-10", note: "each side", sets: 2 },
+};
+function kbProgram() {
+  // row: [id, sets, reps, note, supersetGroup]
+  const day = (name, rows, warmup, cooldown) => ({
+    day: name,
+    slots: rows.map(r => ({ muscle_group: (BUILTIN_EXERCISES.find(x => x.id === r[0]) || {}).muscle_group, sets: r[1], reps: r[2] })),
+    fixed: {
+      exercises: rows.map(r => ({ id: r[0], sets: r[1], reps: r[2], note: r[3] || null, sg: r[4] || null, tr: KB_TRAVEL[r[0]] || null })),
+      warmup, cooldown,
+    },
+  });
+  const wuA = [["open-book-rotation", "6 each side"], ["arm-circles", "10 each direction"], ["hip-hinge-drill", "8 slow reps"]];
+  const wuB = [["cat-cow", "8 slow reps"], ["worlds-greatest-stretch", "4 each side"], ["hip-hinge-drill", "8 slow reps"]];
+  const cdA = [["hip-90-90-stretch", "hold 45s each side"], ["doorway-chest-stretch", "hold 30s each side"], ["childs-pose-reach", "hold 45s, breathe slowly"]];
+  const cdB = [["figure-4-glute-stretch", "hold 45s each side"], ["doorway-chest-stretch", "hold 30s each side"], ["childs-pose-reach", "hold 45s, breathe slowly"]];
+  const A = (sw, sq, pr, rw, ca, tg) => day("Bell A: squat, press, row", [
+    ["kb-swing", sw[0], sw[1]], ["kb-goblet-squat", sq[0], sq[1]],
+    ["kb-press-hk", pr[0], pr[1], "each side", "A"], ["kb-row", rw[0], rw[1], "each side", "A"],
+    ["kb-suitcase-carry", ca[0], ca[1], "seconds each side"], ["kb-turkish-getup", tg[0], tg[1], "each side"],
+  ], wuA, cdA);
+  const B = (sw, cl, lg, fp, rd, wc) => day("Bell B: hinge, clean, single leg", [
+    ["kb-swing-1h", sw[0], sw[1], "switch hands each set"], ["kb-clean", cl[0], cl[1], "each side"],
+    ["kb-rack-reverse-lunge", lg[0], lg[1], "each side", "A"], ["kb-floor-press", fp[0], fp[1], "each side", "A"],
+    ["kb-sl-rdl", rd[0], rd[1], "each side"], ["kb-waiter-carry", wc[0], wc[1], "seconds each side"],
+  ], wuB, cdB);
+  const phase = (label, ws, we, dl, a, b) => ({ phase: label, week_start: ws, week_end: we, deload_weeks: [dl], days: [a, b, a, b].map(d => JSON.parse(JSON.stringify(d))) });
+  return {
+    id: "prog-kb-" + Date.now(),
+    name: "Kettlebell A/B (one bell)",
+    duration_weeks: 12,
+    source: "built-in",
+    structure: {
+      name: "Kettlebell A/B (one bell)",
+      session: { days: 4, minutes: "35-45" },
+      phases: [
+        phase("Foundation: learn the lifts", 1, 4, 4,
+          A([5, "15"], [3, "8"], [4, "3"], [3, "8"], [3, "30"], [1, "2"]),
+          B([6, "10"], [4, "5"], [3, "6"], [3, "8"], [3, "6"], [2, "20"])),
+        phase("Build: more volume", 5, 8, 8,
+          A([6, "15"], [4, "8"], [5, "3"], [4, "8"], [3, "40"], [2, "2"]),
+          B([8, "10"], [5, "5"], [3, "8"], [4, "8"], [3, "8"], [3, "25"])),
+        phase("Strength: heavier and denser", 9, 12, 12,
+          A([10, "10"], [4, "10"], [5, "4"], [4, "10"], [4, "40"], [2, "3"]),
+          B([8, "12"], [5, "6"], [4, "8"], [4, "10"], [4, "8"], [3, "30"])),
+      ],
+    },
+  };
+}
+// Builds a fixed-list day: bell moves, or their bodyweight stand-ins in Travel
+// mode. Deload weeks cut sets by about a third. No AI call involved.
+function buildFixedWorkout(day, isDeload) {
+  const used = new Set();
+  const out = [];
+  (day.fixed.exercises || []).forEach(f => {
+    let lib = exercises.find(x => x.id === f.id);
+    let reps = f.reps, note = f.note;
+    if (state.travelMode && lib && lib.equipment === "kettlebell") {
+      const sub = f.tr && exercises.find(x => x.id === f.tr.id);
+      if (!sub) return;
+      lib = sub; reps = f.tr.reps; note = f.tr.note || null;
+    }
+    if (!lib || used.has(lib.name)) return;
+    used.add(lib.name);
+    const baseSets = state.travelMode && lib.equipment !== "kettlebell" && f.tr && f.tr.sets ? f.tr.sets : f.sets;
+    const sets = isDeload ? Math.max(2, Math.round(baseSets * 0.65)) : baseSets;
+    out.push({ name: lib.name, muscle_group: lib.muscle_group, sets, reps, superset_group: f.sg || null, note: note || null });
+  });
+  const pick = list => (list || []).map(([id, detail]) => {
+    const m = exercises.find(x => x.id === id);
+    return m ? { name: m.name, detail } : null;
+  }).filter(Boolean);
+  const result = { day: day.day, warmup: pick(day.fixed.warmup), exercises: out, cooldown: pick(day.fixed.cooldown) };
+  // Same posture/hip staples as every other day (wall slides, levator stretch, glute bridge, hip-flexor stretch).
+  return ensureShoulderStaples(result, allowedMobilityRegions(day.slots), day.slots);
+}
+
 async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
+  {
+    const cp = currentPhaseFor(program);
+    const fd = cp.phase?.days?.[dayIndex] || cp.phase?.days?.[0];
+    if (fd && fd.fixed) return buildFixedWorkout(fd, !!cp.phase?.deload_weeks?.includes(cp.weekNumber));
+  }
   const recentFromHistory = (state.logs || []).slice(-15).map(l => l.exercise);
   const recentNames = [...new Set([...avoidNames, ...recentFromHistory])].join(", ");
   const levels = state.progressLevels;
@@ -3666,7 +3806,7 @@ function renderTodayWorkout(workout) {
         <div style="display:flex; justify-content:space-between;">
           <div>
             <div class="name">${e.name}</div>
-            <div class="meta">${e.muscle_group} · ${e.sets}×${e.reps}${isHoldExercise(e.name) ? "s hold" : ""} · ${levelLabelFor(e)}${strapNote}</div>
+            <div class="meta">${e.muscle_group} · ${e.sets}×${e.reps}${isHoldExercise(e.name) ? "s hold" : ""}${e.note ? " " + e.note : ""} · ${levelLabelFor(e)}${strapNote}</div>
             ${howToHtml("today-" + i, e.name, exercises.find(x => x.name === e.name)?.cue)}
           </div>
           <button class="danger-link" style="color:var(--accent);" data-swap-open="${i}">Swap</button>
@@ -3809,7 +3949,7 @@ function previewExerciseListHtml(workout) {
       <div class="list-item" style="border-bottom:none; padding:4px 0;">
         <div>
           <div class="name">${e.name}</div>
-          <div class="meta">${e.muscle_group} · ${e.sets}×${e.reps}${isHoldExercise(e.name) ? "s hold" : ""}</div>
+          <div class="meta">${e.muscle_group} · ${e.sets}×${e.reps}${isHoldExercise(e.name) ? "s hold" : ""}${e.note ? " " + e.note : ""}</div>
         </div>
       </div>`).join("");
 }
@@ -4332,6 +4472,7 @@ async function applyWorkoutResults(results) {
   const byGroup = {};
   results.forEach(r => {
     const mg = r.exercise.muscle_group;
+    if (isBellExercise(r.exercise)) return; // bell work progresses by weight, not the bodyweight levels
     if (mg === "push" || mg === "pull") return;
     if (!byGroup[mg]) byGroup[mg] = [];
     byGroup[mg].push(r.result);
@@ -4362,6 +4503,7 @@ async function applyWorkoutResults(results) {
   results.forEach(r => {
     const mg = r.exercise.muscle_group;
     if (mg !== "push" && mg !== "pull") return;
+    if (isBellExercise(r.exercise)) return;
     const plane = planeOf(r.exercise.name, mg);
     const key = `${mg}_${plane}`;
     if (!byPlaneGroup[key]) byPlaneGroup[key] = { mg, plane, outcomes: [] };
@@ -6260,7 +6402,7 @@ function buildSessionQueue(exs) {
           const isLastInRound = mi === members.length - 1;
           queue.push({
             exIndex: m.exIndex, name: m.name, muscle_group: m.muscle_group,
-            reps: m.reps, setNum: round + 1, totalSets: m.sets,
+            reps: m.reps, note: m.note || null, setNum: round + 1, totalSets: m.sets,
             restAfter: isLastInRound ? sessionRest.round : 15,
             supersetLabel: `Superset ${e.superset_group} · ${mi + 1} of ${members.length}`,
           });
@@ -6270,7 +6412,7 @@ function buildSessionQueue(exs) {
       for (let s = 0; s < e.sets; s++) {
         queue.push({
           exIndex: i, name: e.name, muscle_group: e.muscle_group,
-          reps: e.reps, setNum: s + 1, totalSets: e.sets,
+          reps: e.reps, note: e.note || null, setNum: s + 1, totalSets: e.sets,
           restAfter: sessionRest.solo, supersetLabel: null,
         });
       }
@@ -6466,7 +6608,7 @@ function renderSession() {
         <div style="padding:10px 12px; margin-bottom:10px; border:1px solid var(--border); border-radius:8px;">
           <div class="meta" style="text-transform:uppercase; letter-spacing:0.6px; font-size:11px;">Up next${step.supersetLabel ? " · " + step.supersetLabel : ""}</div>
           <div class="name" style="margin-top:2px;">${step.name}</div>
-          <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · ${isHoldExercise(step.name) ? "target " + (parseRepRange(step.reps).max || parseRepRange(step.reps).min || 20) + "s hold" : step.reps + " reps"}</div>
+          <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · ${isHoldExercise(step.name) ? "target " + (parseRepRange(step.reps).max || parseRepRange(step.reps).min || 20) + "s hold" : step.reps + " reps"}${step.note ? " " + step.note : ""}</div>
           ${stepCueHtml}
         </div>
         <button class="secondary" id="skipRestBtn" style="width:100%;">Skip rest</button>
@@ -6550,7 +6692,7 @@ function renderSession() {
     <div class="card">
       ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
       <h2>${step.name}</h2>
-      <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${step.reps} reps · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
+      <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${step.reps} reps${step.note ? " " + step.note : ""} · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
       ${levelLegendHtml}
       ${stepCueHtml}
       <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
@@ -6810,6 +6952,23 @@ document.getElementById("generateProgramBtn").addEventListener("click", async (e
   }
 });
 
+document.getElementById("addKbProgramBtn").addEventListener("click", async (e) => {
+  const btn = e.target;
+  if (programs.some(p => p.source === "built-in" && /Kettlebell/.test(p.name)) && !confirm("You already have a kettlebell program saved. Add another copy?")) return;
+  btn.disabled = true; btn.textContent = "Adding…";
+  try {
+    const program = kbProgram();
+    await apiFetch("/api/programs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(program) });
+    await loadPrograms();
+    renderPrograms();
+    alert(`"${program.name}" added. Open Saved programs and tap Use when your bell arrives.`);
+  } catch (err) {
+    alert("Couldn't add it: " + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = "Add kettlebell program";
+  }
+});
+
 // ---- upload / import program ----
 document.getElementById("uploadDrop").addEventListener("click", () => document.getElementById("uploadInput").click());
 document.getElementById("uploadInput").addEventListener("change", async (e) => {
@@ -6866,7 +7025,7 @@ Output ONLY valid JSON: {"name": "string", "phases": [{"phase": "string", "week_
     // Equipment the AI reported must be one of these six (this person trains
     // calisthenics only) — anything else, including a stray "barbell" guess,
     // falls back to null rather than being trusted and stored.
-    const IMPORT_ALLOWED_EQUIPMENT = new Set(["bodyweight", "rings", "parallettes", "ab wheel", "dumbbell", "band"]);
+    const IMPORT_ALLOWED_EQUIPMENT = new Set(["bodyweight", "rings", "parallettes", "ab wheel", "dumbbell", "band", "kettlebell"]);
     const namedExercises = new Map(); // name (lowercased) -> { name, muscle_group, equipment }
     (structure.phases || []).forEach(phase => {
       (phase.days || []).forEach(day => {
