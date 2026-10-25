@@ -666,7 +666,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-24 23:59 CT";
+const APP_BUILD = "2026-10-25 00:20 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -811,6 +811,7 @@ async function loadState() {
   if (!state.coachTeaserDismissed || typeof state.coachTeaserDismissed !== "object") state.coachTeaserDismissed = null;
   if (!state.coachNoteDismissed || typeof state.coachNoteDismissed !== "object") state.coachNoteDismissed = null;
   if (!Array.isArray(state.sessionNotes)) state.sessionNotes = [];
+  if (!state.programStartedAt || typeof state.programStartedAt !== "object") state.programStartedAt = {};
   if (!state.milestonesSeen) state.milestonesSeen = { weightLbs: [], workoutDays: [] };
   if (!state.celebrations) state.celebrations = [];
   if (!state.flags) state.flags = [];
@@ -1982,8 +1983,11 @@ function computeMacroSuggestionRaw(windowDays = 14) {
       };
     }
     // losing slower than target (or gaining) — trim calories
+    const pace = Math.abs(pctPerWeek) < 0.05 ? "Weight is flat"
+      : pctPerWeek > 0 ? `Weight is trending up about ${pctPerWeek.toFixed(2)}%/week`
+      : `Losing about ${Math.abs(pctPerWeek).toFixed(2)}%/week`;
     return {
-      message: `Losing about ${Math.abs(pctPerWeek).toFixed(2)}%/week${excludedNote} — slower than the ${Math.abs(targetMax)}-${Math.abs(targetMin)}% target range. Suggest trimming ~125 cal (from carbs).`,
+      message: `${pace}${excludedNote} — slower than the ${Math.abs(targetMax)}-${Math.abs(targetMin)}% loss target range. Suggest trimming ~125 cal (from carbs).`,
       deltaCalories: -125,
     };
   }
@@ -2006,6 +2010,14 @@ function computeMacroSuggestionRaw(windowDays = 14) {
 // it has time to show up in the trend.
 const MACRO_BASELINE_DAYS = 28;
 const MACRO_MIN_WEIGHINS = 20; // of those 28 days
+const MACRO_NEW_PROGRAM_DAYS = 14;
+function programStartMs(programId) {
+  if (!programId) return null;
+  const saved = state.programStartedAt && state.programStartedAt[programId];
+  if (saved) { const t = new Date(saved).getTime(); if (!Number.isNaN(t)) return t; }
+  const m = String(programId).match(/(\d{12,})$/);
+  return m ? Number(m[1]) : null;
+}
 function macroSuggestionReadiness() {
   const now = Date.now();
   const cutoff = now - MACRO_BASELINE_DAYS * DAY_MS;
@@ -2016,6 +2028,17 @@ function macroSuggestionReadiness() {
   const sinceApplied = daysSinceMacroSuggestionApplied();
   if (sinceApplied !== null && sinceApplied < MACRO_BASELINE_DAYS) {
     return { ready: false, reason: "cooldown", daysCovered, weighIns: inWindow.length, daysLeft: Math.max(1, Math.ceil(MACRO_BASELINE_DAYS - sinceApplied)), sinceApplied };
+  }
+  // New-program settling period: a new style of training can move the scale
+  // (soreness, water) for a couple of weeks without meaning anything about fat
+  // loss, so calorie suggestions wait. Start date = when you tapped Use, or
+  // for a program picked before this existed, the timestamp in its id.
+  const startedMs = programStartMs(state.activeProgramId);
+  if (startedMs != null) {
+    const daysIn = (now - startedMs) / DAY_MS;
+    if (daysIn >= 0 && daysIn < MACRO_NEW_PROGRAM_DAYS) {
+      return { ready: false, reason: "newprogram", daysCovered, weighIns: inWindow.length, daysLeft: Math.max(1, Math.ceil(MACRO_NEW_PROGRAM_DAYS - daysIn)) };
+    }
   }
   if (daysCovered < MACRO_BASELINE_DAYS || inWindow.length < MACRO_MIN_WEIGHINS) {
     return { ready: false, reason: "baseline", daysCovered, weighIns: inWindow.length };
@@ -2030,6 +2053,12 @@ function computeMacroSuggestion() {
       const d = Math.floor(r.sinceApplied);
       return {
         message: `Your last calorie change was ${d < 1 ? "today" : d === 1 ? "1 day ago" : d + " days ago"}. It takes about 4 weeks to show up in your trend, so nothing new is suggested yet. Next check in ${r.daysLeft} day${r.daysLeft === 1 ? "" : "s"}.`,
+        deltaCalories: 0, gated: true,
+      };
+    }
+    if (r.reason === "newprogram") {
+      return {
+        message: `You just started a new program. A new style of training can move the scale for a couple of weeks (soreness, water) without meaning anything about fat loss, so no calorie changes are suggested for ${r.daysLeft} more day${r.daysLeft === 1 ? "" : "s"}.`,
         deltaCalories: 0, gated: true,
       };
     }
@@ -7179,6 +7208,8 @@ document.getElementById("programList").addEventListener("click", async (e) => {
   }
   if (useId) {
     state.activeProgramId = useId;
+    state.programStartedAt = state.programStartedAt || {};
+    state.programStartedAt[useId] = new Date().toISOString();
     await applyStartingLevelsIfUntrained();
     renderActiveProgramInfo();
   }
