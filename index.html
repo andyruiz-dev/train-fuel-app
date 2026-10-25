@@ -152,6 +152,8 @@
   #tab-today > .card > details.exercise-group:not(#todayWorkoutDetails){order:1; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-top:10px;}
   .tf-today-col{display:flex; flex-direction:column;}
   .tf-today-col > .card{order:-2;}
+  .tf-today-col.tf-off #startSessionBtn, .tf-today-col.tf-off #minimumDayBtn{display:none;}
+  #todayWorkout > .card{border-left:1px solid var(--border); border-radius:14px; padding:18px;}
   #todayWorkout:has(.tf-hero){display:contents; color:var(--text);}
   #todayWorkout > .empty{padding:16px 4px;}
   .tf-hero{order:-1; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; margin:0 0 14px; display:flex; gap:16px; align-items:center;}
@@ -182,7 +184,7 @@
   .tf-today-col > div:first-child{order:4; justify-content:center !important;}
     /* ---- Guided session: full-screen "Block" look. Colour = state (teal = work, dark = rest/warm-up). ---- */
   #sessionPanel[data-sx]{position:fixed; inset:0; z-index:40; overflow-y:auto; padding:18px 22px 28px; display:flex; flex-direction:column; -webkit-overflow-scrolling:touch;}
-  #sessionPanel[data-sx="work"], #sessionPanel[data-sx="emom"], #sessionPanel[data-sx="hold"]{background:var(--accent); color:#0B1512;}
+  #sessionPanel[data-sx="work"], #sessionPanel[data-sx="emom"], #sessionPanel[data-sx="hold"], #sessionPanel[data-sx="done"]{background:var(--accent); color:#0B1512;}
   #sessionPanel[data-sx="rest"], #sessionPanel[data-sx="warm"]{background:#101209; color:var(--text);}
   #sessionPanel[data-sx] .card{background:none; border:none; padding:0; margin:0; flex:1; display:flex; flex-direction:column; box-shadow:none;}
   #sessionPanel[data-sx] h2{font-family:var(--font-display); font-weight:700; font-size:38px; line-height:1.02; text-transform:uppercase; letter-spacing:0.2px; margin:18px 0 8px; color:inherit;}
@@ -192,8 +194,16 @@
   #sessionPanel[data-sx="work"] .list-item, #sessionPanel[data-sx="emom"] .list-item{border-bottom-color:rgba(11,21,18,.2);}
   #sessionPanel[data-sx] button.danger-link{color:inherit !important; opacity:.85; text-decoration:underline; font-size:14px; padding:8px 0;}
   #sessionPanel[data-sx] button.primary{height:60px; border-radius:30px; font-size:20px; letter-spacing:1px; text-transform:uppercase;}
-  #sessionPanel[data-sx="work"] button.primary, #sessionPanel[data-sx="emom"] button.primary, #sessionPanel[data-sx="hold"] button.primary{background:#0B1512; color:#EDEAE0;}
+  #sessionPanel[data-sx="work"] button.primary, #sessionPanel[data-sx="emom"] button.primary, #sessionPanel[data-sx="hold"] button.primary, #sessionPanel[data-sx="done"] button.primary{background:#0B1512; color:#EDEAE0;}
   #sessionPanel[data-sx] button.secondary{height:48px; border-radius:24px; color:inherit; border-color:currentColor; opacity:.9;}
+  .tf-fin-kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:2px; margin-top:26px;}
+  .tf-fin-big{font-family:var(--font-display); font-weight:700; font-size:118px; white-space:nowrap; line-height:.95; text-transform:uppercase; margin-top:8px;}
+  .tf-fin-day{font-size:16px; font-weight:500; margin-top:6px;}
+  .tf-fin-tiles{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:28px;}
+  .tf-fin-tile{background:#0B1512; color:#EDEAE0; border-radius:16px; padding:14px 16px;}
+  .tf-fin-tile b{display:block; font-family:var(--font-display); font-size:34px; font-weight:600; line-height:1;}
+  .tf-fin-tile span{font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:#9B9C8E; text-transform:uppercase;}
+  .tf-fin-note{margin-top:22px; font-size:15px; font-weight:500; line-height:1.45;}
   #sessionPanel[data-sx="work"] #actualRepsInput{background:#0B1512; color:#EDEAE0; border:none; border-radius:16px; font-size:30px; text-align:center; font-family:var(--font-display); padding:14px;}
   #sessionPanel[data-sx="work"] #actualRepsInput::placeholder{color:#7C857F; font-size:16px;}
   #sessionPanel[data-sx] #sessionSwapPanel{background:#101209; color:var(--text); padding:12px; border-radius:14px; margin-top:10px;}
@@ -736,7 +746,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-25 19:55 CT";
+const APP_BUILD = "2026-10-25 20:20 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -4002,11 +4012,14 @@ function renderTodayWorkout(workout) {
   }
   sessionBtn.disabled = false;
   minDayBtn.disabled = false;
+  // Nothing to start on a finished day or a rest day: hide the Start / minimum buttons.
+  const col = document.querySelector(".tf-today-col");
+  if (col) col.classList.toggle("tf-off", !!(state.pendingWorkout?.completed) || !(workout.exercises || []).length);
 
   const genBtn = document.getElementById("genWorkoutBtn");
   if (state.pendingWorkout?.completed) {
     cautionEl.innerHTML = ""; // nothing to caution about — this session is already done
-    box.innerHTML = `<div class="empty">Workout logged: ${workout.exercises.map(e => e.name).join(", ")}. Your next workout will be ready when you come back.</div>`;
+    box.innerHTML = `<div class="tf-hero tf-done"><svg width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="Done"><circle cx="38" cy="38" r="31" fill="none" stroke="#2FBFA6" stroke-width="7"/><path d="M25 39l9 9 17-19" fill="none" stroke="#2FBFA6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><div style="flex:1; min-width:0;"><div class="tf-hero-title">Done for today</div><div class="tf-hero-sub">${escapeHtml(String(workout.day || "Workout"))} · ${workout.exercises.length} moves logged. Your next workout will be ready when you come back.</div></div></div>`;
     sessionBtn.textContent = "Session already logged";
     sessionBtn.disabled = true;
     minDayBtn.disabled = true;
@@ -4052,9 +4065,9 @@ function renderTodayWorkout(workout) {
       const nextDay = phase?.days?.[previewNextIndex];
       if (nextDay) {
         const slotPreview = (nextDay.slots || []).length
-          ? (nextDay.slots || []).map(s => `${s.muscle_group} ${s.sets}×${s.reps}`).join(" · ")
+          ? ""
           : "Rest";
-        nextUpHtml = `<div class="meta" style="margin-top:8px;">Next up: ${nextDay.day}</div><div class="meta" style="margin-top:2px;">${slotPreview}</div>`;
+        nextUpHtml = `<div class="meta" style="margin-top:8px;">Next up: ${escapeHtml(String(nextDay.day))}</div>`;
 
         // "Preview exercises" runs the same generation that Skip rest would
         // commit to, but only caches the result in state.previewWorkout —
@@ -6661,26 +6674,37 @@ function buildSessionSummary(results) {
 
 function renderSessionSummary(summary, opts = {}) {
   const panel = document.getElementById("sessionPanel");
-  panel.removeAttribute("data-sx");
+  panel.setAttribute("data-sx", "done");
   const duration = formatDuration(summary.elapsedMs);
-  const subtitle = opts.partial
-    ? "Logged what you did today — that counts. Full workout waits for next time."
-    : "Logged and levels updated automatically from your actual reps.";
+  // Distinct training days in the last 7 days (this includes today, since the session is already logged).
+  const weekCut = Date.now() - 7 * 86400000;
+  const thisWeek = new Set((state.logs || []).filter(l => new Date(l.date).getTime() >= weekCut).map(l => new Date(l.date).toDateString())).size;
+  const dayName = escapeHtml(String(currentWorkout?.day || "Workout"));
+  const note = opts.partial
+    ? "You logged what you did, and that counts. The full workout waits for next time."
+    : summary.maxCount
+      ? `${summary.maxCount} move${summary.maxCount === 1 ? "" : "s"} at the top of the rep range. Next time, aim for a little more there.`
+      : "Solid work. Same targets next time, and the reps will come.";
+  const tile = (n, label) => `<div class="tf-fin-tile"><b>${n}</b><span>${label}</span></div>`;
   panel.classList.remove("hidden");
   panel.innerHTML = `
     <div class="card">
-      <h2>${opts.partial ? "Session stopped" : "Workout complete"}</h2>
-      <div class="meta">${subtitle}</div>
-      <div style="display:flex; gap:24px; margin:18px 0; flex-wrap:wrap;">
-        ${duration ? `<div><div style="font-size:24px; font-weight:600;">${duration}</div><div class="meta">total time</div></div>` : ""}
-        <div><div style="font-size:24px; font-weight:600;">${summary.exercisesDone}</div><div class="meta">exercise${summary.exercisesDone === 1 ? "" : "s"}</div></div>
-        <div><div style="font-size:24px; font-weight:600;">${summary.totalSets}</div><div class="meta">set${summary.totalSets === 1 ? "" : "s"}</div></div>
-        ${summary.maxCount ? `<div><div style="font-size:24px; font-weight:600;">${summary.maxCount}</div><div class="meta">at max</div></div>` : ""}
+      <div class="tf-fin-kicker">${opts.partial ? "SESSION STOPPED" : "WORKOUT COMPLETE"}</div>
+      <div class="tf-fin-big">${opts.partial ? "Logged" : "Done"}</div>
+      <div class="tf-fin-day">${dayName}</div>
+      <div class="tf-fin-tiles">
+        ${tile(duration || "·", "total time")}
+        ${tile(summary.exercisesDone, summary.exercisesDone === 1 ? "move" : "moves")}
+        ${tile(summary.totalSets, summary.totalSets === 1 ? "set" : "sets")}
+        ${tile(thisWeek, thisWeek === 1 ? "day this week" : "days this week")}
       </div>
+      <div class="tf-fin-note">${note}</div>
+      <div style="flex:1"></div>
       <button class="primary" id="sessionSummaryDoneBtn" style="width:100%;">Done</button>
     </div>`;
   document.getElementById("sessionSummaryDoneBtn").addEventListener("click", () => {
     session = null; clearSessionSnapshot();
+    panel.removeAttribute("data-sx");
     panel.classList.add("hidden");
     document.getElementById("todayWorkout").classList.remove("hidden");
     document.getElementById("startSessionBtn").classList.remove("hidden");
