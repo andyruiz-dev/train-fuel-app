@@ -136,6 +136,41 @@
   }
   details.exercise-group[open] summary::after{content:"−";}
   details.exercise-group .list-item:first-child{padding-top:10px;}
+  /* ---- Today hero ---- */
+  .tf-hero{background:var(--accent); color:#0B1512; border-radius:20px; padding:18px 18px 16px; margin:0 0 12px; display:flex; gap:14px; align-items:stretch;}
+  .tf-hero-main{flex:1; min-width:0;}
+  .tf-hero-kicker{font-family:var(--font-mono); font-size:11px; letter-spacing:1px; text-transform:uppercase; opacity:.8;}
+  .tf-hero-title{font-family:var(--font-display); font-weight:700; font-size:40px; line-height:.98; text-transform:uppercase; margin:8px 0 2px; overflow-wrap:anywhere;}
+  .tf-hero-sub{font-size:14px; font-weight:500; opacity:.85;}
+  .tf-hero-stats{display:flex; gap:8px; margin-top:14px;}
+  .tf-hero-stats div{flex:1; background:#0B1512; color:#EDEAE0; border-radius:12px; padding:8px 10px;}
+  .tf-hero-stats b{display:block; font-family:var(--font-display); font-size:22px; font-weight:600; line-height:1;}
+  .tf-hero-stats span{font-size:11px; color:#9B9C8E;}
+  .tf-hero svg{flex:0 0 auto; align-self:center;}
+  /* ---- Guided session: full-screen "Block" look. Colour = state (teal = work, dark = rest/warm-up). ---- */
+  #sessionPanel[data-sx]{position:fixed; inset:0; z-index:40; overflow-y:auto; padding:18px 22px 28px; display:flex; flex-direction:column; -webkit-overflow-scrolling:touch;}
+  #sessionPanel[data-sx="work"], #sessionPanel[data-sx="emom"], #sessionPanel[data-sx="hold"]{background:var(--accent); color:#0B1512;}
+  #sessionPanel[data-sx="rest"], #sessionPanel[data-sx="warm"]{background:#101209; color:var(--text);}
+  #sessionPanel[data-sx] .card{background:none; border:none; padding:0; margin:0; flex:1; display:flex; flex-direction:column; box-shadow:none;}
+  #sessionPanel[data-sx] h2{font-family:var(--font-display); font-weight:700; font-size:38px; line-height:1.02; text-transform:uppercase; letter-spacing:0.2px; margin:18px 0 8px; color:inherit;}
+  #sessionPanel[data-sx] .meta, #sessionPanel[data-sx] .list-item .meta{color:inherit; opacity:.82; font-size:13px; line-height:1.45;}
+  #sessionPanel[data-sx] .name{font-size:16px; color:inherit;}
+  #sessionPanel[data-sx] .list-item{border-bottom-color:rgba(255,255,255,.12);}
+  #sessionPanel[data-sx="work"] .list-item, #sessionPanel[data-sx="emom"] .list-item{border-bottom-color:rgba(11,21,18,.2);}
+  #sessionPanel[data-sx] button.danger-link{color:inherit !important; opacity:.85; text-decoration:underline; font-size:14px; padding:8px 0;}
+  #sessionPanel[data-sx] button.primary{height:60px; border-radius:30px; font-size:20px; letter-spacing:1px; text-transform:uppercase;}
+  #sessionPanel[data-sx="work"] button.primary, #sessionPanel[data-sx="emom"] button.primary, #sessionPanel[data-sx="hold"] button.primary{background:#0B1512; color:#EDEAE0;}
+  #sessionPanel[data-sx] button.secondary{height:48px; border-radius:24px; color:inherit; border-color:currentColor; opacity:.9;}
+  #sessionPanel[data-sx="work"] #actualRepsInput{background:#0B1512; color:#EDEAE0; border:none; border-radius:16px; font-size:30px; text-align:center; font-family:var(--font-display); padding:14px;}
+  #sessionPanel[data-sx="work"] #actualRepsInput::placeholder{color:#7C857F; font-size:16px;}
+  #sessionPanel[data-sx] #sessionSwapPanel{background:#101209; color:var(--text); padding:12px; border-radius:14px; margin-top:10px;}
+  #sessionPanel[data-sx] #restClock, #sessionPanel[data-sx] #holdClock, #sessionPanel[data-sx] #emomClock{font-family:var(--font-display) !important; font-weight:700 !important; font-size:150px !important; line-height:.9; margin:10px 0 !important; letter-spacing:-2px;}
+  .sx-top{display:flex; justify-content:space-between; align-items:center; font-family:var(--font-mono); font-size:11px; letter-spacing:1px; text-transform:uppercase; opacity:.85;}
+  .sx-bar{height:6px; border-radius:3px; background:rgba(128,128,128,.28); margin:10px 0 0; overflow:hidden;}
+  .sx-bar i{display:block; height:100%; background:currentColor; border-radius:3px;}
+  .sx-hero{font-family:var(--font-display); font-weight:700; font-size:150px; line-height:.9; margin:6px 0 0;}
+  .sx-hero small{display:block; font-family:var(--font-mono); font-weight:500; font-size:13px; letter-spacing:2px; text-transform:uppercase; margin-top:8px; opacity:.85;}
+  .sx-spacer{flex:1; min-height:12px;}
 </style>
 </head>
 <body>
@@ -666,7 +701,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-25 15:50 CT";
+const APP_BUILD = "2026-10-25 18:10 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3827,6 +3862,57 @@ function recentStressCaution(days = 3) {
   return "Stress logged recently — no pressure for the full session today. \"Do the minimum\" below still counts.";
 }
 
+// Small front/back body outline with the muscle groups a workout works lit up.
+// push -> chest/shoulders, pull -> upper back, legs -> thighs/calves, hinge -> glutes/hamstrings, core -> midsection.
+function muscleMapSvg(groups) {
+  const g = new Set((groups || []).map(x => String(x).toLowerCase()));
+  const on = (k) => g.has(k) ? "#0B1512" : "rgba(11,21,18,0.22)";
+  const label = [...g].join(", ") || "no groups";
+  return `<svg width="104" height="132" viewBox="0 0 104 132" role="img" aria-label="Muscles worked: ${label}">
+    <g>
+      <circle cx="24" cy="9" r="6.5" fill="rgba(11,21,18,0.22)"/>
+      <path d="M10 20h28l3 14h-34z" fill="${on("push")}"/>
+      <rect x="14" y="36" width="20" height="20" rx="5" fill="${on("core")}"/>
+      <path d="M13 58h22l2 30h-8l-3-22-3 22h-8z" fill="${on("legs")}"/>
+      <path d="M14 90h8l-1 30h-7zM26 90h8l1 30h-7z" fill="rgba(11,21,18,0.22)"/>
+    </g>
+    <g transform="translate(54,0)">
+      <circle cx="24" cy="9" r="6.5" fill="rgba(11,21,18,0.22)"/>
+      <path d="M10 20h28l-3 24h-22z" fill="${on("pull")}"/>
+      <path d="M13 46h22l1 14h-24z" fill="rgba(11,21,18,0.22)"/>
+      <path d="M12 60h24l-2 28h-7l-3-14-3 14h-7z" fill="${on("hinge")}"/>
+      <path d="M14 90h8l-1 30h-7zM26 90h8l1 30h-7z" fill="${on("legs")}"/>
+    </g>
+  </svg>`;
+}
+function todayHeroHtml(workout) {
+  let kicker = "";
+  try {
+    const prog = programs.find(p => p.id === state.activeProgramId);
+    if (prog && prog.structure && prog.structure.phases) {
+      const { phase, weekNumber } = currentPhaseFor(prog);
+      const total = Math.max(...prog.structure.phases.map(x => x.week_end || 0)) || null;
+      kicker = `Week ${weekNumber}${total ? " of " + total : ""} · ${escapeHtml(String(phase.phase || "").split(":")[0])}`;
+    }
+  } catch (e) {}
+  const raw = String(workout.day || "Today's workout");
+  const ci = raw.indexOf(":");
+  const title = escapeHtml(ci > 0 ? raw.slice(0, ci) : raw);
+  const sub = ci > 0 ? escapeHtml(raw.slice(ci + 1).trim()) : "";
+  const mins = estimateWorkoutMinutes(workout);
+  const moves = (workout.exercises || []).length;
+  const sets = (workout.exercises || []).reduce((a, e) => a + (e.sets || 0), 0);
+  const groups = (workout.exercises || []).map(e => e.muscle_group);
+  return `<div class="tf-hero">
+    <div class="tf-hero-main">
+      <div class="tf-hero-kicker">${kicker || "Today"}</div>
+      <div class="tf-hero-title">${title}</div>
+      ${sub ? `<div class="tf-hero-sub">${sub}</div>` : ""}
+      <div class="tf-hero-stats"><div><b>${mins}</b><span>min</span></div><div><b>${moves}</b><span>moves</span></div><div><b>${sets}</b><span>sets</span></div></div>
+    </div>
+    ${muscleMapSvg(groups)}
+  </div>`;
+}
 function renderTodayWorkout(workout) {
   currentWorkout = workout;
   const box = document.getElementById("todayWorkout");
@@ -4038,7 +4124,7 @@ function renderTodayWorkout(workout) {
       <div class="meta">You were ${resumeSnap.session.pos} of ${resumeSnap.session.queue.length} sets in when the app closed. Your finished sets were kept.</div>
       <button class="primary" id="resumeSessionBtn" style="margin-top:8px; width:100%;">Resume where I left off</button>
     </div>` : "";
-  box.innerHTML = resumeHtml + warmupHtml + workoutHtml + cooldownHtml + `<button id="completeWorkoutBtn" style="background:none; border:none; color:var(--accent); font-size:13px; cursor:pointer; padding:10px 0; display:block;">Complete workout without guided session ▸</button>`;
+  box.innerHTML = resumeHtml + todayHeroHtml(workout) + warmupHtml + workoutHtml + cooldownHtml + `<button id="completeWorkoutBtn" style="background:none; border:none; color:var(--accent); font-size:13px; cursor:pointer; padding:10px 0; display:block;">Complete workout without guided session ▸</button>`;
   document.getElementById("completeWorkoutBtn").addEventListener("click", completeWorkout);
   const resumeBtnEl = document.getElementById("resumeSessionBtn");
   if (resumeBtnEl) resumeBtnEl.addEventListener("click", resumeSessionFromSnapshot);
@@ -6501,6 +6587,7 @@ function buildSessionSummary(results) {
 
 function renderSessionSummary(summary, opts = {}) {
   const panel = document.getElementById("sessionPanel");
+  panel.removeAttribute("data-sx");
   const duration = formatDuration(summary.elapsedMs);
   const subtitle = opts.partial
     ? "Logged what you did today — that counts. Full workout waits for next time."
@@ -6642,6 +6729,7 @@ function startMinimumDay() {
 
 function renderMinimumDayCheckpoint() {
   const panel = document.getElementById("sessionPanel");
+  panel.removeAttribute("data-sx");
   panel.innerHTML = `
     <div class="card">
       <h2>Nice — that's today's minimum done</h2>
@@ -6679,19 +6767,34 @@ async function finishSessionPartial() {
   renderSessionSummary(summary, { partial: true });
 }
 
+function sx(state) { const p = document.getElementById("sessionPanel"); if (p) p.dataset.sx = state; }
+// Top strip of every guided-session screen: where you are, how long you've been going, and a progress bar.
+function sxTop(label) {
+  const total = session && session.queue ? session.queue.length : 0;
+  const pct = total ? Math.min(100, Math.round((session.pos / total) * 100)) : 0;
+  const secs = session && session.startedAt ? Math.max(0, Math.floor((Date.now() - session.startedAt) / 1000)) : 0;
+  return `<div class="sx-top"><span>${label}</span><span>${formatTime(secs)}</span></div><div class="sx-bar"><i style="width:${pct}%"></i></div>`;
+}
+// Keep the elapsed-time readout in the top strip live while a timer screen is open.
+function sxTick() {
+  const e = document.querySelector("#sessionPanel .sx-top span:last-child");
+  if (e && session && session.startedAt) e.textContent = formatTime(Math.max(0, Math.floor((Date.now() - session.startedAt) / 1000)));
+}
 function renderWarmupCooldownStep(phase) {
   const panel = document.getElementById("sessionPanel");
   const items = currentWorkout[phase] || [];
   const isWarmup = phase === "warmup";
+  sx("warm");
   panel.innerHTML = `
     <div class="card">
-      <h2>${isWarmup ? "Warmup" : "Cool-down"}</h2>
+      ${sxTop(isWarmup ? "Warm-up" : "Cool-down")}
+      <h2>${isWarmup ? "Warm-up" : "Cool-down"}</h2>
       ${items.map((it, i) => `
         <div class="list-item">
           <div><div class="name">${it.name}</div><div class="meta">${it.detail || ""}</div></div>
           <button class="danger-link" style="color:var(--accent);" data-warmcool-swap="${phase}:${i}">Swap</button>
         </div>`).join("")}
-      <button class="primary" id="warmCoolContinueBtn" style="margin-top:10px; width:100%;">${isWarmup ? "Start workout" : "Finish session"}</button>
+      <div class="sx-spacer"></div><button class="primary" id="warmCoolContinueBtn" style="margin-top:18px; width:100%;">${isWarmup ? "Start workout" : "Finish session"}</button>
       <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
     </div>`;
   panel.querySelectorAll("[data-warmcool-swap]").forEach(btn => {
@@ -6725,6 +6828,7 @@ function renderSession() {
   const panel = document.getElementById("sessionPanel");
   if (!session) { panel.classList.add("hidden"); panel.innerHTML = ""; return; }
   panel.classList.remove("hidden");
+  panel.removeAttribute("data-sx");
 
   if (session.phase === "warmup" || session.phase === "cooldown") {
     renderWarmupCooldownStep(session.phase);
@@ -6756,14 +6860,16 @@ function renderSession() {
   // Also the one place a total beginner first hits "stop if it hurts" —
   // this isn't about pushing to failure — and, if the session opens on a
   // superset, how to actually run one.
-  const levelLegendHtml = session.pos === 0
+  const levelLegendHtml = (session.pos === 0 && !state.dismissedExerciseLegend)
     ? `<div class="meta" style="margin-top:4px;">Level is a 1-5 difficulty tier (1 = easiest in the library, 5 = hardest); straps is your ring-strap setting (rings only). Stop a set any time your form breaks down or something hurts — this isn't about pushing to failure.${step.supersetLabel ? " For a superset: do one set of each paired exercise back-to-back, then rest." : ""}</div>`
     : "";
 
   if (session.resting) {
     const remaining = Math.max(0, Math.ceil((session.restEndTime - Date.now()) / 1000));
+    sx("rest");
     panel.innerHTML = `
       <div class="card">
+        ${sxTop("Rest · " + Math.min(session.pos + 1, session.queue.length) + " of " + session.queue.length)}
         <h2>Rest</h2>
         <div id="restClock" style="font-size:36px; font-weight:600; text-align:center; margin:14px 0; font-family:var(--font-mono);">${formatTime(remaining)}</div>
         <div style="padding:10px 12px; margin-bottom:10px; border:1px solid var(--border); border-radius:8px;">
@@ -6772,6 +6878,7 @@ function renderSession() {
           <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · ${isHoldExercise(step.name) ? "target " + (parseRepRange(step.reps).max || parseRepRange(step.reps).min || 20) + "s hold" : step.reps + " reps"}${step.note ? " " + step.note : ""}</div>
           ${stepCueHtml}
         </div>
+        <div class="sx-spacer"></div>
         <button class="secondary" id="skipRestBtn" style="width:100%;">Skip rest</button>
         <button class="danger-link" style="color:var(--accent); margin-top:8px;" data-quick-note="${escapeHtml(step.name)}">Add a note or question</button>
       </div>`;
@@ -6806,14 +6913,17 @@ function renderSession() {
 
     if (session.holding) {
       const remaining = Math.max(0, Math.ceil((session.holdEndTime - Date.now()) / 1000));
+      sx("hold");
       panel.innerHTML = `
         <div class="card">
-          ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
+          ${sxTop("Hold · set " + step.setNum + " of " + step.totalSets)}
+          ${step.supersetLabel ? `<div class="meta" style="margin-top:8px;">${step.supersetLabel}</div>` : ""}
           <h2>${step.name}</h2>
           <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · holding${ringStrapNoteFor(step)}</div>
           ${stepCueHtml}
           <div id="holdClock" style="font-size:36px; font-weight:600; text-align:center; margin:14px 0; font-family:var(--font-mono);">${formatTime(remaining)}</div>
           <div class="meta" style="text-align:center; margin-top:-6px; margin-bottom:10px;">It's completely normal not to hit the full target time yet — stop whenever you need to.</div>
+          <div class="sx-spacer"></div>
           <button class="secondary" id="stopHoldBtn" style="width:100%;">Stop / let go</button>
         </div>`;
       document.getElementById("stopHoldBtn").addEventListener("click", () => {
@@ -6826,11 +6936,14 @@ function renderSession() {
       return;
     }
 
+    sx("work");
     panel.innerHTML = `
       <div class="card">
-        ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
+        ${sxTop("Set " + step.setNum + " of " + step.totalSets)}
+        ${step.supersetLabel ? `<div class="meta" style="margin-top:8px;">${step.supersetLabel}</div>` : ""}
         <h2>${step.name}</h2>
-        <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${targetSeconds}s hold · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
+        <div class="sx-hero">${targetSeconds}<small>seconds · hold</small></div>
+        <div class="meta" style="margin-top:12px;">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${targetSeconds}s hold · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
         ${levelLegendHtml}
         ${stepCueHtml}
         <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
@@ -6839,7 +6952,8 @@ function renderSession() {
           <div class="meta">Pick a swap — grouped by easier/harder:</div>
           ${swapAlternatesHtml(currentWorkout.exercises[step.exIndex], step.exIndex)}
         </div>
-        <button class="primary" id="startHoldBtn" style="margin-top:10px;">Start hold</button>
+        <div class="sx-spacer"></div>
+        <button class="primary" id="startHoldBtn" style="margin-top:14px;">Start hold</button>
         <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
       </div>`;
     document.getElementById("sessionSwapOpenBtn").addEventListener("click", () => {
@@ -6856,11 +6970,14 @@ function renderSession() {
     return;
   }
 
+  sx("work");
   panel.innerHTML = `
     <div class="card">
-      ${step.supersetLabel ? `<div class="meta" style="margin-bottom:4px;">${step.supersetLabel}</div>` : ""}
+      ${sxTop("Set " + step.setNum + " of " + step.totalSets)}
+      ${step.supersetLabel ? `<div class="meta" style="margin-top:8px;">${step.supersetLabel}</div>` : ""}
       <h2>${step.name}</h2>
-      <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${step.reps} reps${step.note ? " " + step.note : ""} · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
+      <div class="sx-hero">${step.reps}<small>reps${step.note ? " · " + escapeHtml(step.note) : ""}</small></div>
+      <div class="meta" style="margin-top:12px;">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${step.reps} reps${step.note ? " " + step.note : ""} · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
       ${levelLegendHtml}
       ${stepCueHtml}
       <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
@@ -6869,8 +6986,9 @@ function renderSession() {
         <div class="meta">Pick a swap — grouped by easier/harder:</div>
         ${swapAlternatesHtml(currentWorkout.exercises[step.exIndex], step.exIndex)}
       </div>
-      <input type="text" inputmode="numeric" id="actualRepsInput" placeholder="Actual reps completed" style="margin-top:10px;">
-      <button class="primary" id="completeSetBtn" style="margin-top:10px;">Complete set</button>
+      <div class="sx-spacer"></div>
+      <input type="text" inputmode="numeric" id="actualRepsInput" placeholder="Actual reps completed" style="margin-top:14px;">
+      <button class="primary" id="completeSetBtn" style="margin-top:12px;">Complete set</button>
       <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
     </div>`;
 
@@ -6961,6 +7079,7 @@ function emomStart() {
 function tickEmom() {
   if (!session || !session.emom || !session.emom.startedAt) return;
   const em = session.emom, now = Date.now();
+  sxTick();
   const clock = document.getElementById("emomClock"), label = document.getElementById("emomRound");
   if (now < em.startedAt) {
     if (clock) clock.textContent = Math.ceil((em.startedAt - now) / 1000);
@@ -6988,28 +7107,34 @@ function renderEmom(step, stepCueHtml) {
   const em = session.emom;
   const what = `${step.reps} ${isHoldExercise(step.name) ? "seconds" : "reps"}${step.note ? " · " + step.note : ""}`;
   if (!em.startedAt) {
+    sx("emom");
     panel.innerHTML = `
       <div class="card">
-        <div class="meta" style="margin-bottom:4px;">Timed block · a new round every ${em.interval >= 60 && em.interval % 60 === 0 ? (em.interval / 60) + " minute" + (em.interval === 60 ? "" : "s") : em.interval + " seconds"}</div>
+        ${sxTop("Timed block")}
+        <div class="meta" style="margin-top:8px;">Timed block · a new round every ${em.interval >= 60 && em.interval % 60 === 0 ? (em.interval / 60) + " minute" + (em.interval === 60 ? "" : "s") : em.interval + " seconds"}</div>
         <h2>${step.name}</h2>
         <div class="meta">${em.rounds} rounds · each round: ${what}</div>
         ${stepCueHtml}
-        <div class="meta" style="margin-top:8px;">Finish the round, then rest in whatever time is left. A beep marks each new round. Pick up the bell, then tap Start.</div>
-        <button class="primary" id="emomStartBtn" style="margin-top:10px; width:100%;">Start (3-second countdown)</button>
+        <div class="meta" style="margin-top:8px;">Finish the round, then rest in whatever time is left. A beep marks each new round. Pick up the bell, then tap Start for a 3-second countdown.</div>
+        <div class="sx-spacer"></div>
+        <button class="primary" id="emomStartBtn" style="margin-top:14px; width:100%;">Start</button>
         <button class="danger-link" style="color:var(--accent); margin-top:8px;" data-quick-note="${escapeHtml(step.name)}">Note</button>
         <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
       </div>`;
     document.getElementById("emomStartBtn").addEventListener("click", emomStart);
   } else {
     if (!session.timerId) session.timerId = setInterval(tickEmom, 1000);
+    sx("emom");
     panel.innerHTML = `
       <div class="card">
-        <div class="meta" id="emomRound" style="margin-bottom:4px;">Round ${em.done + 1} of ${em.rounds}</div>
+        ${sxTop("Go")}
+        <div class="meta" id="emomRound" style="margin-top:8px;">Round ${em.done + 1} of ${em.rounds}</div>
         <h2>${step.name}</h2>
         <div class="meta">Do now: ${what}</div>
         <div id="emomClock" style="font-size:48px; font-weight:600; text-align:center; margin:14px 0; font-family:var(--font-mono);">${formatTime(em.interval)}</div>
         ${stepCueHtml}
-        <button class="secondary" id="emomStopBtn" style="margin-top:10px; width:100%;">Stop block</button>
+        <div class="sx-spacer"></div>
+        <button class="secondary" id="emomStopBtn" style="margin-top:14px; width:100%;">Stop block</button>
         <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
       </div>`;
     document.getElementById("emomStopBtn").addEventListener("click", () => {
@@ -7041,6 +7166,7 @@ function startHold(step, targetSeconds) {
 }
 
 function tickHold() {
+  sxTick();
   if (!session || !session.holding) return;
   const remaining = Math.max(0, Math.ceil((session.holdEndTime - Date.now()) / 1000));
   const clock = document.getElementById("holdClock");
@@ -7065,6 +7191,7 @@ function tickRest() {
   const remaining = Math.max(0, Math.ceil((session.restEndTime - Date.now()) / 1000));
   const clock = document.getElementById("restClock");
   if (clock) clock.textContent = formatTime(remaining);
+  sxTick();
   if (remaining <= 0) {
     clearInterval(session.timerId);
     playBeep();
