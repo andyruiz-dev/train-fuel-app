@@ -137,6 +137,42 @@
   details.exercise-group[open] summary::after{content:"−";}
   details.exercise-group .list-item:first-child{padding-top:10px;}
   /* ---- Today hero ---- */
+  /* Food screen, "Steady" look */
+  .tf-hero-food{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; gap:16px; align-items:center; margin-bottom:10px;}
+  .tf-hero-food svg{flex:0 0 auto;}
+  .tf-kv{font-family:var(--font-mono); font-size:10px; color:var(--accent); letter-spacing:1px; text-transform:uppercase;}
+  .tf-pro-n{font-family:var(--font-display); font-size:22px; font-weight:600; margin-top:2px;}
+  .tf-mini{margin-top:12px; display:flex; flex-direction:column; gap:7px; font-size:12px; color:var(--text-muted);}
+  .tf-mini div.r{display:flex; justify-content:space-between;}
+  .tf-mini b{color:var(--text); font-weight:500;}
+  .tf-mini .bar{height:5px; border-radius:3px; background:var(--border);}
+  .tf-mini .bar i{display:block; height:5px; border-radius:3px; background:var(--text-muted);}
+  .tf-now{font-size:12px; color:var(--text-muted); padding:0 4px;}
+  .tf-now .meta{font-family:Inter,sans-serif; font-size:12px;}
+  .tf-now button.secondary{width:100% !important; padding:9px 12px; font-size:12px !important; font-family:Inter,sans-serif; border-radius:10px; line-height:1.35; margin-top:6px !important;}
+  .tf-now .danger-link{font-size:12px; margin-top:8px !important;}
+  .tf-adds{display:flex; gap:10px;}
+  .tf-add{flex:1; min-width:0; height:92px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; color:var(--accent); font-size:14px; font-weight:600; cursor:pointer; box-sizing:border-box;}
+  .tf-add span{color:var(--text);}
+  .tf-add.main{flex:1.3; background:var(--accent); border-color:var(--accent); color:#0F1A17;}
+  .tf-add.main span{color:#0F1A17; font-family:var(--font-display); font-size:17px; letter-spacing:.5px;}
+  .tf-add.open{border-color:var(--accent);}
+  .tf-photo-extra{display:flex; flex-direction:column; align-items:flex-start; gap:2px; margin-top:8px;}
+  .tf-recent{display:flex; flex-wrap:wrap; gap:8px;}
+  .tf-recent .chip{border-radius:10px; font-size:13px; padding:8px 12px;}
+  #foodLogList .list-item{background:var(--surface); border:1px solid var(--border) !important; border-left:4px solid var(--accent) !important; border-radius:10px; padding:12px 14px; margin-bottom:8px;}
+  #foodLogList{color:var(--text);}
+  #foodLogList > .empty{color:var(--text-muted);}
+  #foodLogList .name{font-size:15px; font-weight:600;}
+  #foodLogList .meta{font-family:Inter,sans-serif; font-size:12px;}
+  #foodLogList .tf-prot{font-family:var(--font-display); font-size:20px; font-weight:600; text-align:right;}
+  #foodLogList .tf-prot small{font-size:12px; color:var(--text-muted); font-weight:500;}
+  .tf-hist-row{display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); cursor:pointer;}
+  .tf-hist-row:last-child{border-bottom:0;}
+  .tf-hist-row .d{font-size:14px; font-weight:600;}
+  .tf-hist-row .s{font-size:12px; color:var(--text-muted); margin-top:2px;}
+  .tf-hist-row .p{font-family:var(--font-display); font-size:20px; font-weight:600;}
+  .tf-hist-row .p small{font-size:12px; color:var(--text-muted); font-weight:500;}
   /* Coach screen, "Steady" look */
   .tf-label{font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; padding:14px 4px 8px;}
   #morningChecklist{display:none !important;}
@@ -354,76 +390,91 @@
 
   <!-- FOOD -->
   <section id="tab-food" class="tab-panel hidden">
-    <div class="card">
-      <details class="exercise-group">
-        <summary>Today &amp; this week</summary>
-        <div style="padding-top:6px;">
-          <div id="proteinRemaining" style="text-align:center; margin-bottom:12px;"></div>
-          <div id="macroSummary"></div>
-          <div id="weeklyIntake" style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border);"></div>
-          <button class="danger-link" id="markTodayPartialBtn" style="margin-top:8px; color:var(--accent);"></button>
-        </div>
-      </details>
-    </div>
-    <div class="card">
-      <h2>Add food</h2>
-      <div id="foodNow" style="margin-bottom:12px;"></div>
-      <input type="text" id="scanNote" placeholder="Optional note (e.g. 'turkey not chicken', 'half portion')" style="margin-bottom:10px;">
-      <div class="file-drop" id="foodPhotoDrop">Tap to take a photo</div>
-      <button class="danger-link" id="foodPhotoChoose" style="color:var(--accent); margin-top:6px;">or choose one from your gallery</button>
-      <input type="file" id="foodPhotoInput" accept="image/*" style="display:none;">
-      <div id="foodScanStatus" class="empty" style="display:none; margin-top:8px;"></div>
-      <div id="foodScanReview" class="hidden" style="margin-top:10px;">
-        <input type="text" id="scanName" placeholder="Food name" style="margin-bottom:8px;">
-        <div class="field" style="margin-bottom:8px;">
-          <div class="field-label">Servings (scales the estimate below)</div>
-          <input type="text" inputmode="decimal" id="scanServings" value="1">
-        </div>
-        <div class="row">
-          <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="scanCalories"></div>
-          <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="scanProtein"></div>
-        </div>
-        <div class="row" style="margin-top:8px;">
-          <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="scanCarbs"></div>
-          <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="scanFat"></div>
-        </div>
-        <button class="primary" id="saveScanBtn" style="margin-top:10px;">Add to log</button>
+    <div class="tf-screen-head"><div class="tf-kicker" id="tfFoodKicker"></div><h1>Food</h1></div>
+
+    <div id="foodHero"></div>
+    <div id="proteinRemaining" class="hidden"></div>
+    <div id="macroSummary" class="hidden"></div>
+    <div id="foodNow" class="tf-now"></div>
+
+    <div class="tf-label">Add food</div>
+    <div class="tf-adds">
+      <div class="tf-add main" id="foodPhotoDrop" role="button" tabindex="0">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+        <span class="tf-add-name">PHOTO</span>
       </div>
-      <details class="exercise-group" style="margin-top:14px;">
-        <summary>Quick add</summary>
-        <div style="padding-top:6px;">
-          <div class="meta" style="margin-bottom:6px;">Protein staples. Tap to log instantly.</div>
-          <div class="row" id="quickProteinChips"></div>
-          <div class="meta" style="margin:12px 0 6px;">Drinks</div>
-          <div class="row" id="quickDrinkChips"></div>
-        </div>
-      </details>
-      <details class="exercise-group" style="margin-top:6px;">
-        <summary>Know the exact numbers?</summary>
-        <div style="padding-top:6px;">
-          <input type="text" id="manualName" placeholder="Food name" style="margin-bottom:8px;">
-          <div class="row">
-            <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="manualCalories"></div>
-            <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="manualProtein"></div>
-          </div>
-          <div class="row" style="margin-top:8px;">
-            <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="manualCarbs"></div>
-            <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="manualFat"></div>
-          </div>
-          <button class="primary" id="saveManualBtn" style="margin-top:10px; width:100%;">Add to log</button>
-        </div>
-      </details>
+      <div class="tf-add" id="tfQuickTile" role="button" tabindex="0">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg>
+        <span>Quick add</span>
+      </div>
+      <div class="tf-add" id="tfExactTile" role="button" tabindex="0">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 6h14M5 12h14M5 18h8"/></svg>
+        <span>Exact numbers</span>
+      </div>
     </div>
-    <div class="card">
-      <details class="exercise-group">
-        <summary>Food log</summary>
-        <div style="padding-top:6px;">
-          <input type="date" id="foodLogDate" style="margin-bottom:8px;">
-          <div id="foodLogPartialRow" style="margin-bottom:8px;"></div>
-          <div id="foodLogList" class="empty">Nothing logged for this day.</div>
-        </div>
-      </details>
+    <div class="tf-photo-extra">
+      <input type="text" id="scanNote" placeholder="Note for the photo, e.g. 'half portion' (optional)">
+      <button class="danger-link" id="foodPhotoChoose" style="color:var(--accent);">or choose one from your gallery</button>
     </div>
+    <input type="file" id="foodPhotoInput" accept="image/*" style="display:none;">
+    <div id="foodScanStatus" class="empty" style="display:none; margin-top:8px;"></div>
+    <div id="foodScanReview" class="hidden tf-panel">
+      <input type="text" id="scanName" placeholder="Food name" style="margin-bottom:8px;">
+      <div class="field" style="margin-bottom:8px;">
+        <div class="field-label">Servings (scales the estimate below)</div>
+        <input type="text" inputmode="decimal" id="scanServings" value="1">
+      </div>
+      <div class="row">
+        <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="scanCalories"></div>
+        <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="scanProtein"></div>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="scanCarbs"></div>
+        <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="scanFat"></div>
+      </div>
+      <button class="primary" id="saveScanBtn" style="margin-top:10px;">Add to log</button>
+    </div>
+    <div id="quickAddPanel" class="hidden tf-panel">
+      <div class="meta" style="margin-bottom:6px;">Protein staples. Tap to log instantly.</div>
+      <div class="row" id="quickProteinChips"></div>
+      <div class="meta" style="margin:12px 0 6px;">Drinks</div>
+      <div class="row" id="quickDrinkChips"></div>
+    </div>
+    <div id="exactPanel" class="hidden tf-panel">
+      <input type="text" id="manualName" placeholder="Food name" style="margin-bottom:8px;">
+      <div class="row">
+        <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="manualCalories"></div>
+        <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="manualProtein"></div>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="manualCarbs"></div>
+        <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="manualFat"></div>
+      </div>
+      <button class="primary" id="saveManualBtn" style="margin-top:10px; width:100%;">Add to log</button>
+    </div>
+
+    <div id="recentWrap" class="hidden">
+      <div class="tf-label">Recent foods</div>
+      <div class="tf-recent" id="recentFoods"></div>
+    </div>
+
+    <div class="tf-label" style="display:flex; justify-content:space-between;"><span id="tfLogLabel">Today's log</span><span id="tfBackToday" class="hidden" role="button" tabindex="0" style="color:var(--accent); cursor:pointer;">Back to today</span></div>
+    <div id="foodLogPartialRow" style="margin-bottom:8px;"></div>
+    <div id="foodLogList" class="empty">Nothing logged for this day.</div>
+
+    <details class="exercise-group tf-row" id="foodHistoryDetails" style="margin-top:14px;">
+      <summary>Past days</summary>
+      <div id="foodHistory" style="margin-top:10px;"></div>
+      <div class="field-label" style="margin-top:12px;">Jump to a date</div>
+      <input type="date" id="foodLogDate">
+    </details>
+    <details class="exercise-group tf-row">
+      <summary>7-day average and day options</summary>
+      <div style="padding-top:6px;">
+        <div id="weeklyIntake" style="margin-top:6px;"></div>
+        <button class="danger-link" id="markTodayPartialBtn" style="margin-top:8px; color:var(--accent);"></button>
+      </div>
+    </details>
   </section>
 
   <!-- PROGRAMS (with Library merged in as a sub-section) -->
@@ -783,7 +834,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-25 20:50 CT";
+const APP_BUILD = "2026-10-25 21:30 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -934,6 +985,8 @@ async function loadState() {
   if (!state.flags) state.flags = [];
   if (typeof state.welcomeBackDismissedDate !== "string") state.welcomeBackDismissedDate = "";
   if (!state.settings.macroTargets) state.settings.macroTargets = { calories: 2300, protein: 160, carbs: 200, fat: 70 };
+  // One-time: protein target moves to 145 g (Andy's pick). The flag keeps later edits in Settings from being overwritten.
+  if (state.settings.proteinTargetSetTo145 !== true) { state.settings.macroTargets.protein = 145; state.settings.proteinTargetSetTo145 = true; }
   if (typeof state.travelMode !== "boolean") state.travelMode = false;
   if (typeof state.macroSuggestionAppliedAt !== "string") state.macroSuggestionAppliedAt = "";
   if (!Array.isArray(state.macroSuggestionHistory)) state.macroSuggestionHistory = [];
@@ -5459,24 +5512,142 @@ function renderMacroSummary() {
     macroBar("Protein (g)", totals.protein, t.protein) +
     macroBar("Carbs (g)", totals.carbs, t.carbs) +
     macroBar("Fat (g)", totals.fat, t.fat);
+  renderFoodHero(totals, t, today.length);
+  renderRecentFoods();
+  renderFoodHistory();
   renderWeeklyIntake();
   renderPartialControls();
   renderFoodNow();
 }
+
+// Protein is the headline; calories stay small and neutral (no red, no "over" wording).
+function renderFoodHero(totals, t, entryCount) {
+  const kick = document.getElementById("tfFoodKicker");
+  if (kick) {
+    const d = new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+    kick.textContent = d + " · " + entryCount + (entryCount === 1 ? " entry" : " entries");
+  }
+  const el = document.getElementById("foodHero");
+  if (!el) return;
+  const target = t.protein || 0;
+  const left = Math.max(0, target - totals.protein);
+  const frac = target ? Math.min(1, totals.protein / target) : 0;
+  const C = 2 * Math.PI * 44;
+  const center = target && left === 0
+    ? `<path d="M36 54l12 12 22-26" fill="none" stroke="#2FBFA6" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>`
+    : `<text x="52" y="55" text-anchor="middle" font-family="Oswald, sans-serif" font-size="30" font-weight="600" fill="#EDEAE0">${target ? left + "g" : totals.protein + "g"}</text>
+       <text x="52" y="73" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="9" fill="#9B9C8E" letter-spacing="1">${target ? "LEFT" : "TODAY"}</text>`;
+  const calPct = t.calories ? Math.min(100, Math.round(totals.calories / t.calories * 100)) : 0;
+  el.innerHTML = `<div class="tf-hero-food">
+    <svg width="104" height="104" viewBox="0 0 104 104" role="img" aria-label="Protein: ${totals.protein} of ${target || "?"} grams">
+      <circle cx="52" cy="52" r="44" fill="none" stroke="#3A3F33" stroke-width="9"/>
+      <circle cx="52" cy="52" r="44" fill="none" stroke="#2FBFA6" stroke-width="9" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - frac)).toFixed(1)}" transform="rotate(-90 52 52)"/>
+      ${center}
+    </svg>
+    <div style="flex:1; min-width:0;">
+      <div class="tf-kv">Protein today</div>
+      <div class="tf-pro-n">${totals.protein}${target ? " / " + target : ""} g</div>
+      <div class="tf-mini">
+        <div class="r"><span>Calories</span><b>${totals.calories.toLocaleString()}${t.calories ? " / " + t.calories.toLocaleString() : ""}</b></div>
+        ${t.calories ? `<div class="bar"><i style="width:${calPct}%"></i></div>` : ""}
+        <div class="r"><span>Carbs · Fat</span><b>${totals.carbs} g · ${totals.fat} g</b></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// Foods you log often, re-addable in one tap.
+let recentFoodList = [];
+function renderRecentFoods() {
+  const wrap = document.getElementById("recentWrap"), el = document.getElementById("recentFoods");
+  if (!wrap || !el) return;
+  const cutoff = Date.now() - 60 * 86400000;
+  const map = {};
+  (state.foodLogs || []).forEach(f => {
+    if (!f.name || new Date(f.date).getTime() < cutoff) return;
+    const k = f.name.trim().toLowerCase();
+    const m = map[k] || (map[k] = { count: 0, last: f });
+    m.count++;
+    if (new Date(f.date) > new Date(m.last.date)) m.last = f;
+  });
+  recentFoodList = Object.values(map)
+    .sort((a, b) => b.count - a.count || new Date(b.last.date) - new Date(a.last.date))
+    .slice(0, 8).map(m => m.last);
+  wrap.classList.toggle("hidden", !recentFoodList.length);
+  el.innerHTML = recentFoodList.map((f, i) => `<div class="chip" data-recent-food="${i}">${escapeHtml(f.name)} · ${f.protein || 0}g</div>`).join("");
+}
+document.getElementById("recentFoods").addEventListener("click", async (e) => {
+  const chip = e.target.closest("[data-recent-food]");
+  if (!chip) return;
+  const f = recentFoodList[parseInt(chip.dataset.recentFood, 10)];
+  if (!f) return;
+  const { name, calories, protein, carbs, fat, alcohol } = f;
+  await addFoodEntry({ name, calories: calories || 0, protein: protein || 0, carbs: carbs || 0, fat: fat || 0, ...(alcohol ? { alcohol: true } : {}), source: "recent" });
+});
+
+// Past days: totals per day for the last 14 days; tap one to open it in the log above.
+function renderFoodHistory() {
+  const el = document.getElementById("foodHistory");
+  if (!el) return;
+  const rows = [];
+  const now = new Date();
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    const k = localDateStr(d);
+    const logs = foodLogsForDate(k);
+    if (!logs.length) continue;
+    const pro = logs.reduce((n, f) => n + (f.protein || 0), 0);
+    const cal = logs.reduce((n, f) => n + (f.calories || 0), 0);
+    const label = i === 0 ? "Today" : i === 1 ? "Yesterday" : d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+    rows.push(`<div class="tf-hist-row" data-hist-date="${k}" role="button" tabindex="0"><div><div class="d">${label}</div><div class="s">${logs.length} ${logs.length === 1 ? "entry" : "entries"} · ${cal.toLocaleString()} cal${isDayMarkedPartial(k) ? " · partial day" : ""}</div></div><div class="p">${pro}<small> g protein</small></div></div>`);
+  }
+  el.innerHTML = rows.length ? rows.join("") : '<div class="empty">Nothing logged in the last 14 days.</div>';
+}
+document.getElementById("foodHistory").addEventListener("click", (e) => {
+  const row = e.target.closest("[data-hist-date]");
+  if (!row) return;
+  document.getElementById("foodLogDate").value = row.dataset.histDate === localDateStr() ? "" : row.dataset.histDate;
+  renderFoodLogList();
+  window.scrollTo({ top: document.getElementById("tfLogLabel").getBoundingClientRect().top + window.scrollY - 120, behavior: "smooth" });
+});
+document.getElementById("tfBackToday").addEventListener("click", () => {
+  document.getElementById("foodLogDate").value = "";
+  renderFoodLogList();
+});
+// Quick add / Exact numbers tiles open their panel below; tapping again closes it.
+function toggleAddPanel(which) {
+  const panels = { quick: ["quickAddPanel", "tfQuickTile"], exact: ["exactPanel", "tfExactTile"] };
+  Object.keys(panels).forEach(k => {
+    const [pid, tid] = panels[k];
+    const show = k === which && document.getElementById(pid).classList.contains("hidden");
+    document.getElementById(pid).classList.toggle("hidden", !show);
+    document.getElementById(tid).classList.toggle("open", show);
+  });
+}
+document.getElementById("tfQuickTile").addEventListener("click", () => toggleAddPanel("quick"));
+document.getElementById("tfExactTile").addEventListener("click", () => toggleAddPanel("exact"));
 
 function renderFoodLogList() {
   const el = document.getElementById("foodLogList");
   const dateInput = document.getElementById("foodLogDate");
   const selectedDate = dateInput.value || localDateStr();
   renderPartialControls();
+  const isToday = selectedDate === localDateStr();
+  const lab = document.getElementById("tfLogLabel");
+  if (lab) lab.textContent = isToday ? "Today's log" : new Date(selectedDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) + " log";
+  const back = document.getElementById("tfBackToday");
+  if (back) back.classList.toggle("hidden", isToday);
   const dayLogs = foodLogsForDate(selectedDate).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
   if (!dayLogs.length) { el.innerHTML = '<div class="empty">Nothing logged for this day.</div>'; return; }
   el.innerHTML = dayLogs.map((f, i) => {
     const realIndex = state.foodLogs.indexOf(f);
     return `
       <div class="list-item" style="flex-direction:column; align-items:stretch; border-bottom:none;">
-        <div class="name">${f.name}</div>
-        <div class="meta">${timeLabel(new Date(f.date))} · ${f.calories} cal · ${f.protein}p · ${f.carbs}c · ${f.fat}f</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+          <div style="min-width:0;"><div class="name">${f.name}</div>
+          <div class="meta">${timeLabel(new Date(f.date))} · ${f.calories} cal · ${f.carbs}c · ${f.fat}f</div></div>
+          <div class="tf-prot">${f.protein}<small> g</small></div>
+        </div>
         <div class="row" style="margin-top:8px;">
           <button class="danger-link" style="color:var(--accent);" data-repeat-food="${realIndex}">+1 serving</button>
           <button class="danger-link" style="color:var(--accent);" data-edit-food="${realIndex}">Edit</button>
