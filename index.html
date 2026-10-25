@@ -834,7 +834,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-25 21:30 CT";
+const APP_BUILD = "2026-10-25 21:50 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -987,6 +987,8 @@ async function loadState() {
   if (!state.settings.macroTargets) state.settings.macroTargets = { calories: 2300, protein: 160, carbs: 200, fat: 70 };
   // One-time: protein target moves to 145 g (Andy's pick). The flag keeps later edits in Settings from being overwritten.
   if (state.settings.proteinTargetSetTo145 !== true) { state.settings.macroTargets.protein = 145; state.settings.proteinTargetSetTo145 = true; }
+  // One-time: the 20 g of protein dropped (about 80 cal) goes to carbs so total calories stay put.
+  if (state.settings.carbsPlus20ForProtein145 !== true) { state.settings.macroTargets.carbs = (state.settings.macroTargets.carbs || 0) + 20; state.settings.carbsPlus20ForProtein145 = true; }
   if (typeof state.travelMode !== "boolean") state.travelMode = false;
   if (typeof state.macroSuggestionAppliedAt !== "string") state.macroSuggestionAppliedAt = "";
   if (!Array.isArray(state.macroSuggestionHistory)) state.macroSuggestionHistory = [];
