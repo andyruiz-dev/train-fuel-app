@@ -137,6 +137,33 @@
   details.exercise-group[open] summary::after{content:"−";}
   details.exercise-group .list-item:first-child{padding-top:10px;}
   /* ---- Today hero ---- */
+  /* Program screen, "Steady" look */
+  .tf-prog-head{margin:-4px -16px 0; padding:18px 20px 16px; background:linear-gradient(180deg,#1B3A33,#15170F);}
+  .tf-prog-head .chg{font-size:13px; color:var(--accent); font-weight:600; background:none; border:0; padding:0; cursor:pointer;}
+  .tf-prog-head .pills{display:flex; gap:8px; margin-top:26px; flex-wrap:wrap;}
+  .tf-prog-head .pills span{font-family:var(--font-mono); font-size:11px; background:#0F1A17; border:1px solid var(--border); color:var(--text-muted); border-radius:99px; padding:5px 10px; text-transform:uppercase;}
+  .tf-prog-head .pills span.on{border-color:var(--accent); color:var(--accent);}
+  .tf-prog-head h2{font-family:var(--font-display); font-size:32px; font-weight:600; line-height:1.05; margin:10px 0 0;}
+  .tf-wktabs{display:flex; gap:8px; overflow-x:auto; padding:4px 0 2px; margin:0 -16px; padding-left:16px; padding-right:16px; scrollbar-width:none;}
+  .tf-wktabs::-webkit-scrollbar{display:none;}
+  .tf-wktabs button{flex:0 0 auto; font-size:13px; padding:9px 14px; border-radius:10px; background:var(--surface); color:var(--text-muted); border:0; cursor:pointer; font-family:inherit;}
+  .tf-wktabs button.on{background:var(--accent); color:#0F1A17; font-weight:600;}
+  .tf-pbar{display:flex; align-items:center; gap:12px; padding:18px 4px 6px;}
+  .tf-pbar b{font-family:var(--font-display); font-size:20px; font-weight:600;}
+  .tf-pbar .bar{flex:1; height:8px; border-radius:4px; background:#2A2E24;}
+  .tf-pbar .bar i{display:block; height:8px; border-radius:4px; background:var(--accent);}
+  .tf-pbar span{font-family:var(--font-mono); font-size:11px; color:var(--text-muted);}
+  .tf-pnote{padding:0 4px; font-size:12px; color:var(--text-muted);}
+  .tf-days-list{display:flex; flex-direction:column; gap:10px; padding-top:16px;}
+  .tf-dcard{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; cursor:pointer;}
+  .tf-dcard.next{border:1.5px solid var(--accent);}
+  .tf-dcard.pre{background:#1A1D15; border-color:#2A2E24;}
+  .tf-dcard .r{display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .tf-dcard .k{font-size:12px; color:var(--text-muted);}
+  .tf-dcard.next .k{color:var(--accent); font-weight:600;}
+  .tf-dcard .t{font-family:var(--font-display); font-size:19px; font-weight:600; margin-top:2px; text-transform:uppercase;}
+  .tf-dcard.done .t{color:var(--text-muted);}
+  .tf-dcard .ex{margin-top:10px; padding-top:10px; border-top:1px solid #2A2E24; font-size:13px; color:var(--text-muted); line-height:1.6;}
   /* Progress screen, "Steady" look */
   .tf-pg-hero{background:linear-gradient(135deg,#2FBFA6 0%,#1B8674 100%); color:#0B1512; border-radius:22px; padding:20px; display:flex; gap:18px; align-items:center; margin-bottom:14px;}
   .tf-pg-hero .k{font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase;}
@@ -519,6 +546,10 @@
 
   <!-- PROGRAMS (with Library merged in as a sub-section) -->
   <section id="tab-programs" class="tab-panel hidden">
+    <div id="tfProgramView"></div>
+    <details class="exercise-group tf-row" id="programManage" style="margin-top:16px;">
+      <summary>All programs, generate new, exercise library</summary>
+      <div style="margin-top:12px;">
     <div class="row" id="programsSubNav" style="margin-bottom:14px;">
       <div class="chip active" data-subtab="my-programs">My programs</div>
       <div class="chip" data-subtab="library">Exercise library</div>
@@ -621,6 +652,8 @@
         <div id="exerciseList" style="margin-top:12px;" class="empty">Loading…</div>
       </div>
     </div>
+      </div>
+    </details>
   </section>
 
   <!-- COACH -->
@@ -884,7 +917,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-25 22:30 CT";
+const APP_BUILD = "2026-10-25 19:30 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1096,6 +1129,7 @@ async function persistNow() {
   saveStateLocal();
   try { if (typeof renderMorningChecklist === "function") renderMorningChecklist(); } catch (e) {}
   try { if (typeof renderProgressTop === "function") renderProgressTop(); } catch (e) {}
+  try { if (typeof renderProgramView === "function") renderProgramView(); } catch (e) {}
   clearTimeout(saveTimer);
   if (!WORKER_URL) return;
   try {
@@ -1876,9 +1910,74 @@ async function loadPrograms() {
   programs = [];
 }
 
+// ---- Program screen ("Steady" look) ----
+let tfProgWeek = null;
+function renderProgramView() {
+  const el = document.getElementById("tfProgramView");
+  if (!el) return;
+  const program = programs.find(p => p.id === state.activeProgramId);
+  if (!program || !program.structure || !program.structure.phases) {
+    el.innerHTML = '<div class="tf-empty" style="padding:20px 4px;">No active program yet. Open "All programs" below and tap Use on one.</div>';
+    return;
+  }
+  const esc = escapeHtml;
+  const cp = currentPhaseFor(program);
+  const maxWeek = programMaxWeek(program);
+  const cur = Math.min(cp.weekNumber, maxWeek);
+  if (tfProgWeek === null || tfProgWeek > maxWeek || tfProgWeek < 1) tfProgWeek = cur;
+  const wk = tfProgWeek;
+  const phase = phaseForWeek(program, wk);
+  const pace = getProgramPace(program);
+  const total = totalProgramWorkouts(program);
+  const done = pace.mode === "count" ? pace.completed : null;
+  const pct = done === null ? Math.round(((cur - 1) / maxWeek) * 100) : Math.round((done / total) * 100);
+  const perWeek = workoutsInWeek(program, cur);
+  const pw = state.pendingWorkout && state.pendingWorkout.programId === program.id ? state.pendingWorkout : null;
+  let upIdx = pw ? pw.dayIndex : 0;
+  if (done !== null) { let before = 0; for (let w = 1; w < cur; w++) before += workoutsInWeek(program, w); upIdx = Math.max(0, done - before); }
+  const days = (phase?.days || []).filter(d => (d.slots || []).length > 0 || d.fixed);
+  const isDeload = (phase?.deload_weeks || []).includes(wk);
+
+  const tabs = Array.from({ length: maxWeek }, (_, i) => `<button type="button" data-pweek="${i + 1}" class="${i + 1 === wk ? "on" : ""}">Wk ${i + 1}</button>`).join("");
+  const cards = days.map((d, i) => {
+    let st = "pre";
+    if (wk < cur) st = "done"; else if (wk === cur) st = i < upIdx ? "done" : i === upIdx ? "next" : "pre";
+    const label = st === "done" ? `Day ${i + 1} · done` : st === "next" ? `Day ${i + 1} · up next` : `Day ${i + 1}`;
+    const icon = st === "done"
+      ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2FBFA6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Done"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
+      : st === "next" ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2FBFA6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Open"><path d="M9 5l7 7-7 7"/></svg>'
+      : '<span style="font-size:12px;color:var(--text-muted);">Preview</span>';
+    let exs = "";
+    if (d.fixed) {
+      exs = d.fixed.exercises.map(f => { const x = BUILTIN_EXERCISES.find(b => b.id === f.id); return `${esc(x ? x.name : f.id)} ${esc(String(f.sets))}×${esc(String(f.reps))}`; }).join("<br>");
+    } else {
+      exs = (d.slots || []).map(s => `${esc(s.muscle_group)} ${esc(String(s.sets))}×${esc(String(s.reps))}`).join("<br>");
+    }
+    return `<div class="tf-dcard ${st}" data-dcard><div class="r"><div><div class="k">${label}</div><div class="t">${esc(String(d.day || ""))}</div></div>${icon}</div><div class="ex hidden">${exs}</div></div>`;
+  }).join("");
+
+  const pills = `<span class="on">${esc(String(program.source || "program"))}</span><span>${maxWeek} weeks</span>${program.structure.session?.days ? `<span>${program.structure.session.days} days/wk</span>` : `<span>${perWeek} days/wk</span>`}`;
+  el.innerHTML = `<div class="tf-prog-head"><button type="button" class="chg" id="tfChangeProgram">Change program</button><div class="pills">${pills}</div><h2>${esc(program.name)}</h2></div>
+    <div class="tf-wktabs" id="tfWkTabs">${tabs}</div>
+    <div class="tf-pbar"><b>${pct}%</b><div class="bar"><i style="width:${pct}%"></i></div><span>${done === null ? `wk ${cur} / ${maxWeek}` : `${done} / ${total}`}</span></div>
+    <div class="tf-pnote">${esc(String(phase?.phase || ""))}${isDeload ? " · deload week" : ""}${wk !== cur ? ` · viewing week ${wk}` : ""}</div>
+    <div class="tf-days-list">${cards}</div>`;
+  const on = el.querySelector("#tfWkTabs button.on");
+  if (on) { const bar = el.querySelector("#tfWkTabs"); bar.scrollLeft = on.offsetLeft - 16; }
+}
+document.getElementById("tfProgramView").addEventListener("click", (e) => {
+  const w = e.target.closest("[data-pweek]");
+  if (w) { tfProgWeek = parseInt(w.dataset.pweek, 10); renderProgramView(); return; }
+  if (e.target.closest("#tfChangeProgram")) {
+    const d = document.getElementById("programManage"); d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" }); return;
+  }
+  const c = e.target.closest("[data-dcard]");
+  if (c) c.querySelector(".ex").classList.toggle("hidden");
+});
+
 function renderPrograms() {
   const list = document.getElementById("programList");
-  if (!programs.length) { list.innerHTML = '<div class="empty">None yet.</div>'; return; }
+  if (!programs.length) { list.innerHTML = '<div class="empty">None yet.</div>'; try { renderProgramView(); } catch (e) {} return; }
   list.innerHTML = programs.map(p => `
     <div class="list-item" style="flex-direction:column; align-items:stretch;">
       <div class="name">${p.name}</div>
@@ -1894,6 +1993,7 @@ function renderPrograms() {
     </div>
   `).join("");
   renderActiveProgramInfo();
+  try { renderProgramView(); } catch (e) { console.error("renderProgramView", e); }
 }
 
 function renderProgramPreview(program) {
