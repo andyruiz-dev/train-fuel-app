@@ -701,7 +701,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-25 18:10 CT";
+const APP_BUILD = "2026-10-25 18:40 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3068,7 +3068,12 @@ function renderActiveProgramInfo() {
 }
 
 function phaseKeyFor(program, phase) {
-  return `${program.id}:${phase?.phase}-${phase?.week_start}-${phase?.week_end}`;
+  // Includes a short fingerprint of the phase's days, so editing a program's
+  // exercises (not just its label) retires any cached workout built from the old list.
+  let h = 5381;
+  const str = JSON.stringify(phase?.days || []);
+  for (let i = 0; i < str.length; i++) h = ((h * 33) ^ str.charCodeAt(i)) >>> 0;
+  return `${program.id}:${phase?.phase}-${phase?.week_start}-${phase?.week_end}-${h.toString(36)}`;
 }
 
 // A generated workout is just a plain JSON snapshot (name/sets/reps strings)
@@ -3533,18 +3538,19 @@ function kbProgram() {
   // Every day trains push, pull, legs, hinge and core, so with three sessions a
   // week each group is hit at least twice. Paired rows are supersets (upper with
   // lower or push with pull) to keep sessions well under an hour.
-  const A = (dl, sq, sw, pr, rw, ca, wm, tg) => day("Bell A: squat, press, row", [
+  const A = (dl, sq, sw, pr, rw, pu, ca, wm, tg) => day("Bell A: squat, press, row", [
     ["kb-deadlift", dl[0], dl[1], null, "A"], ["kb-goblet-squat", sq[0], sq[1], null, "A"],
     ["kb-swing", sw[0], sw[1], null],
     ["kb-press-hk", pr[0], pr[1], S, "B"], ["kb-row", rw[0], rw[1], S, "B"],
+    ["pushup", pu[0], "8-12", null, "D"], ["plank", pu[0], pu[1], null, "D"],
     ["kb-suitcase-carry", ca[0], ca[1], "seconds " + S, wm ? "C" : null], ...(wm ? [["kb-windmill", wm[0], wm[1], S + ", no weight to start", "C"]] : []),
     ["kb-turkish-getup", tg[0], tg[1], S],
   ], wuA, cdA);
-  const B = (sw, pl, lg, fp, rd, wc, cx) => day("Bell B: hinge, pull, single leg", [
+  const B = (sw, pl, lg, fp, rd, wc, db, cx) => day("Bell B: hinge, pull, single leg", [
     ["kb-swing-1h", sw[0], sw[1], EM + ", switch hands", null, 60],
     [pl[0], pl[1], pl[2], S, "A"], ["kb-rack-reverse-lunge", lg[0], lg[1], S, "A"],
     ["kb-floor-press", fp[0], fp[1], S, "B"], ["kb-sl-rdl", rd[0], rd[1], S, "B"],
-    ["kb-waiter-carry", wc[0], wc[1], "seconds " + S],
+    ["kb-waiter-carry", wc[0], wc[1], "seconds " + S, "C"], ["dead-bug", db, "8", S, "C"],
     ...(cx ? [["kb-complex", cx[0], "3", "3 of each: deadlift, clean, press, squat. Switch arms each round", null, 60]] : []),
   ], wuB, cdB);
   const phase = (label, ws, we, dl, a, b) => ({ phase: label, week_start: ws, week_end: we, deload_weeks: [dl], days: [a, b, a, b].map(d => JSON.parse(JSON.stringify(d))) });
@@ -3558,14 +3564,14 @@ function kbProgram() {
       session: { days: 4, minutes: "35-60" },
       phases: [
         phase("Foundation v2: learn the lifts", 1, 4, 4,
-          A([2, "8"], [3, "8"], [5, "15"], [4, "3"], [3, "8"], [3, "30"], null, [1, "2"]),
-          B([6, "10"], ["kb-dead-high-pull", 4, "5"], [3, "6"], [3, "8"], [3, "6"], [2, "20"])),
+          A([2, "8"], [3, "8"], [5, "15"], [4, "3"], [3, "8"], [2, "30"], [3, "30"], null, [1, "2"]),
+          B([6, "10"], ["kb-dead-high-pull", 4, "5"], [3, "6"], [3, "8"], [3, "6"], [2, "20"], 2)),
         phase("Build v2: more volume", 5, 8, 8,
-          A([3, "8"], [4, "8"], [5, "15"], [5, "3"], [4, "8"], [3, "40"], [2, "4"], [2, "2"]),
-          B([6, "10"], ["kb-clean", 4, "5"], [3, "8"], [3, "8"], [3, "8"], [2, "25"], [5])),
+          A([3, "8"], [4, "8"], [4, "15"], [5, "3"], [3, "8"], [3, "40"], [3, "40"], [2, "4"], [2, "2"]),
+          B([6, "10"], ["kb-clean", 4, "5"], [3, "8"], [3, "8"], [3, "8"], [2, "25"], 2, [5])),
         phase("Strength v2: heavier and denser", 9, 12, 12,
-          A([3, "8"], [4, "8"], [7, "10"], [5, "4"], [3, "10"], [3, "40"], [2, "5"], [2, "3"]),
-          B([6, "10"], ["kb-dead-snatch", 4, "5"], [3, "8"], [3, "10"], [3, "8"], [2, "30"], [6])),
+          A([3, "8"], [3, "8"], [5, "10"], [4, "4"], [3, "10"], [3, "45"], [3, "40"], [2, "5"], [2, "3"]),
+          B([5, "10"], ["kb-dead-snatch", 4, "5"], [3, "8"], [3, "10"], [3, "8"], [2, "30"], 2, [6])),
       ],
     },
   };
@@ -3862,28 +3868,47 @@ function recentStressCaution(days = 3) {
   return "Stress logged recently — no pressure for the full session today. \"Do the minimum\" below still counts.";
 }
 
-// Small front/back body outline with the muscle groups a workout works lit up.
+// Front/back body outline, each region shaded by how many working sets hit that muscle group today.
 // push -> chest/shoulders, pull -> upper back, legs -> thighs/calves, hinge -> glutes/hamstrings, core -> midsection.
-function muscleMapSvg(groups) {
-  const g = new Set((groups || []).map(x => String(x).toLowerCase()));
-  const on = (k) => g.has(k) ? "#0B1512" : "rgba(11,21,18,0.22)";
-  const label = [...g].join(", ") || "no groups";
-  return `<svg width="104" height="132" viewBox="0 0 104 132" role="img" aria-label="Muscles worked: ${label}">
-    <g>
-      <circle cx="24" cy="9" r="6.5" fill="rgba(11,21,18,0.22)"/>
-      <path d="M10 20h28l3 14h-34z" fill="${on("push")}"/>
-      <rect x="14" y="36" width="20" height="20" rx="5" fill="${on("core")}"/>
-      <path d="M13 58h22l2 30h-8l-3-22-3 22h-8z" fill="${on("legs")}"/>
-      <path d="M14 90h8l-1 30h-7zM26 90h8l1 30h-7z" fill="rgba(11,21,18,0.22)"/>
-    </g>
-    <g transform="translate(54,0)">
-      <circle cx="24" cy="9" r="6.5" fill="rgba(11,21,18,0.22)"/>
-      <path d="M10 20h28l-3 24h-22z" fill="${on("pull")}"/>
-      <path d="M13 46h22l1 14h-24z" fill="rgba(11,21,18,0.22)"/>
-      <path d="M12 60h24l-2 28h-7l-3-14-3 14h-7z" fill="${on("hinge")}"/>
-      <path d="M14 90h8l-1 30h-7zM26 90h8l1 30h-7z" fill="${on("legs")}"/>
-    </g>
-  </svg>`;
+function muscleMapSvg(sets) {
+  // sets: { push: 8, pull: 7, ... } = working sets per muscle group today. More sets = darker region.
+  const m = {};
+  Object.keys(sets || {}).forEach(k => { m[String(k).toLowerCase()] = sets[k]; });
+  const top = Math.max(1, ...Object.values(m));
+  const OFF = "rgba(11,21,18,0.14)";
+  const shade = (n) => n > 0 ? `rgba(11,21,18,${(0.32 + 0.68 * (n / top)).toFixed(2)})` : OFF;
+  const c = (k) => shade(m[k] || 0);
+  const arm = shade(Math.max(m.push || 0, m.pull || 0) * 0.6);
+  const label = Object.keys(m).filter(k => m[k] > 0).map(k => `${k} ${m[k]} sets`).join(", ") || "no groups";
+  const st = 'stroke="#2FBFA6" stroke-width="1" stroke-linejoin="round"';
+  const head = `<ellipse cx="30" cy="9" rx="6.5" ry="8" fill="${OFF}" ${st}/><path d="M26.5 16h7v6h-7z" fill="${OFF}" ${st}/>`;
+  const front = `${head}
+    <path d="M20 24c-5 1-8 5-8 11l6 2 3-13z" fill="${c("push")}" ${st}/>
+    <path d="M40 24c5 1 8 5 8 11l-6 2-3-13z" fill="${c("push")}" ${st}/>
+    <path d="M22 24c5 2 11 2 16 0l2 13c-6 3-14 3-20 0z" fill="${c("push")}" ${st}/>
+    <path d="M12 36l6 2-2 20-6-1z" fill="${arm}" ${st}/>
+    <path d="M48 36l-6 2 2 20 6-1z" fill="${arm}" ${st}/>
+    <path d="M10 58l6 1-2 20-5-2z" fill="${OFF}" ${st}/>
+    <path d="M50 58l-6 1 2 20 5-2z" fill="${OFF}" ${st}/>
+    <path d="M21 38c6 3 12 3 18 0l1 25c-7 3-13 3-20 0z" fill="${c("core")}" ${st}/>
+    <path d="M20 64c7 3 13 3 20 0l2 6-12 4-12-4z" fill="${OFF}" ${st}/>
+    <path d="M18 71l11 4-1 30c-4 2-8 2-11 0-3-10-3-24 1-34z" fill="${c("legs")}" ${st}/>
+    <path d="M42 71l-11 4 1 30c4 2 8 2 11 0 3-10 3-24-1-34z" fill="${c("legs")}" ${st}/>
+    <path d="M17 108l11 1-1 27h-7z" fill="${c("legs")}" ${st}/>
+    <path d="M43 108l-11 1 1 27h7z" fill="${c("legs")}" ${st}/>`;
+  const back = `${head}
+    <path d="M22 23c5-2 11-2 16 0l8 12-6 6-6 12h-8l-6-12-6-6z" fill="${c("pull")}" ${st}/>
+    <path d="M12 36l6 2-2 20-6-1z" fill="${arm}" ${st}/>
+    <path d="M48 36l-6 2 2 20 6-1z" fill="${arm}" ${st}/>
+    <path d="M10 58l6 1-2 20-5-2z" fill="${OFF}" ${st}/>
+    <path d="M50 58l-6 1 2 20 5-2z" fill="${OFF}" ${st}/>
+    <path d="M22 53h16l1 12c-6 3-12 3-18 0z" fill="${c("core")}" ${st}/>
+    <path d="M19 66c7 3 15 3 22 0l2 14c-8 4-18 4-26 0z" fill="${c("hinge")}" ${st}/>
+    <path d="M18 82l11 1-1 24c-4 2-8 2-10 0-2-8-2-16 0-25z" fill="${c("hinge")}" ${st}/>
+    <path d="M42 82l-11 1 1 24c4 2 8 2 10 0 2-8 2-16 0-25z" fill="${c("hinge")}" ${st}/>
+    <path d="M17 110l11 1-1 25h-7z" fill="${c("legs")}" ${st}/>
+    <path d="M43 110l-11 1 1 25h7z" fill="${c("legs")}" ${st}/>`;
+  return `<svg width="118" height="138" viewBox="0 0 124 140" role="img" aria-label="Muscles worked: ${label}"><g>${front}</g><g transform="translate(64,0)">${back}</g></svg>`;
 }
 function todayHeroHtml(workout) {
   let kicker = "";
@@ -3902,7 +3927,8 @@ function todayHeroHtml(workout) {
   const mins = estimateWorkoutMinutes(workout);
   const moves = (workout.exercises || []).length;
   const sets = (workout.exercises || []).reduce((a, e) => a + (e.sets || 0), 0);
-  const groups = (workout.exercises || []).map(e => e.muscle_group);
+  const groups = {};
+  (workout.exercises || []).forEach(e => { groups[e.muscle_group] = (groups[e.muscle_group] || 0) + (e.sets || 0); });
   return `<div class="tf-hero">
     <div class="tf-hero-main">
       <div class="tf-hero-kicker">${kicker || "Today"}</div>
