@@ -137,7 +137,17 @@
   details.exercise-group[open] summary::after{content:"−";}
   details.exercise-group .list-item:first-child{padding-top:10px;}
   /* ---- Today hero ---- */
-  .tf-hero{background:var(--accent); color:#0B1512; border-radius:20px; padding:18px 18px 16px; margin:0 0 12px; display:flex; gap:14px; align-items:stretch;}
+  .tf-hero{background:var(--accent); color:#0B1512; border-radius:20px; padding:18px 18px 16px; margin:0 0 12px; display:flex; flex-direction:column; gap:14px; order:-1;}
+  .tf-today-col{display:flex; flex-direction:column;}
+  .tf-today-col > .card{order:-2;}
+  #todayWorkout:has(.tf-hero){display:contents;}
+  .tf-hero-kicker{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .tf-bars{display:flex; flex-direction:column; gap:7px;}
+  .tf-bar{display:flex; align-items:center; gap:10px; font-family:var(--font-mono); font-size:11px; letter-spacing:.5px; text-transform:uppercase;}
+  .tf-bar-name{width:48px; flex:0 0 auto;}
+  .tf-bar-track{flex:1; height:8px; border-radius:4px; background:rgba(11,21,18,.16); overflow:hidden;}
+  .tf-bar-track i{display:block; height:100%; border-radius:4px; background:#0B1512;}
+  .tf-bar-n{width:18px; text-align:right; flex:0 0 auto;}
   .tf-hero-main{flex:1; min-width:0;}
   .tf-hero-kicker{font-family:var(--font-mono); font-size:11px; letter-spacing:1px; text-transform:uppercase; opacity:.8;}
   .tf-hero-title{font-family:var(--font-display); font-weight:700; font-size:40px; line-height:.98; text-transform:uppercase; margin:8px 0 2px; overflow-wrap:anywhere;}
@@ -146,8 +156,7 @@
   .tf-hero-stats div{flex:1; background:#0B1512; color:#EDEAE0; border-radius:12px; padding:8px 10px;}
   .tf-hero-stats b{display:block; font-family:var(--font-display); font-size:22px; font-weight:600; line-height:1;}
   .tf-hero-stats span{font-size:11px; color:#9B9C8E;}
-  .tf-hero svg{flex:0 0 auto; align-self:center;}
-  /* ---- Guided session: full-screen "Block" look. Colour = state (teal = work, dark = rest/warm-up). ---- */
+    /* ---- Guided session: full-screen "Block" look. Colour = state (teal = work, dark = rest/warm-up). ---- */
   #sessionPanel[data-sx]{position:fixed; inset:0; z-index:40; overflow-y:auto; padding:18px 22px 28px; display:flex; flex-direction:column; -webkit-overflow-scrolling:touch;}
   #sessionPanel[data-sx="work"], #sessionPanel[data-sx="emom"], #sessionPanel[data-sx="hold"]{background:var(--accent); color:#0B1512;}
   #sessionPanel[data-sx="rest"], #sessionPanel[data-sx="warm"]{background:#101209; color:var(--text);}
@@ -222,7 +231,7 @@
 
       <details id="todayWorkoutDetails" open style="margin-top:10px;">
         <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Today's workout</summary>
-        <div style="margin-top:10px;">
+        <div class="tf-today-col" style="margin-top:10px;">
           <div style="display:flex; justify-content:flex-end;">
             <button id="genWorkoutBtn" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; padding:4px 0;" disabled>Regenerate</button>
           </div>
@@ -701,7 +710,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-25 18:40 CT";
+const APP_BUILD = "2026-10-25 19:05 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3868,47 +3877,17 @@ function recentStressCaution(days = 3) {
   return "Stress logged recently — no pressure for the full session today. \"Do the minimum\" below still counts.";
 }
 
-// Front/back body outline, each region shaded by how many working sets hit that muscle group today.
-// push -> chest/shoulders, pull -> upper back, legs -> thighs/calves, hinge -> glutes/hamstrings, core -> midsection.
-function muscleMapSvg(sets) {
-  // sets: { push: 8, pull: 7, ... } = working sets per muscle group today. More sets = darker region.
-  const m = {};
-  Object.keys(sets || {}).forEach(k => { m[String(k).toLowerCase()] = sets[k]; });
-  const top = Math.max(1, ...Object.values(m));
-  const OFF = "rgba(11,21,18,0.14)";
-  const shade = (n) => n > 0 ? `rgba(11,21,18,${(0.32 + 0.68 * (n / top)).toFixed(2)})` : OFF;
-  const c = (k) => shade(m[k] || 0);
-  const arm = shade(Math.max(m.push || 0, m.pull || 0) * 0.6);
-  const label = Object.keys(m).filter(k => m[k] > 0).map(k => `${k} ${m[k]} sets`).join(", ") || "no groups";
-  const st = 'stroke="#2FBFA6" stroke-width="1" stroke-linejoin="round"';
-  const head = `<ellipse cx="30" cy="9" rx="6.5" ry="8" fill="${OFF}" ${st}/><path d="M26.5 16h7v6h-7z" fill="${OFF}" ${st}/>`;
-  const front = `${head}
-    <path d="M20 24c-5 1-8 5-8 11l6 2 3-13z" fill="${c("push")}" ${st}/>
-    <path d="M40 24c5 1 8 5 8 11l-6 2-3-13z" fill="${c("push")}" ${st}/>
-    <path d="M22 24c5 2 11 2 16 0l2 13c-6 3-14 3-20 0z" fill="${c("push")}" ${st}/>
-    <path d="M12 36l6 2-2 20-6-1z" fill="${arm}" ${st}/>
-    <path d="M48 36l-6 2 2 20 6-1z" fill="${arm}" ${st}/>
-    <path d="M10 58l6 1-2 20-5-2z" fill="${OFF}" ${st}/>
-    <path d="M50 58l-6 1 2 20 5-2z" fill="${OFF}" ${st}/>
-    <path d="M21 38c6 3 12 3 18 0l1 25c-7 3-13 3-20 0z" fill="${c("core")}" ${st}/>
-    <path d="M20 64c7 3 13 3 20 0l2 6-12 4-12-4z" fill="${OFF}" ${st}/>
-    <path d="M18 71l11 4-1 30c-4 2-8 2-11 0-3-10-3-24 1-34z" fill="${c("legs")}" ${st}/>
-    <path d="M42 71l-11 4 1 30c4 2 8 2 11 0 3-10 3-24-1-34z" fill="${c("legs")}" ${st}/>
-    <path d="M17 108l11 1-1 27h-7z" fill="${c("legs")}" ${st}/>
-    <path d="M43 108l-11 1 1 27h7z" fill="${c("legs")}" ${st}/>`;
-  const back = `${head}
-    <path d="M22 23c5-2 11-2 16 0l8 12-6 6-6 12h-8l-6-12-6-6z" fill="${c("pull")}" ${st}/>
-    <path d="M12 36l6 2-2 20-6-1z" fill="${arm}" ${st}/>
-    <path d="M48 36l-6 2 2 20 6-1z" fill="${arm}" ${st}/>
-    <path d="M10 58l6 1-2 20-5-2z" fill="${OFF}" ${st}/>
-    <path d="M50 58l-6 1 2 20 5-2z" fill="${OFF}" ${st}/>
-    <path d="M22 53h16l1 12c-6 3-12 3-18 0z" fill="${c("core")}" ${st}/>
-    <path d="M19 66c7 3 15 3 22 0l2 14c-8 4-18 4-26 0z" fill="${c("hinge")}" ${st}/>
-    <path d="M18 82l11 1-1 24c-4 2-8 2-10 0-2-8-2-16 0-25z" fill="${c("hinge")}" ${st}/>
-    <path d="M42 82l-11 1 1 24c4 2 8 2 10 0 2-8 2-16 0-25z" fill="${c("hinge")}" ${st}/>
-    <path d="M17 110l11 1-1 25h-7z" fill="${c("legs")}" ${st}/>
-    <path d="M43 110l-11 1 1 25h7z" fill="${c("legs")}" ${st}/>`;
-  return `<svg width="118" height="138" viewBox="0 0 124 140" role="img" aria-label="Muscles worked: ${label}"><g>${front}</g><g transform="translate(64,0)">${back}</g></svg>`;
+// Sets per muscle group today, as plain bars (longest = full width). Typographic on purpose: it reads
+// at a glance on a phone and needs no anatomy drawing.
+function muscleBarsHtml(sets) {
+  const rows = Object.keys(sets || {}).filter(k => k && sets[k] > 0)
+    .sort((x, y) => sets[y] - sets[x]).slice(0, 6);
+  if (!rows.length) return "";
+  const top = Math.max(...rows.map(k => sets[k]));
+  const label = rows.map(k => `${k} ${sets[k]} sets`).join(", ");
+  return `<div class="tf-bars" role="img" aria-label="Sets by muscle group: ${escapeHtml(label)}">` +
+    rows.map(k => `<div class="tf-bar"><span class="tf-bar-name">${escapeHtml(String(k).charAt(0).toUpperCase() + String(k).slice(1))}</span><span class="tf-bar-track"><i style="width:${Math.max(8, Math.round(100 * sets[k] / top))}%"></i></span><span class="tf-bar-n">${sets[k]}</span></div>`).join("") +
+    `</div>`;
 }
 function todayHeroHtml(workout) {
   let kicker = "";
@@ -3917,7 +3896,7 @@ function todayHeroHtml(workout) {
     if (prog && prog.structure && prog.structure.phases) {
       const { phase, weekNumber } = currentPhaseFor(prog);
       const total = Math.max(...prog.structure.phases.map(x => x.week_end || 0)) || null;
-      kicker = `Week ${weekNumber}${total ? " of " + total : ""} · ${escapeHtml(String(phase.phase || "").split(":")[0])}`;
+      kicker = `Week ${weekNumber}${total ? " of " + total : ""} · ${escapeHtml(String(phase.phase || "").split(":")[0].replace(/\s+v\d+$/i, ""))}`;
     }
   } catch (e) {}
   const raw = String(workout.day || "Today's workout");
@@ -3936,7 +3915,7 @@ function todayHeroHtml(workout) {
       ${sub ? `<div class="tf-hero-sub">${sub}</div>` : ""}
       <div class="tf-hero-stats"><div><b>${mins}</b><span>min</span></div><div><b>${moves}</b><span>moves</span></div><div><b>${sets}</b><span>sets</span></div></div>
     </div>
-    ${muscleMapSvg(groups)}
+    ${muscleBarsHtml(groups)}
   </div>`;
 }
 function renderTodayWorkout(workout) {
