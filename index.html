@@ -207,6 +207,16 @@
         </div>
       </details>
 
+      <details class="exercise-group" style="margin-top:10px;" id="notesDetails">
+        <summary id="notesSummary">Notes and questions</summary>
+        <div style="padding-top:6px;">
+          <p class="meta" style="margin-top:0;">Jot down questions or how a session felt. Each note remembers which exercise you were on. Ask me to check your notes and I'll answer them.</p>
+          <textarea id="noteInput" rows="3" placeholder="e.g. Swings felt like all arms, is that normal?" style="width:100%; box-sizing:border-box;"></textarea>
+          <button class="primary" id="noteSaveBtn" style="margin-top:8px; width:100%;">Save note</button>
+          <div id="notesList" style="margin-top:12px;"></div>
+        </div>
+      </details>
+
       <details class="exercise-group" style="margin-top:10px;">
         <summary>Skill practice</summary>
         <div style="padding-top:6px;">
@@ -412,6 +422,10 @@
     <div id="startHereBanner" class="hidden"></div>
     <div id="morningChecklist" class="hidden"></div>
     <div id="flagsBanner" class="hidden"></div>
+    <div class="card hidden" id="bellCoachCard">
+      <h2>Kettlebell progress</h2>
+      <div id="bellCoach" class="meta"></div>
+    </div>
     <div class="card" id="coachNoteCard">
       <h2>Coach's note</h2>
       <div id="coachNote" class="meta">Still gathering enough days to spot real patterns — check back once you've logged a bit more.</div>
@@ -652,7 +666,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-24 23:05 CT";
+const APP_BUILD = "2026-10-24 23:59 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -796,6 +810,7 @@ async function loadState() {
   if (!state.foodDayClosed || typeof state.foodDayClosed !== "object") state.foodDayClosed = {};
   if (!state.coachTeaserDismissed || typeof state.coachTeaserDismissed !== "object") state.coachTeaserDismissed = null;
   if (!state.coachNoteDismissed || typeof state.coachNoteDismissed !== "object") state.coachNoteDismissed = null;
+  if (!Array.isArray(state.sessionNotes)) state.sessionNotes = [];
   if (!state.milestonesSeen) state.milestonesSeen = { weightLbs: [], workoutDays: [] };
   if (!state.celebrations) state.celebrations = [];
   if (!state.flags) state.flags = [];
@@ -2648,7 +2663,53 @@ function renderMorningChecklist() {
   if (flagsRow) flagsRow.addEventListener("click", () => goTo("flagsBanner", false));
 }
 
+// Kettlebell progression hints, from two sources: how each bell exercise went
+// in your last few sessions (max / ok / missed), and a few plain words in your
+// open notes. Deliberately conservative: reps first, a heavier bell only after
+// three straight top-rep sessions, and presses get extra patience because the
+// next bell size up is a big jump for them.
+const BELL_NEXT_SIZE = "44 lb (20 kg)";
+function computeBellCoach() {
+  const bell = new Set((exercises || []).filter(e => e.equipment === "kettlebell").map(e => e.name));
+  const byEx = {};
+  (state.logs || []).forEach(l => { if (bell.has(l.exercise)) (byEx[l.exercise] = byEx[l.exercise] || []).push(l); });
+  const out = [], light = [], lightPress = [];
+  Object.entries(byEx).forEach(([name, logs]) => {
+    logs.sort((a, b) => new Date(a.date) - new Date(b.date));
+    const last = logs.slice(-3).map(l => l.result);
+    const hold = isHoldExercise(name);
+    if (last[last.length - 1] === "missed") {
+      out.push(`${name}: missed last time. Repeat the same bell and reps until you hit them. No need to change anything else.`);
+    } else if (last.length >= 3 && last.every(r => r === "max")) {
+      (/press/i.test(name) ? lightPress : light).push(name);
+    } else if (last.length >= 2 && last.slice(-2).every(r => r === "max")) {
+      out.push(`${name}: top reps two sessions in a row. Add ${hold ? "5 seconds" : "1-2 reps per set"} next time before changing the bell.`);
+    }
+  });
+  if (light.length) out.unshift(`You've hit top reps three sessions running on ${light.join(", ")}. The 35 lb bell is getting light for those; the next size up is ${BELL_NEXT_SIZE}.`);
+  if (lightPress.length) out.push(`${lightPress.join(", ")}: top reps three sessions running. Before a heavier bell, try 5 reps per side with a slow 3-second lowering. The next size is a big jump for pressing.`);
+  // Open notes: a few plain words only. Anything else, ask Claude to read them.
+  (state.sessionNotes || []).filter(n => !n.done).forEach(n => {
+    const t = String(n.text || "").toLowerCase();
+    const where = n.context ? ` (${n.context})` : "";
+    if (/\b(hurt|hurts|pain|painful|sharp|pinch|pinches|tweak|tweaked)\b/.test(t)) out.push(`Your note${where} mentions pain. Back off that move, check your form, and if it keeps happening, get it looked at.`);
+    else if (/\b(too easy|easy|light|boring|breeze)\b/.test(t)) out.push(`Your note${where} says it felt easy. Add reps first; if it stays easy, that's the sign to go up in bell size.`);
+    else if (/\b(too heavy|heavy|hard|struggl\w*|sloppy|shaky|grind\w*)\b/.test(t)) out.push(`Your note${where} says it felt hard. Hold the same reps and bell until they feel smooth.`);
+  });
+  return out;
+}
+function renderBellCoach() {
+  const card = document.getElementById("bellCoachCard"), el = document.getElementById("bellCoach");
+  if (!card || !el) return;
+  const hints = computeBellCoach();
+  if (!hints.length) { card.classList.add("hidden"); el.innerHTML = ""; return; }
+  card.classList.remove("hidden");
+  el.innerHTML = hints.map(h => `<div class="meta" style="margin-bottom:8px; color:var(--text);">${escapeHtml(h)}</div>`).join("") +
+    `<div class="meta" style="font-size:12px;">Based on your logged results and a few words in your open notes (easy, heavy, pain). Ask Claude to read your notes for anything more.</div>`;
+}
+
 function renderCoachNote() {
+  renderBellCoach();
   const el = document.getElementById("coachNote");
   if (!el) return;
   const card = document.getElementById("coachNoteCard");
@@ -6612,6 +6673,7 @@ function renderSession() {
           ${stepCueHtml}
         </div>
         <button class="secondary" id="skipRestBtn" style="width:100%;">Skip rest</button>
+        <button class="danger-link" style="color:var(--accent); margin-top:8px;" data-quick-note="${escapeHtml(step.name)}">Add a note or question</button>
       </div>`;
     document.getElementById("skipRestBtn").addEventListener("click", () => {
       clearInterval(session.timerId);
@@ -6667,6 +6729,7 @@ function renderSession() {
         ${levelLegendHtml}
         ${stepCueHtml}
         <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
+        <button class="danger-link" style="color:var(--accent); margin-top:4px; margin-left:12px;" data-quick-note="${escapeHtml(step.name)}">Note</button>
         <div class="hidden" id="sessionSwapPanel" style="margin-top:8px;">
           <div class="meta">Pick a swap — grouped by easier/harder:</div>
           ${swapAlternatesHtml(currentWorkout.exercises[step.exIndex], step.exIndex)}
@@ -6696,6 +6759,7 @@ function renderSession() {
       ${levelLegendHtml}
       ${stepCueHtml}
       <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
+      <button class="danger-link" style="color:var(--accent); margin-top:4px; margin-left:12px;" data-quick-note="${escapeHtml(step.name)}">Note</button>
       <div class="hidden" id="sessionSwapPanel" style="margin-top:8px;">
         <div class="meta">Pick a swap — grouped by easier/harder:</div>
         ${swapAlternatesHtml(currentWorkout.exercises[step.exIndex], step.exIndex)}
@@ -7359,6 +7423,64 @@ async function applyStartingLevelsIfUntrained() {
 }
 
 // ---- init ----
+// ---- session notes / questions ----
+// Stored in state (synced to the server like everything else) so they survive
+// a device wipe. Each note keeps the exercise or day it was written on.
+function notesContext(explicit) {
+  if (explicit) return explicit;
+  const pw = state.pendingWorkout;
+  return pw && pw.workout && pw.workout.day ? pw.workout.day : "";
+}
+async function addSessionNote(text, context) {
+  const t = String(text || "").trim();
+  if (!t) return false;
+  state.sessionNotes = state.sessionNotes || [];
+  state.sessionNotes.unshift({ id: "n" + Date.now(), at: new Date().toISOString(), text: t, context: notesContext(context), done: false });
+  await persistNow();
+  renderNotes();
+  renderBellCoach();
+  return true;
+}
+function renderNotes() {
+  const list = document.getElementById("notesList");
+  const sum = document.getElementById("notesSummary");
+  if (!list) return;
+  const notes = state.sessionNotes || [];
+  const open = notes.filter(n => !n.done).length;
+  if (sum) sum.textContent = open ? `Notes and questions (${open} open)` : "Notes and questions";
+  if (!notes.length) { list.innerHTML = '<div class="empty">No notes yet.</div>'; return; }
+  list.innerHTML = notes.map(n => `
+    <div class="list-item" style="flex-direction:column; align-items:stretch; ${n.done ? "opacity:0.55;" : ""}">
+      <div class="meta">${new Date(n.at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}${n.context ? " · " + escapeHtml(n.context) : ""}</div>
+      <div style="margin-top:2px; white-space:pre-wrap;">${escapeHtml(n.text)}</div>
+      <div class="row" style="margin-top:6px;">
+        <button class="secondary" data-note-done="${n.id}" style="padding:4px 10px; font-size:13px;">${n.done ? "Reopen" : "Mark answered"}</button>
+        <button class="danger-link" data-note-del="${n.id}" style="margin-left:auto;">Delete</button>
+      </div>
+    </div>`).join("");
+}
+document.getElementById("noteSaveBtn").addEventListener("click", async () => {
+  const input = document.getElementById("noteInput");
+  if (await addSessionNote(input.value)) input.value = "";
+});
+document.getElementById("notesList").addEventListener("click", async (e) => {
+  const doneId = e.target.dataset.noteDone, delId = e.target.dataset.noteDel;
+  if (!doneId && !delId) return;
+  if (delId) state.sessionNotes = (state.sessionNotes || []).filter(n => n.id !== delId);
+  else (state.sessionNotes || []).forEach(n => { if (n.id === doneId) n.done = !n.done; });
+  await persistNow();
+  renderNotes();
+  renderBellCoach();
+});
+// "Note" buttons inside the guided session (rest and exercise screens).
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-quick-note]");
+  if (!b) return;
+  const ctx = b.dataset.quickNote;
+  const text = window.prompt(`Note or question${ctx ? " about " + ctx : ""}:`);
+  if (text && await addSessionNote(text, ctx)) b.textContent = "Note saved ✓";
+});
+
 async function init() {
   await loadState();
   await loadExercises();
@@ -7367,6 +7489,7 @@ async function init() {
   renderPrograms();
   renderSkillPractice();
   renderCelebrations();
+  renderNotes();
   renderFlagsBanner();
   renderCoachNote();
   renderCoachTeaser();
