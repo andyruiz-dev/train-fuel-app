@@ -196,6 +196,16 @@
   .tf-ins i{flex:none; width:8px; height:8px; border-radius:50%; background:var(--accent); margin-top:7px;}
   .tf-insmore summary{list-style:none; cursor:pointer; color:var(--accent); font-size:13px; margin-bottom:10px;}
   .tf-insmore summary::-webkit-details-marker{display:none;}
+  #tab-settings .card{border:1px solid var(--border); border-left:1px solid var(--border); border-radius:16px; padding:16px; margin-bottom:12px;}
+  #tab-settings .card h2{font-size:18px; margin:0 0 10px;}
+  #tab-settings .card .tf-more{margin:0 0 12px;}
+  #tab-settings .card .tf-more p{margin:8px 0 0; line-height:1.5;}
+  #tab-settings input[type=text], #tab-settings input[type=number], #tab-settings input[type=date]{border-radius:12px;}
+  #tab-settings details.tf-row .card{background:#1A1D15;}
+  #startingLevelSettings .row{flex-wrap:nowrap; gap:6px;}
+  #startingLevelSettings .chip{flex:1; text-align:center; padding:9px 4px; font-size:13px;}
+  .tf-more summary::after{content:none !important;}
+  #tab-settings input[type=number]{background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:10px 12px; width:100%; box-sizing:border-box;}
   .tf-clamp{display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
   .tf-clamp-btn{background:none; border:0; color:var(--accent); font-size:13px; padding:6px 0 0; cursor:pointer;}
   /* Program screen, "Steady" look */
@@ -888,86 +898,19 @@
 
   <!-- SETTINGS -->
   <section id="tab-settings" class="tab-panel hidden">
-    <div class="meta" style="text-align:center; margin-bottom:10px;" id="appBuildInfo"></div>
-    <div class="card">
-      <h2>Cloud sync</h2>
-      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
-        Worker URL — this points the app at your Cloudflare Worker + D1 database.
-        Data is saved here, not just in this browser, so it survives cache clears and
-        new devices.
-      </p>
-      <input type="text" id="workerUrlInput" placeholder="https://your-worker.workers.dev">
-      <button class="secondary" id="saveWorkerUrlBtn" style="margin-top:10px;">Save</button>
-    </div>
-    <div class="card">
-      <h2>Backup</h2>
-      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
-        Manual export/import as a second safety net, independent of the cloud sync above.
-      </p>
-      <div class="row">
-        <button class="secondary" id="exportBtn">Export backup file</button>
-        <button class="secondary" id="importBtn">Import backup file</button>
-      </div>
-      <input type="file" id="importInput" accept="application/json" style="display:none;">
-    </div>
-    <div class="card">
-      <h2>Program start date</h2>
-      <p class="meta" style="margin-bottom:10px;">Only used by programs paced by the calendar. Programs paced by workouts (the default) ignore it. Your progress there is the workout count on the Coach tab.</p>
-      <input type="date" id="startDateInput">
-    </div>
-    <div class="card">
-      <h2>Starting level per movement pattern</h2>
-      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
-        Sets where a fresh, never-trained muscle group begins. Once you've logged a workout for
-        a group, this no longer touches it — auto-progression from your rep ranges takes over
-        from there. Not sure which to pick? <strong style="color:var(--text);">Beginner</strong>
-        = you've never done structured exercise for this movement before;
-        <strong style="color:var(--text);">Intermediate</strong> = you've trained it on and off,
-        casually, for a while; <strong style="color:var(--text);">Advanced</strong> = you've
-        followed a structured program for it before. When in doubt, pick Beginner — it's easy to
-        move up once a few workouts feel too easy, and much safer than starting too hard. Push
-        and pull are split into "horizontal" and "vertical" because they're trained as separate
-        progressions: horizontal push/pull is push-ups and rows, vertical push/pull is overhead
-        presses and pull-ups — set each independently.
-      </p>
-      <div id="startingLevelSettings"></div>
-    </div>
-    <div class="card">
-      <h2>Ring strap setting (push)</h2>
-      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
-        Only matters if you're training ring push exercises (ring push-ups,
-        ring dips) — skip this otherwise. It tracks how horizontal your ring
-        push-ups are set to (lower number = more horizontal = harder),
-        separate from the beginner/intermediate/advanced level above.
-        Auto-adjusts by 0.5 after any workout that includes a ring push
-        exercise: hit max reps and it recommends one notch lower next time;
-        miss and it backs off one notch higher. Push-only — pull's path to a
-        pull-up is a different, vertical-pattern progression (dead hang →
-        negatives → band-assisted → pull-up), not row horizontality, so it's
-        handled by the level system above instead.
-      </p>
-      <div class="field"><div class="field-label">Push straps</div><input type="number" step="0.5" min="1" max="12" inputmode="decimal" id="ringStrapPush" placeholder="8.5"></div>
-      <button class="secondary" id="saveRingStrapBtn" style="margin-top:10px;">Save</button>
-    </div>
-    <div class="card">
-      <h2>Body composition</h2>
-      <p class="meta" style="margin-bottom:10px;">Height is only needed if you log a waist measurement for a Relative Fat Mass body-fat % estimate. Goals (optional) power the start → goal forecast shown on the Body composition card.</p>
-      <div class="field"><div class="field-label">Height (in)</div><input type="text" inputmode="decimal" id="heightInches" placeholder="70"></div>
-      <div class="row" style="margin-top:8px;">
-        <div class="field"><div class="field-label">Goal weight (lb)</div><input type="text" inputmode="decimal" id="goalWeightInput" placeholder="optional"></div>
-        <div class="field"><div class="field-label">Goal body fat (%)</div><input type="text" inputmode="decimal" id="goalBodyFatInput" placeholder="optional"></div>
-      </div>
-      <button class="secondary" id="saveHeightBtn" style="margin-top:10px;">Save</button>
-    </div>
+    <div class="tf-screen-head"><div class="tf-kicker" id="tfSetKicker">YOUR TARGETS AND TOOLS</div><h1>Settings</h1></div>
+    <div class="tf-tiles" id="tfSetTiles" style="margin-bottom:6px;"></div>
+    <div class="meta" id="appBuildInfo" style="text-align:center; margin:10px 0 0; font-family:var(--font-mono); font-size:11px;"></div>
+    <div class="tf-sec">Targets</div>
     <div class="card">
       <h2>Daily macro targets</h2>
-      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+      <details class="tf-more"><summary>How to pick targets</summary><p style="font-size:13px; color:var(--text-muted); margin-top:0;">
         New to tracking macros? A simple starting point: protein around 0.7-1g per lb of your
         bodyweight, calories around what keeps your weight roughly steady right now (lower it
         a bit if the goal is fat loss), and carbs/fat split to fill out the rest. You don't need
         to get this exact — log for a week or two and the Coach's weekly suggestions on the
         Coach tab will nudge these for you from there.
-      </p>
+      </p></details>
       <div class="row">
         <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="targetCalories" placeholder="2300"></div>
         <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="targetProtein" placeholder="160"></div>
@@ -983,6 +926,83 @@
       <button class="secondary" id="saveTargetsBtn" style="margin-top:10px;">Save targets</button>
       <div id="macroSuggestionHistory" style="margin-top:10px;"></div>
     </div>
+    <div class="tf-sec">Body</div>
+    <div class="card">
+      <h2>Body composition</h2>
+      <details class="tf-more"><summary>Why height?</summary><p class="meta" style="margin-bottom:10px;">Height is only needed if you log a waist measurement for a Relative Fat Mass body-fat % estimate. Goals (optional) power the start → goal forecast shown on the Body composition card.</p></details>
+      <div class="field"><div class="field-label">Height (in)</div><input type="text" inputmode="decimal" id="heightInches" placeholder="70"></div>
+      <div class="row" style="margin-top:8px;">
+        <div class="field"><div class="field-label">Goal weight (lb)</div><input type="text" inputmode="decimal" id="goalWeightInput" placeholder="optional"></div>
+        <div class="field"><div class="field-label">Goal body fat (%)</div><input type="text" inputmode="decimal" id="goalBodyFatInput" placeholder="optional"></div>
+      </div>
+      <button class="secondary" id="saveHeightBtn" style="margin-top:10px;">Save</button>
+    </div>
+    <div class="tf-sec">Training</div>
+    <details class="exercise-group tf-row" id="setTrainingDetails">
+      <summary>Starting levels and ring straps</summary>
+      <div style="margin-top:12px;">
+    <div class="card">
+      <h2>Starting level per movement pattern</h2>
+      <details class="tf-more"><summary>What do the levels mean?</summary><p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+        Sets where a fresh, never-trained muscle group begins. Once you've logged a workout for
+        a group, this no longer touches it — auto-progression from your rep ranges takes over
+        from there. Not sure which to pick? <strong style="color:var(--text);">Beginner</strong>
+        = you've never done structured exercise for this movement before;
+        <strong style="color:var(--text);">Intermediate</strong> = you've trained it on and off,
+        casually, for a while; <strong style="color:var(--text);">Advanced</strong> = you've
+        followed a structured program for it before. When in doubt, pick Beginner — it's easy to
+        move up once a few workouts feel too easy, and much safer than starting too hard. Push
+        and pull are split into "horizontal" and "vertical" because they're trained as separate
+        progressions: horizontal push/pull is push-ups and rows, vertical push/pull is overhead
+        presses and pull-ups — set each independently.
+      </p></details>
+      <div id="startingLevelSettings"></div>
+    </div>
+    <div class="card">
+      <h2>Ring strap setting (push)</h2>
+      <details class="tf-more"><summary>How straps work</summary><p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+        Only matters if you're training ring push exercises (ring push-ups,
+        ring dips) — skip this otherwise. It tracks how horizontal your ring
+        push-ups are set to (lower number = more horizontal = harder),
+        separate from the beginner/intermediate/advanced level above.
+        Auto-adjusts by 0.5 after any workout that includes a ring push
+        exercise: hit max reps and it recommends one notch lower next time;
+        miss and it backs off one notch higher. Push-only — pull's path to a
+        pull-up is a different, vertical-pattern progression (dead hang →
+        negatives → band-assisted → pull-up), not row horizontality, so it's
+        handled by the level system above instead.
+      </p></details>
+      <div class="field"><div class="field-label">Push straps</div><input type="number" step="0.5" min="1" max="12" inputmode="decimal" id="ringStrapPush" placeholder="8.5"></div>
+      <button class="secondary" id="saveRingStrapBtn" style="margin-top:10px;">Save</button>
+    </div>
+      </div>
+    </details>
+    <div class="tf-sec">Data</div>
+    <details class="exercise-group tf-row" id="setDataDetails">
+      <summary>Cloud sync, backup, start date</summary>
+      <div style="margin-top:12px;">
+    <div class="card">
+      <h2>Cloud sync</h2>
+      <p class="meta" style="margin-top:0;">Your data lives in the cloud, not just this phone. Only change this if the app was moved.</p>
+      <input type="text" id="workerUrlInput" placeholder="https://your-worker.workers.dev">
+      <button class="secondary" id="saveWorkerUrlBtn" style="margin-top:10px;">Save</button>
+    </div>
+    <div class="card">
+      <h2>Backup</h2>
+      <p class="meta" style="margin-top:0;">A second safety copy, separate from cloud sync.</p>
+      <div class="row">
+        <button class="secondary" id="exportBtn">Export backup file</button>
+        <button class="secondary" id="importBtn">Import backup file</button>
+      </div>
+      <input type="file" id="importInput" accept="application/json" style="display:none;">
+    </div>
+    <div class="card">
+      <h2>Program start date</h2>
+      <p class="meta" style="margin-bottom:10px;">Only used by programs paced by the calendar. Programs paced by workouts (the default) ignore it. Your progress there is the workout count on the Coach tab.</p>
+      <input type="date" id="startDateInput">
+    </div>
+      </div>
+    </details>
   </section>
 
 </main>
@@ -1009,7 +1029,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-26 00:50 CT";
+const APP_BUILD = "2026-10-26 01:20 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -2006,6 +2026,14 @@ async function loadPrograms() {
 
 // ---- Program screen ("Steady" look) ----
 let tfProgWeek = null;
+function renderSettingsTiles() {
+  const el = document.getElementById("tfSetTiles");
+  if (!el) return;
+  const t = state.settings?.macroTargets || {};
+  const goal = state.settings?.weeklyWorkoutGoal || 3;
+  const cell = (v, u, l) => `<div class="tf-rt"><div class="rv">${v || "·"}<small>${v ? " " + u : ""}</small></div><div class="rl">${l}</div></div>`;
+  el.innerHTML = cell(t.calories, "cal", "calories") + cell(t.protein, "g", "protein") + cell(goal, "/ wk", "workout goal");
+}
 function renderProgramView() {
   const el = document.getElementById("tfProgramView");
   if (!el) return;
@@ -6514,6 +6542,7 @@ document.getElementById("saveTargetsBtn").addEventListener("click", async () => 
   const wg = parseInt(document.getElementById("weeklyGoalInput").value, 10);
   state.settings.weeklyWorkoutGoal = wg > 0 && wg <= 7 ? wg : 3;
   await persistNow();
+  try { renderSettingsTiles(); } catch (e) {}
   renderMacroSummary();
   alert("Targets saved.");
 });
@@ -8787,6 +8816,7 @@ async function init() {
   document.getElementById("targetFat").value = t.fat || "";
   document.getElementById("weeklyGoalInput").value = state.settings.weeklyWorkoutGoal || 3;
   document.getElementById("feedbackToggle").checked = state.settings.feedback !== false;
+  try { renderSettingsTiles(); } catch (e) {}
   syncTravelModeLabel();
   syncTravelModeLegendVisibility();
   syncSkillPracticeIntroVisibility();
