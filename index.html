@@ -318,6 +318,18 @@
   button:active:not(:disabled){transform:scale(.98);}
   .tf-calm button:active:not(:disabled){transform:none;}
   #foodLogList .list-item{background:var(--surface); border:1px solid var(--border) !important; border-left:4px solid var(--accent) !important; border-radius:10px; padding:12px 14px; margin-bottom:8px;}
+  #foodLogList .tf-fl-head{display:flex; justify-content:space-between; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:8px; cursor:pointer;}
+  #foodLogList .tf-fl-head .t{font-size:15px; font-weight:600;}
+  #foodLogList .tf-fl-head .s{font-family:Inter,sans-serif; font-size:12px; color:var(--text-muted);}
+  #foodLogList .tf-fl-head .c{font-family:var(--font-mono); font-size:11px; letter-spacing:.5px; color:var(--accent); text-transform:uppercase; white-space:nowrap;}
+  #foodLogList .tf-fl-row{background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:10px; margin-bottom:6px; overflow:hidden;}
+  #foodLogList .tf-fl-main{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:9px 12px; cursor:pointer;}
+  #foodLogList .tf-fl-name{min-width:0; flex:1;}
+  #foodLogList .tf-fl-name .n{font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  #foodLogList .tf-fl-name .m{font-family:Inter,sans-serif; font-size:11px; color:var(--text-muted);}
+  #foodLogList .tf-fl-pro{font-family:var(--font-display); font-size:17px; font-weight:600; text-align:right; white-space:nowrap;}
+  #foodLogList .tf-fl-pro small{font-size:11px; color:var(--text-muted); font-weight:500;}
+  #foodLogList .tf-fl-actions{display:flex; gap:14px; padding:0 12px 10px;}
   #foodLogList{color:var(--text);}
   #foodLogList > .empty{color:var(--text-muted);}
   #foodLogList .name{font-size:15px; font-weight:600;}
@@ -6007,6 +6019,8 @@ document.getElementById("foodLogList").addEventListener("click", (e) => {
 });
 document.getElementById("tfExactTile").addEventListener("click", () => toggleAddPanel("exact"));
 
+let foodLogOpen = false;     // log starts collapsed
+let foodRowOpen = null;      // which entry's actions are showing
 function renderFoodLogList() {
   const el = document.getElementById("foodLogList");
   const dateInput = document.getElementById("foodLogDate");
@@ -6025,21 +6039,26 @@ function renderFoodLogList() {
       : '<div class="empty">Nothing logged for this day.</div>';
     return;
   }
-  el.innerHTML = dayLogs.map((f, i) => {
+  const totCal = dayLogs.reduce((n, f) => n + (f.calories || 0), 0);
+  const totPro = dayLogs.reduce((n, f) => n + (f.protein || 0), 0);
+  const newest = dayLogs.slice().reverse();                  // newest first
+  const shown = foodLogOpen ? newest : newest.slice(0, 1);   // collapsed: just the latest entry
+  const rowHtml = (f) => {
     const realIndex = state.foodLogs.indexOf(f);
+    const open = foodRowOpen === realIndex;
     return `
-      <div class="list-item" style="flex-direction:column; align-items:stretch; border-bottom:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-          <div style="min-width:0;"><div class="name">${f.name}</div>
-          <div class="meta">${timeLabel(new Date(f.date))} · ${f.calories} cal · ${f.carbs}c · ${f.fat}f</div></div>
-          <div class="tf-prot">${f.protein}<small> g</small></div>
+      <div class="tf-fl-row${open ? " open" : ""}">
+        <div class="tf-fl-main" data-row-toggle="${realIndex}" role="button" tabindex="0">
+          <div class="tf-fl-name"><div class="n">${f.name}</div>
+          <div class="m">${timeLabel(new Date(f.date))} · ${f.calories} cal · ${f.carbs}c · ${f.fat}f</div></div>
+          <div class="tf-fl-pro">${f.protein}<small> g</small></div>
         </div>
-        <div class="row" style="margin-top:8px;">
+        <div class="tf-fl-actions${open ? "" : " hidden"}">
           <button class="danger-link" style="color:var(--accent);" data-repeat-food="${realIndex}">+1 serving</button>
           <button class="danger-link" style="color:var(--accent);" data-edit-food="${realIndex}">Edit</button>
           <button class="danger-link" style="margin-left:auto;" data-del-food="${realIndex}">Delete</button>
         </div>
-        <div class="hidden" data-edit-panel="${realIndex}" style="margin-top:8px;">
+        <div class="hidden" data-edit-panel="${realIndex}" style="margin:8px 12px 12px;">
           <input type="text" data-field="name" value="${f.name.replace(/"/g,'&quot;')}" placeholder="Food name" style="margin-bottom:8px;">
           <div class="field" style="margin-bottom:8px;">
             <div class="field-label">Time eaten</div>
@@ -6060,9 +6079,21 @@ function renderFoodLogList() {
           <button class="primary" data-save-food="${realIndex}" style="margin-top:10px;">Save changes</button>
         </div>
       </div>`;
-  }).join("");
+  };
+  const header = `
+    <div class="tf-fl-head" data-log-toggle role="button" tabindex="0">
+      <div><div class="t">${dayLogs.length} ${dayLogs.length === 1 ? "entry" : "entries"} · ${totCal.toLocaleString()} cal</div>
+      <div class="s">${totPro} g protein</div></div>
+      <div class="c">${foodLogOpen ? "Hide" : "Show all"} <span class="chev">${foodLogOpen ? "▴" : "▾"}</span></div>
+    </div>`;
+  el.innerHTML = header + shown.map(rowHtml).join("");
 }
 
+document.getElementById("foodLogList").addEventListener("click", (e) => {
+  if (e.target.closest("[data-log-toggle]")) { foodLogOpen = !foodLogOpen; foodRowOpen = null; renderFoodLogList(); return; }
+  const row = e.target.closest("[data-row-toggle]");
+  if (row) { const i = parseInt(row.dataset.rowToggle, 10); foodRowOpen = foodRowOpen === i ? null : i; renderFoodLogList(); }
+});
 document.getElementById("foodLogDate").addEventListener("change", renderFoodLogList);
 
 // Editing servings rescales the macro fields from the values the panel opened
@@ -6132,6 +6163,7 @@ document.getElementById("foodLogList").addEventListener("click", async (e) => {
   const idx = e.target.dataset.delFood;
   if (idx === undefined) return;
   state.foodLogs.splice(parseInt(idx, 10), 1);
+  foodRowOpen = null;
   await persistNow();
   renderMacroSummary();
   renderFoodLogList();
