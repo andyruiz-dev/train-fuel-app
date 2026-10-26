@@ -34,7 +34,7 @@
   }
   header{
     padding:22px 16px 14px; position:sticky; top:0; background:var(--bg); z-index:5;
-    border-bottom:2px solid var(--text);
+    border-bottom:1px solid var(--border);
     display:flex; justify-content:space-between; align-items:flex-start;
   }
   header h1{
@@ -104,7 +104,7 @@
   .empty{color:var(--text-muted); font-size:14px; padding:8px 0;}
   nav.tabs{
     position:fixed; bottom:0; left:0; right:0; background:var(--surface);
-    border-top:2px solid var(--text); display:flex; z-index:10;
+    border-top:1px solid var(--border); display:flex; z-index:10;
   }
   nav.tabs button{
     flex:1; background:none; border:none; padding:10px 4px 8px; font-size:11px;
@@ -250,8 +250,17 @@
   .tf-add.main span{color:#0F1A17; font-family:var(--font-display); font-size:17px; letter-spacing:.5px;}
   .tf-add.open{border-color:var(--accent);}
   .tf-photo-extra{display:flex; flex-direction:column; align-items:flex-start; gap:2px; margin-top:8px;}
-  .tf-recent{display:flex; flex-wrap:wrap; gap:8px;}
-  .tf-recent .chip{border-radius:10px; font-size:13px; padding:8px 12px;}
+  .tf-recent{display:flex; flex-direction:column; gap:8px;}
+  .tf-recent .chip{border-radius:12px; font-size:14px; padding:11px 14px; display:flex; justify-content:space-between; align-items:center; gap:12px; text-align:left;}
+  .tf-recent .chip .rn{min-width:0; flex:1; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+  .tf-recent .chip .rp{flex:none; text-align:right; font-family:var(--font-mono); font-size:11px; color:var(--text-muted); line-height:1.35;}
+  .tf-recent .chip .rp b{color:var(--accent); font-weight:600;}
+  .tab-panel:not(.hidden){animation:tfFade .18s ease-out;}
+  @keyframes tfFade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+  .tf-calm .tab-panel:not(.hidden), .tf-calm #tfExSheet, .tf-calm #tfExSheet .sheet{animation:none !important; transition:none !important;}
+  @media (prefers-reduced-motion: reduce){.tab-panel:not(.hidden){animation:none;}}
+  button:active:not(:disabled){transform:scale(.98);}
+  .tf-calm button:active:not(:disabled){transform:none;}
   #foodLogList .list-item{background:var(--surface); border:1px solid var(--border) !important; border-left:4px solid var(--accent) !important; border-radius:10px; padding:12px 14px; margin-bottom:8px;}
   #foodLogList{color:var(--text);}
   #foodLogList > .empty{color:var(--text-muted);}
@@ -445,7 +454,7 @@
           </div>
           <div id="recoveryCautionNote"></div>
           <div id="todayWorkout" class="empty">Pick an active program first.</div>
-          <button class="primary" id="startSessionBtn" style="margin-top:10px; width:100%;" disabled>Start guided session</button>
+          <button class="primary" id="startSessionBtn" style="margin-top:10px; width:100%;" disabled>Start workout</button>
           <button class="secondary" id="minimumDayBtn" style="margin-top:8px; width:100%;" disabled>Not feeling it? Do the minimum</button>
         </div>
       </details>
@@ -505,7 +514,7 @@
       </div>
     </div>
     <div class="tf-photo-extra">
-      <input type="text" id="scanNote" placeholder="Note for the photo, e.g. 'half portion' (optional)">
+      <input type="text" id="scanNote" style="border-radius:12px;" placeholder="Note for the photo, e.g. 'half portion' (optional)">
       <button class="danger-link" id="foodPhotoChoose" style="color:var(--accent);">or choose one from your gallery</button>
     </div>
     <input type="file" id="foodPhotoInput" accept="image/*" style="display:none;">
@@ -913,6 +922,7 @@
       <div class="row" style="margin-top:8px;">
         <div class="field"><div class="field-label">Workouts per week (goal line on Progress)</div><input type="text" inputmode="numeric" id="weeklyGoalInput" placeholder="3"></div>
       </div>
+      <label style="display:flex; align-items:center; gap:10px; margin-top:12px; font-size:14px;"><input type="checkbox" id="feedbackToggle" style="width:20px; height:20px;"> Buzz and gentle motion</label>
       <button class="secondary" id="saveTargetsBtn" style="margin-top:10px;">Save targets</button>
       <div id="macroSuggestionHistory" style="margin-top:10px;"></div>
     </div>
@@ -942,7 +952,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-25 20:20 CT";
+const APP_BUILD = "2026-10-25 20:50 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1155,6 +1165,7 @@ async function persistNow() {
   try { if (typeof renderMorningChecklist === "function") renderMorningChecklist(); } catch (e) {}
   try { if (typeof renderProgressTop === "function") renderProgressTop(); } catch (e) {}
   try { if (typeof renderProgramView === "function") renderProgramView(); } catch (e) {}
+  try { applyFeedbackSetting(); } catch (e) {}
   clearTimeout(saveTimer);
   if (!WORKER_URL) return;
   try {
@@ -4484,7 +4495,7 @@ function renderTodayWorkout(workout) {
     : "");
 
   genBtn.classList.remove("hidden");
-  sessionBtn.textContent = "Start guided session";
+  sessionBtn.textContent = "Start workout";
 
   function exerciseCardHtml(e, i) {
     const strapNote = ringStrapNoteFor(e);
@@ -5806,9 +5817,10 @@ function renderRecentFoods() {
   });
   recentFoodList = Object.values(map)
     .sort((a, b) => b.count - a.count || new Date(b.last.date) - new Date(a.last.date))
-    .slice(0, 8).map(m => m.last);
+    .slice(0, 12).map(m => m.last)
+    .sort((a, b) => (a.alcohol ? 1 : 0) - (b.alcohol ? 1 : 0)).slice(0, 6);
   wrap.classList.toggle("hidden", !recentFoodList.length);
-  el.innerHTML = recentFoodList.map((f, i) => `<div class="chip" data-recent-food="${i}">${escapeHtml(f.name)} · ${f.protein || 0}g</div>`).join("");
+  el.innerHTML = recentFoodList.map((f, i) => `<div class="chip" data-recent-food="${i}"><span class="rn">${escapeHtml(f.name)}</span><span class="rp"><b style="font-size:14px;">${f.protein || 0} g</b>${f.calories ? "<br>" + f.calories + " cal" : ""}</span></div>`).join("");
 }
 document.getElementById("recentFoods").addEventListener("click", async (e) => {
   const chip = e.target.closest("[data-recent-food]");
@@ -7372,6 +7384,7 @@ function buildSessionSummary(results) {
 }
 
 function renderSessionSummary(summary, opts = {}) {
+  if (!opts.restore) buzz([40, 60, 40]);
   const panel = document.getElementById("sessionPanel");
   panel.setAttribute("data-sx", "done");
   const duration = formatDuration(summary.elapsedMs);
@@ -7830,6 +7843,7 @@ async function sessionSwapExercise(exIndex, newName) {
 }
 
 function recordSetAndAdvance(step, val) {
+  buzz(25);
   if (!session.setsActual[step.exIndex]) session.setsActual[step.exIndex] = [];
   session.setsActual[step.exIndex].push(val);
   session.pos++;
@@ -8395,6 +8409,11 @@ document.getElementById("dismissSkillIntroBtn").addEventListener("click", async 
   await persistNow();
   syncSkillPracticeIntroVisibility();
 });
+function applyFeedbackSetting() { document.body.classList.toggle("tf-calm", state.settings?.feedback === false); }
+function buzz(p) { try { if (state.settings?.feedback !== false && navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+document.getElementById("feedbackToggle").addEventListener("change", async (e) => {
+  state.settings.feedback = e.target.checked; applyFeedbackSetting(); buzz(20); await persistNow();
+});
 document.getElementById("travelModeToggle").addEventListener("click", async () => {
   state.travelMode = !state.travelMode;
   syncTravelModeLabel();
@@ -8648,6 +8667,7 @@ async function init() {
   document.getElementById("targetCarbs").value = t.carbs || "";
   document.getElementById("targetFat").value = t.fat || "";
   document.getElementById("weeklyGoalInput").value = state.settings.weeklyWorkoutGoal || 3;
+  document.getElementById("feedbackToggle").checked = state.settings.feedback !== false;
   syncTravelModeLabel();
   syncTravelModeLegendVisibility();
   syncSkillPracticeIntroVisibility();
