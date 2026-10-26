@@ -1029,7 +1029,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-26 12:10 CT";
+const APP_BUILD = "2026-10-26 17:05 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -7851,13 +7851,14 @@ function renderSession() {
   if (isHoldExercise(step.name)) {
     const range = parseRepRange(step.reps);
     const targetSeconds = range.max || range.min || 20;
+    const holdEach = /each side/i.test(step.note || "");
 
     if (session.holding) {
       const remaining = Math.max(0, Math.ceil((session.holdEndTime - Date.now()) / 1000));
       sx("hold");
       panel.innerHTML = `
         <div class="card">
-          ${sxTop("Hold · set " + step.setNum + " of " + step.totalSets)}
+          ${sxTop("Hold · set " + step.setNum + " of " + step.totalSets + (holdEach ? " · side " + (session.holdSide || 1) + " of 2" : ""))}
           ${step.supersetLabel ? `<div class="meta" style="margin-top:8px;">${step.supersetLabel}</div>` : ""}
           <h2>${step.name}</h2>
           <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · holding${ringStrapNoteFor(step)}</div>
@@ -7872,8 +7873,23 @@ function renderSession() {
         const remainingAtStop = Math.max(0, Math.ceil((session.holdEndTime - Date.now()) / 1000));
         const held = session.holdTargetSeconds - remainingAtStop;
         session.holding = false;
-        recordSetAndAdvance(session.holdStep, Math.max(1, held));
+        finishHoldSide(Math.max(1, held));
       });
+      return;
+    }
+
+    if (session.holdSwitchEnd) {
+      sx("rest");
+      panel.innerHTML = `
+        <div class="card">
+          ${sxTop("Set " + step.setNum + " of " + step.totalSets)}
+          <h2>${step.name}</h2>
+          <div class="sx-hero" id="switchClock">${Math.max(0, Math.ceil((session.holdSwitchEnd - Date.now()) / 1000))}<small>switch hands</small></div>
+          <div class="meta" style="margin-top:12px;">Side 1 done (${session.holdSide1Held}s). Other side next, ${targetSeconds}s.</div>
+          <div class="sx-spacer"></div>
+          <button class="primary" id="switchGoBtn">Start other side now</button>
+        </div>`;
+      document.getElementById("switchGoBtn").addEventListener("click", beginSecondHoldSide);
       return;
     }
 
@@ -8117,8 +8133,41 @@ function tickHold() {
     clearInterval(session.timerId);
     playBeep();
     session.holding = false;
-    recordSetAndAdvance(session.holdStep, session.holdTargetSeconds);
+    finishHoldSide(session.holdTargetSeconds);
   }
+}
+
+// Holds noted "each side" (suitcase and waiter carries) run twice per set:
+// side one, a short "switch hands" countdown, then side two. The set is logged
+// at the shorter of the two so the weaker side sets the progression.
+function finishHoldSide(held) {
+  const step = session.holdStep;
+  if (/each side/i.test(step.note || "") && (session.holdSide || 1) === 1) {
+    session.holdSide = 2;
+    session.holdSide1Held = held;
+    session.holdSwitchEnd = Date.now() + 8000;
+    renderSession();
+    clearInterval(session.timerId);
+    session.timerId = setInterval(tickSwitch, 500);
+    return;
+  }
+  const first = session.holdSide1Held;
+  session.holdSide = 1; session.holdSide1Held = null; session.holdSwitchEnd = 0;
+  recordSetAndAdvance(step, first != null ? Math.min(first, held) : held);
+}
+function tickSwitch() {
+  if (!session || !session.holdSwitchEnd) { return; }
+  const left = Math.ceil((session.holdSwitchEnd - Date.now()) / 1000);
+  const c = document.getElementById("switchClock");
+  if (c && c.firstChild) c.firstChild.textContent = Math.max(0, left);
+  if (left <= 0) beginSecondHoldSide();
+}
+function beginSecondHoldSide() {
+  if (!session || !session.holdSwitchEnd) return;
+  clearInterval(session.timerId);
+  session.holdSwitchEnd = 0;
+  buzz(25);
+  startHold(session.holdStep, session.holdTargetSeconds);
 }
 
 function startRest(seconds) {
