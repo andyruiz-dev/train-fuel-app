@@ -137,6 +137,22 @@
   details.exercise-group[open] summary::after{content:"−";}
   details.exercise-group .list-item:first-child{padding-top:10px;}
   /* ---- Today hero ---- */
+  /* Exercise detail sheet */
+  #tfExSheet{position:fixed; inset:0; z-index:90; display:flex; align-items:flex-end; background:rgba(0,0,0,.55); opacity:0; pointer-events:none; transition:opacity .18s;}
+  #tfExSheet.open{opacity:1; pointer-events:auto;}
+  #tfExSheet .sheet{width:100%; max-height:82vh; overflow-y:auto; background:var(--surface); border:1px solid var(--border); border-radius:22px 22px 0 0; padding:10px 20px 28px; transform:translateY(24px); transition:transform .2s;}
+  #tfExSheet.open .sheet{transform:none;}
+  @media (prefers-reduced-motion: reduce){#tfExSheet,#tfExSheet .sheet{transition:none;}}
+  #tfExSheet .grab{width:40px; height:4px; border-radius:2px; background:var(--border); margin:0 auto 14px;}
+  #tfExSheet h3{font-family:var(--font-display); font-size:26px; font-weight:600; margin:0; line-height:1.1;}
+  #tfExSheet .tags{display:flex; gap:8px; margin-top:10px;}
+  #tfExSheet .tags span{font-family:var(--font-mono); font-size:11px; text-transform:uppercase; border:1px solid var(--border); border-radius:99px; padding:4px 10px; color:var(--text-muted);}
+  #tfExSheet .lab{font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--gold); margin:18px 0 6px; text-transform:uppercase;}
+  #tfExSheet p,#tfExSheet li{font-size:14px; line-height:1.55; color:var(--text); margin:0;}
+  #tfExSheet ul{margin:0; padding-left:18px;}
+  #tfExSheet .demo{display:block; margin-top:20px; text-align:center; text-decoration:none; background:var(--accent); color:#0F1A17; font-weight:600; border-radius:12px; padding:14px;}
+  #tfExSheet .close{display:block; width:100%; margin-top:10px; background:none; border:0; color:var(--text-muted); font-size:14px; padding:10px; cursor:pointer;}
+  .tf-mv-name[data-exinfo]{cursor:pointer;}
   /* Program screen, "Steady" look */
   .tf-prog-head{margin:-4px -16px 0; padding:18px 20px 16px; background:linear-gradient(180deg,#1B3A33,#15170F);}
   .tf-prog-head .chg{font-size:13px; color:var(--accent); font-weight:600; background:none; border:0; padding:0; cursor:pointer;}
@@ -917,7 +933,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-25 19:30 CT";
+const APP_BUILD = "2026-10-25 19:50 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -4261,6 +4277,57 @@ function todayKickerText() {
   } catch (e) {}
   return day + wk;
 }
+// ---- Exercise detail sheet: how-to, common mistakes, demo link ----
+const EX_MISTAKES = {
+  "kb-swing": ["Squatting the swing instead of hinging back", "Lifting the bell with your arms; it floats from the hip snap", "Leaning back at the top; stand tall and squeeze glutes"],
+  "kb-swing-1h": ["Letting the bell twist your shoulders", "Rounding the lower back on the hike", "Pulling with the arm instead of the hips"],
+  "kb-goblet-squat": ["Heels lifting; keep the whole foot down", "Knees caving in", "Chest dropping forward at the bottom"],
+  "kb-rack-reverse-lunge": ["Front knee drifting in or collapsing", "Leaning forward instead of staying tall", "Short steps that load the front knee"],
+  "kb-press-hk": ["Arching the lower back to finish the press", "Elbow flaring out to the side", "Not squeezing the kneeling-side glute"],
+  "kb-floor-press": ["Elbow flared wide at 90 degrees", "Bouncing the arm off the floor", "Wrist bending back under the bell"],
+  "kb-row": ["Rounding the back as you pull", "Twisting the torso to lift the bell", "Elbow flaring away from the ribs"],
+  "kb-clean": ["Swinging the bell around the wrist and banging the forearm", "Curling it up with the arm", "Not tucking the elbow into the ribs on landing"],
+  "kb-sl-rdl": ["Rotating the hips open as the leg lifts", "Locking the standing knee", "Rounding the back to reach lower"],
+  "kb-suitcase-carry": ["Leaning toward the bell", "Hiking the shoulder up", "Rushing; slow steps keep the core working"],
+  "kb-waiter-carry": ["Wrist bending back under the bell", "Ribs flaring and back arching", "Shoulder shrugging up to the ear"],
+  "kb-turkish-getup": ["Rushing; pause at each position", "Letting the bell arm drift off vertical", "Looking away from the bell during the roll"],
+  "kb-deadlift": ["Rounding the lower back", "Squatting instead of hinging", "Bell too far in front of the feet"],
+  "kb-complex": ["Setting the bell down mid-round", "Rushing into sloppy reps; keep the same crisp form each move", "Skipping the arm switch between rounds"],
+  "pushup": ["Hips sagging or piking up", "Elbows flaring straight out", "Half reps; chest should reach the floor"],
+  "plank": ["Hips sagging", "Holding the breath", "Looking up and straining the neck"],
+  "dead-bug": ["Low back lifting off the floor", "Moving arm and leg too fast", "Holding the breath"],
+  "bird-dog": ["Hips rotating as the leg lifts", "Arching the low back", "Rushing the reach"]
+};
+function exerciseInfoFor(name) {
+  const all = (typeof exercises !== "undefined" && exercises ? exercises : []).concat(BUILTIN_EXERCISES);
+  const n = String(name).toLowerCase();
+  return all.find(x => String(x.name).toLowerCase() === n) || null;
+}
+function openExerciseSheet(name) {
+  const info = exerciseInfoFor(name);
+  const esc = escapeHtml;
+  let el = document.getElementById("tfExSheet");
+  if (!el) {
+    el = document.createElement("div"); el.id = "tfExSheet"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true");
+    document.body.appendChild(el);
+    el.addEventListener("click", (e) => { if (e.target === el || e.target.closest("[data-exclose]")) closeExerciseSheet(); });
+  }
+  const mistakes = info && EX_MISTAKES[info.id];
+  const tags = info ? `<div class="tags">${info.muscle_group ? `<span>${esc(info.muscle_group)}</span>` : ""}${info.equipment ? `<span>${esc(info.equipment)}</span>` : ""}</div>` : "";
+  el.innerHTML = `<div class="sheet"><div class="grab"></div><h3>${esc(name)}</h3>${tags}
+    ${info && info.cue ? `<div class="lab">How to</div><p>${esc(info.cue)}</p>` : `<p style="margin-top:14px;color:var(--text-muted);">No written cue for this one yet. The demo link shows it.</p>`}
+    ${mistakes ? `<div class="lab">Common mistakes</div><ul>${mistakes.map(m => `<li>${esc(m)}</li>`).join("")}</ul>` : ""}
+    <a class="demo" href="${buildYoutubeUrl(name)}" target="_blank" rel="noopener">Watch demo ↗</a>
+    <button type="button" class="close" data-exclose>Close</button></div>`;
+  requestAnimationFrame(() => el.classList.add("open"));
+}
+function closeExerciseSheet() { const el = document.getElementById("tfExSheet"); if (el) el.classList.remove("open"); }
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeExerciseSheet(); });
+document.getElementById("todayWorkout").addEventListener("click", (e) => {
+  const n = e.target.closest("[data-exinfo]");
+  if (n) openExerciseSheet(n.dataset.exinfo);
+});
+
 function movesListHtml(workout) {
   const ex = workout.exercises || [];
   const det = (e) => `${e.sets} × ${escapeHtml(String(e.reps))}${isHoldExercise(e.name) ? " s hold" : ""}${e.note ? " · " + escapeHtml(String(e.note)) : ""}`;
@@ -4271,12 +4338,12 @@ function movesListHtml(workout) {
       seen.add(e.superset_group);
       const mem = ex.filter(x => x.superset_group === e.superset_group);
       return `<div class="tf-mv ss"><div class="tf-mv-tag">SUPERSET ${escapeHtml(String(e.superset_group))}</div>` +
-        mem.map(x => `<div class="tf-mv-name">${escapeHtml(x.name)} <span class="tf-mv-det">· ${det(x)}</span></div>`).join("<hr>") + `</div>`;
+        mem.map(x => `<div class="tf-mv-name" data-exinfo="${escapeHtml(x.name)}">${escapeHtml(x.name)} <span class="tf-mv-det">· ${det(x)}</span></div>`).join("<hr>") + `</div>`;
     }
     const fin = e.emom && i === ex.length - 1;
-    return `<div class="tf-mv${fin ? " fin" : ""}"><div>${fin ? '<div class="tf-mv-tag">FINISHER</div>' : ""}<div class="tf-mv-name">${escapeHtml(e.name)}</div><div class="tf-mv-det">${det(e)}</div></div>${e.emom ? '<span class="tf-pill">EMOM</span>' : ""}</div>`;
+    return `<div class="tf-mv${fin ? " fin" : ""}"><div>${fin ? '<div class="tf-mv-tag">FINISHER</div>' : ""}<div class="tf-mv-name" data-exinfo="${escapeHtml(e.name)}">${escapeHtml(e.name)}</div><div class="tf-mv-det">${det(e)}</div></div>${e.emom ? '<span class="tf-pill">EMOM</span>' : ""}</div>`;
   }).join("");
-  return `<div class="tf-moves"><div class="tf-moves-head"><span>Workout · ${ex.length} moves</span></div>${rows}</div>`;
+  return `<div class="tf-moves"><div class="tf-moves-head"><span>Workout · ${ex.length} moves · tap a move for how-to</span></div>${rows}</div>`;
 }
 function renderTodayWorkout(workout) {
   currentWorkout = workout;
