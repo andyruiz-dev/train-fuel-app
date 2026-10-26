@@ -253,6 +253,7 @@
   .tf-recent{display:flex; flex-direction:column; gap:8px;}
   .tf-recent .chip{border-radius:12px; font-size:14px; padding:11px 14px; display:flex; justify-content:space-between; align-items:center; gap:12px; text-align:left;}
   .tf-recent .chip .rn{min-width:0; flex:1; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+  .tf-recent .chip .rx{flex:none; width:32px; height:32px; margin:-6px -6px -6px 0; border:0; background:none; color:var(--text-muted); font-size:20px; line-height:1; cursor:pointer; border-radius:50%;}
   .tf-recent .chip .rp{flex:none; text-align:right; font-family:var(--font-mono); font-size:11px; color:var(--text-muted); line-height:1.35;}
   .tf-recent .chip .rp b{color:var(--accent); font-weight:600;}
   .tf-partial{display:flex; align-items:center; gap:12px; justify-content:flex-end; min-height:0;}
@@ -961,7 +962,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-25 21:20 CT";
+const APP_BUILD = "2026-10-25 23:20 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1103,6 +1104,7 @@ async function loadState() {
   if (!state.foodLogs) state.foodLogs = [];
   if (!state.foodDayFlags || typeof state.foodDayFlags !== "object") state.foodDayFlags = {};
   if (!state.foodDayClosed || typeof state.foodDayClosed !== "object") state.foodDayClosed = {};
+  if (!Array.isArray(state.hiddenRecentFoods)) state.hiddenRecentFoods = [];
   if (!state.coachTeaserDismissed || typeof state.coachTeaserDismissed !== "object") state.coachTeaserDismissed = null;
   if (!state.coachNoteDismissed || typeof state.coachNoteDismissed !== "object") state.coachNoteDismissed = null;
   if (!Array.isArray(state.sessionNotes)) state.sessionNotes = [];
@@ -5824,6 +5826,7 @@ function renderRecentFoods() {
   (state.foodLogs || []).forEach(f => {
     if (!f.name || new Date(f.date).getTime() < cutoff) return;
     const k = f.name.trim().toLowerCase();
+    if ((state.hiddenRecentFoods || []).includes(k)) return;
     const m = map[k] || (map[k] = { count: 0, last: f });
     m.count++;
     if (new Date(f.date) > new Date(m.last.date)) m.last = f;
@@ -5833,9 +5836,24 @@ function renderRecentFoods() {
     .slice(0, 12).map(m => m.last)
     .sort((a, b) => (a.alcohol ? 1 : 0) - (b.alcohol ? 1 : 0)).slice(0, 6);
   wrap.classList.toggle("hidden", !recentFoodList.length);
-  el.innerHTML = recentFoodList.map((f, i) => `<div class="chip" data-recent-food="${i}"><span class="rn">${escapeHtml(f.name)}</span><span class="rp"><b style="font-size:14px;">${f.protein || 0} g</b>${f.calories ? "<br>" + f.calories + " cal" : ""}</span></div>`).join("");
+  el.innerHTML = recentFoodList.map((f, i) => `<div class="chip" data-recent-food="${i}"><span class="rn">${escapeHtml(f.name)}</span><span class="rp"><b style="font-size:14px;">${f.protein || 0} g</b>${f.calories ? "<br>" + f.calories + " cal" : ""}</span><button type="button" class="rx" data-recent-hide="${i}" aria-label="Hide ${escapeHtml(f.name)} from recent foods">×</button></div>`).join("");
 }
 document.getElementById("recentFoods").addEventListener("click", async (e) => {
+  const hide = e.target.closest("[data-recent-hide]");
+  if (hide) {
+    e.stopPropagation();
+    const hf = recentFoodList[parseInt(hide.dataset.recentHide, 10)];
+    if (!hf) return;
+    const key = hf.name.trim().toLowerCase();
+    state.hiddenRecentFoods = (state.hiddenRecentFoods || []).concat(key);
+    renderRecentFoods();
+    await persistNow();
+    showToast("Hidden from recent foods.", async () => {
+      state.hiddenRecentFoods = state.hiddenRecentFoods.filter(k => k !== key);
+      renderRecentFoods(); await persistNow();
+    });
+    return;
+  }
   const chip = e.target.closest("[data-recent-food]");
   if (!chip) return;
   const f = recentFoodList[parseInt(chip.dataset.recentFood, 10)];
