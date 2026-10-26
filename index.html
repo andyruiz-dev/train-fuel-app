@@ -1000,6 +1000,12 @@
       <button class="secondary" id="saveWorkerUrlBtn" style="margin-top:10px;">Save</button>
     </div>
     <div class="card">
+      <h2>Access passphrase</h2>
+      <p class="meta" style="margin-top:0;">Needed once per device so only you can read or change your data. Keep it saved somewhere safe.</p>
+      <input type="password" id="tfTokenInput" placeholder="abcd-efgh-jkmn-pqrs" autocomplete="off">
+      <button class="secondary" id="saveTfTokenBtn" style="margin-top:10px;">Save passphrase</button>
+    </div>
+    <div class="card">
       <h2>Backup</h2>
       <p class="meta" style="margin-top:0;">A second safety copy, separate from cloud sync.</p>
       <div class="row">
@@ -1075,6 +1081,25 @@ function repairTruncatedJson(text) {
 
 const LS_KEY = "tf_state_v1";
 const LS_WORKER_URL_KEY = "tf_worker_url";
+const LS_TOKEN_KEY = "tf_token";   // access passphrase for the cloud server (entered once per device)
+function tfToken() { try { return localStorage.getItem(LS_TOKEN_KEY) || ""; } catch (e) { return ""; } }
+function withAuth(opts) {
+  const o = Object.assign({}, opts || {});
+  o.headers = Object.assign({}, o.headers || {}, { "Authorization": "Bearer " + tfToken() });
+  return o;
+}
+let askedForToken = false;
+async function askForToken(reason, bad) {
+  if (askedForToken) return;
+  if (bad !== undefined && tfToken() !== bad) return;   // already replaced by an earlier prompt
+  askedForToken = true;
+  const t = window.prompt((reason ? reason + "\n\n" : "") + "Enter your Train & Fuel access passphrase (like abcd-efgh-jkmn-pqrs):", "");
+  if (t && t.trim()) {
+    try { localStorage.setItem(LS_TOKEN_KEY, t.trim()); } catch (e) {}
+    askedForToken = false;
+    await init();
+  }
+}
 
 // Baked in as a default so clearing site data / cache never disconnects the
 // app from its data — this is a fixed endpoint for this app, not something
@@ -1119,7 +1144,13 @@ async function fetchWithRetry(url, opts, retries = 1) {
 
 async function apiFetch(path, opts) {
   if (!WORKER_URL) throw new Error("no worker url configured");
-  const resp = await fetch(WORKER_URL.replace(/\/$/, "") + path, opts);
+  const resp = await fetch(WORKER_URL.replace(/\/$/, "") + path, withAuth(opts));
+  if (resp.status === 401) {
+    setSync(false, "locked — access passphrase needed (Settings)");
+    const bad = tfToken();
+    setTimeout(() => askForToken(bad ? "That passphrase wasn't accepted." : "This app needs its access passphrase.", bad), 50);
+    throw new Error("unauthorized");
+  }
   if (!resp.ok) throw new Error("request failed: " + resp.status);
   return resp.json();
 }
@@ -6402,7 +6433,7 @@ async function scanFoodBlob(file) {
     });
     const resp = await fetchWithRetry(WORKER_URL.replace(/\/$/, "") + "/api/food-scan", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tfToken() },
       body: JSON.stringify({
         image: { media_type: uploadBlob.type || file.type || "image/jpeg", data: base64 },
         note: note ? `${note} (If this lists several foods, return one combined total for the whole meal. Always answer with the JSON object only.)` : note,
@@ -8698,6 +8729,14 @@ document.getElementById("saveWorkerUrlBtn").addEventListener("click", async () =
   localStorage.setItem(LS_WORKER_URL_KEY, WORKER_URL);
   await init();
   alert("Saved. Reconnected to " + (WORKER_URL || "local-only mode") + ".");
+});
+
+document.getElementById("tfTokenInput").value = tfToken();
+document.getElementById("saveTfTokenBtn").addEventListener("click", async () => {
+  try { localStorage.setItem(LS_TOKEN_KEY, document.getElementById("tfTokenInput").value.trim()); } catch (e) {}
+  askedForToken = false;
+  await init();
+  alert("Saved. Reconnecting…");
 });
 
 document.getElementById("exportBtn").addEventListener("click", () => {
