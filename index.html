@@ -134,7 +134,7 @@
   details.exercise-group summary::after{
     content:"+"; color:var(--slate); font-size:18px; font-family:var(--font-mono);
   }
-  details.exercise-group[open] summary::after{content:"−";}
+  details.exercise-group[open] > summary::after{content:"−";}
   details.exercise-group .list-item:first-child{padding-top:10px;}
   /* ---- Today hero ---- */
   /* Exercise detail sheet */
@@ -151,6 +151,7 @@
   #tfExSheet p,#tfExSheet li{font-size:14px; line-height:1.55; color:var(--text); margin:0;}
   #tfExSheet ul{margin:0; padding-left:18px;}
   #tfExSheet .demo{display:block; margin-top:20px; text-align:center; text-decoration:none; background:var(--accent); color:#0F1A17; font-weight:600; border-radius:12px; padding:14px;}
+  #tfExSheet .demo2{display:block; width:100%; margin-top:10px; background:none; border:1px solid var(--border); color:var(--text); border-radius:12px; padding:12px; font-size:14px; cursor:pointer;}
   #tfExSheet .close{display:block; width:100%; margin-top:10px; background:none; border:0; color:var(--text-muted); font-size:14px; padding:10px; cursor:pointer;}
   .tf-mv-name[data-exinfo]{cursor:pointer;}
   #sessionPanel .card > h2{cursor:pointer;}
@@ -342,16 +343,16 @@
   .tf-hero svg{flex:0 0 auto;}
   .tf-hero-title{font-family:var(--font-display); font-weight:600; font-size:22px; line-height:1.15;}
   .tf-hero-sub{font-size:13px; color:var(--text-muted); margin-top:6px;}
-  .tf-moves{display:flex; flex-direction:column; gap:8px; margin:6px 0 10px;}
+  .tf-moves{display:flex; flex-direction:column; gap:6px; margin:6px 0 10px;}
   .tf-moves-head{display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; padding:0 4px;}
-  .tf-mv{background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:10px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .tf-mv{background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:10px; padding:9px 12px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
   .tf-mv.ss{border-left-color:var(--gold); display:block;}
   .tf-mv.fin{background:linear-gradient(90deg,#1B3A33,var(--surface)); border-color:var(--accent);}
   .tf-mv-name{font-size:15px; font-weight:600;}
   .tf-mv-det{font-size:12px; color:var(--text-muted); font-weight:400;}
-  .tf-mv-tag{font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--gold); margin-bottom:8px;}
+  .tf-mv-tag{font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--gold); margin-bottom:5px;}
   .tf-mv.fin .tf-mv-tag{color:var(--accent); margin-bottom:2px;}
-  .tf-mv hr{border:0; height:1px; background:var(--border); margin:9px 0;}
+  .tf-mv hr{border:0; height:1px; background:var(--border); margin:7px 0;}
   .tf-pill{font-family:var(--font-mono); font-size:10px; color:#0F1A17; background:var(--accent); border-radius:99px; padding:4px 8px; flex:0 0 auto;}
   #todayWorkout details.exercise-group{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin:0 0 10px;}
   #startSessionBtn{order:1; position:sticky; bottom:66px; z-index:4; height:56px; border-radius:14px; font-size:20px; letter-spacing:1px; text-transform:uppercase; margin-top:10px; box-shadow:0 -14px 14px -4px var(--bg);}
@@ -362,8 +363,12 @@
   #travelModeExplainer p{font-size:12px; line-height:1.5; color:var(--text-muted); text-align:center; margin:6px 0 4px;}
   #travelModeExplainer button{display:block; margin:0 auto; font-size:12px;}
   #tab-today details.exercise-group summary{text-transform:none;}
-  #genWorkoutBtn{order:4;}
-  .tf-today-col > div:first-child{order:4; justify-content:center !important;}
+  #tfMore{order:5; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-top:14px;}
+  #tfMore details.tf-sub{border-top:1px solid var(--border); padding:12px 0 0; margin-top:12px;}
+  #tfMore #travelModeToggle{order:0;}
+  #genWorkoutBtn{font-size:13px !important; color:var(--text-muted);}
+  .tf-linkbtn{background:none; border:none; color:var(--accent); font-size:13px; cursor:pointer; padding:10px 0; display:block; width:100%; text-align:center;}
+  .tf-today-col.tf-off #completeWorkoutBtn, .tf-today-col.tf-off #genWorkoutBtn{display:none;}
     /* ---- Guided session: full-screen "Block" look. Colour = state (teal = work, dark = rest/warm-up). ---- */
   #sessionPanel[data-sx]{position:fixed; inset:0; z-index:40; overflow-y:auto; padding:18px 22px 28px; display:flex; flex-direction:column; -webkit-overflow-scrolling:touch;}
   #sessionPanel[data-sx="work"], #sessionPanel[data-sx="emom"], #sessionPanel[data-sx="hold"], #sessionPanel[data-sx="done"]{background:var(--accent); color:#0B1512;}
@@ -422,7 +427,32 @@
     <div id="celebrationBanner" class="hidden"></div>
 
     <div class="card">
-      <details class="exercise-group">
+
+
+      <details id="todayWorkoutDetails" open style="margin-top:10px;">
+        <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Today's workout</summary>
+        <div class="tf-today-col" style="margin-top:10px;">
+          <div id="recoveryCautionNote"></div>
+          <div id="todayWorkout" class="empty">Pick an active program first.</div>
+          <button class="primary" id="startSessionBtn" style="margin-top:10px; width:100%;" disabled>Start workout</button>
+          <button class="secondary" id="minimumDayBtn" style="margin-top:8px; width:100%;" disabled>Not feeling it? Do the minimum</button>
+          <details id="tfMore" class="exercise-group">
+            <summary>More</summary>
+            <div style="padding-top:8px;">
+          <div style="display:flex; justify-content:flex-end;">
+            <button id="genWorkoutBtn" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; padding:4px 0;" disabled>Regenerate</button>
+          </div>
+          <div id="travelModeToggle" style="cursor:pointer; font-family:var(--font-display); font-size:15px; font-weight:500; letter-spacing:0.2px; display:flex; justify-content:space-between; align-items:center; padding:10px 0;">
+            <span>✈️ Travel mode</span>
+            <span id="travelModeState" style="color:var(--text-muted); font-size:12px; font-family:var(--font-mono);">Off</span>
+          </div>
+          <a id="findBarLink" class="hidden" href="https://www.google.com/maps/search/?api=1&query=calisthenics+park+outdoor+gym+pull-up+bars" target="_blank" rel="noopener" style="display:block; color:var(--accent); font-size:14px; padding:2px 0 10px;">Find an outdoor gym or pull-up bar nearby ↗</a>
+          <div id="travelModeExplainer" style="margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border);">
+            <p class="meta" style="margin-top:0; margin-bottom:4px;">Generates a bodyweight-only workout — rings are still available as a swap if you brought them, but nothing else (no dumbbell, band, parallettes, or ab wheel). Turning it on or off regenerates today's exercises.</p>
+            <button class="danger-link" id="dismissTravelModeLegendBtn">Got it, don't show this again</button>
+          </div>
+              <button id="completeWorkoutBtn" type="button" class="tf-linkbtn">Complete workout without guided session ▸</button>
+      <details class="exercise-group tf-sub">
         <summary>Cross-training</summary>
         <div style="padding-top:6px;">
           <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
@@ -445,31 +475,7 @@
           </div>
           <div id="recentCardio" style="margin-top:10px;"></div>
         </div>
-      </details>
-
-      <details id="todayWorkoutDetails" open style="margin-top:10px;">
-        <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Today's workout</summary>
-        <div class="tf-today-col" style="margin-top:10px;">
-          <div style="display:flex; justify-content:flex-end;">
-            <button id="genWorkoutBtn" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; padding:4px 0;" disabled>Regenerate</button>
-          </div>
-          <div id="travelModeToggle" style="cursor:pointer; font-family:var(--font-display); font-size:15px; font-weight:500; letter-spacing:0.2px; display:flex; justify-content:space-between; align-items:center; padding:10px 0;">
-            <span>✈️ Travel mode</span>
-            <span id="travelModeState" style="color:var(--text-muted); font-size:12px; font-family:var(--font-mono);">Off</span>
-          </div>
-          <a id="findBarLink" class="hidden" href="https://www.google.com/maps/search/?api=1&query=calisthenics+park+outdoor+gym+pull-up+bars" target="_blank" rel="noopener" style="display:block; color:var(--accent); font-size:14px; padding:2px 0 10px;">Find an outdoor gym or pull-up bar nearby ↗</a>
-          <div id="travelModeExplainer" style="margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border);">
-            <p class="meta" style="margin-top:0; margin-bottom:4px;">Generates a bodyweight-only workout — rings are still available as a swap if you brought them, but nothing else (no dumbbell, band, parallettes, or ab wheel). Turning it on or off regenerates today's exercises.</p>
-            <button class="danger-link" id="dismissTravelModeLegendBtn">Got it, don't show this again</button>
-          </div>
-          <div id="recoveryCautionNote"></div>
-          <div id="todayWorkout" class="empty">Pick an active program first.</div>
-          <button class="primary" id="startSessionBtn" style="margin-top:10px; width:100%;" disabled>Start workout</button>
-          <button class="secondary" id="minimumDayBtn" style="margin-top:8px; width:100%;" disabled>Not feeling it? Do the minimum</button>
-        </div>
-      </details>
-
-      <details class="exercise-group" style="margin-top:10px;" id="notesDetails">
+      </details>      <details class="exercise-group tf-sub" id="notesDetails">
         <summary id="notesSummary">Notes and questions</summary>
         <div style="padding-top:6px;">
           <p class="meta" style="margin-top:0;">Jot down questions or how a session felt. Each note remembers which exercise you were on. Ask me to check your notes and I'll answer them.</p>
@@ -477,9 +483,7 @@
           <button class="primary" id="noteSaveBtn" style="margin-top:8px; width:100%;">Save note</button>
           <div id="notesList" style="margin-top:12px;"></div>
         </div>
-      </details>
-
-      <details class="exercise-group" style="margin-top:10px;">
+      </details>      <details class="exercise-group tf-sub">
         <summary>Skill practice</summary>
         <div style="padding-top:6px;">
           <div id="skillPracticeIntro">
@@ -495,6 +499,14 @@
           <div id="skillPracticeList"></div>
         </div>
       </details>
+            </div>
+          </details>
+        </div>
+      </details>
+
+
+
+
     </div>
     <div id="sessionPanel" class="hidden"></div>
   </section>
@@ -962,7 +974,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-25 23:20 CT";
+const APP_BUILD = "2026-10-26 00:10 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -4334,25 +4346,45 @@ function exerciseInfoFor(name) {
   const n = String(name).toLowerCase();
   return all.find(x => String(x.name).toLowerCase() === n) || null;
 }
-function openExerciseSheet(name) {
+function openExerciseSheet(name, idx) {
   const info = exerciseInfoFor(name);
   const esc = escapeHtml;
   let el = document.getElementById("tfExSheet");
   if (!el) {
     el = document.createElement("div"); el.id = "tfExSheet"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true");
     document.body.appendChild(el);
-    el.addEventListener("click", (e) => { if (e.target === el || e.target.closest("[data-exclose]")) closeExerciseSheet(); });
+    el.addEventListener("click", (e) => {
+      if (e.target === el || e.target.closest("[data-exclose]")) { closeExerciseSheet(); return; }
+      if (e.target.closest("#tfSheetSlot")) todayClickHandler(e);
+    });
   }
   const mistakes = info && EX_MISTAKES[info.id];
   const tags = info ? `<div class="tags">${info.muscle_group ? `<span>${esc(info.muscle_group)}</span>` : ""}${info.equipment ? `<span>${esc(info.equipment)}</span>` : ""}</div>` : "";
   el.innerHTML = `<div class="sheet"><div class="grab"></div><h3>${esc(name)}</h3>${tags}
     ${info && info.cue ? `<div class="lab">How to</div><p>${esc(info.cue)}</p>` : `<p style="margin-top:14px;color:var(--text-muted);">No written cue for this one yet. The demo link shows it.</p>`}
     ${mistakes ? `<div class="lab">Common mistakes</div><ul>${mistakes.map(m => `<li>${esc(m)}</li>`).join("")}</ul>` : ""}
+    ${idx !== undefined ? `<div class="lab">Swap or log</div><div id="tfSheetSlot"></div>` : ""}
     <a class="demo" href="${buildYoutubeUrl(name)}" target="_blank" rel="noopener">Watch demo ↗</a>
+    <button type="button" class="demo2" data-quick-note="${esc(name)}">Add a note or question</button>
     <button type="button" class="close" data-exclose>Close</button></div>`;
+  tfSheetCard = null;
+  if (idx !== undefined) {
+    const card = document.querySelector(`#tfCardStore [data-ex-index="${idx}"]`);
+    const slot = document.getElementById("tfSheetSlot");
+    if (card && slot) { slot.appendChild(card); tfSheetCard = card; }
+  }
   requestAnimationFrame(() => el.classList.add("open"));
 }
-function closeExerciseSheet() { const el = document.getElementById("tfExSheet"); if (el) el.classList.remove("open"); }
+let tfSheetCard = null;
+function closeExerciseSheet(discard) {
+  const el = document.getElementById("tfExSheet");
+  if (tfSheetCard) {
+    const store = document.getElementById("tfCardStore");
+    if (store) store.appendChild(tfSheetCard);
+    tfSheetCard = null;
+  }
+  if (el) el.classList.remove("open");
+}
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeExerciseSheet(); });
 document.getElementById("sessionPanel").addEventListener("click", (e) => {
   const h = e.target.closest(".card > h2");
@@ -4360,7 +4392,7 @@ document.getElementById("sessionPanel").addEventListener("click", (e) => {
 });
 document.getElementById("todayWorkout").addEventListener("click", (e) => {
   const n = e.target.closest("[data-exinfo]");
-  if (n) openExerciseSheet(n.dataset.exinfo);
+  if (n) openExerciseSheet(n.dataset.exinfo, n.dataset.exidx !== undefined ? parseInt(n.dataset.exidx, 10) : undefined);
 });
 
 function movesListHtml(workout) {
@@ -4373,12 +4405,12 @@ function movesListHtml(workout) {
       seen.add(e.superset_group);
       const mem = ex.filter(x => x.superset_group === e.superset_group);
       return `<div class="tf-mv ss"><div class="tf-mv-tag">SUPERSET ${escapeHtml(String(e.superset_group))}</div>` +
-        mem.map(x => `<div class="tf-mv-name" data-exinfo="${escapeHtml(x.name)}">${escapeHtml(x.name)} <span class="tf-mv-det">· ${det(x)}</span></div>`).join("<hr>") + `</div>`;
+        mem.map(x => `<div class="tf-mv-name" data-exidx="${ex.indexOf(x)}" data-exinfo="${escapeHtml(x.name)}">${escapeHtml(x.name)} <span class="tf-mv-det">· ${det(x)}</span></div>`).join("<hr>") + `</div>`;
     }
     const fin = e.emom && i === ex.length - 1;
-    return `<div class="tf-mv${fin ? " fin" : ""}"><div>${fin ? '<div class="tf-mv-tag">FINISHER</div>' : ""}<div class="tf-mv-name" data-exinfo="${escapeHtml(e.name)}">${escapeHtml(e.name)}</div><div class="tf-mv-det">${det(e)}</div></div>${e.emom ? '<span class="tf-pill">EMOM</span>' : ""}</div>`;
+    return `<div class="tf-mv${fin ? " fin" : ""}"><div>${fin ? '<div class="tf-mv-tag">FINISHER</div>' : ""}<div class="tf-mv-name" data-exidx="${i}" data-exinfo="${escapeHtml(e.name)}">${escapeHtml(e.name)}</div><div class="tf-mv-det">${det(e)}</div></div>${e.emom ? '<span class="tf-pill">EMOM</span>' : ""}</div>`;
   }).join("");
-  return `<div class="tf-moves"><div class="tf-moves-head"><span>Workout · ${ex.length} moves · tap a move for how-to</span></div>${rows}</div>`;
+  return `<div class="tf-moves"><div class="tf-moves-head"><span>Workout · ${ex.length} moves · tap one for details</span></div>${rows}</div>`;
 }
 function renderTodayWorkout(workout) {
   currentWorkout = workout;
@@ -4509,46 +4541,22 @@ function renderTodayWorkout(workout) {
   sessionBtn.textContent = "Start workout";
 
   function exerciseCardHtml(e, i) {
-    const strapNote = ringStrapNoteFor(e);
     return `
-      <div class="list-item" data-ex-index="${i}" style="flex-direction:column; align-items:stretch; border-bottom:none;">
-        <div style="display:flex; justify-content:space-between;">
-          <div>
-            <div class="name">${e.name}</div>
-            <div class="meta">${e.muscle_group} · ${e.sets}×${e.reps}${isHoldExercise(e.name) ? "s hold" : ""}${e.note ? " " + e.note : ""} · ${levelLabelFor(e)}${strapNote}</div>
-            ${howToHtml("today-" + i, e.name, exercises.find(x => x.name === e.name)?.cue)}
-          </div>
-          <button class="danger-link" style="color:var(--accent);" data-swap-open="${i}">Swap</button>
-        </div>
+      <div class="list-item" data-ex-index="${i}" style="flex-direction:column; align-items:stretch; border-bottom:none; padding:0;">
+        <div class="meta" style="margin-bottom:10px;">${e.muscle_group} · ${e.sets}×${e.reps}${isHoldExercise(e.name) ? "s hold" : ""}${e.note ? " " + e.note : ""} · ${levelLabelFor(e)}${ringStrapNoteFor(e)}</div>
+        <button class="secondary" data-swap-open="${i}" style="width:100%;">Swap this move</button>
         <div class="swap-panel hidden" data-swap-panel="${i}" style="margin-top:8px;">
-          <div class="meta">No equipment for this one? Pick a swap — grouped by easier/harder:</div>
+          <div class="meta">No equipment for this one? Pick a swap, grouped by easier/harder:</div>
           ${swapAlternatesHtml(e, i)}
         </div>
-        <div class="row" style="margin-top:8px;">
+        <div class="meta" style="margin:14px 0 6px;">How did it go? (counts toward next progression)</div>
+        <div class="row">
           <div class="chip result-chip" data-ex="${i}" data-result="max">Hit max reps</div>
           <div class="chip result-chip" data-ex="${i}" data-result="hold">As prescribed</div>
           <div class="chip result-chip" data-ex="${i}" data-result="missed">Missed reps</div>
         </div>
       </div>`;
   }
-
-  // group into render units: paired supersets stay visually bracketed together,
-  // everything else renders as its own card, in original order.
-  const seenGroups = new Set();
-  const unitsHtml = workout.exercises.map((e, i) => {
-    if (e.superset_group) {
-      if (seenGroups.has(e.superset_group)) return "";
-      seenGroups.add(e.superset_group);
-      const memberIdxs = workout.exercises.map((x, xi) => ({ x, xi })).filter(({ x }) => x.superset_group === e.superset_group);
-      return `
-        <div class="card" style="border-left-color:var(--gold); margin-bottom:10px;">
-          <div class="meta" style="margin-bottom:8px;">Superset ${e.superset_group} — do one set of each exercise back-to-back, then rest</div>
-          ${memberIdxs.map(({ x, xi }) => exerciseCardHtml(x, xi)).join('<div style="border-top:1px dashed var(--border); margin:10px 0;"></div>')}
-        </div>`;
-    }
-    return `<div class="card" style="margin-bottom:10px;">${exerciseCardHtml(e, i)}</div>`;
-  }).join("");
-
   // Mobility items carry a coaching cue in the library same as any other
   // exercise, but it never made it into the generated warmup/cooldown JSON
   // (the AI only returns {name, detail}) — so this card showed a bare name
@@ -4579,14 +4587,7 @@ function renderTodayWorkout(workout) {
         <div class="meta" style="margin-bottom:4px;">After a set: "Hit max reps" means you could've done more with good form, "As prescribed" means you did the planned amount, "Missed reps" means you couldn't finish them with good form. Stop any set early if form breaks down or something hurts — none of this is about pushing to failure.</div>
         <button class="danger-link" id="dismissExerciseLegendBtn" style="margin-bottom:8px;">Got it, don't show this again</button>`;
 
-  const workoutHtml = `
-    <details class="exercise-group">
-      <summary>Swap or log moves</summary>
-      <div style="padding-top:6px;">
-        ${legendHtml}
-        ${unitsHtml}
-      </div>
-    </details>`;
+  const workoutHtml = `<div id="tfCardStore" class="hidden">${workout.exercises.map((e, i) => exerciseCardHtml(e, i)).join("")}</div>`;
 
   const resumeSnap = loadSessionSnapshot();
   const resumeHtml = resumeSnap ? `
@@ -4595,8 +4596,7 @@ function renderTodayWorkout(workout) {
       <div class="meta">You were ${resumeSnap.session.pos} of ${resumeSnap.session.queue.length} sets in when the app closed. Your finished sets were kept.</div>
       <button class="primary" id="resumeSessionBtn" style="margin-top:8px; width:100%;">Resume where I left off</button>
     </div>` : "";
-  box.innerHTML = resumeHtml + todayHeroHtml(workout) + warmupHtml + movesListHtml(workout) + workoutHtml + cooldownHtml + `<button id="completeWorkoutBtn" style="background:none; border:none; color:var(--accent); font-size:13px; cursor:pointer; padding:10px 0; display:block;">Complete workout without guided session ▸</button>`;
-  document.getElementById("completeWorkoutBtn").addEventListener("click", completeWorkout);
+  box.innerHTML = resumeHtml + todayHeroHtml(workout) + warmupHtml + movesListHtml(workout) + workoutHtml + cooldownHtml;
   const resumeBtnEl = document.getElementById("resumeSessionBtn");
   if (resumeBtnEl) resumeBtnEl.addEventListener("click", resumeSessionFromSnapshot);
   const dismissLegendBtn = document.getElementById("dismissExerciseLegendBtn");
@@ -4690,7 +4690,7 @@ async function previewNextDayExercises(program, dayIndex, key) {
 // duplicate listeners to pile up on this persistent container, making
 // toggle-based actions (opening a swap panel) appear to silently do nothing
 // since multiple listeners would open-then-immediately-close it per click.
-document.getElementById("todayWorkout").addEventListener("click", async (e) => {
+async function todayClickHandler(e) {
   const warmcoolBtn = e.target.closest("[data-warmcool-swap]");
   if (warmcoolBtn) {
     const [type, idx] = warmcoolBtn.dataset.warmcoolSwap.split(":");
@@ -4710,6 +4710,7 @@ document.getElementById("todayWorkout").addEventListener("click", async (e) => {
   }
   const pick = e.target.closest("[data-swap-pick]");
   if (pick) {
+    closeExerciseSheet(true);
     await swapExercise(parseInt(pick.dataset.swapPick, 10), pick.dataset.swapName);
     return;
   }
@@ -4725,7 +4726,9 @@ document.getElementById("todayWorkout").addEventListener("click", async (e) => {
     const swapPanelEl = itemEl.querySelector(".swap-panel");
     if (swapPanelEl) swapPanelEl.classList.add("hidden");
   }
-});
+}
+document.getElementById("todayWorkout").addEventListener("click", todayClickHandler);
+document.getElementById("completeWorkoutBtn").addEventListener("click", completeWorkout);
 
 function howToHtml(uid, name, cue) {
   const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(name + " exercise proper form tutorial")}`;
