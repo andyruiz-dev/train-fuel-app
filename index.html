@@ -974,7 +974,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-26 00:10 CT";
+const APP_BUILD = "2026-10-26 00:20 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -8675,6 +8675,29 @@ document.addEventListener("click", async (e) => {
   const text = window.prompt(`Note or question${ctx ? " about " + ctx : ""}:`);
   if (text && await addSessionNote(text, ctx)) b.textContent = "Note saved ✓";
 });
+
+// ---- Keep the screen awake while a guided session is on screen ----
+let tfWakeLock = null;
+function sessionIsOnScreen() {
+  const p = document.getElementById("sessionPanel");
+  const sx = p && p.getAttribute("data-sx");
+  return !!(p && !p.classList.contains("hidden") && sx && sx !== "done");
+}
+async function syncWakeLock() {
+  try {
+    if (!("wakeLock" in navigator)) return;
+    if (sessionIsOnScreen() && document.visibilityState === "visible") {
+      if (!tfWakeLock) {
+        tfWakeLock = await navigator.wakeLock.request("screen");
+        tfWakeLock.addEventListener("release", () => { tfWakeLock = null; });
+      }
+    } else if (tfWakeLock) {
+      const l = tfWakeLock; tfWakeLock = null; await l.release();
+    }
+  } catch (e) { tfWakeLock = null; }
+}
+new MutationObserver(syncWakeLock).observe(document.getElementById("sessionPanel"), { attributes: true, attributeFilter: ["class", "data-sx"] });
+document.addEventListener("visibilitychange", syncWakeLock);
 
 async function init() {
   await loadState();
