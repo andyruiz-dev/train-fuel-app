@@ -153,6 +153,15 @@
   #tfExSheet .demo{display:block; margin-top:20px; text-align:center; text-decoration:none; background:var(--accent); color:#0F1A17; font-weight:600; border-radius:12px; padding:14px;}
   #tfExSheet .close{display:block; width:100%; margin-top:10px; background:none; border:0; color:var(--text-muted); font-size:14px; padding:10px; cursor:pointer;}
   .tf-mv-name[data-exinfo]{cursor:pointer;}
+  #sessionPanel .card > h2{cursor:pointer;}
+  #sessionPanel .card > h2::after{content:"ⓘ"; font-size:.6em; margin-left:8px; color:inherit; opacity:.55; vertical-align:middle;}
+  .tf-recap{background:linear-gradient(135deg,#20231C,#1B2A25); border:1px solid #2E4A42;}
+  .tf-recap .row3{display:flex; gap:10px; margin-top:14px;}
+  .tf-recap .cell{flex:1; min-width:0;}
+  .tf-recap .cell .v{font-family:var(--font-display); font-size:26px; font-weight:600; line-height:1.1;}
+  .tf-recap .cell .v small{font-size:12px; color:var(--text-muted); font-weight:500;}
+  .tf-recap .cell .l{font-size:11px; color:var(--text-muted); margin-top:2px;}
+  .tf-recap .line{margin-top:14px; font-size:13px; color:var(--text); line-height:1.5;}
   /* Program screen, "Steady" look */
   .tf-prog-head{margin:-4px -16px 0; padding:18px 20px 16px; background:linear-gradient(180deg,#1B3A33,#15170F);}
   .tf-prog-head .chg{font-size:13px; color:var(--accent); font-weight:600; background:none; border:0; padding:0; cursor:pointer;}
@@ -933,7 +942,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-25 19:50 CT";
+const APP_BUILD = "2026-10-25 20:20 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -4323,6 +4332,10 @@ function openExerciseSheet(name) {
 }
 function closeExerciseSheet() { const el = document.getElementById("tfExSheet"); if (el) el.classList.remove("open"); }
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeExerciseSheet(); });
+document.getElementById("sessionPanel").addEventListener("click", (e) => {
+  const h = e.target.closest(".card > h2");
+  if (h && exerciseInfoFor(h.textContent.trim())) openExerciseSheet(h.textContent.trim());
+});
 document.getElementById("todayWorkout").addEventListener("click", (e) => {
   const n = e.target.closest("[data-exinfo]");
   if (n) openExerciseSheet(n.dataset.exinfo);
@@ -6760,7 +6773,37 @@ function renderProgressTop() {
     <div style="display:flex; gap:12px; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); margin-top:8px;">${weeks.map((w, i) => `<span style="flex:1; text-align:center;${i === weeks.length - 1 ? " color:var(--accent);" : ""}">${w.start.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()}</span>`).join("")}</div>
   </div>`;
 
-  el.innerHTML = heroHtml + `<div class="tf-stats">${weightTile}${bestTile}${proteinTile}</div>` + weightCard + consistencyCard + milestonesCard + weeklyCard;
+  // Weekly recap: last full Mon-Sun week. Hidden when nothing was logged, so it never shows a wall of zeros.
+  let recapCard = "";
+  {
+    const lw = weeks[weeks.length - 2];
+    const lwStart = lw.start.getTime(), lwEnd = lwStart + 7 * 86400000;
+    const inWk = ms.filter(m => { const t = new Date(m.date + "T12:00:00").getTime(); return t >= lwStart && t < lwEnd; });
+    const before = ms.filter(m => new Date(m.date + "T12:00:00").getTime() < lwStart).pop();
+    let wDelta = null;
+    if (inWk.length) { const base = before ? before.weight : inWk[0].weight; wDelta = inWk[inWk.length - 1].weight - base; }
+    let pHit = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(lw.start.getFullYear(), lw.start.getMonth(), lw.start.getDate() + i);
+      const pro = foodLogsForDate(localDateStr(d)).reduce((n, f) => n + (f.protein || 0), 0);
+      if (pTarget && pro >= pTarget) pHit++;
+    }
+    if (lw.count > 0 || inWk.length) {
+      const end = new Date(lwStart + 6 * 86400000);
+      const rng = lw.start.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + " – " + end.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      const hitGoal = lw.count >= goal;
+      const line = hitGoal ? `You hit your ${goal} workouts. Keep the same rhythm this week.`
+        : lw.count > 0 ? `${lw.count} in the books. A steady week beats a perfect one; aim for ${goal} this week.`
+        : `Weigh-ins kept going. Pick up with your next workout when you are ready.`;
+      recapCard = `<div class="tf-pcard tf-recap"><div class="h"><b>Last week</b><span>${rng}</span></div>
+        <div class="row3">
+          <div class="cell"><div class="v"${hitGoal ? ' style="color:var(--gold);"' : ""}>${lw.count}<small> / ${goal}</small></div><div class="l">workouts</div></div>
+          <div class="cell"><div class="v">${wDelta === null ? "·" : (wDelta <= 0 ? "−" : "+") + Math.abs(wDelta).toFixed(1)}<small>${wDelta === null ? "" : " lb"}</small></div><div class="l">weight</div></div>
+          <div class="cell"><div class="v">${pHit}<small> / 7</small></div><div class="l">protein days</div></div>
+        </div><div class="line">${line}</div></div>`;
+    }
+  }
+  el.innerHTML = heroHtml + `<div class="tf-stats">${weightTile}${bestTile}${proteinTile}</div>` + recapCard + weightCard + consistencyCard + milestonesCard + weeklyCard;
 }
 document.getElementById("tfProgress").addEventListener("click", (e) => {
   const b = e.target.closest("[data-goto-tab]");
