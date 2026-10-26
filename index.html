@@ -255,6 +255,15 @@
   .tf-recent .chip .rn{min-width:0; flex:1; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
   .tf-recent .chip .rp{flex:none; text-align:right; font-family:var(--font-mono); font-size:11px; color:var(--text-muted); line-height:1.35;}
   .tf-recent .chip .rp b{color:var(--accent); font-weight:600;}
+  .tf-partial{display:flex; align-items:center; gap:12px; justify-content:flex-end; min-height:0;}
+  .tf-partial.on{justify-content:space-between; font-size:12px; color:var(--text-muted); background:var(--surface); border:1px solid var(--border); border-radius:99px; padding:4px 12px;}
+  .tf-foodempty{background:var(--surface); border:1px dashed var(--border); border-radius:14px; padding:18px 16px; font-size:14px; color:var(--text-muted); display:flex; flex-direction:column; gap:12px; align-items:flex-start;}
+  .tf-foodempty button{height:36px; padding:0 16px; border-radius:10px; border:1px solid var(--accent); background:none; color:var(--accent); font-weight:600; cursor:pointer;}
+  .tf-sugg{display:flex; justify-content:space-between; align-items:center; gap:12px; width:100%; margin-top:8px; text-align:left; background:var(--surface); border:1px solid var(--accent); border-radius:12px; padding:11px 14px; color:var(--text); font-size:14px; cursor:pointer;}
+  .tf-sugg .rn{flex:1; min-width:0; line-height:1.3;}
+  .tf-sugg .rn em{display:block; font-style:normal; font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--accent); text-transform:uppercase; margin-bottom:2px;}
+  .tf-sugg .rp{flex:none; text-align:right; font-family:var(--font-mono); font-size:11px; color:var(--text-muted); line-height:1.35;}
+  .tf-sugg .rp b{color:var(--accent); font-size:14px;}
   .tab-panel:not(.hidden){animation:tfFade .18s ease-out;}
   @keyframes tfFade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
   .tf-calm .tab-panel:not(.hidden), .tf-calm #tfExSheet, .tf-calm #tfExSheet .sheet{animation:none !important; transition:none !important;}
@@ -952,7 +961,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-25 20:50 CT";
+const APP_BUILD = "2026-10-25 21:20 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3444,7 +3453,7 @@ function renderActiveProgramInfo() {
     renderWeeklyReview();
     return;
   }
-  headerName.textContent = active.name;
+  headerName.textContent = active.name.replace(/\s*\([^)]*\)/g, "").trim() || active.name;
   genBtn.disabled = false;
   genBtn.textContent = "Regenerate";
   ensureWorkoutReady(active);
@@ -5603,10 +5612,14 @@ function renderPartialControls() {
   const dateInput = document.getElementById("foodLogDate");
   if (row && dateInput) {
     const d = dateInput.value || todayStr;
-    row.innerHTML = `<button class="danger-link" style="color:var(--accent);" data-toggle-partial="${d}">${isDayMarkedPartial(d) ? "Marked as not fully tracked. Undo" : "Mark this day as not fully tracked"}</button>`;
+    row.innerHTML = isDayMarkedPartial(d)
+      ? `<div class="tf-partial on"><span>Not fully tracked</span><button class="danger-link" style="color:var(--accent);" data-toggle-partial="${d}">Undo</button></div>`
+      : `<div class="tf-partial"><button type="button" class="danger-link" data-partial-more aria-label="More options" style="color:var(--text-muted); font-size:18px; letter-spacing:2px;">⋯</button><button class="danger-link hidden" data-toggle-partial="${d}" style="color:var(--accent);">Mark this day as not fully tracked</button></div>`;
   }
 }
 document.addEventListener("click", (e) => {
+  const more = e.target.closest("[data-partial-more]");
+  if (more) { more.nextElementSibling.classList.toggle("hidden"); return; }
   const t = e.target.closest("[data-toggle-partial]");
   if (t) toggleDayPartial(t.dataset.togglePartial);
 });
@@ -5684,7 +5697,7 @@ function renderFoodNow() {
     const n = foodNudge(now);
     if (n) {
       html += `<div class="meta" style="margin-top:8px; color:var(--text);">${gapLabel(n.gapMs)} since your last logged meal${n.ateToday ? "" : " (nothing logged yet today)"}. You may be busy, so here are two quick options:</div>`;
-      html += n.options.map((o, i) => `<button class="secondary" data-food-combo="${i}" style="margin-top:8px; width:100%; text-align:left;">${o.items.map(x => x.name).join(" + ")} · ${o.cal} cal · ${o.pro} g protein. Tap to add</button>`).join("");
+      html += n.options.map((o, i) => `<button class="tf-sugg" data-food-combo="${i}"><span class="rn"><em>Suggested</em>${o.items.map(x => escapeHtml(x.name)).join(" + ")}</span><span class="rp"><b>${o.pro} g</b><br>${o.cal} cal</span></button>`).join("");
     }
     if (todays.length) html += `<button class="danger-link" data-food-end style="color:var(--accent); margin-top:10px;">End tracking for today</button>`;
   }
@@ -5871,6 +5884,9 @@ function toggleAddPanel(which) {
   });
 }
 document.getElementById("tfQuickTile").addEventListener("click", () => toggleAddPanel("quick"));
+document.getElementById("foodLogList").addEventListener("click", (e) => {
+  if (e.target.closest("[data-empty-quick]")) { toggleAddPanel("quick"); document.getElementById("tfQuickTile").scrollIntoView({ behavior: "smooth", block: "center" }); }
+});
 document.getElementById("tfExactTile").addEventListener("click", () => toggleAddPanel("exact"));
 
 function renderFoodLogList() {
@@ -5884,7 +5900,12 @@ function renderFoodLogList() {
   const back = document.getElementById("tfBackToday");
   if (back) back.classList.toggle("hidden", isToday);
   const dayLogs = foodLogsForDate(selectedDate).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
-  if (!dayLogs.length) { el.innerHTML = '<div class="empty">Nothing logged for this day.</div>'; return; }
+  if (!dayLogs.length) {
+    el.innerHTML = isToday
+      ? '<div class="tf-foodempty"><div>Nothing logged yet. Start with a protein hit.</div><button type="button" data-empty-quick>Quick add</button></div>'
+      : '<div class="empty">Nothing logged for this day.</div>';
+    return;
+  }
   el.innerHTML = dayLogs.map((f, i) => {
     const realIndex = state.foodLogs.indexOf(f);
     return `
