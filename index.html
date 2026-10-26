@@ -1029,7 +1029,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-26 02:05 CT";
+const APP_BUILD = "2026-10-26 12:10 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -5919,10 +5919,14 @@ function renderRecentFoods() {
   if (!wrap || !el) return;
   const cutoff = Date.now() - 60 * 86400000;
   const map = {};
+  // Skip anything already in the log for the day being viewed; those rows have their own "+1 serving".
+  const dateInput = document.getElementById("foodLogDate");
+  const viewDate = (dateInput && dateInput.value) || localDateStr();
+  const loggedNow = new Set(foodLogsForDate(viewDate).map(f => String(f.name || "").trim().toLowerCase()));
   (state.foodLogs || []).forEach(f => {
     if (!f.name || new Date(f.date).getTime() < cutoff) return;
     const k = f.name.trim().toLowerCase();
-    if ((state.hiddenRecentFoods || []).includes(k)) return;
+    if ((state.hiddenRecentFoods || []).includes(k) || loggedNow.has(k)) return;
     const m = map[k] || (map[k] = { count: 0, last: f });
     m.count++;
     if (new Date(f.date) > new Date(m.last.date)) m.last = f;
@@ -6007,6 +6011,7 @@ function renderFoodLogList() {
   const el = document.getElementById("foodLogList");
   const dateInput = document.getElementById("foodLogDate");
   const selectedDate = dateInput.value || localDateStr();
+  try { renderRecentFoods(); } catch (e) {}
   renderPartialControls();
   const isToday = selectedDate === localDateStr();
   const lab = document.getElementById("tfLogLabel");
