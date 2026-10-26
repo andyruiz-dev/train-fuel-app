@@ -1029,7 +1029,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-26 01:35 CT";
+const APP_BUILD = "2026-10-26 01:50 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -4049,7 +4049,8 @@ function kbProgram() {
     ["kb-swing-1h", sw[0], sw[1], EM + ", switch hands", null, 60],
     [pl[0], pl[1], pl[2], S, "A"], ["kb-rack-reverse-lunge", lg[0], lg[1], S, "A"],
     ["kb-floor-press", fp[0], fp[1], S, "B"], ["kb-sl-rdl", rd[0], rd[1], S, "B"],
-    ["kb-waiter-carry", wc[0], wc[1], "seconds " + S, "C"], ["dead-bug", db, "8", S, "C"],
+    ["kb-waiter-carry", wc[0], wc[1], "seconds " + S, null],
+    ["pushup", 2, "8-12", null, "C"], ["dead-bug", db, "8", S, "C"],
     ...(cx ? [["kb-complex", cx[0], "3", "3 of each: deadlift, clean, press, squat. Switch arms each round", null, 60]] : []),
   ], wuB, cdB);
   const phase = (label, ws, we, dl, a, b) => ({ phase: label, week_start: ws, week_end: we, deload_weeks: [dl], days: [a, b, a, b].map(d => JSON.parse(JSON.stringify(d))) });
