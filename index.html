@@ -163,6 +163,41 @@
   .tf-recap .cell .v small{font-size:12px; color:var(--text-muted); font-weight:500;}
   .tf-recap .cell .l{font-size:11px; color:var(--text-muted); margin-top:2px;}
   .tf-recap .line{margin-top:14px; font-size:13px; color:var(--text); line-height:1.5;}
+  /* Rings, bars and tiles for text-heavy screens */
+  .tf-sec{font-family:var(--font-mono); font-size:11px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); margin:18px 2px 8px;}
+  .tf-sec:first-child{margin-top:2px;}
+  .tf-tiles{display:flex; gap:10px;}
+  .tf-rt{flex:1; min-width:0; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px;}
+  .tf-rt .rl{font-size:11px; color:var(--text-muted); line-height:1.3;}
+  .tf-rt .rv{font-family:var(--font-display); font-size:20px; font-weight:600; line-height:1;}
+  .tf-rt .rv small{font-size:11px; color:var(--text-muted); font-weight:500;}
+  .tf-pill2{display:inline-block; font-size:12px; font-weight:600; padding:5px 11px; border-radius:99px; background:#1B3A33; color:var(--accent);}
+  .tf-pill2.gold{background:#3A2F18; color:var(--gold);}
+  .tf-pill2.gray{background:#2A2E24; color:var(--text-muted);}
+  .tf-bars{display:flex; flex-direction:column; gap:8px; margin-top:6px;}
+  .tf-bar{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:0;}
+  .tf-bar summary{list-style:none; cursor:pointer; padding:10px 12px; display:block;}
+  .tf-bar summary::-webkit-details-marker{display:none;}
+  .tf-bar summary::after{content:none !important;}
+  .tf-bar .bt{display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px;}
+  .tf-bar .bt b{font-family:var(--font-mono); font-size:12px; color:var(--text-muted); font-weight:500;}
+  .tf-bar .tr{height:6px; border-radius:3px; background:#2A2E24;}
+  .tf-bar .tr i{display:block; height:6px; border-radius:3px; background:var(--gold);}
+  .tf-bar.dn .tr i{background:var(--accent);}
+  .tf-bar .bd{padding:0 12px 12px; font-size:13px; line-height:1.5; color:var(--text-muted);}
+  .tf-dots7{display:flex; gap:5px; justify-content:center;}
+  .tf-dots7 i{width:9px; height:9px; border-radius:50%; background:#2A2E24; display:block;}
+  .tf-dots7 i.on{background:var(--accent);}
+  .tf-hl{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 14px; margin-top:10px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .tf-hl .t{font-size:14px; font-weight:600;}
+  .tf-hl button{background:none; border:0; color:var(--accent); font-size:13px; cursor:pointer; padding:4px 0;}
+  .tf-hl-body{font-size:13px; color:var(--text-muted); line-height:1.5; padding:8px 4px 0;}
+  .tf-ins{display:flex; gap:10px; align-items:flex-start; font-size:14px; line-height:1.45; color:var(--text); margin-bottom:10px;}
+  .tf-ins i{flex:none; width:8px; height:8px; border-radius:50%; background:var(--accent); margin-top:7px;}
+  .tf-insmore summary{list-style:none; cursor:pointer; color:var(--accent); font-size:13px; margin-bottom:10px;}
+  .tf-insmore summary::-webkit-details-marker{display:none;}
+  .tf-clamp{display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
+  .tf-clamp-btn{background:none; border:0; color:var(--accent); font-size:13px; padding:6px 0 0; cursor:pointer;}
   /* Program screen, "Steady" look */
   .tf-prog-head{margin:-4px -16px 0; padding:18px 20px 16px; background:linear-gradient(180deg,#1B3A33,#15170F);}
   .tf-prog-head .chg{font-size:13px; color:var(--accent); font-weight:600; background:none; border:0; padding:0; cursor:pointer;}
@@ -974,7 +1009,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-26 00:20 CT";
+const APP_BUILD = "2026-10-26 00:50 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3185,13 +3220,20 @@ function computeBellCoach() {
   });
   return out;
 }
+function tfInsightList(items, bright) {
+  if (!items.length) return "";
+  const row = (t) => `<div class="tf-ins"><i></i><span>${t}</span></div>`;
+  const first = items.slice(0, 2).map(row).join("");
+  const rest = items.slice(2);
+  return first + (rest.length ? `<details class="tf-insmore"><summary>${rest.length} more</summary>${rest.map(row).join("")}</details>` : "");
+}
 function renderBellCoach() {
   const card = document.getElementById("bellCoachCard"), el = document.getElementById("bellCoach");
   if (!card || !el) return;
   const hints = computeBellCoach();
   if (!hints.length) { card.classList.add("hidden"); el.innerHTML = ""; return; }
   card.classList.remove("hidden");
-  el.innerHTML = hints.map(h => `<div class="meta" style="margin-bottom:8px; color:var(--text);">${escapeHtml(h)}</div>`).join("") +
+  el.innerHTML = tfInsightList(hints.map(h => escapeHtml(h)), true) +
     `<div class="meta" style="font-size:12px;">Based on your logged results and a few words in your open notes (easy, heavy, pain). Ask Claude to read your notes for anything more.</div>`;
 }
 
@@ -3216,13 +3258,13 @@ function renderCoachNote() {
     card.classList.remove("hidden");
   }
   const body = result.insights.length
-    ? result.insights.map(i => `<div class="meta" style="margin-bottom:8px;">${i}</div>`).join("")
+    ? tfInsightList(result.insights, false)
     : `<div class="meta">${
         result.totalCheckins === 0
           ? "Still gathering enough days to spot real patterns — check back once you've logged a few daily check-ins."
           : `Logged ${result.totalCheckins} daily check-in${result.totalCheckins === 1 ? "" : "s"} so far — keep going and patterns will start showing up here once there's enough matched data (roughly 5 days with and without a given reason).`
       }</div>`;
-  el.innerHTML = body + `<button class="secondary" id="dismissCoachNote" style="margin-top:6px; width:100%;">Got it</button>`;
+  el.innerHTML = body + `<button class="tf-clamp-btn" id="dismissCoachNote" style="margin-top:6px;">Got it, hide for a week</button>`;
   document.getElementById("dismissCoachNote").addEventListener("click", async () => {
     state.coachNoteDismissed = { key, at: Date.now() };
     if (card) card.classList.add("hidden");
@@ -3351,6 +3393,27 @@ document.getElementById("reasonPatternsHint").addEventListener("click", () => {
 });
 
 let weeklyReviewLogsOpen = false;
+function tfRing(frac, center, label, color, size) {
+  const r = 30, C = 2 * Math.PI * r, f = Math.max(0, Math.min(1, frac || 0));
+  size = size || 78;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 76 76" role="img" aria-label="${escapeHtml(label)}"><circle cx="38" cy="38" r="${r}" fill="none" stroke="#2A2E24" stroke-width="7"/><circle cx="38" cy="38" r="${r}" fill="none" stroke="${color || "#2FBFA6"}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - f)).toFixed(1)}" transform="rotate(-90 38 38)"/><text x="38" y="43" text-anchor="middle" font-family="Oswald, sans-serif" font-size="15" font-weight="600" fill="#EDEAE0">${escapeHtml(center)}</text></svg>`;
+}
+function tfBarRows(items, cls) {
+  const max = Math.max(1, ...items.map(c => c.count));
+  return `<div class="tf-bars">${items.map(c => `<details class="tf-bar ${cls || ""}"><summary><div class="bt"><span>${escapeHtml(c.reason)}</span><b>${c.count}×</b></div><div class="tr"><i style="width:${Math.round((c.count / max) * 100)}%"></i></div></summary>${c.suggestion ? `<div class="bd">${escapeHtml(c.suggestion)}</div>` : ""}</details>`).join("")}</div>`;
+}
+function tfClampText(el) {
+  if (!el) return;
+  const old = el.nextElementSibling && el.nextElementSibling.classList.contains("tf-clamp-btn") ? el.nextElementSibling : null;
+  if (old) old.remove();
+  el.classList.remove("tf-clamp");
+  if (el.scrollHeight < 1) return;
+  el.classList.add("tf-clamp");
+  if (el.scrollHeight - el.clientHeight < 4) { el.classList.remove("tf-clamp"); return; }
+  const b = document.createElement("button"); b.type = "button"; b.className = "tf-clamp-btn"; b.textContent = "Read more";
+  b.addEventListener("click", () => { const c = el.classList.toggle("tf-clamp"); b.textContent = c ? "Read more" : "Show less"; });
+  el.after(b);
+}
 function renderWeeklyReview() {
   const el = document.getElementById("weeklyReview");
   const program = programs.find(p => p.id === state.activeProgramId);
@@ -3407,43 +3470,44 @@ function renderWeeklyReview() {
     <div class="list-item"><div class="name">${new Date(l.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · ${l.exercise}</div><div class="meta">${l.result}</div></div>
   `).join("") : `<div class="empty">Nothing logged this week yet.</div>`) : "";
 
-  const sectionLabelStyle = "font-size:11px; text-transform:uppercase; letter-spacing:0.6px; color:var(--text-muted); margin-top:14px; margin-bottom:4px;";
+  const programDone = (program && getProgramPace(program).mode === "count") ? getProgramPace(program).completed : null;
+  const programTotal = program ? totalProgramWorkouts(program) : 0;
+  const ringFrac = programDone !== null && programTotal ? programDone / programTotal : (program ? (weekNumber - 1) / Math.max(1, programMaxWeek(program)) : 0);
+  const ringCenter = programDone !== null ? `${programDone}/${programTotal}` : `Wk ${weekNumber}`;
+  const totLogs = counts.max + counts.hold + counts.missed;
+  const logRow = (lab, n, col) => `<div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-muted);"><span style="width:62px; text-align:left;">${lab}</span><span style="flex:1; height:6px; border-radius:3px; background:#2A2E24;"><i style="display:block; height:6px; border-radius:3px; width:${totLogs ? Math.round(n / totLogs * 100) : 0}%; background:${col};"></i></span><b style="font-family:var(--font-mono); font-weight:500; width:16px; text-align:right;">${n}</b></div>`;
+  const calT = state.settings?.macroTargets?.calories || 0;
+  const intakeTile = wi.counted >= 3
+    ? `<div class="tf-rt">${tfRing(calT ? wi.avg / calT : 0, String(wi.avg), "Average intake " + wi.avg + " calories", "#2FBFA6")}<div class="rv">${wi.avg}<small> cal/day</small></div><div class="rl">${calT ? "of " + calT + " target" : "7-day average"}</div></div>`
+    : `<div class="tf-rt"><div class="rl" style="padding:18px 4px;">Log 3 days of food to see your 7-day average.</div></div>`;
+  const daysTile = `<div class="tf-rt"><div class="rv" style="margin-top:6px;">${wi.counted}<small> / 7</small></div><div class="tf-dots7">${Array.from({ length: 7 }, (_, k) => `<i class="${k < wi.counted ? "on" : ""}"></i>`).join("")}</div><div class="rl">days counted</div></div>`;
+  let sugHead = "", sugPill = "gray";
+  if (suggestion) {
+    if (suggestion.deltaCalories !== 0) { sugHead = `${suggestion.deltaCalories > 0 ? "+" : "−"}${Math.abs(suggestion.deltaCalories)} cal/day suggested`; sugPill = "gold"; }
+    else sugHead = "No calorie change suggested";
+  } else sugHead = "Need 2 weigh-ins a week apart";
+  const applied = suggestion && suggestion.deltaCalories !== 0 && daysSinceApplied !== null && daysSinceApplied < MACRO_BASELINE_DAYS;
+  const nutritionBlock = `
+    <div class="tf-sec">Nutrition</div>
+    <div class="tf-tiles">${intakeTile}${daysTile}</div>
+    <div class="tf-hl"><span class="t">${sugHead}</span>${suggestion ? `<button type="button" data-hl-toggle>Why</button>` : ""}</div>
+    ${suggestion ? `<div class="tf-hl-body hidden" data-hl-body>${suggestion.message}${applied ? ` Applied ${daysSinceApplied < 1 ? "today" : Math.floor(daysSinceApplied) + " day(s) ago"}.` : ""}</div>` : ""}
+    ${suggestion && suggestion.deltaCalories !== 0 && !applied ? `<button class="secondary" id="applyMacroSuggestionBtn" style="margin-top:8px; width:100%;">Apply suggestion</button>` : ""}`;
   el.innerHTML = `
-    <div style="${sectionLabelStyle} margin-top:0;">Training week</div>
-    <div class="meta">${paceLine}</div>
-    ${paceNote ? `<div class="meta" style="margin-top:4px;">${paceNote}</div>` : ""}
-    ${deloadNote ? `<div class="meta" style="margin-top:4px;">Deload = a planned lighter week built into your program so your body can recover — sets and reps are automatically reduced, no action needed from you.</div>` : ""}
-    <div class="meta" id="weeklyReviewLogsToggle" style="margin-top:6px; cursor:pointer;">Last 7 days: ${recentLogs.length} exercises logged
-    (${counts.max} hit max, ${counts.hold} as prescribed, ${counts.missed} missed) · ${weeklyReviewLogsOpen ? "hide" : "see"} which</div>
+    <div class="tf-sec">Training</div>
+    <div class="tf-tiles">
+      <div class="tf-rt">${tfRing(ringFrac, ringCenter, "Program progress", "#2FBFA6")}<div class="rl">${programDone !== null ? "workouts done" : "program week"}${deloadNote ? "<br>deload week" : ""}</div></div>
+      <div class="tf-rt" style="align-items:stretch; justify-content:center;"><div class="rl" style="text-align:left;">Last 7 days · ${totLogs} moves</div>${logRow("Hit max", counts.max, "var(--accent)")}${logRow("As planned", counts.hold, "#7FA89F")}${logRow("Short", counts.missed, "#6B6F60")}</div>
+    </div>
+    <div class="tf-hl"><span class="t">${paceNote ? escapeHtml(paceNote) : escapeHtml(paceLine)}</span><button type="button" id="weeklyReviewLogsToggle">${weeklyReviewLogsOpen ? "Hide" : "Moves"}</button></div>
     ${logsDetailHtml}
-
-    <div style="${sectionLabelStyle}">Nutrition</div>
-    ${weeklyIntakeLine}
-    ${suggestion ? `
-      <div class="meta">${suggestion.message}</div>
-      ${suggestion.deltaCalories !== 0 ? (
-        daysSinceApplied !== null && daysSinceApplied < MACRO_BASELINE_DAYS
-          ? `<div class="meta" style="margin-top:8px;">Applied ${daysSinceApplied < 1 ? "today" : Math.floor(daysSinceApplied) === 1 ? "1 day ago" : Math.floor(daysSinceApplied) + " days ago"} — next suggestion available in ${Math.max(1, Math.ceil(MACRO_BASELINE_DAYS - daysSinceApplied))} day${Math.ceil(MACRO_BASELINE_DAYS - daysSinceApplied) === 1 ? "" : "s"}.</div>`
-          : `<button class="secondary" id="applyMacroSuggestionBtn" style="margin-top:8px; width:100%;">Apply suggestion</button>`
-      ) : ""}
-    ` : `<div class="meta">Log at least two weigh-ins about a week apart to get a calorie-pace suggestion here.</div>`}
-    ${checkInSummary?.up.length ? `
-      <div class="meta" style="margin-top:10px;">
-        <strong style="color:var(--text);">This week's weight upticks were linked to:</strong>
-      </div>
-      ${checkInSummary.up.map(c => `
-        <div class="meta" style="margin-top:6px;">${c.reason} (${c.count})${c.suggestion ? ` — ${c.suggestion}` : ""}</div>
-      `).join("")}
-    ` : ""}
-    ${checkInSummary?.down.length ? `
-      <div class="meta" style="margin-top:10px;">
-        <strong style="color:var(--text);">This week's notable weight drops were linked to:</strong>
-      </div>
-      ${checkInSummary.down.map(c => `
-        <div class="meta" style="margin-top:6px;">${c.reason} (${c.count})${c.suggestion ? ` — ${c.suggestion}` : ""}</div>
-      `).join("")}
-    ` : ""}
+    ${nutritionBlock}
+    ${checkInSummary?.up.length ? `<div class="tf-sec">Weight upticks this week</div>${tfBarRows(checkInSummary.up, "")}` : ""}
+    ${checkInSummary?.down.length ? `<div class="tf-sec">Weight drops this week</div>${tfBarRows(checkInSummary.down, "dn")}` : ""}
   `;
+  el.querySelectorAll("[data-hl-toggle]").forEach(b => b.addEventListener("click", () => {
+    const body = b.closest(".tf-hl").nextElementSibling; if (body && body.hasAttribute("data-hl-body")) { body.classList.toggle("hidden"); b.textContent = body.classList.contains("hidden") ? "Why" : "Hide"; }
+  }));
 
   const applyBtn = document.getElementById("applyMacroSuggestionBtn");
   if (applyBtn) applyBtn.addEventListener("click", () => applyMacroSuggestion(suggestion.deltaCalories));
@@ -6507,70 +6571,60 @@ document.getElementById("journeyStats").addEventListener("click", (e) => {
 
 function renderBodyFatSummary() {
   const el = document.getElementById("bodyFatSummary");
-  let html = "";
+  const tiles = [];
+  let notes = "";
 
-  // --- Weight: start -> current -> goal -> forecast ---
+  // --- Weight ---
   const wg = computeWeightGoalForecast();
   if (!wg) {
-    html += `<div class="meta">Log a weigh-in to start tracking toward a goal.</div>`;
+    notes += `<div class="tf-empty" style="padding:0 2px 8px;">Log a weigh-in to start tracking toward a goal.</div>`;
   } else {
-    const startStr = `${wg.startWeight} lb (${formatDateOnly(wg.startDate)})`;
-    if (!wg.goalWeight) {
-      html += `<div class="meta">Weight: start ${startStr} → now ${wg.currentWeight} lb.</div>`;
-      html += `<div class="meta">Set a goal weight in Settings to see a forecast.</div>`;
+    let frac = 0, sub = "now";
+    if (wg.goalWeight) {
+      const span = wg.startWeight - wg.goalWeight;
+      frac = span !== 0 ? (wg.startWeight - wg.currentWeight) / span : 0;
+      sub = "goal " + wg.goalWeight;
+    }
+    tiles.push(`<div class="tf-rt">${tfRing(frac, String(wg.currentWeight), "Weight " + wg.currentWeight + " pounds", "#2FBFA6", 96)}<div class="rv">${wg.currentWeight}<small> lb</small></div><div class="rl">${sub}${wg.goalWeight ? "<br>started " + wg.startWeight : ""}</div></div>`);
+    if (!wg.goalWeight) notes += `<div class="rl" style="color:var(--text-muted); font-size:13px; margin-top:8px;">Set a goal weight in Settings to see a forecast.</div>`;
+    else if (wg.status === "reached") notes += `<div class="tf-hl"><span class="t" style="color:var(--accent);">Goal weight reached</span></div>`;
+    else if (wg.status === "onTrack" && Math.abs(wg.weeksToGoal) <= 104) {
+      const weeks = Math.abs(wg.weeksToGoal);
+      const wl = weeks < 1 ? "under a week" : `~${Math.round(weeks)} wk`;
+      notes += `<div class="tf-hl"><span class="t">${wl} to goal at ${wg.trendLbPerWeek >= 0 ? "+" : ""}${wg.trendLbPerWeek.toFixed(2)} lb/wk</span><span class="tf-pill2">on track</span></div>`;
     } else {
-      html += `<div class="meta">Weight: start ${startStr} → now ${wg.currentWeight} lb → goal ${wg.goalWeight} lb.</div>`;
-      if (wg.status === "reached") {
-        html += `<div class="meta" style="color:var(--accent);">Goal weight reached.</div>`;
-      } else if (wg.status === "onTrack") {
-        const weeks = Math.abs(wg.weeksToGoal);
-        const weeksLabel = weeks < 1 ? "under a week" : `~${Math.round(weeks)} week${Math.round(weeks) === 1 ? "" : "s"}`;
-        html += `<div class="meta">At your current pace (${wg.trendLbPerWeek >= 0 ? "+" : ""}${wg.trendLbPerWeek.toFixed(2)} lb/week), ${weeksLabel} to goal — around ${formatWeeksFromNow(wg.weeksToGoal)}.</div>`;
-      } else {
-        html += `<div class="meta" style="color:var(--gold);">No ETA at your current trend — it's flat or moving away from your goal.</div>`;
-      }
+      notes += `<div class="tf-hl"><span class="t">Holding steady for now</span><span class="tf-pill2 gray">keep logging</span></div>`;
     }
   }
 
-  // --- Body fat: same shape, only once neck+waist data exists ---
+  // --- Body fat ---
   const bf = computeBodyFatTrend();
   if (!bf) {
-    html += `<div class="meta" style="margin-top:8px;">Log neck + waist with a weigh-in to get a body-fat estimate here.</div>`;
-    if (clearFlagType("bodyFatTrend")) { persistNow(); renderFlagsBanner(); }
-  } else if (bf.ptsPerWeek === null) {
-    // Have a real reading, just not enough points/span yet for a trend line
-    // — show the value itself rather than falling back to the "log it"
-    // prompt the person already acted on.
-    const dateStr = formatDateOnly(bf.latestDate);
-    html += `<div class="meta" style="margin-top:8px;">Body fat (RFM method): ${bf.latest}% as of ${dateStr} — log it again with a future weigh-in to start seeing a trend.</div>`;
+    notes += `<div class="rl" style="color:var(--text-muted); font-size:13px; margin-top:10px;">Log neck + waist with a weigh-in to get a body-fat estimate here.</div>`;
     if (clearFlagType("bodyFatTrend")) { persistNow(); renderFlagsBanner(); }
   } else {
-    const trendWord = bf.ptsPerWeek <= -0.1 ? "trending down" : bf.ptsPerWeek >= 0.1 ? "trending up" : "holding steady";
-    const message = `Body fat (RFM method): ${bf.latest}% as of ${formatDateOnly(bf.latestDate)} — ${trendWord} (${bf.ptsPerWeek >= 0 ? "+" : ""}${bf.ptsPerWeek.toFixed(2)} pts/week).`;
-    html += `<div class="meta" style="margin-top:8px;">${message}</div>`;
-
-    const bfg = computeBodyFatGoalForecast();
-    if (!bfg?.goalPct) {
-      html += `<div class="meta">Set a goal body-fat % in Settings to see a forecast.</div>`;
-    } else if (bfg.status === "reached") {
-      html += `<div class="meta" style="color:var(--accent);">Goal body fat reached.</div>`;
-    } else if (bfg.status === "onTrack") {
-      const weeks = Math.abs(bfg.weeksToGoal);
-      const weeksLabel = weeks < 1 ? "under a week" : `~${Math.round(weeks)} week${Math.round(weeks) === 1 ? "" : "s"}`;
-      html += `<div class="meta">At this pace, ${weeksLabel} to your ${bfg.goalPct}% goal — around ${formatWeeksFromNow(bfg.weeksToGoal)}.</div>`;
+    const bfg = (typeof computeBodyFatGoalForecast === "function") ? computeBodyFatGoalForecast() : null;
+    const goalPct = bfg && bfg.goalPct;
+    const firstBf = (state.measurements || []).filter(m => typeof m.bodyFatPct === "number").sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+    let frac = 0;
+    if (goalPct && firstBf && firstBf.bodyFatPct !== goalPct) frac = (firstBf.bodyFatPct - bf.latest) / (firstBf.bodyFatPct - goalPct);
+    tiles.push(`<div class="tf-rt">${tfRing(frac, bf.latest + "%", "Body fat " + bf.latest + " percent", "#C79A45", 96)}<div class="rv">${bf.latest}<small> % body fat</small></div><div class="rl">${goalPct ? "goal " + goalPct + "%" : "RFM estimate"}<br>${formatDateOnly(bf.latestDate)}</div></div>`);
+    if (bf.ptsPerWeek === null) {
+      notes += `<div class="tf-hl"><span class="t">Log again next weigh-in to start a trend</span></div>`;
+      if (clearFlagType("bodyFatTrend")) { persistNow(); renderFlagsBanner(); }
     } else {
-      html += `<div class="meta" style="color:var(--gold);">No ETA toward your body-fat goal at the current trend.</div>`;
+      const down = bf.ptsPerWeek <= -0.1, up = bf.ptsPerWeek >= 0.1;
+      const word = down ? "Trending down" : up ? "Trending up" : "Holding steady";
+      const message = `Body fat (RFM method): ${bf.latest}% as of ${formatDateOnly(bf.latestDate)} — ${word.toLowerCase()} (${bf.ptsPerWeek >= 0 ? "+" : ""}${bf.ptsPerWeek.toFixed(2)} pts/week).`;
+      let extra = "";
+      if (goalPct && bfg.status === "reached") extra = "goal reached";
+      else if (goalPct && bfg.status === "onTrack" && Math.abs(bfg.weeksToGoal) <= 104) extra = "~" + Math.round(Math.abs(bfg.weeksToGoal)) + " wk to " + goalPct + "%";
+      notes += `<div class="tf-hl"><span class="t">${word} · ${bf.ptsPerWeek >= 0 ? "+" : ""}${bf.ptsPerWeek.toFixed(2)} pts/wk</span>${extra ? `<span class="tf-pill2">${extra}</span>` : `<span class="tf-pill2 gray">${down ? "good" : "steady"}</span>`}</div>`;
+      const flagChanged = Math.abs(bf.ptsPerWeek) >= 0.1 ? upsertFlag("bodyFatTrend", message) : clearFlagType("bodyFatTrend");
+      if (flagChanged) { persistNow(); renderFlagsBanner(); }
     }
-
-    // Only a real move (not "holding steady") is worth flagging for review —
-    // a flat trend is just confirmation nothing's changed.
-    const flagChanged = Math.abs(bf.ptsPerWeek) >= 0.1
-      ? upsertFlag("bodyFatTrend", message)
-      : clearFlagType("bodyFatTrend");
-    if (flagChanged) { persistNow(); renderFlagsBanner(); }
   }
-
-  el.innerHTML = html;
+  el.innerHTML = (tiles.length ? `<div class="tf-tiles">${tiles.join("")}</div>` : "") + notes;
 }
 
 // "7-day avg: 202.1 lb (down 0.6 vs the week before)". Needs 2+ readings in
