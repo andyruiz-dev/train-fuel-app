@@ -1029,7 +1029,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-26 01:50 CT";
+const APP_BUILD = "2026-10-26 02:05 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -8782,6 +8782,46 @@ async function syncWakeLock() {
 }
 new MutationObserver(syncWakeLock).observe(document.getElementById("sessionPanel"), { attributes: true, attributeFilter: ["class", "data-sx"] });
 document.addEventListener("visibilitychange", syncWakeLock);
+
+// ---- Swipe left/right between the four main tabs ----
+(function () {
+  const ORDER = ["coach", "food", "today", "progress"];
+  let sx = 0, sy = 0, st = 0, ok = false;
+  function blocked(t) {
+    if (!t || !t.closest) return true;
+    if (t.closest("input, textarea, select, [contenteditable], svg[data-noswipe]")) return true;
+    // Don't hijack horizontally scrollable strips (week tabs, chip rows).
+    for (let el = t; el && el !== document.body; el = el.parentElement) {
+      const cs = getComputedStyle(el);
+      if ((cs.overflowX === "auto" || cs.overflowX === "scroll") && el.scrollWidth > el.clientWidth + 2) return true;
+    }
+    const sp = document.getElementById("sessionPanel");
+    if (sp && !sp.classList.contains("hidden") && sp.getAttribute("data-sx")) return true;
+    const sheet = document.getElementById("tfExSheet");
+    if (sheet && sheet.classList.contains("open")) return true;
+    return false;
+  }
+  document.addEventListener("touchstart", (e) => {
+    if (e.touches.length !== 1) { ok = false; return; }
+    const t = e.touches[0];
+    sx = t.clientX; sy = t.clientY; st = Date.now();
+    ok = !blocked(e.target);
+  }, { passive: true });
+  document.addEventListener("touchend", (e) => {
+    if (!ok) return;
+    ok = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - sx, dy = t.clientY - sy;
+    if (Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * 0.6 || Date.now() - st > 700) return;
+    const cur = document.querySelector("nav.tabs .tab-btn.active");
+    const i = cur ? ORDER.indexOf(cur.dataset.tab) : -1;
+    if (i < 0) return;
+    const next = ORDER[i + (dx < 0 ? 1 : -1)];
+    if (!next) return;
+    const btn = document.querySelector(`nav.tabs .tab-btn[data-tab="${next}"]`);
+    if (btn) { btn.click(); window.scrollTo(0, 0); buzz(10); }
+  }, { passive: true });
+})();
 
 async function init() {
   await loadState();
