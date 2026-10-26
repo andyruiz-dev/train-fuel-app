@@ -1029,7 +1029,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-26 01:20 CT";
+const APP_BUILD = "2026-10-26 01:35 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -4041,9 +4041,9 @@ function kbProgram() {
     ["kb-deadlift", dl[0], dl[1], null, "A"], ["kb-goblet-squat", sq[0], sq[1], null, "A"],
     ["kb-swing", sw[0], sw[1], null],
     ["kb-press-hk", pr[0], pr[1], S, "B"], ["kb-row", rw[0], rw[1], S, "B"],
-    ["pushup", pu[0], "8-12", null, "D"], ["plank", pu[0], pu[1], null, "D"],
     ["kb-suitcase-carry", ca[0], ca[1], "seconds " + S, wm ? "C" : null], ...(wm ? [["kb-windmill", wm[0], wm[1], S + ", no weight to start", "C"]] : []),
     ["kb-turkish-getup", tg[0], tg[1], S],
+    ["pushup", pu[0], "8-12", null, "D"], ["plank", pu[0], pu[1], null, "D"],
   ], wuA, cdA);
   const B = (sw, pl, lg, fp, rd, wc, db, cx) => day("Bell B: hinge, pull, single leg", [
     ["kb-swing-1h", sw[0], sw[1], EM + ", switch hands", null, 60],
