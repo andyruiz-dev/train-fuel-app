@@ -1051,7 +1051,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-27 08:10 CT";
+const APP_BUILD = "2026-10-27 18:55 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -6447,14 +6447,14 @@ async function scanFoodBlob(file) {
       reader.onerror = reject;
       reader.readAsDataURL(uploadBlob);
     });
-    const resp = await fetchWithRetry(WORKER_URL.replace(/\/$/, "") + "/api/food-scan", {
+    const resp = await fetchWithRetry(WORKER_URL.replace(/\/$/, "") + "/api/food-scan", withAuth({
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tfToken() },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         image: { media_type: uploadBlob.type || file.type || "image/jpeg", data: base64 },
         note: note ? `${note} (If this lists several foods, return one combined total for the whole meal. Always answer with the JSON object only.)` : note,
       }),
-    });
+    }));
     if (!resp.ok) {
       const errBody = await resp.text().catch(() => "");
       throw new Error(`${resp.status}: ${errBody.slice(0, 300)}`);
