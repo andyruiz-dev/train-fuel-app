@@ -1050,7 +1050,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-26 21:30 CT";
+const APP_BUILD = "2026-10-26 21:45 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -8106,6 +8106,11 @@ function emomStart() {
   session.timerId = setInterval(tickEmom, 1000);
   renderSession();
 }
+// Blocks noted "switch hands/arms" alternate sides each round, starting right.
+function emomHandLabel(step, roundIdx) {
+  if (!step || !/switch (hands|arms)/i.test(step.note || "")) return "";
+  return roundIdx % 2 === 0 ? "Right hand" : "Left hand";
+}
 function tickEmom() {
   if (!session || !session.emom || !session.emom.startedAt) return;
   const em = session.emom, now = Date.now();
@@ -8128,6 +8133,8 @@ function tickEmom() {
   const roundEnd = em.startedAt + (em.done + 1) * em.interval * 1000;
   if (clock) clock.textContent = Math.max(0, Math.ceil((roundEnd - now) / 1000));
   if (label) label.textContent = `Round ${em.done + 1} of ${em.rounds}`;
+  const handEl = document.getElementById("emomHand");
+  if (handEl) handEl.textContent = emomHandLabel(session.queue[session.pos], em.done);
 }
 function renderEmom(step, stepCueHtml) {
   const panel = document.getElementById("sessionPanel");
@@ -8145,7 +8152,7 @@ function renderEmom(step, stepCueHtml) {
         <h2>${step.name}</h2>
         <div class="meta">${em.rounds} rounds · each round: ${what}</div>
         ${stepCueHtml}
-        <div class="meta" style="margin-top:8px;">Finish the round, then rest in whatever time is left. A beep marks each new round. Pick up the bell, then tap Start for a 3-second countdown.</div>
+        <div class="meta" style="margin-top:8px;">Finish the round, then rest in whatever time is left. A beep marks each new round. Pick up the bell, then tap Start for a 3-second countdown.${emomHandLabel(step, 0) ? " Start with your right hand, then switch hands each round." : ""}</div>
         <div class="sx-spacer"></div>
         <button class="primary" id="emomStartBtn" style="margin-top:14px; width:100%;">Start</button>
         <button class="danger-link" style="color:var(--accent); margin-top:8px;" data-quick-note="${escapeHtml(step.name)}">Note</button>
@@ -8161,6 +8168,7 @@ function renderEmom(step, stepCueHtml) {
         <div class="meta" id="emomRound" style="margin-top:8px;">Round ${em.done + 1} of ${em.rounds}</div>
         <h2>${step.name}</h2>
         <div class="meta">Do now: ${what}</div>
+        ${emomHandLabel(step, em.done) ? `<div id="emomHand" style="font-family:var(--font-display); font-size:30px; font-weight:600; color:var(--accent); text-align:center; margin-top:10px; text-transform:uppercase;">${emomHandLabel(step, em.done)}</div>` : ""}
         <div id="emomClock" style="font-size:48px; font-weight:600; text-align:center; margin:14px 0; font-family:var(--font-mono);">${formatTime(em.interval)}</div>
         ${stepCueHtml}
         <div class="sx-spacer"></div>
