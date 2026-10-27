@@ -234,6 +234,7 @@
   .tf-dcard.next .k{color:var(--accent); font-weight:600;}
   .tf-dcard .t{font-family:var(--font-display); font-size:19px; font-weight:600; margin-top:2px; text-transform:uppercase;}
   .tf-dcard.done .t{color:var(--text-muted);}
+  .tf-recent-more{display:block; width:100%; background:none; border:0; color:var(--accent); font-family:var(--font-mono); font-size:12px; letter-spacing:.5px; text-transform:uppercase; text-align:left; padding:8px 2px; cursor:pointer;}
   .tf-dcard .tf-exlink{display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; background:none; border:0; border-bottom:1px solid #2A2E24; color:var(--text); font:inherit; font-size:14px; text-align:left; padding:9px 0; cursor:pointer;}
   .tf-dcard .tf-exlink:last-child{border-bottom:0;}
   .tf-dcard .tf-exlink b{font-family:var(--font-mono); font-size:11px; font-weight:500; letter-spacing:.5px; color:var(--accent); text-transform:uppercase; white-space:nowrap;}
@@ -1050,7 +1051,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-26 22:05 CT";
+const APP_BUILD = "2026-10-27 08:10 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -5966,6 +5967,7 @@ function renderFoodHero(totals, t, entryCount) {
 
 // Foods you log often, re-addable in one tap.
 let recentFoodList = [];
+let recentFoodsOpen = false;
 function renderRecentFoods() {
   const wrap = document.getElementById("recentWrap"), el = document.getElementById("recentFoods");
   if (!wrap || !el) return;
@@ -5988,9 +5990,14 @@ function renderRecentFoods() {
     .slice(0, 12).map(m => m.last)
     .sort((a, b) => (a.alcohol ? 1 : 0) - (b.alcohol ? 1 : 0)).slice(0, 6);
   wrap.classList.toggle("hidden", !recentFoodList.length);
-  el.innerHTML = recentFoodList.map((f, i) => `<div class="chip" data-recent-food="${i}"><span class="rn">${escapeHtml(f.name)}</span><span class="rp"><b style="font-size:14px;">${f.protein || 0} g</b>${f.calories ? "<br>" + f.calories + " cal" : ""}</span><button type="button" class="rx" data-recent-hide="${i}" aria-label="Hide ${escapeHtml(f.name)} from recent foods">×</button></div>`).join("");
+  const shownRecent = recentFoodsOpen ? recentFoodList.length : Math.min(3, recentFoodList.length);
+  el.innerHTML = recentFoodList.slice(0, shownRecent).map((f, i) => `<div class="chip" data-recent-food="${i}"><span class="rn">${escapeHtml(f.name)}</span><span class="rp"><b style="font-size:14px;">${f.protein || 0} g</b>${f.calories ? "<br>" + f.calories + " cal" : ""}</span><button type="button" class="rx" data-recent-hide="${i}" aria-label="Hide ${escapeHtml(f.name)} from recent foods">×</button></div>`).join("");
+  if (recentFoodList.length > 3) {
+    el.insertAdjacentHTML("beforeend", `<button type="button" class="tf-recent-more" data-recent-more>${recentFoodsOpen ? "Show fewer" : "Show " + (recentFoodList.length - 3) + " more"}</button>`);
+  }
 }
 document.getElementById("recentFoods").addEventListener("click", async (e) => {
+  if (e.target.closest("[data-recent-more]")) { recentFoodsOpen = !recentFoodsOpen; renderRecentFoods(); return; }
   const hide = e.target.closest("[data-recent-hide]");
   if (hide) {
     e.stopPropagation();
