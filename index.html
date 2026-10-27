@@ -234,6 +234,9 @@
   .tf-dcard.next .k{color:var(--accent); font-weight:600;}
   .tf-dcard .t{font-family:var(--font-display); font-size:19px; font-weight:600; margin-top:2px; text-transform:uppercase;}
   .tf-dcard.done .t{color:var(--text-muted);}
+  .tf-dcard .tf-exlink{display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; background:none; border:0; border-bottom:1px solid #2A2E24; color:var(--text); font:inherit; font-size:14px; text-align:left; padding:9px 0; cursor:pointer;}
+  .tf-dcard .tf-exlink:last-child{border-bottom:0;}
+  .tf-dcard .tf-exlink b{font-family:var(--font-mono); font-size:11px; font-weight:500; letter-spacing:.5px; color:var(--accent); text-transform:uppercase; white-space:nowrap;}
   .tf-dcard .ex{margin-top:10px; padding-top:10px; border-top:1px solid #2A2E24; font-size:13px; color:var(--text-muted); line-height:1.6;}
   /* Progress screen, "Steady" look */
   .tf-pg-hero{background:linear-gradient(135deg,#2FBFA6 0%,#1B8674 100%); color:#0B1512; border-radius:22px; padding:20px; display:flex; gap:18px; align-items:center; margin-bottom:14px;}
@@ -1047,7 +1050,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-26 20:55 CT";
+const APP_BUILD = "2026-10-26 21:30 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -2118,7 +2121,7 @@ function renderProgramView() {
       : '<span style="font-size:12px;color:var(--text-muted);">Preview</span>';
     let exs = "";
     if (d.fixed) {
-      exs = d.fixed.exercises.map(f => { const x = BUILTIN_EXERCISES.find(b => b.id === f.id); return `${esc(x ? x.name : f.id)} ${esc(String(f.sets))}×${esc(String(f.reps))}`; }).join("<br>");
+      exs = d.fixed.exercises.map(f => { const x = BUILTIN_EXERCISES.find(b => b.id === f.id); const nm = x ? x.name : f.id; return `<button type="button" class="tf-exlink" data-pexinfo="${esc(nm)}"><span>${esc(nm)} ${esc(String(f.sets))}×${esc(String(f.reps))}</span><b>How to ›</b></button>`; }).join("");
     } else {
       exs = (d.slots || []).map(s => `${esc(s.muscle_group)} ${esc(String(s.sets))}×${esc(String(s.reps))}`).join("<br>");
     }
@@ -2140,6 +2143,8 @@ document.getElementById("tfProgramView").addEventListener("click", (e) => {
   if (e.target.closest("#tfChangeProgram")) {
     const d = document.getElementById("programManage"); d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" }); return;
   }
+  const xl = e.target.closest("[data-pexinfo]");
+  if (xl) { openExerciseSheet(xl.dataset.pexinfo); return; }
   const c = e.target.closest("[data-dcard]");
   if (c) c.querySelector(".ex").classList.toggle("hidden");
 });
