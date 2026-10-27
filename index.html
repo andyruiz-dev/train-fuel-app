@@ -1050,7 +1050,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-26 21:45 CT";
+const APP_BUILD = "2026-10-26 22:05 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -7793,6 +7793,48 @@ function sxTick() {
   const e = document.querySelector("#sessionPanel .sx-top span:last-child");
   if (e && session && session.startedAt) e.textContent = formatTime(Math.max(0, Math.floor((Date.now() - session.startedAt) / 1000)));
 }
+// Timers for held stretches in the warm-up/cool-down ("hold 45s each side").
+// Tap Timer to count the hold; for "each side" a short switch pause and a
+// second hold follow automatically. Ranges ("20-30s") use the longer number.
+let wcTimer = null;
+function wcHoldInfo(detail) {
+  const d = String(detail || "");
+  const m = d.match(/hold\s+(\d+)(?:\s*-\s*(\d+))?\s*s\b/i) || d.match(/\b(\d+)(?:\s*-\s*(\d+))?\s*s\s+each side/i);
+  if (!m) return null;
+  return { secs: parseInt(m[2] || m[1], 10), each: /each side/i.test(d) };
+}
+function wcStopTimer() {
+  if (wcTimer) { clearInterval(wcTimer.id); wcTimer = null; }
+}
+function wcToggleTimer(i, items) {
+  const info = wcHoldInfo(items[i] && items[i].detail);
+  if (!info) return;
+  const wasThis = wcTimer && wcTimer.idx === i;
+  document.querySelectorAll("[data-wc-timer]").forEach(b => { b.textContent = "Timer"; });
+  wcStopTimer();
+  if (wasThis) return;   // second tap cancels
+  wcTimer = { idx: i, secs: info.secs, each: info.each, side: 1, mode: "hold", end: Date.now() + info.secs * 1000, id: null };
+  wcTimer.id = setInterval(wcTick, 250);
+  wcTick();
+}
+function wcTick() {
+  const t = wcTimer; if (!t) return;
+  const btn = document.getElementById("wcT" + t.idx);
+  if (!btn) { wcStopTimer(); return; }
+  const left = Math.max(0, Math.ceil((t.end - Date.now()) / 1000));
+  btn.textContent = t.mode === "switch" ? "Switch " + left : (t.each ? "Side " + t.side + " · " : "") + left + "s";
+  if (left > 0) return;
+  try { playBeep(); } catch (e) {}
+  buzz(40);
+  if (t.mode === "hold" && t.each && t.side === 1) {
+    t.mode = "switch"; t.end = Date.now() + 5000; return;
+  }
+  if (t.mode === "switch") {
+    t.mode = "hold"; t.side = 2; t.end = Date.now() + t.secs * 1000; return;
+  }
+  wcStopTimer();
+  btn.textContent = "Done ✓";
+}
 function renderWarmupCooldownStep(phase) {
   const panel = document.getElementById("sessionPanel");
   const items = currentWorkout[phase] || [];
@@ -7805,11 +7847,18 @@ function renderWarmupCooldownStep(phase) {
       ${items.map((it, i) => `
         <div class="list-item">
           <div><div class="name">${it.name}</div><div class="meta">${it.detail || ""}</div></div>
-          <button class="danger-link" style="color:var(--accent);" data-warmcool-swap="${phase}:${i}">Swap</button>
+          <div style="display:flex; gap:14px; align-items:center;">
+            ${wcHoldInfo(it.detail) ? `<button class="danger-link" style="color:var(--accent); min-width:64px; text-align:right;" data-wc-timer="${i}" id="wcT${i}">Timer</button>` : ""}
+            <button class="danger-link" style="color:var(--accent);" data-warmcool-swap="${phase}:${i}">Swap</button>
+          </div>
         </div>`).join("")}
       <div class="sx-spacer"></div><button class="primary" id="warmCoolContinueBtn" style="margin-top:18px; width:100%;">${isWarmup ? "Start workout" : "Finish session"}</button>
       <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
     </div>`;
+  wcStopTimer();
+  panel.querySelectorAll("[data-wc-timer]").forEach(btn => {
+    btn.addEventListener("click", () => wcToggleTimer(parseInt(btn.dataset.wcTimer, 10), items));
+  });
   panel.querySelectorAll("[data-warmcool-swap]").forEach(btn => {
     btn.addEventListener("click", async () => {
       const [type, idx] = btn.dataset.warmcoolSwap.split(":");
