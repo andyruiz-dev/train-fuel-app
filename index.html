@@ -1051,7 +1051,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-27 18:55 CT";
+const APP_BUILD = "2026-10-27 20:50 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -5603,15 +5603,34 @@ document.getElementById("saveCardioBtn").addEventListener("click", async () => {
 
 function renderRecentCardio() {
   const el = document.getElementById("recentCardio");
-  const recent = (state.cardioLogs || []).slice(-5).reverse();
+  const all = state.cardioLogs || [];
+  const recent = all.slice(-5).reverse();
   if (!recent.length) { el.innerHTML = ""; return; }
-  el.innerHTML = recent.map(c => `
-    <div class="meta" style="padding:4px 0;">
-      ${new Date(c.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })} ·
-      ${c.type === "ruck" ? "Ruck" : "Walk"}${c.distance ? ` · ${c.distance}mi` : ""}${c.duration ? ` · ${c.duration}min` : ""}${c.weight ? ` · ${c.weight}lb` : ""}
+  el.innerHTML = recent.map((c, i) => `
+    <div class="meta" style="padding:4px 0; display:flex; justify-content:space-between; align-items:center; gap:10px;">
+      <span>${new Date(c.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })} ·
+      ${c.type === "ruck" ? "Ruck" : "Walk"}${c.distance ? ` · ${c.distance}mi` : ""}${c.duration ? ` · ${c.duration}min` : ""}${c.weight ? ` · ${c.weight}lb` : ""}</span>
+      <button type="button" class="danger-link" style="padding:8px 4px; min-width:56px; text-align:right;" data-cardio-del="${all.length - 1 - i}" aria-label="Delete this entry">Delete</button>
     </div>
   `).join("");
 }
+document.getElementById("recentCardio").addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-cardio-del]");
+  if (!btn) return;
+  const idx = parseInt(btn.dataset.cardioDel, 10);
+  const entry = (state.cardioLogs || [])[idx];
+  if (!entry) return;
+  state.cardioLogs.splice(idx, 1);
+  renderRecentCardio();
+  try { renderProgressCharts(); } catch (err) {}
+  await persistNow();
+  showToast("Entry deleted.", async () => {
+    state.cardioLogs.splice(Math.min(idx, state.cardioLogs.length), 0, entry);
+    renderRecentCardio();
+    try { renderProgressCharts(); } catch (err) {}
+    await persistNow();
+  });
+});
 
 // ---- quick-add protein staples ----
 const QUICK_PROTEIN_FOODS = [
