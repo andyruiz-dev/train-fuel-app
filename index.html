@@ -234,6 +234,9 @@
   .tf-dcard.next .k{color:var(--accent); font-weight:600;}
   .tf-dcard .t{font-family:var(--font-display); font-size:19px; font-weight:600; margin-top:2px; text-transform:uppercase;}
   .tf-dcard.done .t{color:var(--text-muted);}
+  .tf-hint{margin-top:12px; padding:10px 12px; border:1px solid var(--accent); border-radius:12px; font-size:13px; line-height:1.45; color:var(--text);}
+  .tf-hint b{font-family:var(--font-mono); font-size:11px; letter-spacing:.6px; text-transform:uppercase; color:var(--accent); margin-right:6px;}
+  .tf-hint .t{margin-top:6px; color:var(--text-muted);}
   .tf-recent-more{display:block; width:100%; background:none; border:0; color:var(--accent); font-family:var(--font-mono); font-size:12px; letter-spacing:.5px; text-transform:uppercase; text-align:left; padding:8px 2px; cursor:pointer;}
   .tf-dcard .tf-exlink{display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; background:none; border:0; border-bottom:1px solid #2A2E24; color:var(--text); font:inherit; font-size:14px; text-align:left; padding:9px 0; cursor:pointer;}
   .tf-dcard .tf-exlink:last-child{border-bottom:0;}
@@ -1051,7 +1054,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-27 20:50 CT";
+const APP_BUILD = "2026-10-30 21:15 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3269,6 +3272,51 @@ document.getElementById("tfPending").addEventListener("click", () => {
 // next bell size up is a big jump for them. The plan is to stay on one bell for
 // the whole 12 weeks: until the final week the Coach only ever says "add reps",
 // and the get-up (a skill lift) never prompts a bigger bell at all.
+// Suggested target + optional tempo tip for one kettlebell move, shown on the
+// set screen and in the exercise sheet. Advice only: it never changes the
+// prescription and never suggests fewer reps. Uses the last logged results
+// (and the actual reps, for sessions logged from now on).
+const BELL_TEMPO_TIPS = [
+  [/floor press/i, "3-second lowering, 1-second pause with the elbow on the floor."],
+  [/press/i, "press up as normal, then a slow 3-second lowering."],
+  [/goblet|squat/i, "3-second lowering with a 1-second pause at the bottom."],
+  [/lunge/i, "slow 3-second lowering on every rep."],
+  [/romanian|rdl|deadlift/i, "3-second lowering, brief pause just off the floor."],
+  [/row/i, "squeeze for 1 second at the top, then a 3-second lowering."],
+  [/get-up/i, "pause 1 to 2 seconds in each position."],
+];
+function bellTargetHint(name, repsStr) {
+  if (!isBellExercise(name)) return null;
+  const logs = (state.logs || []).filter(l => l.exercise === name).sort((a, b) => new Date(a.date) - new Date(b.date)).slice(-3);
+  if (!logs.length) return null;
+  const last = logs[logs.length - 1];
+  const twoMax = logs.length >= 2 && logs.slice(-2).every(l => l.result === "max");
+  const hold = isHoldExercise(name);
+  const r = parseRepRange(repsStr || "");
+  const top = r.max || r.min || 0;
+  const unit = hold ? "s" : " reps";
+  const lastTxt = last.actuals && last.actuals.length ? `Last time: ${last.actuals.join(", ")}. ` : "";
+  let line, tip = null;
+  if (last.result === "missed") {
+    line = `${lastTxt}Same target again. Hit it before adding anything.`;
+  } else if (twoMax) {
+    if (/get-up/i.test(name)) line = `${lastTxt}You've topped it twice. Add a rep, or slow it down.`;
+    else if (hold) line = `${lastTxt}You've topped it twice. Try ${top + 5}s.`;
+    else line = `${lastTxt}You've topped it twice. Try ${top + 1} to ${top + 2} per set.`;
+    const t = !hold && BELL_TEMPO_TIPS.find(([re]) => re.test(name));
+    if (t) tip = `Or keep the reps and make them harder: ${t[1]}`;
+  } else if (last.result === "max") {
+    line = `${lastTxt}You hit the top last time. One more clean session, then add.`;
+  } else {
+    line = `${lastTxt}Aim for the full ${top}${unit} on every set.`;
+  }
+  return { line, tip };
+}
+function bellHintHtml(name, repsStr) {
+  const h = bellTargetHint(name, repsStr);
+  if (!h) return "";
+  return `<div class="tf-hint"><b>Target</b> ${escapeHtml(h.line)}${h.tip ? `<div class="t">${escapeHtml(h.tip)}</div>` : ""}</div>`;
+}
 const BELL_NEXT_SIZE = "44 lb (20 kg)";
 function computeBellCoach() {
   const bell = new Set((exercises || []).filter(e => e.equipment === "kettlebell").map(e => e.name));
@@ -4507,6 +4555,7 @@ function openExerciseSheet(name, idx) {
   const mistakes = info && EX_MISTAKES[info.id];
   const tags = info ? `<div class="tags">${info.muscle_group ? `<span>${esc(info.muscle_group)}</span>` : ""}${info.equipment ? `<span>${esc(info.equipment)}</span>` : ""}</div>` : "";
   el.innerHTML = `<div class="sheet"><div class="grab"></div><h3>${esc(name)}</h3>${tags}
+    ${bellHintHtml(name, (currentWorkout && currentWorkout.exercises || []).find(x => x.name === name)?.reps)}
     ${info && info.cue ? `<div class="lab">How to</div><p>${esc(info.cue)}</p>` : `<p style="margin-top:14px;color:var(--text-muted);">No written cue for this one yet. The demo link shows it.</p>`}
     ${mistakes ? `<div class="lab">Common mistakes</div><ul>${mistakes.map(m => `<li>${esc(m)}</li>`).join("")}</ul>` : ""}
     ${idx !== undefined ? `<div class="lab">Swap or log</div><div id="tfSheetSlot"></div>` : ""}
@@ -5456,7 +5505,7 @@ async function applyWorkoutResults(results) {
 
   state.logs = state.logs || [];
   results.forEach(r => {
-    state.logs.push({ date: new Date().toISOString(), exercise: r.exercise.name, muscle_group: r.exercise.muscle_group, result: r.result });
+    state.logs.push({ date: new Date().toISOString(), exercise: r.exercise.name, muscle_group: r.exercise.muscle_group, result: r.result, ...(r.actuals && r.actuals.length ? { actuals: r.actuals } : {}) });
   });
 
   checkWorkoutMilestones(oldLevels);
@@ -7799,7 +7848,7 @@ async function finishSessionPartial() {
       let result = "hold";
       if (actuals.some(a => a < range.min)) result = "missed";
       else if (actuals.every(a => a >= range.max)) result = "max";
-      return { exercise: e, result };
+      return { exercise: e, result, actuals: actuals.slice() };
     });
   const summary = buildSessionSummary(results);
   await applyWorkoutResults(results);
@@ -8049,6 +8098,7 @@ function renderSession() {
         <div class="sx-hero">${targetSeconds}<small>seconds · hold</small></div>
         <div class="meta" style="margin-top:12px;">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${targetSeconds}s hold · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
         ${levelLegendHtml}
+        ${bellHintHtml(step.name, step.reps)}
         ${stepCueHtml}
         <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
         <button class="danger-link" style="color:var(--accent); margin-top:4px; margin-left:12px;" data-quick-note="${escapeHtml(step.name)}">Note</button>
@@ -8083,6 +8133,7 @@ function renderSession() {
       <div class="sx-hero">${step.reps}<small>reps${step.note ? " · " + escapeHtml(step.note) : ""}</small></div>
       <div class="meta" style="margin-top:12px;">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${step.reps} reps${step.note ? " " + step.note : ""} · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
       ${levelLegendHtml}
+      ${bellHintHtml(step.name, step.reps)}
       ${stepCueHtml}
       <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
       <button class="danger-link" style="color:var(--accent); margin-top:4px; margin-left:12px;" data-quick-note="${escapeHtml(step.name)}">Note</button>
@@ -8364,7 +8415,7 @@ async function finishSession() {
     if (!actuals.length) result = "hold";
     else if (actuals.some(a => a < range.min)) result = "missed";
     else if (actuals.every(a => a >= range.max)) result = "max";
-    return { exercise: e, result };
+    return { exercise: e, result, actuals: actuals.slice() };
   });
   const summary = buildSessionSummary(results);
   await applyWorkoutResults(results);
