@@ -1054,7 +1054,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-01 08:45 CT";
+const APP_BUILD = "2026-11-01 09:10 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -7736,7 +7736,10 @@ function buildSessionQueue(exs) {
       for (let round = 0; round < maxSets; round++) {
         members.forEach((m, mi) => {
           if (round >= m.sets) return;
-          const isLastInRound = mi === members.length - 1;
+          // Last move still in play this round: if a later partner has run out of
+          // sets (e.g. 4 pulls but 3 lunges), the extra set gets the full rest
+          // instead of the short 15s pair-switch rest.
+          const isLastInRound = !members.slice(mi + 1).some(x => round < x.sets);
           queue.push({
             exIndex: m.exIndex, name: m.name, muscle_group: m.muscle_group,
             reps: m.reps, note: m.note || null, setNum: round + 1, totalSets: m.sets,
@@ -7767,6 +7770,7 @@ function supersetCueHtml(step) {
   const isLast = m && m[1] === m[2];
   let txt;
   if (!isLast && sameGroup) txt = `Then go straight into ${escapeHtml(next.name)}, with no real rest.`;
+  else if (!isLast && !sameGroup) txt = "Rest after this one. Your partner move is done for this pair.";
   else if (isLast) txt = next && next.supersetLabel && next.supersetLabel.split(" · ")[0] === step.supersetLabel.split(" · ")[0] ? "Rest after this one, then repeat the pair." : "Rest after this one. That finishes the pair.";
   else return "";
   return `<div class="meta" style="margin-top:6px; color:var(--accent);">${txt}</div>`;
