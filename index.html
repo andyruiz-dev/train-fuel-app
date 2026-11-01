@@ -1054,7 +1054,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-01 12:40 CT";
+const APP_BUILD = "2026-11-01 13:05 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -4569,7 +4569,8 @@ function todayHeroHtml(workout) {
   const ring = `<svg width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="${total ? `Week ${week} of ${total}` : "Program progress"}">
       <circle cx="38" cy="38" r="31" fill="none" stroke="#3A3F33" stroke-width="7"/>
       <circle cx="38" cy="38" r="31" fill="none" stroke="#2FBFA6" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - frac)).toFixed(1)}" transform="rotate(-90 38 38)"/>
-      <text x="38" y="44" text-anchor="middle" font-family="Oswald, sans-serif" font-size="20" font-weight="600" fill="#EDEAE0">${week || "·"}</text>
+      <text x="38" y="40" text-anchor="middle" font-family="Oswald, sans-serif" font-size="20" font-weight="600" fill="#EDEAE0">${week || "·"}</text>
+      <text x="38" y="53" text-anchor="middle" font-family="Oswald, sans-serif" font-size="9" letter-spacing="1.5" fill="#9A9A8C">WEEK</text>
     </svg>`;
   return `<div class="tf-hero">${ring}
     <div style="flex:1; min-width:0;">
