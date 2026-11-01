@@ -1054,7 +1054,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-01 10:05 CT";
+const APP_BUILD = "2026-11-01 10:40 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1650,6 +1650,8 @@ const BUILTIN_EXERCISES = [
   { id: "kb-racked-squat", name: "Kettlebell racked squat", muscle_group: "legs", equipment: "kettlebell", cue: "One bell racked at your shoulder with the elbow tucked against your ribs. Squat deep with an upright torso, then stand. Switch sides each set. Harder than a goblet squat because the load is on one side." },
   { id: "kb-complex", name: "Kettlebell complex", muscle_group: "hinge", equipment: "kettlebell", cue: "One round = 3 deadlifts, then 3 cleans, 3 presses and 3 racked squats, all with one hand on the bell and without putting it down. Switch arms each round. Start a new round every minute and rest in whatever time is left. Choose a bell you can press for 3 clean reps." },
   { id: "bw-complex", name: "Bodyweight complex", muscle_group: "legs", equipment: "bodyweight", cue: "One round = 4 good mornings, 4 reverse lunges each side, 4 push-ups and 4 squats, back to back without stopping. Start a new round every minute and rest in whatever time is left. Used as the travel version of the kettlebell complex." },
+  { id: "kb-curl", name: "Kettlebell curl", muscle_group: "pull", equipment: "kettlebell", cue: "Hold the handle in one hand with your elbow pinned to your side. Curl the bell to your shoulder, then lower it slowly. Keep your torso still. If 35 lb is too heavy for clean reps, hold the horns with both hands." },
+  { id: "kb-overhead-triceps-ext", name: "Kettlebell overhead triceps extension", muscle_group: "push", equipment: "kettlebell", cue: "Hold the handle with both hands and press the bell overhead so it hangs behind your head, elbows pointing forward. Bend the elbows to lower it slowly behind your head, then straighten. Keep ribs down, and use control, not speed." },
   { id: "kb-push-press", name: "Kettlebell push press", muscle_group: "push", equipment: "kettlebell", cue: "From the rack, dip a few inches by bending the knees, then drive the legs and press the bell overhead in one motion. Lower it back to the rack. Lets you move heavier loads overhead than a strict press." },
 ];
 
@@ -2070,6 +2072,22 @@ function renderExercises(filterText = "", muscleGroup = "all", levelFilter = "al
 }
 
 // ---- programs ----
+// One-time catch-up: if the stored built-in kettlebell program predates the arm
+// work (curl + overhead triceps extension), bring its structure up to date.
+// Same program id, so progress carries over. Safe to repeat: it only acts when
+// the arm moves are missing.
+async function migrateKbProgramArms() {
+  try {
+    const p = (programs || []).find(x => x.source === "built-in" && /^Kettlebell A\/B \(one bell\) v2/.test(x.name || ""));
+    if (!p || !p.structure || JSON.stringify(p.structure).includes('"kb-curl"')) return;
+    const fresh = kbProgram();
+    await apiFetch("/api/programs", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: p.id, name: p.name, duration_weeks: p.duration_weeks, source: p.source, structure: fresh.structure }),
+    });
+    await loadPrograms();
+  } catch (e) { /* retried next open */ }
+}
 async function loadPrograms() {
   if (WORKER_URL) {
     try { programs = await apiFetch("/api/programs", { method: "GET" }); return; }
@@ -4110,6 +4128,8 @@ const KB_TRAVEL = {
   "kb-floor-press":        { id: "pushup",                 reps: "8-12" },
   "kb-row":                { id: "backpack-row",           reps: "8-12" },
   "kb-clean":              { id: "doorframe-row",          reps: "8-12" },
+  "kb-curl": ["Swinging the bell up with the back", "Elbow drifting forward", "Dropping it fast instead of lowering slowly"],
+  "kb-overhead-triceps-ext": ["Elbows flaring wide", "Arching the lower back", "Lowering too fast behind the head"],
   "kb-sl-rdl":             { id: "glute-bridge-march",     reps: "8-10", note: "each side" },
   "kb-suitcase-carry":     { id: "side-plank",             reps: "20-30", note: "each side" },
   "kb-waiter-carry":       { id: "side-plank",             reps: "20-30", note: "each side" },
@@ -4145,6 +4165,7 @@ function kbProgram() {
     ["kb-press-hk", pr[0], pr[1], S, "B"], ["kb-row", rw[0], rw[1], S, "B"],
     ["kb-suitcase-carry", ca[0], ca[1], "seconds " + S, wm ? "C" : null], ...(wm ? [["kb-windmill", wm[0], wm[1], S + ", no weight to start", "C"]] : []),
     ["kb-turkish-getup", tg[0], tg[1], S],
+    ["kb-curl", 2, "8-10", S, "E"], ["kb-overhead-triceps-ext", 2, "8-10", null, "E"],
     ["pushup", pu[0], "8-12", null, "D"], ["plank", pu[0], pu[1], null, "D"],
   ], wuA, cdA);
   const B = (sw, pl, lg, fp, rd, wc, db, cx) => day("Bell B: hinge, pull, single leg", [
@@ -4152,6 +4173,7 @@ function kbProgram() {
     [pl[0], pl[1], pl[2], S, "A"], ["kb-rack-reverse-lunge", lg[0], lg[1], S, "A"],
     ["kb-floor-press", fp[0], fp[1], S, "B"], ["kb-sl-rdl", rd[0], rd[1], S, "B"],
     ["kb-waiter-carry", wc[0], wc[1], "seconds " + S, null],
+    ["kb-curl", 2, "8-10", S, "E"], ["kb-overhead-triceps-ext", 2, "8-10", null, "E"],
     ["pushup", 2, "8-12", null, "C"], ["dead-bug", db, "8", S, "C"],
     ...(cx ? [["kb-complex", cx[0], "3", "3 of each: deadlift, clean, press, squat. Switch arms each round", null, 60]] : []),
   ], wuB, cdB);
@@ -4163,7 +4185,7 @@ function kbProgram() {
     source: "built-in",
     structure: {
       name: "Kettlebell A/B (one bell) v2",
-      session: { days: 4, minutes: "35-60" },
+      session: { days: 4, minutes: "40-65" },
       phases: [
         phase("Foundation v2: learn the lifts", 1, 4, 4,
           A([2, "8"], [3, "8"], [5, "15"], [4, "3"], [3, "8"], [2, "30"], [3, "30"], null, [1, "2"]),
@@ -9144,6 +9166,7 @@ async function init() {
   await loadState();
   await loadExercises();
   await loadPrograms();
+  await migrateKbProgramArms();
   renderExercises();
   renderPrograms();
   renderSkillPractice();
