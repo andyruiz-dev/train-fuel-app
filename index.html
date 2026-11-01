@@ -1054,7 +1054,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-01 09:10 CT";
+const APP_BUILD = "2026-11-01 09:30 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -7761,6 +7761,14 @@ function buildSessionQueue(exs) {
   return queue;
 }
 
+// Plain-language reminder on per-side moves: both sides make one set.
+function eachSideCueHtml(step, isHold) {
+  if (!step || !/each (side|arm|leg)/i.test(step.note || "")) return "";
+  const txt = isHold
+    ? `Both sides make one set. The timer runs side 1, gives you a short switch, then runs side 2.`
+    : `Both sides make one set. Do ${escapeHtml(String(step.reps))} reps on one side, switch, then ${escapeHtml(String(step.reps))} on the other.`;
+  return `<div class="tf-hint"><b>Both sides</b> ${txt}</div>`;
+}
 // One plain-language line for superset steps: what happens right after this set.
 function supersetCueHtml(step) {
   if (!step || !step.supersetLabel) return "";
@@ -7769,9 +7777,10 @@ function supersetCueHtml(step) {
   const m = step.supersetLabel.match(/(\d+) of (\d+)$/);
   const isLast = m && m[1] === m[2];
   let txt;
-  if (!isLast && sameGroup) txt = `Then go straight into ${escapeHtml(next.name)}, with no real rest.`;
-  else if (!isLast && !sameGroup) txt = "Rest after this one. Your partner move is done for this pair.";
-  else if (isLast) txt = next && next.supersetLabel && next.supersetLabel.split(" · ")[0] === step.supersetLabel.split(" · ")[0] ? "Rest after this one, then repeat the pair." : "Rest after this one. That finishes the pair.";
+  const both = /each (side|arm|leg)/i.test(step.note || "") ? "finish both sides, then " : "";
+  if (!isLast && sameGroup) txt = `${both ? "Do this move: " + both : "Then "}go straight into ${escapeHtml(next.name)} (about 15 seconds). Rest only after that one.`;
+  else if (!isLast && !sameGroup) txt = `${both ? "Finish both sides, then rest" : "Rest after this one"}. Your partner move is done for this pair.`;
+  else if (isLast) txt = next && next.supersetLabel && next.supersetLabel.split(" · ")[0] === step.supersetLabel.split(" · ")[0] ? `${both ? "Finish both sides, then rest" : "Rest"}. Then repeat the pair from the first move.` : `${both ? "Finish both sides, then rest" : "Rest after this one"}. That finishes the pair.`;
   else return "";
   return `<div class="meta" style="margin-top:6px; color:var(--accent);">${txt}</div>`;
 }
@@ -8115,6 +8124,7 @@ function renderSession() {
         <h2>${step.name}</h2>
         <div class="sx-hero">${targetSeconds}<small>seconds · hold</small></div>
         <div class="meta" style="margin-top:12px;">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${targetSeconds}s hold · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
+        ${eachSideCueHtml(step, true)}
         ${levelLegendHtml}
         ${bellHintHtml(step.name, step.reps)}
         ${stepCueHtml}
@@ -8150,6 +8160,7 @@ function renderSession() {
       <h2>${step.name}</h2>
       <div class="sx-hero">${step.reps}<small>reps${step.note ? " · " + escapeHtml(step.note) : ""}</small></div>
       <div class="meta" style="margin-top:12px;">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${step.reps} reps${step.note ? " " + step.note : ""} · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
+      ${eachSideCueHtml(step, false)}
       ${levelLegendHtml}
       ${bellHintHtml(step.name, step.reps)}
       ${stepCueHtml}
