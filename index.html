@@ -1054,7 +1054,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-01 10:40 CT";
+const APP_BUILD = "2026-11-01 10:50 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -2079,7 +2079,7 @@ function renderExercises(filterText = "", muscleGroup = "all", levelFilter = "al
 async function migrateKbProgramArms() {
   try {
     const p = (programs || []).find(x => x.source === "built-in" && /^Kettlebell A\/B \(one bell\) v2/.test(x.name || ""));
-    if (!p || !p.structure || JSON.stringify(p.structure).includes('"kb-curl"')) return;
+    if (!p || !p.structure || (p.structure.rev || 0) >= 2) return;
     const fresh = kbProgram();
     await apiFetch("/api/programs", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -4160,11 +4160,11 @@ function kbProgram() {
   // week each group is hit at least twice. Paired rows are supersets (upper with
   // lower or push with pull) to keep sessions well under an hour.
   const A = (dl, sq, sw, pr, rw, pu, ca, wm, tg) => day("Bell A: squat, press, row", [
+    ["kb-turkish-getup", tg[0], tg[1], S],
     ["kb-deadlift", dl[0], dl[1], null, "A"], ["kb-goblet-squat", sq[0], sq[1], null, "A"],
     ["kb-swing", sw[0], sw[1], null],
     ["kb-press-hk", pr[0], pr[1], S, "B"], ["kb-row", rw[0], rw[1], S, "B"],
     ["kb-suitcase-carry", ca[0], ca[1], "seconds " + S, wm ? "C" : null], ...(wm ? [["kb-windmill", wm[0], wm[1], S + ", no weight to start", "C"]] : []),
-    ["kb-turkish-getup", tg[0], tg[1], S],
     ["kb-curl", 2, "8-10", S, "E"], ["kb-overhead-triceps-ext", 2, "8-10", null, "E"],
     ["pushup", pu[0], "8-12", null, "D"], ["plank", pu[0], pu[1], null, "D"],
   ], wuA, cdA);
@@ -4172,10 +4172,10 @@ function kbProgram() {
     ["kb-swing-1h", sw[0], sw[1], EM + ", switch hands", null, 60],
     [pl[0], pl[1], pl[2], S, "A"], ["kb-rack-reverse-lunge", lg[0], lg[1], S, "A"],
     ["kb-floor-press", fp[0], fp[1], S, "B"], ["kb-sl-rdl", rd[0], rd[1], S, "B"],
+    ...(cx ? [["kb-complex", cx[0], "3", "3 of each: deadlift, clean, press, squat. Switch arms each round", null, 60]] : []),
     ["kb-waiter-carry", wc[0], wc[1], "seconds " + S, null],
     ["kb-curl", 2, "8-10", S, "E"], ["kb-overhead-triceps-ext", 2, "8-10", null, "E"],
     ["pushup", 2, "8-12", null, "C"], ["dead-bug", db, "8", S, "C"],
-    ...(cx ? [["kb-complex", cx[0], "3", "3 of each: deadlift, clean, press, squat. Switch arms each round", null, 60]] : []),
   ], wuB, cdB);
   const phase = (label, ws, we, dl, a, b) => ({ phase: label, week_start: ws, week_end: we, deload_weeks: [dl], days: [a, b, a, b].map(d => JSON.parse(JSON.stringify(d))) });
   return {
@@ -4185,6 +4185,7 @@ function kbProgram() {
     source: "built-in",
     structure: {
       name: "Kettlebell A/B (one bell) v2",
+      rev: 2,
       session: { days: 4, minutes: "40-65" },
       phases: [
         phase("Foundation v2: learn the lifts", 1, 4, 4,
