@@ -1054,7 +1054,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-10-30 21:35 CT";
+const APP_BUILD = "2026-11-01 08:45 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -7758,6 +7758,19 @@ function buildSessionQueue(exs) {
   return queue;
 }
 
+// One plain-language line for superset steps: what happens right after this set.
+function supersetCueHtml(step) {
+  if (!step || !step.supersetLabel) return "";
+  const next = session.queue[session.pos + 1];
+  const sameGroup = next && next.supersetLabel && next.supersetLabel.split(" · ")[0] === step.supersetLabel.split(" · ")[0];
+  const m = step.supersetLabel.match(/(\d+) of (\d+)$/);
+  const isLast = m && m[1] === m[2];
+  let txt;
+  if (!isLast && sameGroup) txt = `Then go straight into ${escapeHtml(next.name)}, with no real rest.`;
+  else if (isLast) txt = next && next.supersetLabel && next.supersetLabel.split(" · ")[0] === step.supersetLabel.split(" · ")[0] ? "Rest after this one, then repeat the pair." : "Rest after this one. That finishes the pair.";
+  else return "";
+  return `<div class="meta" style="margin-top:6px; color:var(--accent);">${txt}</div>`;
+}
 function startSession() {
   if (!currentWorkout) return;
   session = {
@@ -8094,7 +8107,7 @@ function renderSession() {
     panel.innerHTML = `
       <div class="card">
         ${sxTop("Set " + step.setNum + " of " + step.totalSets)}
-        ${step.supersetLabel ? `<div class="meta" style="margin-top:8px;">${step.supersetLabel}</div>` : ""}
+        ${step.supersetLabel ? `<div class="meta" style="margin-top:8px;">${step.supersetLabel}</div>${supersetCueHtml(step)}` : ""}
         <h2>${step.name}</h2>
         <div class="sx-hero">${targetSeconds}<small>seconds · hold</small></div>
         <div class="meta" style="margin-top:12px;">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${targetSeconds}s hold · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
@@ -8129,7 +8142,7 @@ function renderSession() {
   panel.innerHTML = `
     <div class="card">
       ${sxTop("Set " + step.setNum + " of " + step.totalSets)}
-      ${step.supersetLabel ? `<div class="meta" style="margin-top:8px;">${step.supersetLabel}</div>` : ""}
+      ${step.supersetLabel ? `<div class="meta" style="margin-top:8px;">${step.supersetLabel}</div>${supersetCueHtml(step)}` : ""}
       <h2>${step.name}</h2>
       <div class="sx-hero">${step.reps}<small>reps${step.note ? " · " + escapeHtml(step.note) : ""}</small></div>
       <div class="meta" style="margin-top:12px;">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${step.reps} reps${step.note ? " " + step.note : ""} · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
@@ -8143,7 +8156,7 @@ function renderSession() {
         ${swapAlternatesHtml(currentWorkout.exercises[step.exIndex], step.exIndex)}
       </div>
       <div class="sx-spacer"></div>
-      <input type="text" inputmode="numeric" id="actualRepsInput" placeholder="Actual reps completed" style="margin-top:14px;">
+      <input type="text" inputmode="numeric" id="actualRepsInput" placeholder="${/each (side|arm|leg)/i.test(step.note || "") ? "Reps completed on each side" : "Actual reps completed"}" style="margin-top:14px;">
       <button class="primary" id="completeSetBtn" style="margin-top:12px;">Complete set</button>
       <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
     </div>`;
@@ -8279,7 +8292,8 @@ function renderEmom(step, stepCueHtml) {
         <h2>${step.name}</h2>
         <div class="meta">${em.rounds} rounds · each round: ${what}</div>
         ${stepCueHtml}
-        <div class="meta" style="margin-top:8px;">Finish the round, then rest in whatever time is left. A beep marks each new round. Pick up the bell, then tap Start for a 3-second countdown.${emomHandLabel(step, 0) ? " Start with your right hand, then switch hands each round." : ""}</div>
+        <div class="tf-hint" style="margin-top:12px;"><b>How it works</b> Each minute starts with a beep. Do the reps right away${emomHandLabel(step, 0) ? " (right hand first, then switch hands every round)" : ""}, then rest until the next beep. Do not start a second set inside the same minute. The clock shows the whole minute, and the rep count is done when you stop, not when time runs out.</div>
+        <div class="meta" style="margin-top:8px;">Pick up the bell, then tap Start for a 3-second countdown.</div>
         <div class="sx-spacer"></div>
         <button class="primary" id="emomStartBtn" style="margin-top:14px; width:100%;">Start</button>
         <button class="danger-link" style="color:var(--accent); margin-top:8px;" data-quick-note="${escapeHtml(step.name)}">Note</button>
@@ -8294,7 +8308,7 @@ function renderEmom(step, stepCueHtml) {
         ${sxTop("Go")}
         <div class="meta" id="emomRound" style="margin-top:8px;">Round ${em.done + 1} of ${em.rounds}</div>
         <h2>${step.name}</h2>
-        <div class="meta">Do now: ${what}</div>
+        <div class="meta">Do now: ${what}. Then rest until the beep.</div>
         ${emomHandLabel(step, em.done) ? `<div id="emomHand" style="font-family:var(--font-display); font-size:30px; font-weight:600; color:var(--accent); text-align:center; margin-top:10px; text-transform:uppercase;">${emomHandLabel(step, em.done)}</div>` : ""}
         <div id="emomClock" style="font-size:48px; font-weight:600; text-align:center; margin:14px 0; font-family:var(--font-mono);">${formatTime(em.interval)}</div>
         ${stepCueHtml}
