@@ -1054,7 +1054,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-01 11:20 CT";
+const APP_BUILD = "2026-11-01 11:45 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1642,6 +1642,8 @@ const BUILTIN_EXERCISES = [
   { id: "kb-suitcase-carry", name: "Kettlebell suitcase carry", muscle_group: "core", equipment: "kettlebell", cue: "Hold the bell at your side like a suitcase and walk tall. Don't lean toward the bell; keep your shoulders level and ribs stacked. Switch hands halfway through the time." },
   { id: "kb-waiter-carry", name: "Waiter carry", muscle_group: "core", equipment: "kettlebell", cue: "Bell pressed overhead in one hand with wrist over elbow over shoulder. Walk slowly with ribs down and the shoulder packed. Switch hands halfway. If it drifts, bring it to the rack and finish there." },
   { id: "kb-overhead-lunge", name: "Kettlebell overhead reverse lunge", muscle_group: "core", equipment: "kettlebell", cue: "Press the bell overhead with one arm, bicep by your ear and ribs down. Step back into a lunge, torso tall, eyes forward, then drive through the front heel to stand. All reps one side, then switch. Too heavy overhead? Hold it racked at the shoulder instead." },
+  { id: "kb-halo", name: "Kettlebell halo", muscle_group: "core", equipment: "kettlebell", cue: "Hold the bell upside down by the horns at your chest. Circle it around your head, close to your neck, ribs down and hips tight. Do all reps one direction, then the other." },
+  { id: "kb-figure8", name: "Kettlebell figure-8", muscle_group: "core", equipment: "kettlebell", cue: "Feet wide, hinge slightly. Pass the bell around one leg, hand it to the other hand between your legs, then around the other leg in a figure-8. Keep your chest up and switch direction halfway." },
   { id: "kb-turkish-getup", name: "Turkish get-up", muscle_group: "core", equipment: "kettlebell", cue: "Lie on your back with the bell pressed up, same-side knee bent. Roll to your elbow, then your hand, lift the hips, sweep the leg back to a kneel, stand. Reverse every step. Eyes on the bell. Learn it with a light object first (even a shoe on your fist)." },
   { id: "kb-deadlift", name: "Kettlebell deadlift", muscle_group: "hinge", equipment: "kettlebell", cue: "Bell on the floor between your feet, just behind the line of your toes. Hinge back with hips high and a flat back, grip the handle with both hands, push the floor away and stand tall, squeezing your glutes. Lower by sending the hips back first. This is the foundation for the swing." },
   { id: "kb-dead-high-pull", name: "Kettlebell dead high pull", muscle_group: "pull", equipment: "kettlebell", cue: "Bell on the floor. Hinge and grab it with one hand, drive the hips forward and pull the elbow up high and wide so the bell rises to chest height. Lower it to the floor and reset every rep. The hips do the work, not the arm. An easier way to learn the clean." },
@@ -1663,7 +1665,7 @@ const EXERCISE_LEVEL_MAP = {
   // kettlebell (one bell) — levels only order the swap picker; these never move your levels
   "kb-swing": 2, "kb-swing-1h": 3, "kb-goblet-squat": 2, "kb-rack-reverse-lunge": 3, "kb-press-hk": 3,
   "kb-floor-press": 2, "kb-row": 2, "kb-clean": 3, "kb-sl-rdl": 3, "kb-suitcase-carry": 2,
-  "kb-waiter-carry": 3, "kb-turkish-getup": 3, "kb-overhead-lunge": 3,
+  "kb-waiter-carry": 3, "kb-turkish-getup": 3, "kb-overhead-lunge": 3, "kb-halo": 2, "kb-figure8": 2,
   "kb-deadlift": 1, "kb-dead-high-pull": 2, "kb-dead-snatch": 3, "kb-snatch": 4,
   "kb-windmill": 3, "kb-racked-squat": 3, "kb-push-press": 3, "kb-complex": 3, "bw-complex": 2,
   // push
@@ -2080,7 +2082,7 @@ function renderExercises(filterText = "", muscleGroup = "all", levelFilter = "al
 async function migrateKbProgramArms() {
   try {
     const p = (programs || []).find(x => x.source === "built-in" && /^Kettlebell A\/B \(one bell\) v2/.test(x.name || ""));
-    if (!p || !p.structure || (p.structure.rev || 0) >= 3) return;
+    if (!p || !p.structure || (p.structure.rev || 0) >= 4) return;
     const fresh = kbProgram();
     await apiFetch("/api/programs", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -4134,6 +4136,8 @@ const KB_TRAVEL = {
   "kb-sl-rdl":             { id: "glute-bridge-march",     reps: "8-10", note: "each side" },
   "kb-suitcase-carry":     { id: "side-plank",             reps: "20-30", note: "each side" },
   "kb-waiter-carry":       { id: "side-plank",             reps: "20-30", note: "each side" },
+  "kb-halo":               { id: "dead-bug",               reps: "8-10", note: "each side", sets: 2 },
+  "kb-figure8":            { id: "dead-bug",               reps: "8-10", note: "each side", sets: 2 },
   "kb-overhead-lunge":     { id: "reverse-lunge",          reps: "8-10", note: "each side" },
   "kb-turkish-getup":      { id: "dead-bug",               reps: "8-10", note: "each side", sets: 2 },
   "kb-deadlift":           { id: "good-morning-bw",        reps: "10-12" },
@@ -4162,7 +4166,7 @@ function kbProgram() {
   // week each group is hit at least twice. Paired rows are supersets (upper with
   // lower or push with pull) to keep sessions well under an hour.
   const A = (dl, sq, sw, pr, rw, pu, ca, wm, tg) => day("Bell A: squat, press, row", [
-    ["kb-overhead-lunge", tg[0], tg[1], S],
+    [tg[0], tg[1], tg[2], tg[3] || null],
     ["kb-deadlift", dl[0], dl[1], null, "A"], ["kb-goblet-squat", sq[0], sq[1], null, "A"],
     ["kb-swing", sw[0], sw[1], null],
     ["kb-press-hk", pr[0], pr[1], S, "B"], ["kb-row", rw[0], rw[1], S, "B"],
@@ -4187,17 +4191,17 @@ function kbProgram() {
     source: "built-in",
     structure: {
       name: "Kettlebell A/B (one bell) v2",
-      rev: 3,
+      rev: 4,
       session: { days: 4, minutes: "40-65" },
       phases: [
         phase("Foundation v2: learn the lifts", 1, 4, 4,
-          A([2, "8"], [3, "8"], [5, "15"], [4, "3"], [3, "8"], [2, "30"], [3, "30"], null, [2, "5"]),
+          A([2, "8"], [3, "8"], [5, "15"], [4, "3"], [3, "8"], [2, "30"], [3, "30"], null, ["kb-halo", 2, "8", "each direction"]),
           B([6, "10"], ["kb-dead-high-pull", 4, "5"], [3, "6"], [3, "8"], [3, "6"], [2, "20"], 2)),
         phase("Build v2: more volume", 5, 8, 8,
-          A([3, "8"], [4, "8"], [4, "15"], [5, "3"], [3, "8"], [3, "40"], [3, "40"], [2, "4"], [2, "6"]),
+          A([3, "8"], [4, "8"], [4, "15"], [5, "3"], [3, "8"], [3, "40"], [3, "40"], [2, "4"], ["kb-figure8", 2, "10", "switch direction halfway"]),
           B([6, "10"], ["kb-clean", 4, "5"], [3, "8"], [3, "8"], [3, "8"], [2, "25"], 2, [5])),
         phase("Strength v2: heavier and denser", 9, 12, 12,
-          A([3, "8"], [3, "8"], [5, "10"], [4, "4"], [3, "10"], [3, "45"], [3, "40"], [2, "5"], [3, "6"]),
+          A([3, "8"], [3, "8"], [5, "10"], [4, "4"], [3, "10"], [3, "45"], [3, "40"], [2, "5"], ["kb-figure8", 3, "10", "switch direction halfway"]),
           B([5, "10"], ["kb-dead-snatch", 4, "5"], [3, "8"], [3, "10"], [3, "8"], [2, "30"], 2, [6])),
       ],
     },
@@ -4572,6 +4576,8 @@ const EX_MISTAKES = {
   "kb-sl-rdl": ["Rotating the hips open as the leg lifts", "Locking the standing knee", "Rounding the back to reach lower"],
   "kb-suitcase-carry": ["Leaning toward the bell", "Hiking the shoulder up", "Rushing; slow steps keep the core working"],
   "kb-waiter-carry": ["Wrist bending back under the bell", "Ribs flaring and back arching", "Shoulder shrugging up to the ear"],
+  "kb-halo": ["Arching the back as the bell passes overhead", "Bell drifting away from the neck", "Rushing the circle"],
+  "kb-figure8": ["Rounding the back instead of hinging", "Standing too narrow so the bell bumps your legs", "Gripping tight instead of a smooth hand-off"],
   "kb-overhead-lunge": ["Ribs flaring and back arching under the bell", "Arm drifting forward of the ear", "Leaning forward instead of staying tall"],
   "kb-turkish-getup": ["Rushing; pause at each position", "Letting the bell arm drift off vertical", "Looking away from the bell during the roll"],
   "kb-deadlift": ["Rounding the lower back", "Squatting instead of hinging", "Bell too far in front of the feet"],
