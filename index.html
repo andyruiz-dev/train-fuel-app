@@ -1054,7 +1054,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-01 11:45 CT";
+const APP_BUILD = "2026-11-01 12:10 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1638,6 +1638,7 @@ const BUILTIN_EXERCISES = [
   { id: "kb-floor-press", name: "Kettlebell floor press", muscle_group: "push", equipment: "kettlebell", cue: "Lie on your back, knees bent, bell in one hand with the upper arm about 45 degrees from your body. Press straight up, lower until the back of your upper arm touches the floor, pause, press." },
   { id: "kb-row", name: "Kettlebell bent-over row", muscle_group: "pull", equipment: "kettlebell", cue: "Hinge to a flat back with your free hand on your knee or a bench. Row the bell to your hip, elbow close to your ribs, squeeze the shoulder blade, lower slowly." },
   { id: "kb-clean", name: "Kettlebell clean to rack", muscle_group: "pull", equipment: "kettlebell", cue: "Start like a one-hand swing. As the bell comes up, pull your elbow in tight and let the bell rotate around your hand to land softly in the rack at your shoulder, not slam your wrist. Learn it as a hinge then a pull; start light." },
+  { id: "kb-row-2h", name: "Kettlebell two-handed row", muscle_group: "pull", equipment: "kettlebell", cue: "Hold the bell by the horns with both hands, hinge to a flat back with the bell hanging below your chest. Row it to your lower ribs, elbows close, squeeze your shoulder blades, lower slowly. Both arms work together, so no sides to switch." },
   { id: "kb-sl-rdl", name: "Kettlebell single-leg Romanian deadlift", muscle_group: "hinge", equipment: "kettlebell", cue: "Bell in the hand opposite your standing leg. Soft knee, hinge forward as the other leg reaches straight back, flat back and square hips. Squeeze the glute of the standing leg to come up." },
   { id: "kb-suitcase-carry", name: "Kettlebell suitcase carry", muscle_group: "core", equipment: "kettlebell", cue: "Hold the bell at your side like a suitcase and walk tall. Don't lean toward the bell; keep your shoulders level and ribs stacked. Switch hands halfway through the time." },
   { id: "kb-waiter-carry", name: "Waiter carry", muscle_group: "core", equipment: "kettlebell", cue: "Bell pressed overhead in one hand with wrist over elbow over shoulder. Walk slowly with ribs down and the shoulder packed. Switch hands halfway. If it drifts, bring it to the rack and finish there." },
@@ -1664,7 +1665,7 @@ const BUILTIN_EXERCISES = [
 const EXERCISE_LEVEL_MAP = {
   // kettlebell (one bell) — levels only order the swap picker; these never move your levels
   "kb-swing": 2, "kb-swing-1h": 3, "kb-goblet-squat": 2, "kb-rack-reverse-lunge": 3, "kb-press-hk": 3,
-  "kb-floor-press": 2, "kb-row": 2, "kb-clean": 3, "kb-sl-rdl": 3, "kb-suitcase-carry": 2,
+  "kb-floor-press": 2, "kb-row": 2, "kb-row-2h": 2, "kb-clean": 3, "kb-sl-rdl": 3, "kb-suitcase-carry": 2,
   "kb-waiter-carry": 3, "kb-turkish-getup": 3, "kb-overhead-lunge": 3, "kb-halo": 2, "kb-figure8": 2,
   "kb-deadlift": 1, "kb-dead-high-pull": 2, "kb-dead-snatch": 3, "kb-snatch": 4,
   "kb-windmill": 3, "kb-racked-squat": 3, "kb-push-press": 3, "kb-complex": 3, "bw-complex": 2,
@@ -1858,7 +1859,7 @@ function levelOf(exerciseIdOrName) {
 // e.g. a ring row and a dead hang as interchangeable just because they're
 // both tagged "pull" at some difficulty number.
 const EXERCISE_PLANE_MAP = {
-  "kb-press-hk": "v", "kb-floor-press": "h", "kb-row": "h", "kb-clean": "v",
+  "kb-press-hk": "v", "kb-floor-press": "h", "kb-row": "h", "kb-row-2h": "h", "kb-clean": "v",
   "kb-push-press": "v", "kb-dead-high-pull": "h", "kb-dead-snatch": "v", "kb-snatch": "v",
   // push - horizontal (push-up/planche line, presses away from the ground)
   "wall-pushup": "h", "incline-pushup-high": "h", "incline-pushup": "h", "knee-pushup": "h",
@@ -2082,7 +2083,7 @@ function renderExercises(filterText = "", muscleGroup = "all", levelFilter = "al
 async function migrateKbProgramArms() {
   try {
     const p = (programs || []).find(x => x.source === "built-in" && /^Kettlebell A\/B \(one bell\) v2/.test(x.name || ""));
-    if (!p || !p.structure || (p.structure.rev || 0) >= 4) return;
+    if (!p || !p.structure || (p.structure.rev || 0) >= 5) return;
     const fresh = kbProgram();
     await apiFetch("/api/programs", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -4130,6 +4131,7 @@ const KB_TRAVEL = {
   "kb-press-hk":           { id: "pike-pushup-hands-elevated", reps: "6-8" },
   "kb-floor-press":        { id: "pushup",                 reps: "8-12" },
   "kb-row":                { id: "backpack-row",           reps: "8-12" },
+  "kb-row-2h":             { id: "backpack-row",           reps: "8-12" },
   "kb-clean":              { id: "doorframe-row",          reps: "8-12" },
   "kb-curl": ["Swinging the bell up with the back", "Elbow drifting forward", "Dropping it fast instead of lowering slowly"],
   "kb-overhead-triceps-ext": ["Elbows flaring wide", "Arching the lower back", "Lowering too fast behind the head"],
@@ -4177,7 +4179,8 @@ function kbProgram() {
   const B = (sw, pl, lg, fp, rd, wc, db, cx) => day("Bell B: hinge, pull, single leg", [
     ["kb-swing-1h", sw[0], sw[1], EM + ", switch hands", null, 60],
     [pl[0], pl[1], pl[2], S, "A"], ["kb-rack-reverse-lunge", lg[0], lg[1], S, "A"],
-    ["kb-floor-press", fp[0], fp[1], S, "B"], ["kb-sl-rdl", rd[0], rd[1], S, "B"],
+    ["kb-floor-press", fp[0], fp[1], S, "B"], ["kb-row-2h", 3, "8-10", null, "B"],
+    ["kb-sl-rdl", rd[0], rd[1], S, null],
     ...(cx ? [["kb-complex", cx[0], "3", "3 of each: deadlift, clean, press, squat. Switch arms each round", null, 60]] : []),
     ["kb-waiter-carry", wc[0], wc[1], "seconds " + S, null],
     ["kb-curl", 2, "8-10", S, "E"], ["kb-overhead-triceps-ext", 2, "8-10", null, "E"],
@@ -4191,7 +4194,7 @@ function kbProgram() {
     source: "built-in",
     structure: {
       name: "Kettlebell A/B (one bell) v2",
-      rev: 4,
+      rev: 5,
       session: { days: 4, minutes: "40-65" },
       phases: [
         phase("Foundation v2: learn the lifts", 1, 4, 4,
@@ -4571,6 +4574,7 @@ const EX_MISTAKES = {
   "kb-rack-reverse-lunge": ["Front knee drifting in or collapsing", "Leaning forward instead of staying tall", "Short steps that load the front knee"],
   "kb-press-hk": ["Arching the lower back to finish the press", "Elbow flaring out to the side", "Not squeezing the kneeling-side glute"],
   "kb-floor-press": ["Elbow flared wide at 90 degrees", "Bouncing the arm off the floor", "Wrist bending back under the bell"],
+  "kb-row-2h": ["Rounding the back as you pull", "Shrugging instead of squeezing the shoulder blades", "Using hip swing to throw the bell up"],
   "kb-row": ["Rounding the back as you pull", "Twisting the torso to lift the bell", "Elbow flaring away from the ribs"],
   "kb-clean": ["Swinging the bell around the wrist and banging the forearm", "Curling it up with the arm", "Not tucking the elbow into the ribs on landing"],
   "kb-sl-rdl": ["Rotating the hips open as the leg lifts", "Locking the standing knee", "Rounding the back to reach lower"],
