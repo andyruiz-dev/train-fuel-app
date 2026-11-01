@@ -1054,7 +1054,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-01 09:30 CT";
+const APP_BUILD = "2026-11-01 10:05 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -2125,7 +2125,7 @@ function renderProgramView() {
       : '<span style="font-size:12px;color:var(--text-muted);">Preview</span>';
     let exs = "";
     if (d.fixed) {
-      exs = d.fixed.exercises.map(f => { const x = BUILTIN_EXERCISES.find(b => b.id === f.id); const nm = x ? x.name : f.id; return `<button type="button" class="tf-exlink" data-pexinfo="${esc(nm)}"><span>${esc(nm)} ${esc(String(f.sets))}×${esc(String(f.reps))}</span><b>How to ›</b></button>`; }).join("");
+      exs = d.fixed.exercises.map(f => { const v = kbFinisherVariant(f, wk); const x = BUILTIN_EXERCISES.find(b => b.id === ((v && v.id) || f.id)); const nm = x ? x.name : f.id; const reps = (v && v.reps) || f.reps; return `<button type="button" class="tf-exlink" data-pexinfo="${esc(nm)}"><span>${esc(nm)} ${esc(String(f.sets))}×${esc(String(reps))}</span><b>How to ›</b></button>`; }).join("");
     } else {
       exs = (d.slots || []).map(s => `${esc(s.muscle_group)} ${esc(String(s.sets))}×${esc(String(s.reps))}`).join("<br>");
     }
@@ -2136,7 +2136,7 @@ function renderProgramView() {
   el.innerHTML = `<div class="tf-prog-head"><button type="button" class="chg" id="tfChangeProgram">Change program</button><div class="pills">${pills}</div><h2>${esc(program.name)}</h2></div>
     <div class="tf-wktabs" id="tfWkTabs">${tabs}</div>
     <div class="tf-pbar"><b>${pct}%</b><div class="bar"><i style="width:${pct}%"></i></div><span>${done === null ? `wk ${cur} / ${maxWeek}` : `${done} / ${total}`}</span></div>
-    <div class="tf-pnote">${esc(String(phase?.phase || ""))}${isDeload ? " · deload week" : ""}${wk !== cur ? ` · viewing week ${wk}` : ""}</div>
+    <div class="tf-pnote">${esc(String(phase?.phase || ""))}${isDeload ? " · deload week" : ""}${wk !== cur ? ` · viewing week ${wk}` : ""}${days.some(d => d.fixed && d.fixed.exercises.some(f => KB_FINISHER_ROTATION[f.id])) ? " · push-up and core finishers rotate weekly" : ""}</div>
     <div class="tf-days-list">${cards}</div>`;
   const on = el.querySelector("#tfWkTabs button.on");
   if (on) { const bar = el.querySelector("#tfWkTabs"); bar.scrollLeft = on.offsetLeft - 16; }
@@ -4209,7 +4209,21 @@ function estimateWorkoutMinutes(w) {
 }
 // Builds a fixed-list day: bell moves, or their bodyweight stand-ins in Travel
 // mode. Deload weeks cut sets by about a third. No AI call involved.
-function buildFixedWorkout(day, isDeload) {
+// The push-up and core finishers rotate weekly so the same two moves aren't
+// repeated all program long. Weekly (not per session) so a move repeats on
+// consecutive sessions, which is what the Target hints need. Skipped in travel
+// mode, which stays bodyweight-only with its own substitutes.
+const KB_FINISHER_ROTATION = {
+  "pushup":   [{ id: "pushup" }, { id: "parallette-pushup" }, { id: "decline-pushup" }],
+  "plank":    [{ id: "plank" }, { id: "plank-shoulder-tap", reps: "8", note: "each side" }, { id: "hollow-hold-tucked" }, { id: "ab-wheel-rollout-kneeling", reps: "6" }],
+  "dead-bug": [{ id: "dead-bug" }, { id: "bird-dog" }, { id: "side-plank", reps: "20", note: "each side" }],
+};
+function kbFinisherVariant(f, week) {
+  const list = KB_FINISHER_ROTATION[f && f.id];
+  if (!list || !week || week < 1) return null;
+  return list[(week - 1) % list.length];
+}
+function buildFixedWorkout(day, isDeload, weekNumber) {
   const used = new Set();
   const out = [];
   (day.fixed.exercises || []).forEach(f => {
@@ -4220,6 +4234,11 @@ function buildFixedWorkout(day, isDeload) {
       if (!sub) return;
       lib = sub; reps = f.tr.reps; note = f.tr.note || null;
       emom = f.tr.emom === true ? (f.emom || 60) : null;
+    }
+    if (!state.travelMode && weekNumber) {
+      const v = kbFinisherVariant(f, weekNumber);
+      const vl = v && v.id !== f.id ? exercises.find(x => x.id === v.id) : null;
+      if (vl) { lib = vl; if (v.reps) reps = v.reps; if (v.note !== undefined) note = v.note; }
     }
     if (!lib || used.has(lib.name)) return;
     used.add(lib.name);
@@ -4243,7 +4262,7 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
   {
     const cp = currentPhaseFor(program);
     const fd = cp.phase?.days?.[dayIndex] || cp.phase?.days?.[0];
-    if (fd && fd.fixed) return buildFixedWorkout(fd, !!cp.phase?.deload_weeks?.includes(cp.weekNumber));
+    if (fd && fd.fixed) return buildFixedWorkout(fd, !!cp.phase?.deload_weeks?.includes(cp.weekNumber), cp.weekNumber);
   }
   const recentFromHistory = (state.logs || []).slice(-15).map(l => l.exercise);
   const recentNames = [...new Set([...avoidNames, ...recentFromHistory])].join(", ");
