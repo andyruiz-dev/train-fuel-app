@@ -1054,7 +1054,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-01 12:10 CT";
+const APP_BUILD = "2026-11-01 12:40 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3723,11 +3723,35 @@ function workoutHasStaleExercises(workout) {
 // they're clicked, which is how a day (e.g. the one core slot in Foundation
 // phase) can go weeks without ever coming up — the cycle keeps restarting
 // before it gets there.
+// Which day of this week is up next, from the count of finished workouts (the
+// same source the Program screen uses). null when the program isn't paced by count.
+function expectedDayIndex(program) {
+  try {
+    const pace = getProgramPace(program);
+    if (pace.mode !== "count") return null;
+    const cur = Math.min(currentPhaseFor(program).weekNumber, programMaxWeek(program));
+    let before = 0; for (let w = 1; w < cur; w++) before += workoutsInWeek(program, w);
+    return Math.max(0, pace.completed - before);
+  } catch (e) { return null; }
+}
 async function ensureWorkoutReady(program, forceDayIndex) {
   const { phase, weekNumber } = currentPhaseFor(program);
   const key = phaseKeyFor(program, phase);
 
-  const cached = state.pendingWorkout;
+  let cached = state.pendingWorkout;
+  // One-time repair (build 2026-11-01 12:40): a program edit used to restart a
+  // pending workout at Day 1. If the saved day disagrees with the finished-workout
+  // count, put it back on the right day.
+  if (cached && !cached.completed && cached.programId === program.id && state.dayIdxHeal !== 1 && typeof forceDayIndex !== "number") {
+    state.dayIdxHeal = 1;
+    const exp = expectedDayIndex(program);
+    const tot = (phase?.days || []).length || 1;
+    if (exp !== null && exp < tot && exp !== cached.dayIndex) { forceDayIndex = exp; cached = null; }
+    else { try { persist(); } catch (e) {} }
+  }
+  // Same program and phase but the day list changed (hash differs): keep its place in the rotation.
+  const baseKey = k => String(k || "").replace(/-[a-z0-9]+$/, "");
+  const sameSlot = cached && cached.programId === program.id && baseKey(cached.phaseKey) === baseKey(key);
   const hasMatchingCache = cached && cached.programId === program.id && cached.phaseKey === key;
   if (hasMatchingCache && !cached.completed && !workoutHasStaleExercises(cached.workout)) {
     renderTodayWorkout(cached.workout);
@@ -3739,9 +3763,11 @@ async function ensureWorkoutReady(program, forceDayIndex) {
   try {
     const totalDays = (phase?.days || []).length || 1;
     let nextIndex = typeof forceDayIndex === "number" ? ((forceDayIndex % totalDays) + totalDays) % totalDays : 0;
-    if (hasMatchingCache && cached.completed) {
+    if (typeof forceDayIndex === "number") {
+      // explicit choice wins
+    } else if (sameSlot && cached.completed) {
       nextIndex = (cached.dayIndex + 1) % totalDays;
-    } else if (hasMatchingCache && !cached.completed) {
+    } else if (sameSlot && !cached.completed) {
       // Stale cache for a day not yet done — regenerate the same slot,
       // don't advance the rotation just because the old copy aged out.
       nextIndex = cached.dayIndex;
