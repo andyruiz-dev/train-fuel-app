@@ -1064,7 +1064,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-03 06:30 CT";
+const APP_BUILD = "2026-11-03 07:05 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1180,18 +1180,26 @@ async function apiFetch(path, opts) {
 async function loadState() {
   const cached = localStorage.getItem(LS_KEY);
   if (cached) state = JSON.parse(cached);
+  let needPush = false;
 
   if (!WORKER_URL) { setSync(false, "no worker configured — offline only"); return; }
 
   try {
     const remote = await apiFetch("/api/state", { method: "GET" });
     if (remote && Object.keys(remote).length) {
-      state = remote;
-      localStorage.setItem(LS_KEY, JSON.stringify(state));
+      if (cached && isDirty()) {
+        // This phone has changes the server never confirmed. Don't overwrite them.
+        if ((remote._savedAt || 0) > (state._savedAt || 0)) state = mergeStates(state, remote);
+        needPush = true;
+        localStorage.setItem(LS_KEY, JSON.stringify(state));
+      } else {
+        state = remote;
+        localStorage.setItem(LS_KEY, JSON.stringify(state));
+      }
     }
-    setSync(true, "synced");
+    setSync(true, needPush ? "syncing saved changes" : "synced");
   } catch (e) {
-    setSync(false, "offline — using local cache");
+    setSync(false, isDirty() ? "offline: saved on this phone, will sync" : "offline: using local cache");
   }
   if (!state.progressLevels) {
     state.progressLevels = { push: 1, pull: 1, legs: 1, hinge: 1, core: 1, ruck: 1 };
@@ -1270,9 +1278,53 @@ async function loadState() {
     state.skillLevels = { ...DEFAULT_SKILL_LEVELS, ...state.skillLevels };
   }
   if (!state.skillStreaks || typeof state.skillStreaks !== "object") state.skillStreaks = {};
+  if (needPush) { markDirty(); saveStateLocal(); saveStateRemote(); }
+}
+
+// Unsynced-change tracking. Every local save stamps the state and marks it "dirty";
+// the mark is cleared only when the server confirms that exact version. On the next
+// open, a dirty phone copy is sent to the server instead of being overwritten by it.
+const LS_DIRTY = "tf_dirty_at";
+function markDirty() {
+  state._savedAt = Date.now();
+  try { localStorage.setItem(LS_DIRTY, String(state._savedAt)); } catch (e) {}
+}
+function isDirty() { try { return !!localStorage.getItem(LS_DIRTY); } catch (e) { return false; } }
+function clearDirtyIf(sentAt) {
+  try { if (localStorage.getItem(LS_DIRTY) === String(sentAt)) localStorage.removeItem(LS_DIRTY); } catch (e) {}
+}
+async function putState() {
+  const sentAt = state._savedAt || 0;
+  await apiFetch("/api/state", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(state),
+  });
+  clearDirtyIf(sentAt);
+  setSync(true, "synced");
+}
+function offlineLabel() { return isDirty() ? "offline: saved on this phone, will sync" : "offline: will retry"; }
+// If another device saved a newer copy while this phone had unsynced changes, keep the
+// server copy and add back anything this phone logged that the server doesn't have.
+function mergeStates(local, remote) {
+  const out = JSON.parse(JSON.stringify(remote));
+  const keyOf = {
+    foodLogs: x => [x.date, x.name, x.calories].join("|"),
+    logs: x => [x.date, x.exercise, x.result].join("|"),
+    cardioLogs: x => [x.date, x.type, x.distance].join("|"),
+    measurements: x => x.date,
+  };
+  for (const k of Object.keys(keyOf)) {
+    const have = new Set((out[k] || []).map(keyOf[k]));
+    out[k] = out[k] || [];
+    for (const item of (local[k] || [])) if (!have.has(keyOf[k](item))) out[k].push(item);
+    if (k === "foodLogs" || k === "logs" || k === "cardioLogs") out[k].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  }
+  return out;
 }
 
 function saveStateLocal() {
+  markDirty();
   localStorage.setItem(LS_KEY, JSON.stringify(state));
 }
 
@@ -1281,14 +1333,9 @@ function saveStateRemote() {
   saveTimer = setTimeout(async () => {
     if (!WORKER_URL) return;
     try {
-      await apiFetch("/api/state", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(state),
-      });
-      setSync(true, "synced");
+      await putState();
     } catch (e) {
-      setSync(false, "offline — will retry");
+      setSync(false, offlineLabel());
     }
   }, 800);
 }
@@ -1311,16 +1358,16 @@ async function persistNow() {
   clearTimeout(saveTimer);
   if (!WORKER_URL) return;
   try {
-    await apiFetch("/api/state", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(state),
-    });
-    setSync(true, "synced");
+    await putState();
   } catch (e) {
-    setSync(false, "offline — will retry");
+    setSync(false, offlineLabel());
   }
 }
+// Retry unsynced changes when the connection comes back, the app returns to the
+// foreground, and on a slow timer while anything is waiting.
+window.addEventListener("online", () => { if (isDirty()) saveStateRemote(); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden && isDirty()) saveStateRemote(); });
+setInterval(() => { if (isDirty() && !document.hidden) saveStateRemote(); }, 60000);
 
 // ---- exercise library ----
 const BUILTIN_EXERCISES = [
