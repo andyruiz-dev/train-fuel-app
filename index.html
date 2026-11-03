@@ -610,6 +610,7 @@
     <div class="tf-photo-extra">
       <input type="text" id="scanNote" style="border-radius:12px;" placeholder="Note for the photo, e.g. 'half portion' (optional)">
       <button class="danger-link" id="foodPhotoChoose" style="color:var(--accent);">or choose one from your gallery</button>
+      <button class="danger-link" id="barcodeBtn" style="color:var(--accent);">Scan a barcode (exact label numbers)</button>
     </div>
     <input type="file" id="foodPhotoInput" accept="image/*" style="display:none;">
     <div id="foodScanStatus" class="empty" style="display:none; margin-top:8px;"></div>
@@ -1068,7 +1069,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-03 07:50 CT";
+const APP_BUILD = "2026-11-03 08:30 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -6708,6 +6709,23 @@ async function getUploadBlob(file, maxBytes = 3 * 1024 * 1024) {
   throw new Error("Couldn't shrink this photo enough to upload safely. Try a different photo, or use manual entry below.");
 }
 
+function fillScanReview(est) {
+  scanBaseValues = { calories: est.calories || 0, protein: est.protein || 0, carbs: est.carbs || 0, fat: est.fat || 0 };
+  document.getElementById("scanName").value = est.name || "";
+  document.getElementById("scanServings").value = "1";
+  // Serving info: what one "serving" means, plus quick buttons when the package holds several.
+  const spc = parseFloat(est.servings_per_container);
+  document.getElementById("scanServingInfo").textContent = [est.serving_note, spc > 1 ? `Package holds about ${spc} servings.` : ""].filter(Boolean).join(" · ");
+  document.getElementById("scanServingChips").innerHTML = spc > 1
+    ? `<div class="chip" data-sv="0.5">½</div><div class="chip" data-sv="1">1 serving</div><div class="chip" data-sv="${spc}">Whole package (×${spc})</div>`
+    : "";
+  document.getElementById("scanCalories").value = est.calories || "";
+  document.getElementById("scanProtein").value = est.protein || "";
+  document.getElementById("scanCarbs").value = est.carbs || "";
+  document.getElementById("scanFat").value = est.fat || "";
+  document.getElementById("foodScanReview").classList.remove("hidden");
+  document.getElementById("scanNote").value = "";
+}
 async function scanFoodBlob(file) {
   const statusEl = document.getElementById("foodScanStatus");
   statusEl.style.display = "block";
@@ -6758,21 +6776,7 @@ async function scanFoodBlob(file) {
         throw new Error("the AI replied with text instead of an estimate: \"" + text.trim().slice(0, 160) + "\"");
       }
     }
-    scanBaseValues = { calories: est.calories || 0, protein: est.protein || 0, carbs: est.carbs || 0, fat: est.fat || 0 };
-    document.getElementById("scanName").value = est.name || "";
-    document.getElementById("scanServings").value = "1";
-    // Serving info: what one "serving" means, plus quick buttons when the package holds several.
-    const spc = parseFloat(est.servings_per_container);
-    document.getElementById("scanServingInfo").textContent = [est.serving_note, spc > 1 ? `Package holds about ${spc} servings.` : ""].filter(Boolean).join(" · ");
-    document.getElementById("scanServingChips").innerHTML = spc > 1
-      ? `<div class="chip" data-sv="0.5">½</div><div class="chip" data-sv="1">1 serving</div><div class="chip" data-sv="${spc}">Whole package (×${spc})</div>`
-      : "";
-    document.getElementById("scanCalories").value = est.calories || "";
-    document.getElementById("scanProtein").value = est.protein || "";
-    document.getElementById("scanCarbs").value = est.carbs || "";
-    document.getElementById("scanFat").value = est.fat || "";
-    document.getElementById("foodScanReview").classList.remove("hidden");
-    document.getElementById("scanNote").value = "";
+    fillScanReview(est);
     statusEl.textContent = est.confidence === "low"
       ? "Low confidence: check the portion, or retake with a note like '2 slices'."
       : "Review the estimate below, then add it.";
@@ -6853,6 +6857,74 @@ document.getElementById("foodPhotoChoose").addEventListener("click", () => {
   scanBreadcrumb("set");
   document.getElementById("foodPhotoInput").click();
 });
+
+// ---- Barcode scan: exact label numbers for packaged food ----
+// Uses the browser's BarcodeDetector when the phone has one; otherwise (or as a backup)
+// you can type the number printed under the barcode. Lookup runs through the worker.
+async function lookupBarcode(code) {
+  const statusEl = document.getElementById("foodScanStatus");
+  statusEl.style.display = "block";
+  statusEl.textContent = "Looking up " + code + "…";
+  document.getElementById("foodScanReview").classList.add("hidden");
+  try {
+    const resp = await fetchWithRetry(WORKER_URL.replace(/\/$/, "") + "/api/barcode?code=" + encodeURIComponent(code), withAuth({ method: "GET" }));
+    if (!resp.ok) throw new Error("lookup failed (" + resp.status + ")");
+    const d = await resp.json();
+    if (!d.found) { statusEl.textContent = "That barcode isn't in the food database. Use PHOTO on the package instead."; return; }
+    fillScanReview({ ...d, name: d.name + (d.basis === "100g" ? " (100 g)" : " (1 serving)"), confidence: "high" });
+    statusEl.textContent = d.basis === "100g"
+      ? "Label numbers are per 100 g here. Set Servings to match what you ate (1 = 100 g)."
+      : "Exact label numbers for one serving. Adjust servings if you ate more.";
+  } catch (err) {
+    statusEl.textContent = "Barcode lookup failed: " + err.message;
+  }
+}
+async function openBarcodeScanner() {
+  let stream = null, timer = null, done = false;
+  const ov = document.createElement("div");
+  ov.id = "barcodeOverlay";
+  ov.style.cssText = "position:fixed; inset:0; z-index:9999; background:#000; display:flex; flex-direction:column;";
+  ov.innerHTML = `
+    <video id="barcodeVideo" autoplay playsinline muted style="flex:1; min-height:0; width:100%; object-fit:contain; background:#000;"></video>
+    <div id="barcodeMsg" style="color:#fff; text-align:center; padding:8px 16px;">Point the camera at the barcode</div>
+    <div style="display:flex; gap:8px; padding:0 16px 8px;"><input type="text" inputmode="numeric" id="barcodeTyped" placeholder="or type the number under the barcode" style="flex:1; border-radius:12px;"><button class="primary" id="barcodeGo">Look up</button></div>
+    <div style="padding:8px 16px 16px; padding-bottom:max(16px, env(safe-area-inset-bottom));"><button class="secondary" id="barcodeCancel" style="width:100%;">Cancel</button></div>`;
+  document.body.appendChild(ov);
+  const finish = (code) => {
+    if (done) return; done = true;
+    clearInterval(timer);
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    ov.remove();
+    if (code) lookupBarcode(code);
+  };
+  document.getElementById("barcodeCancel").addEventListener("click", () => finish(null));
+  document.getElementById("barcodeGo").addEventListener("click", () => {
+    const v = document.getElementById("barcodeTyped").value.replace(/\D/g, "");
+    if (v.length >= 6) finish(v); else document.getElementById("barcodeMsg").textContent = "Enter the full barcode number (6 to 14 digits).";
+  });
+  if (!("BarcodeDetector" in window)) {
+    document.getElementById("barcodeMsg").textContent = "This browser can't read barcodes with the camera. Type the number below.";
+    document.getElementById("barcodeVideo").style.display = "none";
+    return;
+  }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1600 }, height: { ideal: 1200 } }, audio: false });
+    if (done) { stream.getTracks().forEach(t => t.stop()); return; }
+    const video = document.getElementById("barcodeVideo");
+    video.srcObject = stream;
+    const detector = new BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e"] });
+    timer = setInterval(async () => {
+      if (done || !video.videoWidth) return;
+      try {
+        const found = await detector.detect(video);
+        if (found && found.length) finish(found[0].rawValue);
+      } catch (e) { /* keep trying */ }
+    }, 350);
+  } catch (e) {
+    document.getElementById("barcodeMsg").textContent = "Camera not available. Type the number below.";
+  }
+}
+document.getElementById("barcodeBtn").addEventListener("click", openBarcodeScanner);
 
 document.getElementById("saveScanBtn").addEventListener("click", async () => {
   let name = document.getElementById("scanName").value.trim();

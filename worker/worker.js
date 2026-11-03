@@ -228,6 +228,48 @@ export default {
         return json(data, resp.status);
       }
 
+      // ---- barcode lookup (Open Food Facts) ----
+      // Done here, not in the browser, so there is no cross-origin problem and the request
+      // carries a proper User-Agent as the Open Food Facts usage policy asks.
+      if (path === "/api/barcode" && request.method === "GET") {
+        const code = (url.searchParams.get("code") || "").replace(/\D/g, "");
+        if (code.length < 6 || code.length > 14) return json({ found: false, error: "bad code" }, 400);
+        const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,brands,serving_size,serving_quantity,product_quantity,nutriments`, {
+          headers: { "User-Agent": "TrainFuel/1.0 (personal fitness app)" },
+        });
+        if (!r.ok) return json({ found: false });
+        const d = await r.json();
+        const p = d && d.product;
+        if (!p || d.status === 0) return json({ found: false });
+        const n = p.nutriments || {};
+        const num = (v) => { const x = parseFloat(v); return isFinite(x) ? x : null; };
+        const sq = num(p.serving_quantity);            // grams (or ml) in one serving
+        const per = (key) => {                          // per-serving value, from label or scaled from 100 g
+          const s = num(n[key + "_serving"]);
+          if (s !== null) return s;
+          const h = num(n[key + "_100g"]);
+          return h !== null && sq ? h * sq / 100 : null;
+        };
+        let kcal = per("energy-kcal");
+        if (kcal === null) { const kj = per("energy"); if (kj !== null) kcal = kj / 4.184; }
+        const prot = per("proteins"), carb = per("carbohydrates"), fat = per("fat");
+        if (kcal === null || sq === null) {
+          // No per-serving data: fall back to 100 g values and say so.
+          const k100 = num(n["energy-kcal_100g"]);
+          if (k100 === null) return json({ found: false });
+          return json({ found: true, name: [p.brands && p.brands.split(",")[0], p.product_name].filter(Boolean).join(" "),
+            basis: "100g", serving_note: "per 100 g (no serving size on file)", servings_per_container: null,
+            calories: Math.round(k100), protein: Math.round(num(n["proteins_100g"]) || 0),
+            carbs: Math.round(num(n["carbohydrates_100g"]) || 0), fat: Math.round(num(n["fat_100g"]) || 0) });
+        }
+        const pq = num(p.product_quantity);
+        const spc = pq && sq ? Math.round((pq / sq) * 10) / 10 : null;
+        return json({ found: true, name: [p.brands && p.brands.split(",")[0], p.product_name].filter(Boolean).join(" "),
+          basis: "serving", serving_note: p.serving_size ? `1 serving = ${p.serving_size}` : `1 serving = ${sq} g`,
+          servings_per_container: spc && spc > 1 ? spc : null,
+          calories: Math.round(kcal), protein: Math.round(prot || 0), carbs: Math.round(carb || 0), fat: Math.round(fat || 0) });
+      }
+
       return json({ error: "not found" }, 404);
     } catch (err) {
       return json({ error: String(err) }, 500);
