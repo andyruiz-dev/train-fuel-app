@@ -651,8 +651,12 @@
     </div>
 
     <div id="recentWrap" class="hidden">
-      <div class="tf-label">Recent foods</div>
+      <div class="tf-label" style="display:flex; justify-content:space-between;"><span>Recent foods</span><span id="myFoodsOpen" role="button" tabindex="0" style="color:var(--accent); cursor:pointer;">All my foods</span></div>
       <div class="tf-recent" id="recentFoods"></div>
+    </div>
+    <div id="myFoodsPanel" class="hidden tf-panel">
+      <input type="text" id="myFoodsSearch" placeholder="Search your foods" style="margin-bottom:8px;">
+      <div id="myFoodsList"></div>
     </div>
 
     <div class="tf-label" style="display:flex; justify-content:space-between;"><span id="tfLogLabel">Today's log</span><span id="tfBackToday" class="hidden" role="button" tabindex="0" style="color:var(--accent); cursor:pointer;">Back to today</span></div>
@@ -1064,7 +1068,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-03 07:05 CT";
+const APP_BUILD = "2026-11-03 07:50 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -6227,6 +6231,61 @@ document.getElementById("recentFoods").addEventListener("click", async (e) => {
   if (!f) return;
   const { name, calories, protein, carbs, fat, alcohol } = f;
   await addFoodEntry({ name, calories: calories || 0, protein: protein || 0, carbs: carbs || 0, fat: fat || 0, ...(alcohol ? { alcohol: true } : {}), source: "recent" });
+});
+
+// My foods: everything you have logged before, most-used first. One tap logs it again with the
+// exact same numbers, so repeat foods never need another scan (and never vary).
+let myFoodsList = [];
+function renderMyFoods() {
+  const el = document.getElementById("myFoodsList");
+  if (!el) return;
+  const q = (document.getElementById("myFoodsSearch").value || "").trim().toLowerCase();
+  const map = {};
+  (state.foodLogs || []).forEach(f => {
+    if (!f.name || !(f.calories || f.protein)) return;
+    const k = f.name.trim().toLowerCase().replace(/\s*\(×[\d.]+\)\s*$/, "");
+    if ((state.hiddenRecentFoods || []).includes(f.name.trim().toLowerCase())) return;
+    const m = map[k] || (map[k] = { count: 0, last: f });
+    m.count++;
+    if (new Date(f.date) > new Date(m.last.date)) m.last = f;
+  });
+  myFoodsList = Object.values(map)
+    .filter(m => !q || m.last.name.toLowerCase().includes(q))
+    .sort((a, b) => b.count - a.count || new Date(b.last.date) - new Date(a.last.date))
+    .slice(0, 40).map(m => {
+      // Show one unit: an entry saved as "Egg (×2)" is listed as "Egg" with half the numbers.
+      const f = m.last, prev = parseFloat((f.name.match(/\(×([\d.]+)\)\s*$/) || [])[1]) || 1;
+      return { ...f, name: f.name.replace(/\s*\(×[\d.]+\)\s*$/, ""), calories: Math.round((f.calories || 0) / prev), protein: Math.round((f.protein || 0) / prev), carbs: Math.round((f.carbs || 0) / prev), fat: Math.round((f.fat || 0) / prev), _count: m.count };
+    });
+  el.innerHTML = myFoodsList.length ? myFoodsList.map((f, i) => `
+    <div class="tf-hist-row" style="gap:8px; align-items:center;">
+      <div style="min-width:0; flex:1;"><div class="d" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(f.name)}</div><div class="s">${f.calories || 0} cal · ${f.protein || 0} g protein · logged ${f._count}×</div></div>
+      <button class="danger-link" style="color:var(--accent);" data-my-add="${i}" data-mult="1">+1</button>
+      <button class="danger-link" style="color:var(--accent);" data-my-add="${i}" data-mult="2">×2</button>
+    </div>`).join("") : '<div class="empty">No matches.</div>';
+}
+function toggleMyFoods(force) {
+  const p = document.getElementById("myFoodsPanel");
+  const show = typeof force === "boolean" ? force : p.classList.contains("hidden");
+  p.classList.toggle("hidden", !show);
+  if (show) renderMyFoods();
+}
+document.getElementById("myFoodsOpen").addEventListener("click", () => toggleMyFoods());
+document.getElementById("myFoodsSearch").addEventListener("input", renderMyFoods);
+document.getElementById("myFoodsList").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-my-add]"); if (!b) return;
+  const f = myFoodsList[parseInt(b.dataset.myAdd, 10)]; if (!f) return;
+  const mult = parseFloat(b.dataset.mult) || 1;
+  const base = f.name.replace(/\s*\(×[\d.]+\)\s*$/, "");
+  // Entries already scaled earlier (name ends "(×2)") are brought back to one unit first.
+  const prev = parseFloat((f.name.match(/\(×([\d.]+)\)\s*$/) || [])[1]) || 1;
+  const u = mult / prev;
+  await addFoodEntry({
+    name: mult === 1 ? base : `${base} (×${mult})`,
+    calories: Math.round((f.calories || 0) * u), protein: Math.round((f.protein || 0) * u),
+    carbs: Math.round((f.carbs || 0) * u), fat: Math.round((f.fat || 0) * u),
+    ...(f.alcohol ? { alcohol: true } : {}), source: "my",
+  });
 });
 
 // Past days: totals per day for the last 14 days; tap one to open it in the log above.
