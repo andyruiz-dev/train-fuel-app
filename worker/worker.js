@@ -1,5 +1,5 @@
 /**
- * Train & Fuel — Cloudflare Worker
+ * Train & Fuel — Cloudflare Worker (deployed from this repo via Cloudflare Git integration)
  *
  * Bindings required (set in wrangler.toml / dashboard):
  *   - DB              D1 database binding
