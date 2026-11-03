@@ -1064,7 +1064,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-03 06:15 CT";
+const APP_BUILD = "2026-11-03 06:30 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -6696,14 +6696,14 @@ function closeCamera() {
 async function openCamera() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error("no camera api");
   cameraStream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: { ideal: "environment" }, width: { ideal: 1600 }, height: { ideal: 1600 } },
+    video: { facingMode: { ideal: "environment" }, width: { ideal: 1600 }, height: { ideal: 1200 } },
     audio: false,
   });
   const ov = document.createElement("div");
   ov.id = "cameraOverlay";
   ov.style.cssText = "position:fixed; inset:0; z-index:9999; background:#000; display:flex; flex-direction:column;";
   ov.innerHTML = `
-    <video id="cameraVideo" autoplay playsinline muted style="flex:1; min-height:0; width:100%; object-fit:cover;"></video>
+    <video id="cameraVideo" autoplay playsinline muted style="flex:1; min-height:0; width:100%; object-fit:contain; background:#000;"></video>
     <div style="display:flex; gap:12px; padding:16px; padding-bottom:max(16px, env(safe-area-inset-bottom)); background:#000;">
       <button class="secondary" id="cameraCancelBtn" style="flex:1;">Cancel</button>
       <button class="primary" id="cameraSnapBtn" style="flex:2;">Take photo</button>
@@ -6711,6 +6711,12 @@ async function openCamera() {
   document.body.appendChild(ov);
   const video = document.getElementById("cameraVideo");
   video.srcObject = cameraStream;
+  // Start at the widest view the camera offers, so a whole plate fits without backing away.
+  try {
+    const track = cameraStream.getVideoTracks()[0];
+    const caps = track.getCapabilities ? track.getCapabilities() : {};
+    if (caps.zoom && typeof caps.zoom.min === "number") await track.applyConstraints({ advanced: [{ zoom: caps.zoom.min }] });
+  } catch (e) { /* zoom control not supported on this phone: ignore */ }
   document.getElementById("cameraCancelBtn").addEventListener("click", closeCamera);
   document.getElementById("cameraSnapBtn").addEventListener("click", async () => {
     const w = video.videoWidth, h = video.videoHeight;
