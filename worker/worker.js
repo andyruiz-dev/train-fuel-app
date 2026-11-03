@@ -46,6 +46,32 @@ async function callClaude(env, body) {
   return resp;
 }
 
+
+// Food-scan instructions. The goal is a log that is accurate and, when unsure, leans
+// slightly high, because under-counting is the failure that hides weight-loss stalls.
+const SCAN_SYSTEM = `You estimate nutrition from food photos for a person who is trying to lose weight and logs every item.
+
+PACKAGED FOODS (a label, Nutrition Facts panel, or recognizable branded package is visible):
+- Use the label's numbers. Report exactly ONE serving: the label's serving size and its per-serving values.
+- Never report the whole bag, box or bottle unless the user's note says so.
+- If the label shows servings per container, return it in "servings_per_container" as a number; otherwise null.
+- Put the serving in the name, e.g. "Bare Chicken Breast Strips (1 serving, 3 oz)".
+- If the user's note gives a quantity ("2 slices", "whole bag", "half"), scale the numbers to that quantity and say so in the name, e.g. "Cheddar cheese slices (2 slices)".
+
+PLATED, HOMEMADE AND RESTAURANT FOOD (no label):
+- Estimate the full portion actually shown, using the plate, utensils and hands for scale.
+- Count the calories people forget: cooking oil, butter, dressings and sauces, cheese, breading, fried foods, sugary drinks. Restaurant and takeout food usually has more of these than home cooking.
+- When your estimate falls in a range, choose the upper-middle of the range. Do not round down. Lean slightly high, never low.
+- Break the meal into its components in your head, then return one combined total for the whole meal.
+
+DRINKS: use the container size and ABV if visible. A 12 oz beer is about 150 calories at 5% ABV and about 200 at 6.5-7%, roughly 280 at 9-10%. Count mixers and sugar.
+
+ALWAYS:
+- The name must state the quantity counted (for example "2 eggs", "1 serving", "whole bag", "12 oz can") so the log is honest later.
+- Calories should agree with the macros: about 4 per gram of protein, 4 per gram of carbs, 9 per gram of fat, within 10%.
+- Whole numbers only. Set "confidence" to "low" if you could not see the item clearly or the portion is a guess.
+- Reply with ONLY the JSON object requested.`;
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -167,23 +193,37 @@ export default {
 
       // ---- food photo scan ----
       if (path === "/api/food-scan" && request.method === "POST") {
-        const { image, note } = await request.json();
-        const resp = await callClaude(env, {
+        const { image, note, kind } = await request.json();
+        const kindHint = {
+          package: "The user says this is a PACKAGED product.",
+          plated: "The user says this is a homemade or plated meal (not packaged).",
+          restaurant: "The user says this is a RESTAURANT or takeout meal. Restaurant portions run large and use more oil, butter and sauce.",
+          drink: "The user says this is a DRINK.",
+        }[kind] || "";
+        const userText = [
+          "Estimate the nutrition of what is in this photo.",
+          kindHint,
+          note ? `The user's note (trust it over the photo; if it gives a quantity, count exactly that quantity): "${note}"` : "",
+          `Reply with ONLY valid JSON, no prose:
+{"name": "string", "calories": 0, "protein": 0, "carbs": 0, "fat": 0, "kind": "package|plated|restaurant|drink|other", "serving_note": "string", "servings_per_container": null, "confidence": "high|medium|low"}`,
+        ].filter(Boolean).join("\n");
+        const make = (withTemp) => callClaude(env, {
           model: "claude-sonnet-4-6",
-          max_tokens: 500,
+          max_tokens: 600,
+          ...(withTemp ? { temperature: 0 } : {}),
+          system: SCAN_SYSTEM,
           messages: [{
             role: "user",
             content: [
               { type: "image", source: { type: "base64", media_type: image.media_type, data: image.data } },
-              { type: "text", text: `Identify the food or meal in this photo and estimate its nutrition
-based on the visible portion size.${note ? ` The user added this note — trust it over what
-the photo alone suggests, since photos can be ambiguous or misleading: "${note}"` : ""}
-Respond with ONLY valid JSON, no prose:
-{"name": "string", "calories": 000, "protein": 00, "carbs": 00, "fat": 00}
-Protein/carbs/fat are grams, whole numbers, best estimate for the portion shown.` },
+              { type: "text", text: userText },
             ],
           }],
         });
+        // temperature 0 makes the same food score the same every time. If the API ever
+        // rejects the parameter, retry without it rather than breaking scans.
+        let resp = await make(true);
+        if (resp.status === 400) resp = await make(false);
         const data = await resp.json();
         return json(data, resp.status);
       }
