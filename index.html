@@ -585,6 +585,7 @@
     <div id="foodNow" class="tf-now"></div>
 
     <div class="tf-label">Add food</div>
+    <div id="pastDayBanner" class="hidden" style="margin:0 0 10px; padding:10px 12px; border:1px solid var(--accent); border-radius:12px; color:var(--accent); font-size:14px; display:flex; justify-content:space-between; gap:8px; align-items:center;"><span id="pastDayBannerText"></span><span id="pastDayBack" role="button" tabindex="0" style="text-decoration:underline; cursor:pointer; white-space:nowrap;">Back to today</span></div>
     <div class="tf-adds">
       <div class="tf-add main" id="foodPhotoDrop" role="button" tabindex="0">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
@@ -649,6 +650,7 @@
         <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="manualFat"></div>
       </div>
       <button class="primary" id="saveManualBtn" style="margin-top:10px; width:100%;">Add to log</button>
+      <button class="danger-link" id="dayTotalBtn" style="color:var(--accent); margin-top:8px;">Log a whole-day total (estimate)</button>
     </div>
 
     <div id="recentWrap" class="hidden">
@@ -1069,7 +1071,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-03 08:30 CT";
+const APP_BUILD = "2026-11-08 07:55 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -6318,6 +6320,14 @@ document.getElementById("tfBackToday").addEventListener("click", () => {
   document.getElementById("foodLogDate").value = "";
   renderFoodLogList();
 });
+document.getElementById("pastDayBack").addEventListener("click", () => {
+  document.getElementById("foodLogDate").value = "";
+  renderFoodLogList();
+});
+document.getElementById("dayTotalBtn").addEventListener("click", () => {
+  document.getElementById("manualName").value = "Day total (estimated)";
+  document.getElementById("manualCalories").focus();
+});
 // Quick add / Exact numbers tiles open their panel below; tapping again closes it.
 function toggleAddPanel(which) {
   const panels = { quick: ["quickAddPanel", "tfQuickTile"], exact: ["exactPanel", "tfExactTile"] };
@@ -6347,6 +6357,12 @@ function renderFoodLogList() {
   if (lab) lab.textContent = isToday ? "Today's log" : new Date(selectedDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) + " log";
   const back = document.getElementById("tfBackToday");
   if (back) back.classList.toggle("hidden", isToday);
+  const pb = document.getElementById("pastDayBanner");
+  if (pb) {
+    const t = foodAddTarget();
+    pb.classList.toggle("hidden", !t.past);
+    document.getElementById("pastDayBannerText").textContent = t.past ? "Adding to " + t.label + ", not today" : "";
+  }
   const dayLogs = foodLogsForDate(selectedDate).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
   if (!dayLogs.length) {
     el.innerHTML = isToday
@@ -6507,20 +6523,31 @@ function showToast(message, onUndo) {
   toastTimer = setTimeout(() => { el.style.display = "none"; }, 4500);
 }
 
+// If you are viewing an earlier day in the log, new entries are saved to THAT day (at noon).
+function foodAddTarget() {
+  const v = (document.getElementById("foodLogDate").value || "").trim();
+  const today = localDateStr();
+  if (v && v < today) {
+    return { past: true, dateStr: v, iso: new Date(v + "T12:00:00").toISOString(),
+      label: new Date(v + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) };
+  }
+  return { past: false, dateStr: today, iso: null, label: "" };
+}
 async function addFoodEntries(entries, label) {
   const todayStr = localDateStr();
-  if (state.foodDayClosed && state.foodDayClosed[todayStr]) {
+  const target = foodAddTarget();
+  if (!target.past && state.foodDayClosed && state.foodDayClosed[todayStr]) {
     if (!confirm("You ended tracking for today. Add this anyway and reopen the day?")) return false;
     delete state.foodDayClosed[todayStr];
   }
-  const records = entries.map(e => ({ date: new Date().toISOString(), ...e }));
+  const records = entries.map(e => ({ date: target.past ? target.iso : new Date().toISOString(), ...e }));
   records.forEach(r => state.foodLogs.push(r));
   await persistNow();
   renderMacroSummary();
   renderFoodLogList();
   renderQuickProteinChips();
   const cal = records.reduce((n, r) => n + (r.calories || 0), 0);
-  showToast(`Added ${label || (records.length === 1 ? records[0].name : records.length + " items")} · ${cal} cal`, async () => {
+  showToast(`Added ${label || (records.length === 1 ? records[0].name : records.length + " items")} · ${cal} cal${target.past ? " to " + target.label : ""}`, async () => {
     records.forEach(r => { const i = state.foodLogs.indexOf(r); if (i !== -1) state.foodLogs.splice(i, 1); });
     await persistNow();
     renderMacroSummary();
