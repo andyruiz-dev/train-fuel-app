@@ -580,6 +580,7 @@
     <div class="tf-screen-head"><div class="tf-kicker" id="tfFoodKicker"></div><h1>Food</h1></div>
 
     <div id="foodHero"></div>
+    <div id="weekBudget" class="card" style="margin:10px 0; padding:14px;"></div>
     <div id="proteinRemaining" class="hidden"></div>
     <div id="macroSummary" class="hidden"></div>
     <div id="foodNow" class="tf-now"></div>
@@ -1071,7 +1072,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-08 07:55 CT";
+const APP_BUILD = "2026-11-08 13:40 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -5946,6 +5947,47 @@ function computeWeeklyIntake(now = new Date()) {
   const avg = counted.length ? Math.round(counted.reduce((a, b) => a + b, 0) / counted.length) : null;
   return { avg, counted: counted.length, partial, untracked };
 }
+// Weekly calorie budget (Mon-Sun). Skipped days are NOT left out: they show as "not logged" so they can't hide.
+const DEFAULT_WEEK_BUDGET = 12600;
+function renderWeekBudget() {
+  const el = document.getElementById("weekBudget");
+  if (!el) return;
+  const budget = state.settings.weeklyCalBudget || DEFAULT_WEEK_BUDGET;
+  const now = new Date();
+  const mon = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+  let eaten = 0, notLogged = 0, daysLeft = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mon); d.setDate(mon.getDate() + i);
+    const ds = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    const logs = foodLogsForDate(ds);
+    const cal = logs.reduce((n, f) => n + (f.calories || 0), 0);
+    eaten += cal;
+    const isToday = ds === localDateStr();
+    if (d > now && !isToday) daysLeft++;
+    else if (!isToday && (logs.length === 0 || isDayMarkedPartial(ds))) notLogged++;
+  }
+  const left = budget - eaten;
+  const frac = Math.min(1, eaten / budget);
+  const daysLeftInclToday = daysLeft + 1;
+  const big = left >= 0
+    ? `<span style="font-family:var(--font-mono); font-size:30px; font-weight:600; color:var(--accent);">${left.toLocaleString()}</span> <span class="meta">cal left this week</span>`
+    : `<span style="font-family:var(--font-mono); font-size:30px; font-weight:600; color:var(--text-muted);">${Math.abs(left).toLocaleString()}</span> <span class="meta">cal over this week's budget</span>`;
+  const perDay = left > 0 && daysLeftInclToday > 1 ? ` · about ${Math.round(left / daysLeftInclToday).toLocaleString()} a day for the ${daysLeftInclToday} day${daysLeftInclToday === 1 ? "" : "s"} left` : "";
+  el.innerHTML = `<div class="field-label" style="text-transform:uppercase; letter-spacing:0.6px; display:flex; justify-content:space-between;"><span>This week (Mon to Sun)</span><button class="danger-link" id="editWeekBudget" style="color:var(--accent);">Budget ${budget.toLocaleString()}</button></div>
+    <div style="margin-top:6px;">${big}</div>
+    <div style="height:8px; border-radius:4px; background:var(--border, #2a2a2a); margin:8px 0; overflow:hidden;"><div style="height:100%; width:${Math.round(frac * 100)}%; background:var(--accent);"></div></div>
+    <div class="meta">${eaten.toLocaleString()} logged${perDay}.${notLogged ? ` ${notLogged} day${notLogged === 1 ? "" : "s"} this week with nothing logged. A rough total counts.` : ""}</div>`;
+}
+document.addEventListener("click", async (e) => {
+  if (!e.target.closest("#editWeekBudget")) return;
+  const cur = state.settings.weeklyCalBudget || DEFAULT_WEEK_BUDGET;
+  const v = parseInt(prompt("Weekly calorie budget (7 days)", String(cur)), 10);
+  if (!v || v < 7000 || v > 25000) return;
+  state.settings.weeklyCalBudget = v;
+  await persistNow();
+  renderWeekBudget();
+});
 function renderWeeklyIntake() {
   const el = document.getElementById("weeklyIntake");
   if (!el) return;
@@ -6140,6 +6182,7 @@ function renderMacroSummary() {
   renderRecentFoods();
   renderFoodHistory();
   renderWeeklyIntake();
+  renderWeekBudget();
   renderPartialControls();
   renderFoodNow();
 }
