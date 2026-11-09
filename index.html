@@ -420,6 +420,24 @@
   #todayWorkout:has(.tf-hero){display:contents; color:var(--text);}
   #todayWorkout > .empty{padding:16px 4px;}
   .tf-hero{order:-1; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; margin:0 0 14px; display:flex; gap:16px; align-items:center;}
+  /* Coach: match Today/Food */
+  #tab-coach .tf-screen-head{padding:8px 4px 4px; display:flex; flex-direction:row-reverse; justify-content:space-between; align-items:baseline;}
+  #tab-coach .tf-screen-head h1{font-size:22px;}
+  #tab-coach .tf-label{padding:8px 4px 5px;}
+  .tf-coachhero{border:1px solid #2b5c51; border-radius:16px; background:linear-gradient(160deg,#1E4A41 0%,#20231C 65%); padding:14px 16px 10px; margin:0 0 10px; color:var(--text);}
+  .tf-coachhero .meta, .tf-coachhero li, .tf-coachhero p{color:var(--text); font-size:15px; line-height:1.4;}
+  .tf-coachhero .tf-clamp-btn{color:#8fd9c9; font-size:12px; padding:6px 0 2px;}
+  #tab-coach #bellCoachCard{margin-bottom:10px;}
+  #tab-coach .tf-tiles{margin-bottom:10px;}
+  .tf-coachhero .tf-hero2-k{margin-bottom:6px;}
+  #tab-coach .tf-weekcard{order:0; margin:0 0 8px;}
+  #tab-coach .tf-tile{padding:12px;}
+  #tab-coach .tf-tile-big input{font-size:26px;}
+  #tab-coach .tf-tile button.primary{margin-top:8px;}
+  #tab-coach .tf-tile .chip{margin-top:8px;}
+  .tf-dotrow summary{justify-content:flex-start !important; text-transform:none; font-family:Inter,sans-serif !important; font-size:15px !important; font-weight:600 !important;}
+  .tf-dotrow summary::before{content:""; display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:10px; background:var(--dc,var(--accent));}
+  .tf-dotrow summary::after{margin-left:auto;}
   /* Today: session card + week strip + coloured phases */
   #todayWorkout:has(.tf-hero2){display:contents; color:var(--text); text-align:left;}
   .tf-hero2{color:var(--text);}
@@ -860,7 +878,11 @@
     <div id="morningChecklist" class="hidden"></div>
     <div id="flagsBanner" class="hidden"></div>
 
-    <div class="tf-label">Today</div>
+    <div class="tf-coachhero" id="coachNoteCard">
+      <div class="tf-hero2-k">Coach's note</div>
+      <div id="coachNote" class="meta">Still gathering enough days to spot real patterns. Check back once you've logged a bit more.</div>
+    </div>
+    <div class="tf-label">Check in</div>
     <div class="tf-tiles">
       <div class="tf-tile tf-pend" id="weighInDetails">
         <div class="tf-tile-tag">Weigh-in</div>
@@ -910,26 +932,18 @@
       </div>
     </div>
 
-    <div class="tf-label">Your coach</div>
-    <div class="card" id="coachNoteCard">
-      <h2>Coach's note</h2>
-      <div id="coachNote" class="meta">Still gathering enough days to spot real patterns. Check back once you've logged a bit more.</div>
-    </div>
+
     <div class="card hidden" id="bellCoachCard">
       <h2>Kettlebell progress</h2>
       <div id="bellCoach" class="meta"></div>
     </div>
 
-    <div class="tf-label">This week</div>
-    <div class="tf-week">
-      <div class="tf-dots" id="tfWeekDots" role="img" aria-label="Workouts this week"></div>
-      <div class="tf-week-n"><b id="tfWeekCount">0</b><span>workouts</span></div>
-    </div>
-    <details class="exercise-group tf-row" id="weeklyReviewDetails">
+    <div id="tfWeekCard"></div>
+    <details class="exercise-group tf-row tf-dotrow" id="weeklyReviewDetails" style="--dc:#C79A45;">
       <summary>Weekly review</summary>
       <div id="weeklyReview" style="margin-top:10px;"></div>
     </details>
-    <details class="exercise-group tf-row" id="bodyCompDetails">
+    <details class="exercise-group tf-row tf-dotrow" id="bodyCompDetails" style="--dc:#9B6FB0;">
       <summary>Body composition</summary>
       <div id="bodyFatSummary" style="margin-top:10px;">Log neck + waist with a weigh-in to get a body-fat estimate here.</div>
     </details>
@@ -1133,7 +1147,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-09 12:00 CT";
+const APP_BUILD = "2026-11-09 13:30 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3362,23 +3376,8 @@ function renderCoachTop(rows) {
     else if (m.date === localDateStr()) last.textContent = `Logged today: ${m.weight} lb`;
     else last.textContent = `Last: ${m.weight} · ${new Date(m.date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
   }
-  const dots = document.getElementById("tfWeekDots");
-  if (dots) {
-    const now = new Date();
-    const mondayOffset = (now.getDay() + 6) % 7; // Mon = 0
-    const days = new Set((state.logs || []).map(l => new Date(l.date).toDateString()));
-    let n = 0, html = "";
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(now); d.setDate(now.getDate() - mondayOffset + i);
-      const done = days.has(d.toDateString());
-      if (done) n++;
-      html += `<i class="${done ? "on" : ""}${i === mondayOffset && !done ? " today" : ""}"></i>`;
-    }
-    dots.innerHTML = html;
-    const cnt = document.getElementById("tfWeekCount");
-    if (cnt) cnt.textContent = n;
-    dots.setAttribute("aria-label", `${n} workout${n === 1 ? "" : "s"} this week`);
-  }
+  const wkc = document.getElementById("tfWeekCard");
+  if (wkc) wkc.innerHTML = weekStripHtml();
 }
 function renderMorningChecklist() {
   const el = document.getElementById("morningChecklist");
@@ -4952,6 +4951,14 @@ function recentStressCaution(days = 3) {
 }
 
 // Today "Steady" look: one card (progress ring + what today is) and an open list of the moves.
+function weekStripHtml() {
+  const goal = state.settings?.weeklyWorkoutGoal || 3;
+  const days = weekDayList(0), todayS = localDateStr();
+  const doneSet = new Set((state.logs || []).map(l => dayKeyOf(l.date)));
+  const doneN = days.filter(d => doneSet.has(d)).length;
+  const letters = ["M", "T", "W", "T", "F", "S", "S"];
+  return `<div class="tf-weekcard"><div class="tf-wk-top"><span>This week</span><b>${doneN} of ${goal} done</b></div><div class="tf-wk">${days.map((d, i) => `<div class="tf-wd${doneSet.has(d) ? " done" : ""}${d === todayS ? " today" : ""}"><i>${doneSet.has(d) ? "✓" : ""}</i>${letters[i]}</div>`).join("")}</div></div>`;
+}
 function todayHeroHtml(workout) {
   let week = 0, total = 0;
   try {
@@ -4975,12 +4982,7 @@ function todayHeroHtml(workout) {
   if (workout.cooldown && workout.cooldown.length) segs.push(["#5DA89A", 0.8]);
   const bar = segs.map(sg => `<i style="flex:${sg[1]}; background:${sg[0]};"></i>`).join("");
   const kicker = week ? `Week ${week}${total ? " of " + total : ""}` : "Today's session";
-  const goal = state.settings?.weeklyWorkoutGoal || 3;
-  const days = weekDayList(0), todayS = localDateStr();
-  const doneSet = new Set((state.logs || []).map(l => dayKeyOf(l.date)));
-  const doneN = days.filter(d => doneSet.has(d)).length;
-  const letters = ["M", "T", "W", "T", "F", "S", "S"];
-  const strip = `<div class="tf-weekcard"><div class="tf-wk-top"><span>This week</span><b>${doneN} of ${goal} done</b></div><div class="tf-wk">${days.map((d, i) => `<div class="tf-wd${doneSet.has(d) ? " done" : ""}${d === todayS ? " today" : ""}"><i>${doneSet.has(d) ? "✓" : ""}</i>${letters[i]}</div>`).join("")}</div></div>`;
+  const strip = weekStripHtml();
   return `<div class="tf-hero2"><div class="tf-hero2-in">
       <div class="tf-hero2-k">${kicker}</div>
       <div class="tf-hero2-title">${title}</div>${sub ? `<div class="tf-hero2-sub">${sub}</div>` : ""}
