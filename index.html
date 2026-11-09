@@ -677,8 +677,7 @@
       <div id="myFoodsList"></div>
     </div>
 
-    <div class="tf-label" style="display:flex; justify-content:space-between;"><span id="tfLogLabel">Today's log</span><span id="tfBackToday" class="hidden" role="button" tabindex="0" style="color:var(--accent); cursor:pointer;">Back to today</span></div>
-    <div id="foodLogPartialRow" style="margin-bottom:8px;"></div>
+    <div class="tf-label" style="display:flex; justify-content:space-between;"><span id="tfLogLabel">Today's log</span><span style="display:flex; gap:14px; align-items:center;"><span id="tfBackToday" class="hidden" role="button" tabindex="0" style="color:var(--accent); cursor:pointer;">Back to today</span><span id="foodLogPartialRow" style="position:relative;"></span></span></div>
     <div id="foodLogList" class="empty">Nothing logged for this day.</div>
 
     <div class="tf-label" style="margin-top:16px;"><span>Last 7 days</span></div>
@@ -1089,7 +1088,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-09 13:00 CT";
+const APP_BUILD = "2026-11-09 16:00 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -5026,13 +5025,17 @@ document.getElementById("sessionPanel").addEventListener("click", (e) => {
   if (h && exerciseInfoFor(h.textContent.trim())) openExerciseSheet(h.textContent.trim());
 });
 document.getElementById("todayWorkout").addEventListener("click", (e) => {
+  if (e.target.closest("[data-moves-toggle]")) { movesOpen = !movesOpen; if (currentWorkout) renderTodayWorkout(currentWorkout); return; }
   const n = e.target.closest("[data-exinfo]");
   if (n) openExerciseSheet(n.dataset.exinfo, n.dataset.exidx !== undefined ? parseInt(n.dataset.exidx, 10) : undefined);
 });
 
+let movesOpen = false;
 function movesListHtml(workout) {
   const ex = workout.exercises || [];
-  const det = (e) => `${e.sets} × ${escapeHtml(String(e.reps))}${isHoldExercise(e.name) ? " s hold" : ""}${e.note ? " · " + escapeHtml(String(e.note)) : ""}`;
+  const secNote = (e) => /^\s*seconds?\b/i.test(String(e.note || ""));
+  const noteOf = (e) => { let n = e.note ? String(e.note) : ""; if (isHoldExercise(e.name) || secNote(e)) n = n.replace(/^\s*seconds?\s*/i, "").replace(/^\s*[,·-]\s*/, ""); return n; };
+  const det = (e) => `${e.sets} × ${escapeHtml(String(e.reps))}${isHoldExercise(e.name) || secNote(e) ? " s" + (isHoldExercise(e.name) ? " hold" : "") : ""}${noteOf(e) ? " · " + escapeHtml(noteOf(e)) : ""}`;
   const seen = new Set();
   const rows = ex.map((e, i) => {
     if (e.superset_group) {
@@ -5045,7 +5048,10 @@ function movesListHtml(workout) {
     const fin = e.emom && i === ex.length - 1;
     return `<div class="tf-mv${fin ? " fin" : ""}" style="flex-wrap:wrap;">${fin ? '<div class="tf-mv-tag" style="flex:1 0 100%;">FINISHER</div>' : ""}<div class="tf-mv-name" data-exidx="${i}" data-exinfo="${escapeHtml(e.name)}" style="flex:1 1 0; min-width:0;">${escapeHtml(e.name)}</div><div class="tf-mv-det" style="text-align:right;">${det(e)}${e.emom ? ' <span class="tf-pill">EMOM</span>' : ""}</div></div>`;
   }).join("");
-  return `<div class="tf-moves"><div class="tf-moves-head"><span>Workout · ${ex.length} moves · tap one for details</span></div>${rows}</div>`;
+  const names = [...new Set(ex.map(e => String(e.name)))].map(n => escapeHtml(n)).join(" · ");
+  const head = `<div class="tf-moves-head" data-moves-toggle role="button" tabindex="0" style="cursor:pointer;"><span>${ex.length} moves${movesOpen ? " · tap one for details" : ""}</span><span style="color:var(--accent);">${movesOpen ? "Hide ▴" : "See all ▾"}</span></div>`;
+  if (!movesOpen) return `<div class="tf-moves">${head}<div data-moves-toggle style="cursor:pointer; font-size:13px; color:var(--text-muted); line-height:1.45; padding:2px 4px 0;">${names}</div></div>`;
+  return `<div class="tf-moves">${head}${rows}</div>`;
 }
 function renderTodayWorkout(workout) {
   currentWorkout = workout;
@@ -6312,14 +6318,20 @@ function renderPartialControls() {
   const dateInput = document.getElementById("foodLogDate");
   if (row && dateInput) {
     const d = dateInput.value || todayStr;
-    row.innerHTML = isDayMarkedPartial(d)
-      ? `<div class="tf-partial on"><span>Not fully tracked</span><button class="danger-link" style="color:var(--accent);" data-toggle-partial="${d}">Undo</button></div>`
-      : `<div class="tf-partial"><button type="button" class="danger-link" data-partial-more aria-label="More options" style="color:var(--text-muted); font-size:18px; letter-spacing:2px;">⋯</button><button class="danger-link hidden" data-toggle-partial="${d}" style="color:var(--accent);">Mark this day as not fully tracked</button></div>`;
+    const marked = isDayMarkedPartial(d);
+    const closed = d === todayStr && state.foodDayClosed && state.foodDayClosed[todayStr];
+    const canEnd = d === todayStr && !closed && todaysFoodLogs().length;
+    row.innerHTML = `${marked ? '<span style="font-size:11px; color:var(--text-muted); margin-right:8px;">Not fully tracked</span>' : ""}<button type="button" class="danger-link" data-partial-more aria-label="Day options" style="color:var(--text-muted); font-size:20px; letter-spacing:2px; line-height:1; padding:0 4px;">⋯</button>
+      <div class="hidden" data-day-menu style="position:absolute; right:0; top:26px; z-index:20; min-width:220px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:6px; box-shadow:0 6px 20px rgba(0,0,0,.4); text-align:left;">
+        <button class="danger-link" data-toggle-partial="${d}" style="display:block; width:100%; text-align:left; padding:10px; color:var(--text);">${marked ? "Undo: not fully tracked" : "Mark day as not fully tracked"}</button>
+        ${canEnd ? '<button class="danger-link" data-food-end style="display:block; width:100%; text-align:left; padding:10px; color:var(--text);">End tracking for today</button>' : ""}
+      </div>`;
   }
 }
 document.addEventListener("click", (e) => {
   const more = e.target.closest("[data-partial-more]");
-  if (more) { more.nextElementSibling.classList.toggle("hidden"); return; }
+  if (more) { more.parentElement.querySelector("[data-day-menu]").classList.toggle("hidden"); return; }
+  if (!e.target.closest("[data-day-menu]")) document.querySelectorAll("[data-day-menu]").forEach(m => m.classList.add("hidden"));
   const t = e.target.closest("[data-toggle-partial]");
   if (t) toggleDayPartial(t.dataset.togglePartial);
 });
@@ -6399,20 +6411,20 @@ function renderFoodNow() {
       html += `<div class="meta" style="margin-top:8px; color:var(--text);">${gapLabel(n.gapMs)} since your last logged meal${n.ateToday ? "" : " (nothing logged yet today)"}. You may be busy, so here are two quick options:</div>`;
       html += n.options.map((o, i) => `<button class="tf-sugg" data-food-combo="${i}"><span class="rn"><em>Suggested</em>${o.items.map(x => escapeHtml(x.name)).join(" + ")}</span><span class="rp"><b>${o.pro} g</b><br>${o.cal} cal</span></button>`).join("");
     }
-    if (todays.length) html += `<button class="danger-link" data-food-end style="color:var(--accent); margin-top:10px;">End tracking for today</button>`;
   }
   el.innerHTML = html;
 }
-document.getElementById("foodNow").addEventListener("click", async (e) => {
+document.addEventListener("click", async (e) => {
   if (e.target.closest("[data-food-end]")) {
+    document.querySelectorAll("[data-day-menu]").forEach(m => m.classList.add("hidden"));
     state.foodDayClosed = state.foodDayClosed || {};
     state.foodDayClosed[localDateStr()] = new Date().toISOString();
     await persistNow();
-    renderFoodNow();
+    renderFoodNow(); renderPartialControls();
     showToast("Tracking ended for today. Nothing more to log.", async () => {
       delete state.foodDayClosed[localDateStr()];
       await persistNow();
-      renderFoodNow();
+      renderFoodNow(); renderPartialControls();
     });
     return;
   }
@@ -6728,7 +6740,7 @@ document.getElementById("foodLogList").addEventListener("click", (e) => {
 });
 document.getElementById("tfExactTile").addEventListener("click", () => toggleAddPanel("exact"));
 
-let foodLogOpen = false;     // log starts collapsed
+let foodLogOpen = true;      // log starts open, compact rows
 let foodRowOpen = null;      // which entry's actions are showing
 function renderFoodLogList() {
   const el = document.getElementById("foodLogList");
@@ -6766,8 +6778,8 @@ function renderFoodLogList() {
       <div class="tf-fl-row${open ? " open" : ""}">
         <div class="tf-fl-main" data-row-toggle="${realIndex}" role="button" tabindex="0">
           <div class="tf-fl-name"><div class="n">${f.name}</div>
-          <div class="m">${timeLabel(new Date(f.date))} · ${f.calories} cal · ${f.carbs}c · ${f.fat}f</div></div>
-          <div class="tf-fl-pro">${f.protein}<small> g</small></div>
+          <div class="m">${timeLabel(new Date(f.date))}${open ? ` · ${f.carbs}c · ${f.fat}f` : ""}</div></div>
+          <div class="tf-fl-pro">${f.calories}<small> cal · ${f.protein}g</small></div>
         </div>
         <div class="tf-fl-actions${open ? "" : " hidden"}">
           <button class="danger-link" style="color:var(--accent);" data-repeat-food="${realIndex}">+1 serving</button>
