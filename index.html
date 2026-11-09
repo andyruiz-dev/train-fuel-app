@@ -410,7 +410,7 @@
   .tf-hero-sub{font-size:13px; color:var(--text-muted); margin-top:6px;}
   .tf-moves{display:flex; flex-direction:column; gap:6px; margin:6px 0 10px;}
   .tf-moves-head{display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; padding:0 4px;}
-  .tf-mv{background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:10px; padding:9px 12px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .tf-mv{background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:10px; padding:7px 12px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
   .tf-mv.ss{border-left-color:var(--gold); display:block;}
   .tf-mv.fin{background:linear-gradient(90deg,#1B3A33,var(--surface)); border-color:var(--accent);}
   .tf-mv-name{font-size:15px; font-weight:600;}
@@ -418,6 +418,10 @@
   .tf-mv-tag{font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--gold); margin-bottom:5px;}
   .tf-mv.fin .tf-mv-tag{color:var(--accent); margin-bottom:2px;}
   .tf-mv hr{border:0; height:1px; background:var(--border); margin:7px 0;}
+  .tf-mv-line{display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:5px 0;}
+  .tf-mv-line .tf-mv-name{flex:1 1 0; min-width:0;}
+  .tf-mv-line .tf-mv-det,.tf-mv > .tf-mv-det{flex:0 0 auto; text-align:right; max-width:46%;}
+  .tf-mv-tag{margin-bottom:2px;}
   .tf-pill{font-family:var(--font-mono); font-size:10px; color:#0F1A17; background:var(--accent); border-radius:99px; padding:4px 8px; flex:0 0 auto;}
   #todayWorkout details.exercise-group{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin:0 0 10px;}
   #startSessionBtn{order:1; position:sticky; bottom:66px; z-index:4; height:56px; border-radius:14px; font-size:20px; letter-spacing:1px; text-transform:uppercase; margin-top:10px; box-shadow:0 -14px 14px -4px var(--bg);}
@@ -1085,7 +1089,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-09 12:10 CT";
+const APP_BUILD = "2026-11-09 13:00 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3486,6 +3490,7 @@ function renderCoachNote() {
   if (!el) return;
   const card = document.getElementById("coachNoteCard");
   const result = computeCoachInsights();
+  result.insights = coachExtraInsights().concat(result.insights || []);
   // "Got it" hides the card for a week. Keyed on the findings with their
   // numbers stripped: the same findings stay quiet as counts tick up, while
   // a different finding (or a week passing) brings the card back.
@@ -3744,7 +3749,7 @@ function jumpClearDays(j) {
   for (let k = j.i + 1; k < ms.length; k++) if (ms[k].weight <= j.base + 0.8) return Math.max(1, daysBetween(ms[j.i].date, ms[k].date));
   return null;
 }
-function explainJump(date) {
+function jumpFacts(date) {
   const ms = sortedWeights(), i = ms.findIndex(m => m.date === date);
   if (i < 1) return null;
   const cur = ms[i], prev = ms[i - 1], delta = cur.weight - prev.weight;
@@ -3754,7 +3759,8 @@ function explainJump(date) {
   for (let k = 3; k <= 16; k++) { const ds = addDaysStr(date, -k), di = dayInfo(ds); if (di.n >= 3 && !isDayMarkedPartial(ds)) usual.push(di); }
   const avg = f => usual.length ? usual.reduce((s, x) => s + x[f], 0) / usual.length : null;
   const uKcal = avg("kcal"), uCarb = avg("carbs");
-  const lines = [], causes = [];
+  const lines = [], causes = [], parts = [];
+  const alc = a.alc + b.alc, salty = Math.max(a.salty, b.salty);
   if (!a.n && !b.n) {
     lines.push("Nothing was logged the two days before, so I can't say what drove it. A rough total still counts.");
   } else {
@@ -3762,23 +3768,38 @@ function explainJump(date) {
       const fat = Math.max(0, a.kcal - uKcal) / 3500;
       lines.push(`Calories the day before: ${Math.round(a.kcal).toLocaleString()} vs your usual ${Math.round(uKcal).toLocaleString()}. That is at most about ${fat.toFixed(1)} lb of fat, so most of a ${delta.toFixed(1)} lb jump is water and gut contents, not fat.`);
     }
-    const alc = a.alc + b.alc, salty = Math.max(a.salty, b.salty);
-    if (alc >= 300) causes.push(`Alcohol: about ${Math.round(alc)} cal in the last 2 days. It dehydrates you, then you hold water to compensate.`);
-    if (salty >= 600) causes.push(`Salty or restaurant food (about ${Math.round(salty)} cal). Sodium makes you hold water.`);
-    if (uCarb != null && a.carbs >= 200 && a.carbs >= uCarb * 1.25) causes.push(`Carbs ${Math.round(a.carbs)} g vs your usual ${Math.round(uCarb)} g. Each gram of stored carb holds about 3 g of water.`);
+    if (alc >= 300) { causes.push(`Alcohol: about ${Math.round(alc)} cal in the last 2 days. It dehydrates you, then you hold water to compensate.`); parts.push(`alcohol (about ${Math.round(alc)} cal)`); }
+    if (salty >= 600) { causes.push(`Salty or restaurant food (about ${Math.round(salty)} cal). Sodium makes you hold water.`); parts.push(`salty food (about ${Math.round(salty)} cal)`); }
+    if (uCarb != null && a.carbs >= 200 && a.carbs >= uCarb * 1.25) { causes.push(`Carbs ${Math.round(a.carbs)} g vs your usual ${Math.round(uCarb)} g. Each gram of stored carb holds about 3 g of water.`); parts.push("extra carbs"); }
     if (!causes.length) causes.push("Nothing in your logs stands out. That usually points to gut contents, sleep, or sodium that wasn't logged.");
   }
   const tags = (cur.reasons || []).filter(r => r !== WATER_REASON);
   if (tags.length) causes.push("You tagged: " + tags.join(", ") + (cur.waterOz ? ` and about ${cur.waterOz} oz of water` : "") + ".");
   else if ((cur.reasons || []).includes(WATER_REASON)) causes.push("You tagged lots of water" + (cur.waterOz ? ` (about ${cur.waterOz} oz)` : "") + ".");
   const cleared = findJumps().filter(j => j.date < date).map(jumpClearDays).filter(x => x != null).sort((x, y) => x - y);
+  let med = null;
   if (cleared.length >= 2) {
-    const med = cleared[Math.floor(cleared.length / 2)];
+    med = cleared[Math.floor(cleared.length / 2)];
     lines.push(`Your last ${cleared.length} jumps like this cleared in about ${med} day${med === 1 ? "" : "s"}. Expect to be back near ${prev.weight} lb by ${formatDateOnly(addDaysStr(date, med))}. If it is still ${(prev.weight + 0.8).toFixed(1)} or higher on ${formatDateOnly(addDaysStr(date, 4))}, treat it as real and we look closer.`);
   }
-  return `<div style="font-weight:600; margin-bottom:4px;">Up ${delta.toFixed(1)} lb: what likely happened</div>` +
-    lines.map(l => `<div style="margin-top:6px;">${escapeHtml(l)}</div>`).join("") +
-    causes.map(l => `<div style="margin-top:6px;">• ${escapeHtml(l)}</div>`).join("");
+  const short = `Up ${delta.toFixed(1)} lb is most likely water, not fat${parts.length ? ": " + parts.join(" and ") + " in the last 2 days" : ""}.${med ? ` Your last jumps like this cleared in about ${med} day${med === 1 ? "" : "s"}.` : ""}`;
+  return { delta, lines, causes, short };
+}
+function explainJump(date) {
+  const f = jumpFacts(date);
+  if (!f) return null;
+  return `<div style="font-weight:600; margin-bottom:4px;">Up ${f.delta.toFixed(1)} lb: what likely happened</div>` +
+    f.lines.map(l => `<div style="margin-top:6px;">${escapeHtml(l)}</div>`).join("") +
+    f.causes.map(l => `<div style="margin-top:6px;">• ${escapeHtml(l)}</div>`).join("");
+}
+function coachExtraInsights() {
+  const out = [];
+  try {
+    const ms = sortedWeights(), last = ms[ms.length - 1];
+    if (last && daysBetween(last.date, localDateStr()) <= 1) { const f = jumpFacts(last.date); if (f) out.push(f.short); }
+    computeBlindSpots().slice(0, 2).forEach(x => out.push(x.text));
+  } catch (e) {}
+  return out;
 }
 function computeBlindSpots() {
   const ms = sortedWeights(), pairs = [];
@@ -5019,10 +5040,10 @@ function movesListHtml(workout) {
       seen.add(e.superset_group);
       const mem = ex.filter(x => x.superset_group === e.superset_group);
       return `<div class="tf-mv ss"><div class="tf-mv-tag">SUPERSET ${escapeHtml(String(e.superset_group))}</div>` +
-        mem.map(x => `<div class="tf-mv-name" data-exidx="${ex.indexOf(x)}" data-exinfo="${escapeHtml(x.name)}">${escapeHtml(x.name)} <span class="tf-mv-det">· ${det(x)}</span></div>`).join("<hr>") + `</div>`;
+        mem.map(x => `<div class="tf-mv-line"><div class="tf-mv-name" data-exidx="${ex.indexOf(x)}" data-exinfo="${escapeHtml(x.name)}">${escapeHtml(x.name)}</div><div class="tf-mv-det">${det(x)}</div></div>`).join("") + `</div>`;
     }
     const fin = e.emom && i === ex.length - 1;
-    return `<div class="tf-mv${fin ? " fin" : ""}"><div>${fin ? '<div class="tf-mv-tag">FINISHER</div>' : ""}<div class="tf-mv-name" data-exidx="${i}" data-exinfo="${escapeHtml(e.name)}">${escapeHtml(e.name)}</div><div class="tf-mv-det">${det(e)}</div></div>${e.emom ? '<span class="tf-pill">EMOM</span>' : ""}</div>`;
+    return `<div class="tf-mv${fin ? " fin" : ""}" style="flex-wrap:wrap;">${fin ? '<div class="tf-mv-tag" style="flex:1 0 100%;">FINISHER</div>' : ""}<div class="tf-mv-name" data-exidx="${i}" data-exinfo="${escapeHtml(e.name)}" style="flex:1 1 0; min-width:0;">${escapeHtml(e.name)}</div><div class="tf-mv-det" style="text-align:right;">${det(e)}${e.emom ? ' <span class="tf-pill">EMOM</span>' : ""}</div></div>`;
   }).join("");
   return `<div class="tf-moves"><div class="tf-moves-head"><span>Workout · ${ex.length} moves · tap one for details</span></div>${rows}</div>`;
 }
@@ -7666,7 +7687,7 @@ function renderProgressTop() {
     const down = delta <= 0;
     const wkAgo = ms.filter(m => new Date(m.date + "T12:00:00").getTime() <= Date.now() - 7 * 86400000).pop();
     const wkDelta = wkAgo ? ms[ms.length - 1].weight - wkAgo.weight : null;
-    weightTile = `<div class="tf-stat"><div class="l">Weight</div><div class="v" style="color:var(--accent);">${down ? "−" : "+"}${Math.abs(delta).toFixed(1)}<small> lb</small></div>${wkDelta === null ? `<div class="p">since start</div>` : `<div class="p">${wkDelta <= 0 ? "▼" : "▲"} ${Math.abs(wkDelta).toFixed(1)} / wk</div>`}</div>`;
+    weightTile = `<div class="tf-stat"><div class="l">Since ${formatDateOnly(ms[0].date)}</div><div class="v" style="color:${down ? "var(--accent)" : "#D96C5B"};">${down ? "−" : "+"}${Math.abs(delta).toFixed(1)}<small> lb</small></div>${wkDelta === null ? `<div class="p">total change</div>` : `<div class="p">${wkDelta <= 0 ? "▼" : "▲"} ${Math.abs(wkDelta).toFixed(1)} this week</div>`}</div>`;
   }
   const bestTile = `<div class="tf-stat"><div class="l">Best week</div><div class="v">${best.count}<small> ${best.count === 1 ? "workout" : "workouts"}</small></div><div class="p gold">${best.count ? "wk of " + best.start.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "none yet"}</div></div>`;
   // Protein days hit in the last 7 completed-or-current days
@@ -7710,19 +7731,32 @@ function renderProgressTop() {
         ${goalW ? `<line x1="0" y1="${Y(goalW).toFixed(1)}" x2="${W}" y2="${Y(goalW).toFixed(1)}" stroke="#C79A45" stroke-width="1.5" stroke-dasharray="5 5"/><text x="${W - 4}" y="${(Y(goalW) - 5).toFixed(1)}" text-anchor="end" font-family="Roboto Mono, monospace" font-size="9" fill="#C79A45">GOAL ${goalW}</text>` : ""}
         <path d="${area}" fill="url(#tfWg)"/>
         <polyline fill="none" stroke="#2FBFA6" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="${line}"/>
+        ${(() => {
+          const jd = new Set(findJumps().map(j => j.date));
+          const dots = use.filter(m => jd.has(m.date)).map(m => `<circle cx="${X(m).toFixed(1)}" cy="${Y(m.weight).toFixed(1)}" r="5" fill="#D96C5B" stroke="#20231C" stroke-width="2"/>`).join("");
+          let ticks = "";
+          const dayMs = 86400000, startD = new Date(use[0].date + "T12:00:00"), endD = new Date(use[use.length - 1].date + "T12:00:00");
+          for (let d = new Date(startD); d <= endD; d = new Date(d.getTime() + dayMs)) {
+            const ds = localDateStr(d), di = dayInfo(ds), x = X({ date: ds }).toFixed(1);
+            if (di.alc >= 200) ticks += `<rect x="${(x - 2).toFixed(1)}" y="${H - bot + 5}" width="4" height="9" rx="2" fill="#D96C5B"/>`;
+            else if (di.salty >= 700) ticks += `<rect x="${(x - 2).toFixed(1)}" y="${H - bot + 5}" width="4" height="9" rx="2" fill="#D9A441"/>`;
+          }
+          return ticks + dots;
+        })()}
         <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="12" fill="#2FBFA6" fill-opacity=".2"/>
-        <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="6" fill="#2FBFA6" stroke="#20231C" stroke-width="2.5"/>
+        <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="6" fill="${findJumps().some(j => j.date === last.date) ? "#D96C5B" : "#2FBFA6"}" stroke="#20231C" stroke-width="2.5"/>
         <rect x="${(bubbleX - 31).toFixed(1)}" y="${Math.max(0, ly - 40).toFixed(1)}" width="62" height="24" rx="12" fill="#EDEAE0"/>
         <text x="${bubbleX.toFixed(1)}" y="${Math.max(16, ly - 24).toFixed(1)}" text-anchor="middle" font-family="Oswald, sans-serif" font-size="14" font-weight="600" fill="#0B1512">${last.weight}</text>
       </svg>
       <div class="tf-axis"><span>${fmt(use[0])}</span><span>TODAY</span></div>
+      <div class="meta" style="font-size:11px; margin-top:8px;"><span style="color:#D96C5B;">●</span> jump of 1.5+ lb · <span style="color:#D96C5B;">▮</span> alcohol day · <span style="color:#D9A441;">▮</span> salty or restaurant day</div>
     </div>`;
   }
 
   // Consistency: small circles, one row per week
   const dayNames = ["M", "T", "W", "T", "F", "S", "S"];
   const consistencyCard = `<div class="tf-pcard">
-    <div class="h"><b>Consistency</b><span>last 5 weeks</span></div>
+    <div class="h"><b>Consistency</b><span>avg <em>${(fiveWeekTotal / 5).toFixed(1)}</em> · goal ${goal} a week</span></div>
     <div class="tf-weeks">${weeks.map(w => `<div class="tf-wk"><span class="lab">${w.start.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()}</span><span class="dots">${w.days.map(d => `<i class="${d.done ? "on" : d.today ? "today" : d.future ? "fut" : ""}"></i>`).join("")}</span><span class="cnt">${w.count}</span></div>`).join("")}</div>
     <div class="tf-days">${dayNames.map(n => `<span>${n}</span>`).join("")}</div>
     <div style="margin-top:14px; font-size:13px; color:var(--text-muted); padding:0 2px;"><span style="color:var(--text); font-weight:600;">${fiveWeekTotal} workout day${fiveWeekTotal === 1 ? "" : "s"}</span> in the last 5 weeks.</div>
@@ -7784,24 +7818,34 @@ function renderProgressTop() {
       const pro = foodLogsForDate(localDateStr(d)).reduce((n, f) => n + (f.protein || 0), 0);
       if (pTarget && pro >= pTarget) pHit++;
     }
-    if (lw.count > 0 || inWk.length) {
+    const lwDays = Array.from({ length: 7 }, (_, i) => localDateStr(new Date(lw.start.getFullYear(), lw.start.getMonth(), lw.start.getDate() + i)));
+    const lwInfo = lwDays.map(d => dayInfo(d)), lwCal = lwInfo.reduce((n, x) => n + x.kcal, 0), lwLogged = lwInfo.filter(x => x.n > 0).length;
+    const wkBudget = state.settings?.weeklyCalBudget || DEFAULT_WEEK_BUDGET;
+    if (lw.count > 0 || inWk.length || lwLogged) {
       const end = new Date(lwStart + 6 * 86400000);
       const rng = lw.start.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + " – " + end.toLocaleDateString("en-US", { month: "short", day: "numeric" });
       const hitGoal = lw.count >= goal;
-      const line = hitGoal ? `You hit your ${goal} workouts. Keep the same rhythm this week.`
-        : lw.count > 0 ? `${lw.count} in the books. A steady week beats a perfect one; aim for ${goal} this week.`
-        : `Weigh-ins kept going. Pick up with your next workout when you are ready.`;
+      const over = lwCal > wkBudget;
+      const kf = n => n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(Math.round(n));
       recapCard = `<div class="tf-pcard tf-recap"><div class="h"><b>Last week</b><span>${rng}</span></div>
-        <div class="row3">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 10px; margin-top:12px;">
+          <div class="cell"><div class="v" style="color:${over ? "#D96C5B" : "var(--accent)"};">${kf(lwCal)}<small> / ${kf(wkBudget)}</small></div><div class="l">calories vs budget</div></div>
+          <div class="cell"><div class="v">${lwLogged}<small> / 7</small></div><div class="l">days logged</div></div>
           <div class="cell"><div class="v"${hitGoal ? ' style="color:var(--gold);"' : ""}>${lw.count}<small> / ${goal}</small></div><div class="l">workouts</div></div>
-          <div class="cell"><div class="v">${wDelta === null ? "·" : (wDelta <= 0 ? "−" : "+") + Math.abs(wDelta).toFixed(1)}<small>${wDelta === null ? "" : " lb"}</small></div><div class="l">weight</div></div>
-          <div class="cell"><div class="v">${pHit}<small> / 7</small></div><div class="l">protein days</div></div>
-        </div><div class="line">${line}</div></div>`;
+          <div class="cell"><div class="v">${wDelta === null ? "·" : (wDelta <= 0 ? "−" : "+") + Math.abs(wDelta).toFixed(1)}<small>${wDelta === null ? "" : " lb"}</small></div><div class="l">weight change</div></div>
+        </div>
+        <button type="button" class="secondary" data-open-review style="margin-top:14px; width:100%;">Open the full weekly review</button></div>`;
     }
   }
-  el.innerHTML = heroHtml + `<div class="tf-stats">${weightTile}${bestTile}${proteinTile}</div>` + recapCard + weightCard + consistencyCard + milestonesCard + weeklyCard;
+  el.innerHTML = heroHtml + `<div class="tf-stats">${weightTile}${bestTile}${proteinTile}</div>` + recapCard + weightCard + consistencyCard + milestonesCard;
 }
 document.getElementById("tfProgress").addEventListener("click", (e) => {
+  if (e.target.closest("[data-open-review]")) {
+    weekCloseOffset = -1; weekCloseStep = 0;
+    const t = document.querySelector('nav.tabs .tab-btn[data-tab="coach"]'); if (t) t.click();
+    const d = document.getElementById("weeklyReviewDetails"); if (d) { d.open = true; renderWeekClose(); setTimeout(() => d.scrollIntoView({ behavior: "smooth", block: "start" }), 150); }
+    return;
+  }
   const b = e.target.closest("[data-goto-tab]");
   if (!b) return;
   const t = document.querySelector(`nav.tabs .tab-btn[data-tab="${b.dataset.gotoTab}"]`);
