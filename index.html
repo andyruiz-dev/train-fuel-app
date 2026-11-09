@@ -421,6 +421,12 @@
   #todayWorkout > .empty{padding:16px 4px;}
   .tf-hero{order:-1; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; margin:0 0 14px; display:flex; gap:16px; align-items:center;}
   .tf-hero svg{flex:0 0 auto;}
+  #tab-today .tf-hero{padding:12px 14px; margin-bottom:8px; gap:12px;}
+  #tab-today .tf-hero svg{width:56px; height:56px;}
+  #tab-today .tf-hero-title{font-size:19px;}
+  #tab-today .tf-hero-sub{margin-top:3px;}
+  #tab-today .tf-screen-head{padding:8px 4px 4px; display:flex; flex-direction:row-reverse; justify-content:space-between; align-items:baseline;}
+  #tab-today .tf-screen-head h1{font-size:22px;}
   .tf-hero-title{font-family:var(--font-display); font-weight:600; font-size:22px; line-height:1.15;}
   .tf-hero-sub{font-size:13px; color:var(--text-muted); margin-top:6px;}
   .tf-moves{display:flex; flex-direction:column; gap:6px; margin:6px 0 10px;}
@@ -438,7 +444,7 @@
   .tf-mv-line .tf-mv-det,.tf-mv > .tf-mv-det{flex:0 0 auto; text-align:right; max-width:46%;}
   .tf-mv-tag{margin-bottom:2px;}
   .tf-pill{font-family:var(--font-mono); font-size:10px; color:#0F1A17; background:var(--accent); border-radius:99px; padding:4px 8px; flex:0 0 auto;}
-  #todayWorkout details.exercise-group{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin:0 0 10px;}
+  #todayWorkout details.exercise-group{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 14px; margin:0 0 8px;}
   #startSessionBtn{order:1; position:sticky; bottom:66px; z-index:4; height:56px; border-radius:14px; font-size:20px; letter-spacing:1px; text-transform:uppercase; margin-top:10px; box-shadow:0 -14px 14px -4px var(--bg);}
   #minimumDayBtn{order:2; background:none; border:0; color:var(--text-muted); font-family:Inter,sans-serif; font-size:13px; padding:12px 0 4px;}
   #travelModeToggle{order:3; justify-content:center !important; gap:8px; font-family:Inter,sans-serif !important; font-size:13px !important; color:var(--text-muted); padding:6px 0 !important;}
@@ -1097,7 +1103,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-09 11:15 CT";
+const APP_BUILD = "2026-11-09 11:30 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -5057,7 +5063,7 @@ function movesListHtml(workout) {
     const fin = e.emom && i === ex.length - 1;
     return `<div class="tf-mv${fin ? " fin" : ""}" style="flex-wrap:wrap;">${fin ? '<div class="tf-mv-tag" style="flex:1 0 100%;">FINISHER</div>' : ""}<div class="tf-mv-name" data-exidx="${i}" data-exinfo="${escapeHtml(e.name)}" style="flex:1 1 0; min-width:0;">${escapeHtml(e.name)}</div><div class="tf-mv-det" style="text-align:right;">${det(e)}${e.emom ? ' <span class="tf-pill">EMOM</span>' : ""}</div></div>`;
   }).join("");
-  const names = [...new Set(ex.map(e => String(e.name)))].map(n => escapeHtml(n)).join(" · ");
+  const names = [...new Set(ex.map(e => String(e.name).replace(/^(kettlebell|kb)\s+/i, "")))].map(n => escapeHtml(n)).join(" · ");
   const head = `<div class="tf-moves-head" data-moves-toggle role="button" tabindex="0" style="cursor:pointer;"><span>${ex.length} moves${movesOpen ? " · tap one for details" : ""}</span><span style="color:var(--accent);">${movesOpen ? "Hide ▴" : "See all ▾"}</span></div>`;
   if (!movesOpen) return `<div class="tf-moves">${head}<div data-moves-toggle style="cursor:pointer; font-size:13px; color:var(--text-muted); line-height:1.45; padding:2px 4px 0;">${names}</div></div>`;
   return `<div class="tf-moves">${head}${rows}</div>`;
