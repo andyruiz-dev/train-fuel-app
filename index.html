@@ -424,6 +424,16 @@
   #tab-coach .tf-screen-head{padding:8px 4px 4px; display:flex; flex-direction:row-reverse; justify-content:space-between; align-items:baseline;}
   #tab-coach .tf-screen-head h1{font-size:22px;}
   #tab-coach .tf-label{padding:8px 4px 5px;}
+  #tab-coach .tf-hero2{order:0; margin:0 0 10px;}
+  #tab-coach .tf-hero2 .big{font-family:var(--font-display); font-size:38px; font-weight:600; line-height:1; color:var(--text);}
+  #tab-coach .tf-hero2 .big small{font-size:12px; font-family:Inter,sans-serif; color:var(--text-muted); font-weight:500;}
+  #tab-coach .tf-hero2 .d{font-size:13px; font-weight:600; margin-top:6px;}
+  .tf-cchips{display:flex; border-top:1px solid rgba(255,255,255,.08);}
+  .tf-cchip{flex:1; padding:10px 12px; border-right:1px solid rgba(255,255,255,.08);}
+  .tf-cchip:last-child{border-right:0;}
+  .tf-cchip b{display:block; font-family:var(--font-display); font-size:19px; font-weight:600; line-height:1.1;}
+  .tf-cchip b small{font-size:11px; color:var(--text-muted); font-family:Inter,sans-serif; font-weight:500;}
+  .tf-cchip span{font-size:11px; color:var(--text-muted);}
   .tf-coachhero{border:1px solid #2b5c51; border-radius:16px; background:linear-gradient(160deg,#1E4A41 0%,#20231C 65%); padding:14px 16px 10px; margin:0 0 10px; color:var(--text);}
   .tf-coachhero .meta, .tf-coachhero li, .tf-coachhero p{color:var(--text); font-size:15px; line-height:1.4;}
   .tf-coachhero .tf-clamp-btn{color:#8fd9c9; font-size:12px; padding:6px 0 2px;}
@@ -878,6 +888,7 @@
     <div id="morningChecklist" class="hidden"></div>
     <div id="flagsBanner" class="hidden"></div>
 
+    <div id="coachHero"></div>
     <div class="tf-coachhero" id="coachNoteCard">
       <div class="tf-hero2-k">Coach's note</div>
       <div id="coachNote" class="meta">Still gathering enough days to spot real patterns. Check back once you've logged a bit more.</div>
@@ -1147,7 +1158,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-09 13:30 CT";
+const APP_BUILD = "2026-11-09 14:30 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3378,6 +3389,7 @@ function renderCoachTop(rows) {
   }
   const wkc = document.getElementById("tfWeekCard");
   if (wkc) wkc.innerHTML = weekStripHtml();
+  renderCoachHero();
 }
 function renderMorningChecklist() {
   const el = document.getElementById("morningChecklist");
@@ -4951,6 +4963,44 @@ function recentStressCaution(days = 3) {
 }
 
 // Today "Steady" look: one card (progress ring + what today is) and an open list of the moves.
+function renderCoachHero() {
+  const el = document.getElementById("coachHero");
+  if (!el) return;
+  const ms = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+  const now = new Date(), msDay = 86400000;
+  const recent = ms.filter(m => new Date(m.date + "T12:00:00").getTime() >= Date.now() - 14 * msDay);
+  const pts = recent.length >= 2 ? recent : ms.slice(-2);
+  let left = `<div class="big">·</div><div class="d" style="color:var(--text-muted);">Log two weigh-ins to see your trend.</div>`, spark = "";
+  if (ms.length >= 2) {
+    const wk = ms.filter(m => new Date(m.date + "T12:00:00").getTime() >= Date.now() - 7 * msDay);
+    const avg = (wk.length ? wk : ms.slice(-1)).reduce((a, m) => a + m.weight, 0) / (wk.length || 1);
+    const delta = ms[ms.length - 1].weight - ms[0].weight, down = delta <= 0;
+    left = `<div class="big">${avg.toFixed(1)}<small> lb</small></div><div class="d" style="color:${down ? "#7fe0cc" : "#F0907D"};">${down ? "−" : "+"}${Math.abs(delta).toFixed(1)} lb since ${formatDateOnly(ms[0].date)}</div>`;
+    const vals = pts.map(m => m.weight), lo = Math.min(...vals) - 0.6, hi = Math.max(...vals) + 0.6, W = 130, H = 52;
+    const t0 = new Date(pts[0].date + "T12:00:00").getTime(), t1 = new Date(pts[pts.length - 1].date + "T12:00:00").getTime();
+    const X = m => t1 === t0 ? W / 2 : ((new Date(m.date + "T12:00:00").getTime() - t0) / (t1 - t0)) * (W - 8) + 4;
+    const Y = w => 4 + (1 - (w - lo) / (hi - lo)) * (H - 8);
+    const line = pts.map(m => `${X(m).toFixed(1)},${Y(m.weight).toFixed(1)}`).join(" ");
+    const l = pts[pts.length - 1];
+    spark = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight, last 14 days"><polyline fill="none" stroke="#2FBFA6" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="${line}"/><circle cx="${X(l).toFixed(1)}" cy="${Y(l.weight).toFixed(1)}" r="4.5" fill="#EDEAE0"/></svg>`;
+  }
+  const wb = weekBudgetNumbers();
+  const pT = state.settings?.macroTargets?.protein || 0;
+  let hit = 0, logged = 0;
+  for (let i = 0; i < 7; i++) {
+    const ds = localDateStr(new Date(now.getFullYear(), now.getMonth(), now.getDate() - i));
+    const fl = foodLogsForDate(ds);
+    if (fl.length) logged++;
+    if (pT && fl.reduce((n, f) => n + (f.protein || 0), 0) >= pT) hit++;
+  }
+  const chip = (l, v, u) => `<div class="tf-cchip"><b>${v}<small>${u}</small></b><span>${l}</span></div>`;
+  const budgetChip = wb.left >= 0 ? chip("week budget left", wb.left.toLocaleString(), " cal") : chip("over week budget", Math.abs(wb.left).toLocaleString(), " cal");
+  el.innerHTML = `<div class="tf-hero2"><div class="tf-hero2-in">
+      <div class="tf-hero2-k">7-day average · last 14 days</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:6px;"><div>${left}</div>${spark}</div>
+    </div>
+    <div class="tf-cchips">${budgetChip}${chip("protein days hit", hit + " / 7", "")}${chip("days logged", logged + " / 7", "")}</div></div>`;
+}
 function weekStripHtml() {
   const goal = state.settings?.weeklyWorkoutGoal || 3;
   const days = weekDayList(0), todayS = localDateStr();
