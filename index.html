@@ -841,6 +841,7 @@
 
     <div id="weightCheckInPanel" class="hidden tf-panel">
       <div class="meta" id="weightCheckInMessage" style="margin-bottom:8px;"></div>
+      <div class="meta hidden" id="weightJumpExplain" style="margin-bottom:10px; padding:10px 12px; border:1px solid var(--border); border-radius:12px;"></div>
       <div class="row" id="weightCheckInChips"></div>
       <input type="number" inputmode="decimal" id="weightCheckInWater" class="hidden" placeholder="About how much water? (oz, optional)" style="margin-top:10px;">
       <input type="text" id="weightCheckInFood" class="hidden" placeholder="Anything specific you ate? (optional)" style="margin-top:10px;">
@@ -865,6 +866,10 @@
       <div class="tf-dots" id="tfWeekDots" role="img" aria-label="Workouts this week"></div>
       <div class="tf-week-n"><b id="tfWeekCount">0</b><span>workouts</span></div>
     </div>
+    <details class="exercise-group tf-row" id="weekCloseDetails">
+      <summary>Close the week</summary>
+      <div id="weekClose" style="margin-top:10px;"></div>
+    </details>
     <details class="exercise-group tf-row" id="weeklyReviewDetails">
       <summary>Weekly review</summary>
       <div id="weeklyReview" style="margin-top:10px;"></div>
@@ -1073,7 +1078,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-09 08:30 CT";
+const APP_BUILD = "2026-11-09 10:00 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -2362,7 +2367,8 @@ function computeWeightTrend(windowDays = 14) {
 
   const cutoff = Date.now() - windowDays * 24 * 60 * 60 * 1000;
   const recentAll = ms.filter(m => new Date(m.date).getTime() >= cutoff);
-  const recentClean = recentAll.filter(m => !(m.reasons && m.reasons.length));
+  // Every weigh-in counts, tagged or not: a swing is information, not something to filter out.
+  const recentClean = recentAll;
 
   let windowSet, excludedFlagged = 0;
   if (recentClean.length >= 2) {
@@ -2387,7 +2393,12 @@ function computeWeightTrend(windowDays = 14) {
   const meanY = ys.reduce((a, b) => a + b, 0) / n;
   const num = xs.reduce((sum, x, i) => sum + (x - meanX) * (ys[i] - meanY), 0);
   const den = xs.reduce((sum, x) => sum + (x - meanX) ** 2, 0);
-  const slopePerDay = den === 0 ? 0 : num / den; // lb/day
+  // Theil-Sen: the median of all pairwise slopes. Every weigh-in counts, but one salty-dinner
+  // spike can't drag the trend the way a plain regression line would.
+  const pair = [];
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) if (xs[j] - xs[i] >= 1) pair.push((ys[j] - ys[i]) / (xs[j] - xs[i]));
+  pair.sort((p, q) => p - q);
+  const slopePerDay = pair.length ? (pair.length % 2 ? pair[(pair.length - 1) / 2] : (pair[pair.length / 2 - 1] + pair[pair.length / 2]) / 2) : (den === 0 ? 0 : num / den); // lb/day
   const pctPerWeek = (slopePerDay * 7 / meanY) * 100;
 
   return { pctPerWeek, lbPerWeek: slopePerDay * 7, days, n, excludedFlagged };
@@ -3742,6 +3753,207 @@ function renderWeeklyReview() {
     renderWeeklyReview();
   });
 }
+
+// ---- Insight engine: why did the scale move, blind spots, and the weekly close-out ----
+// Nothing here removes or hides a weigh-in. It reads your own logs and weights and explains them.
+const ALCOHOL_RE = /\b(beers?|bourbon|bulleit|whiskey|whisky|vodka|wine|tequila|margarita|cocktail|saint arnold|ipa|lager|ale|rum|gin|shots?|mezcal|champagne|martini|old fashioned|bud light|miller|coors|modelo|corona|white claw)\b/i;
+const SALTY_RE = /\b(pizza|wings?|wingstop|fries|burger|tacos?|lasagna|ramen|bbq|restaurant|takeout|nachos|queso|fried|chick-fil-a|mcdonald'?s|chipotle|sushi|pho)\b/i;
+function isAlcoholEntry(f) { return !!f.alcohol || ALCOHOL_RE.test(f.name || ""); }
+function addDaysStr(ds, n) { const d = new Date(ds + "T12:00:00"); d.setDate(d.getDate() + n); return localDateStr(d); }
+function dayInfo(ds) {
+  const o = { n: 0, kcal: 0, protein: 0, carbs: 0, fat: 0, alc: 0, salty: 0 };
+  foodLogsForDate(ds).forEach(f => {
+    const c = f.calories || 0;
+    o.n++; o.kcal += c; o.protein += f.protein || 0; o.carbs += f.carbs || 0; o.fat += f.fat || 0;
+    if (isAlcoholEntry(f)) o.alc += c;
+    if (SALTY_RE.test(f.name || "")) o.salty += c;
+  });
+  return o;
+}
+function sortedWeights() { return (state.measurements || []).filter(m => m.weight > 0).slice().sort((a, b) => a.date.localeCompare(b.date)); }
+function daysBetween(a, b) { return Math.round((new Date(b + "T12:00:00") - new Date(a + "T12:00:00")) / 864e5); }
+function findJumps(minLb = 1.5) {
+  const ms = sortedWeights(), out = [];
+  for (let i = 1; i < ms.length; i++) {
+    const gap = daysBetween(ms[i - 1].date, ms[i].date), d = ms[i].weight - ms[i - 1].weight;
+    if (gap <= 3 && d >= minLb) out.push({ i, date: ms[i].date, delta: d, base: ms[i - 1].weight });
+  }
+  return out;
+}
+function jumpClearDays(j) {
+  const ms = sortedWeights();
+  for (let k = j.i + 1; k < ms.length; k++) if (ms[k].weight <= j.base + 0.8) return Math.max(1, daysBetween(ms[j.i].date, ms[k].date));
+  return null;
+}
+function explainJump(date) {
+  const ms = sortedWeights(), i = ms.findIndex(m => m.date === date);
+  if (i < 1) return null;
+  const cur = ms[i], prev = ms[i - 1], delta = cur.weight - prev.weight;
+  if (delta < 1.5 || daysBetween(prev.date, cur.date) > 3) return null;
+  const a = dayInfo(addDaysStr(date, -1)), b = dayInfo(addDaysStr(date, -2));
+  const usual = [];
+  for (let k = 3; k <= 16; k++) { const ds = addDaysStr(date, -k), di = dayInfo(ds); if (di.n >= 3 && !isDayMarkedPartial(ds)) usual.push(di); }
+  const avg = f => usual.length ? usual.reduce((s, x) => s + x[f], 0) / usual.length : null;
+  const uKcal = avg("kcal"), uCarb = avg("carbs");
+  const lines = [], causes = [];
+  if (!a.n && !b.n) {
+    lines.push("Nothing was logged the two days before, so I can't say what drove it. A rough total still counts.");
+  } else {
+    if (uKcal != null && a.kcal > 0) {
+      const fat = Math.max(0, a.kcal - uKcal) / 3500;
+      lines.push(`Calories the day before: ${Math.round(a.kcal).toLocaleString()} vs your usual ${Math.round(uKcal).toLocaleString()}. That is at most about ${fat.toFixed(1)} lb of fat, so most of a ${delta.toFixed(1)} lb jump is water and gut contents, not fat.`);
+    }
+    const alc = a.alc + b.alc, salty = Math.max(a.salty, b.salty);
+    if (alc >= 300) causes.push(`Alcohol: about ${Math.round(alc)} cal in the last 2 days. It dehydrates you, then you hold water to compensate.`);
+    if (salty >= 600) causes.push(`Salty or restaurant food (about ${Math.round(salty)} cal). Sodium makes you hold water.`);
+    if (uCarb != null && a.carbs >= 200 && a.carbs >= uCarb * 1.25) causes.push(`Carbs ${Math.round(a.carbs)} g vs your usual ${Math.round(uCarb)} g. Each gram of stored carb holds about 3 g of water.`);
+    if (!causes.length) causes.push("Nothing in your logs stands out. That usually points to gut contents, sleep, or sodium that wasn't logged.");
+  }
+  const tags = (cur.reasons || []).filter(r => r !== WATER_REASON);
+  if (tags.length) causes.push("You tagged: " + tags.join(", ") + (cur.waterOz ? ` and about ${cur.waterOz} oz of water` : "") + ".");
+  else if ((cur.reasons || []).includes(WATER_REASON)) causes.push("You tagged lots of water" + (cur.waterOz ? ` (about ${cur.waterOz} oz)` : "") + ".");
+  const cleared = findJumps().filter(j => j.date < date).map(jumpClearDays).filter(x => x != null).sort((x, y) => x - y);
+  if (cleared.length >= 2) {
+    const med = cleared[Math.floor(cleared.length / 2)];
+    lines.push(`Your last ${cleared.length} jumps like this cleared in about ${med} day${med === 1 ? "" : "s"}. Expect to be back near ${prev.weight} lb by ${formatDateOnly(addDaysStr(date, med))}. If it is still ${(prev.weight + 0.8).toFixed(1)} or higher on ${formatDateOnly(addDaysStr(date, 4))}, treat it as real and we look closer.`);
+  }
+  return `<div style="font-weight:600; margin-bottom:4px;">Up ${delta.toFixed(1)} lb: what likely happened</div>` +
+    lines.map(l => `<div style="margin-top:6px;">${escapeHtml(l)}</div>`).join("") +
+    causes.map(l => `<div style="margin-top:6px;">• ${escapeHtml(l)}</div>`).join("");
+}
+function computeBlindSpots() {
+  const ms = sortedWeights(), pairs = [];
+  for (let i = 1; i < ms.length; i++) {
+    if (daysBetween(ms[i - 1].date, ms[i].date) !== 1) continue;
+    const ds = ms[i - 1].date, di = dayInfo(ds);
+    if (di.n < 3 || isDayMarkedPartial(ds)) continue;
+    pairs.push({ delta: ms[i].weight - ms[i - 1].weight, di });
+  }
+  if (pairs.length < 12) return [];
+  const carbs = pairs.map(p => p.di.carbs).sort((x, y) => x - y);
+  const carbCut = Math.max(200, carbs[Math.floor(carbs.length * 0.75)]);
+  const tests = [
+    ["300+ alcohol calories", p => p.di.alc >= 300],
+    [`${carbCut}+ g of carbs`, p => p.di.carbs >= carbCut],
+    ["2,400+ calories", p => p.di.kcal >= 2400],
+    ["700+ calories of salty or restaurant food", p => p.di.salty >= 700],
+  ];
+  const out = [];
+  tests.forEach(([label, fn]) => {
+    const yes = pairs.filter(fn).map(p => p.delta), no = pairs.filter(p => !fn(p)).map(p => p.delta);
+    if (yes.length < 4 || no.length < 4) return;
+    const diff = meanOf(yes) - meanOf(no);
+    if (diff >= 0.3) out.push({ diff, text: `After days with ${label}, your next-morning weight runs ${diff.toFixed(1)} lb higher than after other days (${yes.length} days).` });
+  });
+  return out.sort((x, y) => y.diff - x.diff);
+}
+
+// ---- Close the week ----
+let weekCloseOffset = null;
+function weekDayList(offset) {
+  const now = new Date(), mon = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7) + offset * 7);
+  return Array.from({ length: 7 }, (_, i) => { const d = new Date(mon); d.setDate(mon.getDate() + i); return localDateStr(d); });
+}
+function tfDonut(slices, centerTop, centerBottom) {
+  const total = slices.reduce((s, x) => s + x.v, 0);
+  const r = 46, C = 2 * Math.PI * r;
+  let off = 0, arcs = "";
+  slices.forEach(s => {
+    if (s.v <= 0 || !total) return;
+    const len = (s.v / total) * C;
+    arcs += `<circle cx="60" cy="60" r="${r}" fill="none" stroke="${s.c}" stroke-width="16" stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 60 60)"/>`;
+    off += len;
+  });
+  return `<svg width="132" height="132" viewBox="0 0 120 120" role="img" aria-label="Calories by source"><circle cx="60" cy="60" r="${r}" fill="none" stroke="#2A2E24" stroke-width="16"/>${arcs}<text x="60" y="58" text-anchor="middle" font-family="Oswald, sans-serif" font-size="19" font-weight="600" fill="#EDEAE0">${escapeHtml(centerTop)}</text><text x="60" y="74" text-anchor="middle" font-size="9" fill="#9A9D8E">${escapeHtml(centerBottom)}</text></svg>`;
+}
+function renderWeekClose() {
+  const el = document.getElementById("weekClose");
+  if (!el) return;
+  const today = localDateStr();
+  if (weekCloseOffset === null) weekCloseOffset = ((new Date().getDay() + 6) % 7) === 0 ? -1 : 0;
+  const days = weekDayList(weekCloseOffset), elapsed = days.filter(d => d <= today);
+  const complete = elapsed.length === 7;
+  const budget = state.settings?.weeklyCalBudget || DEFAULT_WEEK_BUDGET;
+  const t = state.settings?.macroTargets || {};
+  const infos = elapsed.map(d => ({ d, ...dayInfo(d) }));
+  const loggedDays = infos.filter(x => x.n > 0);
+  const unlogged = infos.filter(x => x.n === 0 && x.d !== today);
+  const total = infos.reduce((s, x) => s + x.kcal, 0);
+  // Calories by source. Alcohol is its own slice; entries logged with calories but no macros show as "Unsorted".
+  const src = { protein: 0, carbs: 0, fat: 0, alcohol: 0, unsorted: 0 };
+  days.forEach(d => foodLogsForDate(d).forEach(f => {
+    const cal = f.calories || 0;
+    if (isAlcoholEntry(f)) { src.alcohol += cal; return; }
+    let p = 4 * (f.protein || 0), c = 4 * (f.carbs || 0), fa = 9 * (f.fat || 0);
+    const m = p + c + fa;
+    if (m > cal && m > 0) { const k = cal / m; p *= k; c *= k; fa *= k; }
+    src.protein += p; src.carbs += c; src.fat += fa; src.unsorted += Math.max(0, cal - (p + c + fa));
+  }));
+  const slices = [
+    { k: "Protein", v: src.protein, c: "#2FBFA6" }, { k: "Carbs", v: src.carbs, c: "#D9A441" },
+    { k: "Fat", v: src.fat, c: "#8E7CC3" }, { k: "Alcohol", v: src.alcohol, c: "#D96C5B" }, { k: "Unsorted", v: src.unsorted, c: "#6B6F60" },
+  ];
+  const sTot = slices.reduce((s, x) => s + x.v, 0) || 1;
+  const legend = slices.filter(s => s.v > 0).map(s => `<div style="display:flex; align-items:center; gap:8px; font-size:13px; margin:3px 0;"><i style="width:10px; height:10px; border-radius:3px; background:${s.c}; display:inline-block;"></i><span style="flex:1;">${s.k}</span><b style="font-family:var(--font-mono); font-weight:500;">${Math.round(s.v).toLocaleString()}</b><span class="meta" style="width:36px; text-align:right;">${Math.round(s.v / sTot * 100)}%</span></div>`).join("");
+  const wkLogs = (state.logs || []).filter(l => days.includes(dayKeyOf(l.date)));
+  const workoutDays = new Set(wkLogs.map(l => dayKeyOf(l.date))).size;
+  const wkCardio = (state.cardioLogs || []).filter(c => days.includes(dayKeyOf(c.date)));
+  const cardioMin = wkCardio.reduce((s, c) => s + (c.duration || 0), 0), cardioDist = wkCardio.reduce((s, c) => s + (c.distance || 0), 0);
+  const goal = state.settings?.weeklyWorkoutGoal || 3;
+  const prevDays = weekDayList(weekCloseOffset - 1);
+  const wIn = ds => sortedWeights().filter(m => ds.includes(m.date)).map(m => m.weight);
+  const wNow = wIn(days), wPrev = wIn(prevDays);
+  const avgNow = wNow.length ? meanOf(wNow) : null, avgPrev = wPrev.length ? meanOf(wPrev) : null;
+  const jumps = findJumps().filter(j => days.includes(j.date));
+  const proteinAvg = loggedDays.length ? loggedDays.reduce((s, x) => s + x.protein, 0) / loggedDays.length : 0;
+  const alcPct = total ? src.alcohol / total : 0;
+  const dayName = d => new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday: "short" });
+  const right = [], wrong = [], attn = [];
+  if (elapsed.length >= 3 && !unlogged.length) right.push(`Logged every day (${loggedDays.length} of ${elapsed.length}).`);
+  if (t.protein && loggedDays.length >= 3 && proteinAvg >= t.protein * 0.9) right.push(`Protein averaged ${Math.round(proteinAvg)} g against a ${t.protein} g target.`);
+  if (workoutDays >= goal) right.push(`${workoutDays} workout day${workoutDays === 1 ? "" : "s"}, goal was ${goal}.`);
+  if (wkCardio.length) right.push(`${wkCardio.length} cardio or walk session${wkCardio.length === 1 ? "" : "s"}${cardioMin ? `, ${Math.round(cardioMin)} min` : ""}.`);
+  if (complete && total > 0 && total <= budget) right.push(`Calories came in at ${Math.round(total).toLocaleString()} of your ${budget.toLocaleString()} budget.`);
+  if (avgNow != null && avgPrev != null && avgNow < avgPrev - 0.2) right.push(`Your average weight is down ${(avgPrev - avgNow).toFixed(1)} lb from the week before.`);
+  if (elapsed.length >= 5 && !jumps.length && wNow.length >= 3) right.push("No big overnight jumps on the scale.");
+  if (unlogged.length) wrong.push(`${unlogged.length} day${unlogged.length === 1 ? "" : "s"} with nothing logged (${unlogged.map(x => dayName(x.d)).join(", ")}). A rough total counts.`);
+  if (complete && total > budget) wrong.push(`Calories ran ${Math.round(total - budget).toLocaleString()} over the ${budget.toLocaleString()} budget.`);
+  const bigDays = infos.filter(x => x.kcal >= 2800);
+  if (bigDays.length) wrong.push(`Big days: ${bigDays.map(x => `${dayName(x.d)} ${Math.round(x.kcal).toLocaleString()}`).join(", ")}.`);
+  if (src.alcohol >= 600) wrong.push(`Alcohol was ${Math.round(src.alcohol).toLocaleString()} cal, ${Math.round(alcPct * 100)}% of the week's intake.`);
+  if (complete && workoutDays < goal) wrong.push(`${workoutDays} workout day${workoutDays === 1 ? "" : "s"}, goal was ${goal}.`);
+  if (jumps.length) wrong.push(`Weight jumped on ${jumps.map(j => `${dayName(j.date)} (+${j.delta.toFixed(1)})`).join(", ")}.`);
+  computeBlindSpots().slice(0, 2).forEach(b => attn.push(b.text));
+  if (t.protein && loggedDays.length >= 3 && proteinAvg < t.protein * 0.9) attn.push(`Protein averaged ${Math.round(proteinAvg)} g, under your ${t.protein} g target.`);
+  if (!attn.length) attn.push("Nothing stands out this week.");
+  let focus = "Repeat what worked this week.";
+  if (unlogged.length) focus = "Log something every day, even a rough total.";
+  else if (alcPct >= 0.15) focus = "Decide your drinking nights ahead of time and log the drinks first.";
+  else if (t.protein && loggedDays.length >= 3 && proteinAvg < t.protein * 0.9) focus = "Hit protein earlier in the day.";
+  else if (complete && total > budget) focus = "Plan the lighter days around your biggest day.";
+  const list = (title, items, color) => items.length ? `<div style="margin-top:12px;"><div class="field-label" style="text-transform:uppercase; letter-spacing:0.6px; color:${color};">${title}</div>${items.map(x => `<div style="margin-top:5px; font-size:14px;">• ${escapeHtml(x)}</div>`).join("")}</div>` : "";
+  const jumpHtml = jumps.map(j => explainJump(j.date)).filter(Boolean).map(h => `<div class="meta" style="margin-top:12px; padding:10px 12px; border:1px solid var(--border); border-radius:12px;">${h}</div>`).join("");
+  const tab = (lab, off) => `<button type="button" data-weekclose="${off}" class="${weekCloseOffset === off ? "primary" : "secondary"}" style="flex:1; padding:8px;">${lab}</button>`;
+  const rangeLab = `${formatDateOnly(days[0])} to ${formatDateOnly(days[6])}`;
+  el.innerHTML = `
+    <div class="row" style="gap:8px;">${tab("Last week", -1)}${tab("This week", 0)}</div>
+    <div class="meta" style="margin:8px 0;">${rangeLab}${complete ? "" : ` · ${elapsed.length} of 7 days so far`}</div>
+    ${total > 0 ? `<div style="display:flex; align-items:center; gap:14px;">${tfDonut(slices, Math.round(total).toLocaleString(), "cal logged")}<div style="flex:1;">${legend}</div></div>
+    <div class="meta" style="margin-top:6px;">${Math.round(total).toLocaleString()} of ${budget.toLocaleString()} weekly budget · ${loggedDays.length ? Math.round(total / loggedDays.length).toLocaleString() : 0} cal on a logged day.</div>` : `<div class="empty">No food logged this week yet.</div>`}
+    <div style="margin-top:10px; font-size:14px;">Training: ${workoutDays} workout day${workoutDays === 1 ? "" : "s"} (goal ${goal})${wkCardio.length ? ` · ${wkCardio.length} cardio, ${Math.round(cardioMin)} min${cardioDist ? `, ${cardioDist.toFixed(1)} mi` : ""}` : ""}.</div>
+    <div style="margin-top:4px; font-size:14px;">Weight: ${avgNow != null ? `average ${avgNow.toFixed(1)} lb` : "no weigh-ins"}${avgNow != null && avgPrev != null ? ` (${avgNow - avgPrev >= 0 ? "+" : "−"}${Math.abs(avgNow - avgPrev).toFixed(1)} vs the week before)` : ""}.</div>
+    ${list("What went right", right, "#2FBFA6")}${list("What went wrong", wrong, "#D96C5B")}${list("Needs attention", attn, "#D9A441")}
+    ${jumpHtml}
+    <div class="tf-hl" style="margin-top:14px;"><span class="t">Next week's focus: ${escapeHtml(focus)}</span></div>
+    <div class="meta" style="margin-top:8px;">Calories burned aren't measured here. Training and cardio are shown as activity, not calories.</div>`;
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-weekclose]");
+  if (!b) return;
+  weekCloseOffset = parseInt(b.dataset.weekclose, 10);
+  renderWeekClose();
+});
 
 function renderActiveProgramInfo() {
   renderWelcomeBackBanner();
@@ -6191,6 +6403,7 @@ function renderMacroSummary() {
   renderFoodHistory();
   renderWeeklyIntake();
   renderWeekBudget();
+  try { renderWeekClose(); } catch (e) {}
   renderPartialControls();
   renderFoodNow();
 }
@@ -7863,6 +8076,7 @@ document.getElementById("logWeightBtn").addEventListener("click", async () => {
   document.getElementById("weightCheckInFood").value = "";
   document.getElementById("weightCheckInWater").classList.add("hidden");
   document.getElementById("weightCheckInWater").value = "";
+  document.getElementById("weightJumpExplain").classList.add("hidden");
   pendingCheckInIsBloat = false;
 
   if (bloat) {
@@ -7886,6 +8100,11 @@ document.getElementById("logWeightBtn").addEventListener("click", async () => {
     document.getElementById("weightCheckInMessage").textContent = direction === "up"
       ? `Up ${diff}lb since your last entry (${prior.weight}lb). What happened? (optional, pick any that apply)`
       : `Down ${diff}lb since your last entry (${prior.weight}lb) — that's a bigger drop than usual. Anything unusual? (optional)`;
+    try {
+      const ex = direction === "up" ? explainJump(date) : null;
+      const exEl = document.getElementById("weightJumpExplain");
+      if (ex) { exEl.innerHTML = ex; exEl.classList.remove("hidden"); }
+    } catch (e) {}
     document.getElementById("weightCheckInPanel").classList.remove("hidden");
   } else {
     document.getElementById("weightCheckInPanel").classList.add("hidden");
