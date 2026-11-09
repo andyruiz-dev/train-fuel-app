@@ -842,6 +842,7 @@
     <div id="weightCheckInPanel" class="hidden tf-panel">
       <div class="meta" id="weightCheckInMessage" style="margin-bottom:8px;"></div>
       <div class="row" id="weightCheckInChips"></div>
+      <input type="number" inputmode="decimal" id="weightCheckInWater" class="hidden" placeholder="About how much water? (oz, optional)" style="margin-top:10px;">
       <input type="text" id="weightCheckInFood" class="hidden" placeholder="Anything specific you ate? (optional)" style="margin-top:10px;">
       <div class="row" style="margin-top:10px;">
         <button class="secondary" id="weightCheckInSaveBtn" style="flex:1;">Save</button>
@@ -1072,7 +1073,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-08 20:30 CT";
+const APP_BUILD = "2026-11-09 08:30 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -2787,6 +2788,7 @@ const REASON_SUGGESTIONS = {
   "Alcohol": "Alcohol adds calories and can affect sleep/recovery quality on top of that.",
   "No BM in 2+ days": "A couple of days without going adds gut weight to the scale. It usually evens out once things move, so it isn't fat gained. Fiber, water and a walk help; travel and alcohol often cause it.",
   "Stress": "Stress affects both appetite and water retention — a change here isn't necessarily fat gained or lost.",
+  "Rehydrated (drank a lot of water)": "A jump after drinking a lot of water, especially if you were dehydrated, is mostly water. It usually settles in a day or two, and this day is left out of your weight trend.",
   "Illness": "Weight loss from being sick isn't the kind of progress to chase — let this one reset once you're recovered.",
   "Dehydration/low water intake": "A large drop from dehydration is water, not fat — rehydrating usually reverses it within a day or two.",
   "Big workout": "A very demanding session can shift water short-term — this should settle back within a few days.",
@@ -7779,7 +7781,8 @@ let pendingCheckInDirection = null;
 let pendingCheckInIsBloat = false;
 const activeCheckInReasons = new Set();
 
-const INCREASE_REASONS = ["Traveling", "Poor sleep", "Missed workout", "Missed cross-training", "Didn't track food", "Alcohol", "Stress", "No BM in 2+ days"];
+const WATER_REASON = "Rehydrated (drank a lot of water)";
+const INCREASE_REASONS = ["Traveling", "Poor sleep", "Missed workout", "Missed cross-training", "Didn't track food", "Alcohol", "Stress", "No BM in 2+ days", WATER_REASON];
 const DECREASE_REASONS = ["Illness", "Dehydration/low water intake", "Big workout", "Didn't eat much", "Traveling", "Stress"];
 // Daily check-in reuses this same tag vocabulary (defined here, after both
 // lists exist) rather than a second taxonomy — see renderDailyCheckin above.
@@ -7858,6 +7861,8 @@ document.getElementById("logWeightBtn").addEventListener("click", async () => {
 
   document.getElementById("weightCheckInFood").classList.add("hidden");
   document.getElementById("weightCheckInFood").value = "";
+  document.getElementById("weightCheckInWater").classList.add("hidden");
+  document.getElementById("weightCheckInWater").value = "";
   pendingCheckInIsBloat = false;
 
   if (bloat) {
@@ -7908,6 +7913,10 @@ document.getElementById("weightCheckInChips").addEventListener("click", (e) => {
   chip.classList.toggle("active");
   if (wasActive) activeCheckInReasons.delete(reason);
   else activeCheckInReasons.add(reason);
+  if (reason === WATER_REASON) {
+    document.getElementById("weightCheckInWater").classList.toggle("hidden", wasActive);
+    if (wasActive) document.getElementById("weightCheckInWater").value = "";
+  }
 });
 
 document.getElementById("weightCheckInSaveBtn").addEventListener("click", async () => {
@@ -7925,6 +7934,8 @@ document.getElementById("weightCheckInSaveBtn").addEventListener("click", async 
       pendingCheckInIsBloat = false;
     } else {
       m.reasons = picked;
+      const waterOz = parseFloat(document.getElementById("weightCheckInWater").value);
+      if (picked.includes(WATER_REASON) && waterOz > 0) m.waterOz = Math.round(waterOz); else delete m.waterOz;
       m.checkInDirection = pendingCheckInDirection;
       if (none) m.noReason = true; else delete m.noReason;
     }
