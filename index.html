@@ -866,10 +866,6 @@
       <div class="tf-dots" id="tfWeekDots" role="img" aria-label="Workouts this week"></div>
       <div class="tf-week-n"><b id="tfWeekCount">0</b><span>workouts</span></div>
     </div>
-    <details class="exercise-group tf-row" id="weekCloseDetails">
-      <summary>Close the week</summary>
-      <div id="weekClose" style="margin-top:10px;"></div>
-    </details>
     <details class="exercise-group tf-row" id="weeklyReviewDetails">
       <summary>Weekly review</summary>
       <div id="weeklyReview" style="margin-top:10px;"></div>
@@ -1078,7 +1074,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-09 10:55 CT";
+const APP_BUILD = "2026-11-09 11:30 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3702,56 +3698,8 @@ function renderWeeklyReview() {
     : clearFlagType("macroSuggestion");
   if (flagChanged) { persistNow(); renderFlagsBanner(); }
 
-  const logsDetailHtml = weeklyReviewLogsOpen ? (recentLogs.length ? recentLogs.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).map(l => `
-    <div class="list-item"><div class="name">${new Date(l.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · ${l.exercise}</div><div class="meta">${l.result}</div></div>
-  `).join("") : `<div class="empty">Nothing logged this week yet.</div>`) : "";
-
-  const programDone = (program && getProgramPace(program).mode === "count") ? getProgramPace(program).completed : null;
-  const programTotal = program ? totalProgramWorkouts(program) : 0;
-  const ringFrac = programDone !== null && programTotal ? programDone / programTotal : (program ? (weekNumber - 1) / Math.max(1, programMaxWeek(program)) : 0);
-  const ringCenter = programDone !== null ? `${programDone}/${programTotal}` : `Wk ${weekNumber}`;
-  const totLogs = counts.max + counts.hold + counts.missed;
-  const logRow = (lab, n, col) => `<div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-muted);"><span style="width:62px; text-align:left;">${lab}</span><span style="flex:1; height:6px; border-radius:3px; background:#2A2E24;"><i style="display:block; height:6px; border-radius:3px; width:${totLogs ? Math.round(n / totLogs * 100) : 0}%; background:${col};"></i></span><b style="font-family:var(--font-mono); font-weight:500; width:16px; text-align:right;">${n}</b></div>`;
-  const calT = state.settings?.macroTargets?.calories || 0;
-  const intakeTile = wi.counted >= 3
-    ? `<div class="tf-rt">${tfRing(calT ? wi.avg / calT : 0, String(wi.avg), "Average intake " + wi.avg + " calories", "#2FBFA6")}<div class="rv">${wi.avg}<small> cal/day</small></div><div class="rl">${calT ? "of " + calT + " target" : "7-day average"}</div></div>`
-    : `<div class="tf-rt"><div class="rl" style="padding:18px 4px;">Log 3 days of food to see your 7-day average.</div></div>`;
-  const daysTile = `<div class="tf-rt"><div class="rv" style="margin-top:6px;">${wi.counted}<small> / 7</small></div><div class="tf-dots7">${Array.from({ length: 7 }, (_, k) => `<i class="${k < wi.counted ? "on" : ""}"></i>`).join("")}</div><div class="rl">days counted</div></div>`;
-  let sugHead = "", sugPill = "gray";
-  if (suggestion) {
-    if (suggestion.deltaCalories !== 0) { sugHead = `${suggestion.deltaCalories > 0 ? "+" : "−"}${Math.abs(suggestion.deltaCalories)} cal/day suggested`; sugPill = "gold"; }
-    else sugHead = "No calorie change suggested";
-  } else sugHead = "Need 2 weigh-ins a week apart";
-  const applied = suggestion && suggestion.deltaCalories !== 0 && daysSinceApplied !== null && daysSinceApplied < MACRO_BASELINE_DAYS;
-  const nutritionBlock = `
-    <div class="tf-sec">Nutrition</div>
-    <div class="tf-tiles">${intakeTile}${daysTile}</div>
-    <div class="tf-hl"><span class="t">${sugHead}</span>${suggestion ? `<button type="button" data-hl-toggle>Why</button>` : ""}</div>
-    ${suggestion ? `<div class="tf-hl-body hidden" data-hl-body>${suggestion.message}${applied ? ` Applied ${daysSinceApplied < 1 ? "today" : Math.floor(daysSinceApplied) + " day(s) ago"}.` : ""}</div>` : ""}
-    ${suggestion && suggestion.deltaCalories !== 0 && !applied ? `<button class="secondary" id="applyMacroSuggestionBtn" style="margin-top:8px; width:100%;">Apply suggestion</button>` : ""}`;
-  el.innerHTML = `
-    <div class="tf-sec">Training</div>
-    <div class="tf-tiles">
-      <div class="tf-rt">${tfRing(ringFrac, ringCenter, "Program progress", "#2FBFA6")}<div class="rl">${programDone !== null ? "workouts done" : "program week"}${deloadNote ? "<br>deload week" : ""}</div></div>
-      <div class="tf-rt" style="align-items:stretch; justify-content:center;"><div class="rl" style="text-align:left;">Last 7 days · ${totLogs} moves</div>${logRow("Hit max", counts.max, "var(--accent)")}${logRow("As planned", counts.hold, "#7FA89F")}${logRow("Short", counts.missed, "#6B6F60")}</div>
-    </div>
-    <div class="tf-hl"><span class="t">${paceNote ? escapeHtml(paceNote) : escapeHtml(paceLine)}</span><button type="button" id="weeklyReviewLogsToggle">${weeklyReviewLogsOpen ? "Hide" : "Moves"}</button></div>
-    ${logsDetailHtml}
-    ${nutritionBlock}
-    ${checkInSummary?.up.length ? `<div class="tf-sec">Weight upticks this week</div>${tfBarRows(checkInSummary.up, "")}` : ""}
-    ${checkInSummary?.down.length ? `<div class="tf-sec">Weight drops this week</div>${tfBarRows(checkInSummary.down, "dn")}` : ""}
-  `;
-  el.querySelectorAll("[data-hl-toggle]").forEach(b => b.addEventListener("click", () => {
-    const body = b.closest(".tf-hl").nextElementSibling; if (body && body.hasAttribute("data-hl-body")) { body.classList.toggle("hidden"); b.textContent = body.classList.contains("hidden") ? "Why" : "Hide"; }
-  }));
-
-  const applyBtn = document.getElementById("applyMacroSuggestionBtn");
-  if (applyBtn) applyBtn.addEventListener("click", () => applyMacroSuggestion(suggestion.deltaCalories));
-
-  document.getElementById("weeklyReviewLogsToggle").addEventListener("click", () => {
-    weeklyReviewLogsOpen = !weeklyReviewLogsOpen;
-    renderWeeklyReview();
-  });
+  // Display is the card deck (one place for the whole weekly review).
+  try { renderWeekClose(); } catch (e) { el.innerHTML = '<div class="empty">Could not build the review.</div>'; }
 }
 
 // ---- Insight engine: why did the scale move, blind spots, and the weekly close-out ----
@@ -3869,7 +3817,7 @@ function tfDonut(slices, centerTop, centerBottom) {
   return `<svg width="132" height="132" viewBox="0 0 120 120" role="img" aria-label="Calories by source"><circle cx="60" cy="60" r="${r}" fill="none" stroke="#2A2E24" stroke-width="16"/>${arcs}<text x="60" y="58" text-anchor="middle" font-family="Oswald, sans-serif" font-size="19" font-weight="600" fill="#EDEAE0">${escapeHtml(centerTop)}</text><text x="60" y="74" text-anchor="middle" font-size="9" fill="#9A9D8E">${escapeHtml(centerBottom)}</text></svg>`;
 }
 function renderWeekClose() {
-  const el = document.getElementById("weekClose");
+  const el = document.getElementById("weeklyReview");
   if (!el) return;
   const today = localDateStr();
   if (weekCloseOffset === null) weekCloseOffset = ((new Date().getDay() + 6) % 7) === 0 ? -1 : 0;
@@ -3936,23 +3884,88 @@ function renderWeekClose() {
   // One card at a time: read it, tap Next.
   const big = (t) => `<div style="font-family:Oswald,sans-serif; font-size:22px; font-weight:600; line-height:1.25; margin-bottom:10px;">${escapeHtml(t)}</div>`;
   const bullets = (items, color) => items.map(x => `<div style="margin-top:10px; font-size:16px; line-height:1.4; padding-left:12px; border-left:3px solid ${color};">${escapeHtml(x)}</div>`).join("");
+  const rangeLab = `${formatDateOnly(days[0])} to ${formatDateOnly(days[6])}`;
   const cards = [];
+  const kfmt = n => n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(Math.round(n));
+  const dailyBudget = budget / 7;
+  // 1. Scoreboard: the only summary, everything after it is the "why".
+  const wDelta = avgNow != null && avgPrev != null ? avgNow - avgPrev : null;
+  cards.push(`<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+    <div class="tf-rt">${tfRing(budget ? total / budget : 0, kfmt(total), "Calories against weekly budget", total > budget ? "#D96C5B" : "#2FBFA6")}<div class="rl">of ${budget.toLocaleString()} budget</div></div>
+    <div class="tf-rt"><div class="rv" style="margin-top:6px;">${loggedDays.length}<small> / ${elapsed.length}</small></div><div class="tf-dots7">${Array.from({ length: 7 }, (_, k) => `<i class="${infos[k] && infos[k].n > 0 ? "on" : ""}"></i>`).join("")}</div><div class="rl">days logged</div></div>
+    <div class="tf-rt">${tfRing(goal ? Math.min(1, workoutDays / goal) : 0, `${workoutDays}/${goal}`, "Workouts against goal", "#2FBFA6")}<div class="rl">workouts</div></div>
+    <div class="tf-rt"><div class="rv" style="margin-top:6px;">${avgNow != null ? avgNow.toFixed(1) : "·"}<small> lb</small></div><div class="rl" style="color:${wDelta == null ? "inherit" : wDelta > 0.2 ? "#D96C5B" : wDelta < -0.2 ? "#2FBFA6" : "inherit"};">${wDelta == null ? "no comparison yet" : `${wDelta > 0.2 ? "▲" : wDelta < -0.2 ? "▼" : "▬"} ${Math.abs(wDelta).toFixed(1)} vs last week`}</div><div class="rl">average weight</div></div>
+  </div><div class="meta" style="margin-top:10px;">${complete ? "" : `${elapsed.length} of 7 days so far. `}Tap Next for the why.</div>`);
+  // 2. Daily calories against the budget line
+  {
+    const vals = days.map(d => ({ d, v: d <= today ? dayInfo(d).kcal : null, n: d <= today ? dayInfo(d).n : 0 }));
+    const top = Math.max(dailyBudget * 1.3, ...vals.map(x => x.v || 0)) * 1.08;
+    const H = 130, W = 300, bw = 28, gap = (W - bw * 7) / 8;
+    const yOf = v => H - (v / top) * H;
+    const bars = vals.map((x, k) => {
+      const xx = gap + k * (bw + gap);
+      if (x.v == null) return `<text x="${xx + bw / 2}" y="${H + 16}" text-anchor="middle" font-size="10" fill="#6B6F60">${dayName(x.d)[0]}</text>`;
+      if (!x.n) return `<rect x="${xx}" y="${H - 4}" width="${bw}" height="4" rx="2" fill="#3A3E34"/><text x="${xx + bw / 2}" y="${H - 8}" text-anchor="middle" font-size="9" fill="#9A9D8E">none</text><text x="${xx + bw / 2}" y="${H + 16}" text-anchor="middle" font-size="10" fill="#9A9D8E">${dayName(x.d)[0]}</text>`;
+      const col = x.v <= dailyBudget * 1.1 ? "#2FBFA6" : x.v <= dailyBudget * 1.3 ? "#D9A441" : "#D96C5B";
+      return `<rect x="${xx}" y="${yOf(x.v)}" width="${bw}" height="${H - yOf(x.v)}" rx="4" fill="${col}"/><text x="${xx + bw / 2}" y="${yOf(x.v) - 4}" text-anchor="middle" font-size="10" fill="#EDEAE0">${kfmt(x.v)}</text><text x="${xx + bw / 2}" y="${H + 16}" text-anchor="middle" font-size="10" fill="#9A9D8E">${dayName(x.d)[0]}</text>`;
+    }).join("");
+    cards.push(`${big("Day by day")}<svg viewBox="0 -6 ${W} ${H + 26}" width="100%" role="img" aria-label="Daily calories against budget line"><line x1="0" x2="${W}" y1="${yOf(dailyBudget)}" y2="${yOf(dailyBudget)}" stroke="#EDEAE0" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>${bars}</svg><div class="meta" style="margin-top:6px;">Dashed line is your daily share of the budget (${Math.round(dailyBudget).toLocaleString()}). Teal is at or near it, gold is over, red is well over.</div>`);
+  }
+  // 3. Where it came from
   cards.push(total > 0
-    ? `${big("Where your calories came from")}<div style="display:flex; align-items:center; gap:14px;">${tfDonut(slices, Math.round(total).toLocaleString(), "cal logged")}<div style="flex:1;">${legend}</div></div><div class="meta" style="margin-top:10px;">${Math.round(total).toLocaleString()} of ${budget.toLocaleString()} weekly budget · ${loggedDays.length ? Math.round(total / loggedDays.length).toLocaleString() : 0} cal on a logged day.</div>`
-    : `${big("Where your calories came from")}<div class="empty">No food logged this week yet.</div>`);
-  cards.push(`${big("Training and weight")}<div style="font-size:16px; line-height:1.5;">${workoutDays} workout day${workoutDays === 1 ? "" : "s"} (goal ${goal})${wkCardio.length ? `<br>${wkCardio.length} cardio or walk, ${Math.round(cardioMin)} min${cardioDist ? `, ${cardioDist.toFixed(1)} mi` : ""}` : ""}<br>${avgNow != null ? `Average weight ${avgNow.toFixed(1)} lb` : "No weigh-ins"}${avgNow != null && avgPrev != null ? ` (${avgNow - avgPrev >= 0 ? "+" : "−"}${Math.abs(avgNow - avgPrev).toFixed(1)} vs the week before)` : ""}</div><div class="meta" style="margin-top:10px;">Calories burned aren't measured here, so training shows as activity.</div>`);
-  // Each point gets its own card.
+    ? `${big("Where it came from")}<div style="display:flex; align-items:center; gap:14px;">${tfDonut(slices, Math.round(total).toLocaleString(), "cal logged")}<div style="flex:1;">${legend}</div></div>`
+    : `${big("Where it came from")}<div class="empty">No food logged this week yet.</div>`);
+  // 4. Training
+  {
+    const prog = programs.find(p => p.id === state.activeProgramId);
+    let ring = "";
+    if (prog) { const pace = getProgramPace(prog); if (pace.mode === "count") { const tot = totalProgramWorkouts(prog); ring = `<div class="tf-rt" style="flex:0 0 110px;">${tfRing(tot ? pace.completed / tot : 0, `${pace.completed}/${tot}`, "Program progress", "#2FBFA6")}<div class="rl">program</div></div>`; } }
+    const cnt = { max: 0, hold: 0, missed: 0 }; wkLogs.forEach(l => { if (cnt[l.result] !== undefined) cnt[l.result]++; });
+    const tl = cnt.max + cnt.hold + cnt.missed;
+    const row = (lab, n, col) => `<div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-muted); margin:4px 0;"><span style="width:70px;">${lab}</span><span style="flex:1; height:8px; border-radius:4px; background:#2A2E24;"><i style="display:block; height:8px; border-radius:4px; width:${tl ? Math.round(n / tl * 100) : 0}%; background:${col};"></i></span><b style="font-family:var(--font-mono); font-weight:500; width:18px; text-align:right;">${n}</b></div>`;
+    cards.push(`${big("Training")}<div style="display:flex; gap:12px; align-items:center;">${ring}<div style="flex:1;">${row("Hit max", cnt.max, "var(--accent)")}${row("As planned", cnt.hold, "#7FA89F")}${row("Short", cnt.missed, "#6B6F60")}</div></div><div style="margin-top:12px; font-size:15px;">${workoutDays} workout day${workoutDays === 1 ? "" : "s"} (goal ${goal})${wkCardio.length ? ` · ${wkCardio.length} cardio, ${Math.round(cardioMin)} min${cardioDist ? `, ${cardioDist.toFixed(1)} mi` : ""}` : ""}</div><div class="meta" style="margin-top:8px;">Calories burned aren't measured here, so training shows as activity.</div>`);
+  }
+  // 5. Weight line with jumps marked
+  {
+    const from = addDaysStr(days[0], -3);
+    const pts = sortedWeights().filter(m => m.date >= from && m.date <= days[6]);
+    const tagCounts = {};
+    sortedWeights().filter(m => days.includes(m.date)).forEach(m => (m.reasons || []).forEach(r => { tagCounts[r] = (tagCounts[r] || 0) + 1; }));
+    const chips = Object.entries(tagCounts).sort((x, y) => y[1] - x[1]).map(([r, c]) => `<span style="display:inline-block; margin:3px 4px 0 0; padding:3px 9px; border:1px solid var(--border); border-radius:12px; font-size:12px;">${escapeHtml(r)} ${c}×</span>`).join("");
+    let chart = `<div class="empty">Need at least 2 weigh-ins to draw the line.</div>`;
+    if (pts.length >= 2) {
+      const W = 300, H = 110, lo = Math.min(...pts.map(p => p.weight)) - 0.6, hi = Math.max(...pts.map(p => p.weight)) + 0.6;
+      const span = daysBetween(from, days[6]) || 1;
+      const X = d => 10 + (daysBetween(from, d) / span) * (W - 20), Y = v => H - ((v - lo) / (hi - lo)) * (H - 10) - 4;
+      const jd = new Set(jumps.map(j => j.date));
+      chart = `<svg viewBox="0 0 ${W} ${H + 14}" width="100%" role="img" aria-label="Weight this week"><polyline fill="none" stroke="#2FBFA6" stroke-width="2" points="${pts.map(p => `${X(p.date).toFixed(1)},${Y(p.weight).toFixed(1)}`).join(" ")}"/>${pts.map(p => `<circle cx="${X(p.date).toFixed(1)}" cy="${Y(p.weight).toFixed(1)}" r="${jd.has(p.date) ? 5 : 3}" fill="${jd.has(p.date) ? "#D96C5B" : "#2FBFA6"}"/>${jd.has(p.date) ? `<text x="${X(p.date).toFixed(1)}" y="${(Y(p.weight) - 8).toFixed(1)}" text-anchor="middle" font-size="10" fill="#EDEAE0">${p.weight}</text>` : ""}`).join("")}<text x="2" y="${H + 12}" font-size="9" fill="#6B6F60">${lo.toFixed(0)} to ${hi.toFixed(0)} lb · red dot = jump of 1.5+ lb</text></svg>`;
+    }
+    cards.push(`${big("Weight")}${chart}<div style="margin-top:8px; font-size:15px;">${avgNow != null ? `Average ${avgNow.toFixed(1)} lb` : "No weigh-ins"}${wDelta != null ? ` (${wDelta >= 0 ? "+" : "−"}${Math.abs(wDelta).toFixed(1)} vs the week before)` : ""}</div>${chips ? `<div style="margin-top:6px;">${chips}</div>` : ""}`);
+  }
+  // 6. Each point gets its own card.
   const one = (title, items, color) => items.forEach((x, k) => cards.push(`<div class="field-label" style="text-transform:uppercase; letter-spacing:0.6px; color:${color}; margin-bottom:8px;">${title} · ${k + 1} of ${items.length}</div><div style="font-size:21px; line-height:1.4; padding-left:12px; border-left:3px solid ${color};">${escapeHtml(x)}</div>`));
   one("What went right", right, "#2FBFA6");
   one("What went wrong", wrong, "#D96C5B");
   one("Needs attention", attn, "#D9A441");
   jumps.forEach(j => { const h = explainJump(j.date); if (h) cards.push(`<div style="font-size:15px; line-height:1.45;">${h}</div>`); });
+  // 7. Calorie target suggestion (merged in from the old review). Held until the Nov 17 review.
+  {
+    const sug = computeMacroSuggestion(), since = daysSinceMacroSuggestionApplied();
+    const holding = today < "2026-11-17";
+    const dlt = sug ? sug.deltaCalories : 0;
+    let body;
+    if (!sug) body = `${big("Calorie target")}<div style="font-size:16px;">Need 2 weigh-ins a week apart before I can suggest anything.</div>`;
+    else if (holding) body = `${big("No target changes yet")}<div style="font-size:16px; line-height:1.45;">Holding until the Nov 17 review, so any change rests on two full weeks of complete logging.</div><div class="meta" style="margin-top:10px;">For reference, the app's current idea: ${dlt === 0 ? "no change" : `${dlt < 0 ? "−" : "+"}${Math.abs(dlt)} cal/day`}.</div>`;
+    else if (dlt === 0) body = `${big("Calorie target")}<div style="font-size:16px;">No change suggested. ${escapeHtml(sug.message)}</div>`;
+    else if (since !== null && since < MACRO_BASELINE_DAYS) body = `${big("Calorie target")}<div style="font-size:16px;">A change was applied ${since < 1 ? "today" : Math.floor(since) + " day(s) ago"}. Give it time before changing again.</div>`;
+    else body = `${big(`${dlt < 0 ? "−" : "+"}${Math.abs(dlt)} cal/day suggested`)}<div style="font-size:15px; line-height:1.45;">${escapeHtml(sug.message)}</div><button type="button" class="secondary" id="applyWeeklySuggestionBtn" data-delta="${dlt}" style="margin-top:12px; width:100%;">Apply (moves the weekly budget by ${dlt < 0 ? "−" : "+"}${Math.abs(dlt * 7).toLocaleString()})</button>`;
+    cards.push(body);
+  }
   cards.push(`${big("Next week's focus")}<div style="font-size:18px; line-height:1.4;">${escapeHtml(focus)}</div>`);
   if (weekCloseStep >= cards.length) weekCloseStep = cards.length - 1;
   if (weekCloseStep < 0) weekCloseStep = 0;
   const dots = cards.map((_, k) => `<i style="display:inline-block; width:8px; height:8px; border-radius:50%; margin:0 3px; background:${k === weekCloseStep ? "var(--accent)" : "#3A3E34"};"></i>`).join("");
   const tab = (lab, off) => `<button type="button" data-weekclose="${off}" class="${weekCloseOffset === off ? "primary" : "secondary"}" style="flex:1; padding:8px;">${lab}</button>`;
-  const rangeLab = `${formatDateOnly(days[0])} to ${formatDateOnly(days[6])}`;
   el.innerHTML = `
     <div class="row" style="gap:8px;">${tab("Last week", -1)}${tab("This week", 0)}</div>
     <div class="meta" style="margin:8px 0;">${rangeLab}${complete ? "" : ` · ${elapsed.length} of 7 days so far`}</div>
@@ -3967,7 +3980,15 @@ document.addEventListener("click", (e) => {
   weekCloseStep = 0;
   renderWeekClose();
 });
-document.addEventListener("click", (e) => {
+document.addEventListener("click", async (e) => {
+  const ap = e.target.closest("#applyWeeklySuggestionBtn");
+  if (ap) {
+    await applyMacroSuggestion(parseInt(ap.dataset.delta, 10));
+    state.settings.weeklyCalBudget = Math.round((state.settings.macroTargets.calories || 0) * 7);
+    await persistNow();
+    try { renderWeekBudget(); renderWeekClose(); } catch (err) {}
+    return;
+  }
   const b = e.target.closest("[data-weekstep]");
   if (!b) return;
   weekCloseStep += parseInt(b.dataset.weekstep, 10);
