@@ -1078,7 +1078,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-09 10:40 CT";
+const APP_BUILD = "2026-11-09 10:55 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3941,9 +3941,11 @@ function renderWeekClose() {
     ? `${big("Where your calories came from")}<div style="display:flex; align-items:center; gap:14px;">${tfDonut(slices, Math.round(total).toLocaleString(), "cal logged")}<div style="flex:1;">${legend}</div></div><div class="meta" style="margin-top:10px;">${Math.round(total).toLocaleString()} of ${budget.toLocaleString()} weekly budget · ${loggedDays.length ? Math.round(total / loggedDays.length).toLocaleString() : 0} cal on a logged day.</div>`
     : `${big("Where your calories came from")}<div class="empty">No food logged this week yet.</div>`);
   cards.push(`${big("Training and weight")}<div style="font-size:16px; line-height:1.5;">${workoutDays} workout day${workoutDays === 1 ? "" : "s"} (goal ${goal})${wkCardio.length ? `<br>${wkCardio.length} cardio or walk, ${Math.round(cardioMin)} min${cardioDist ? `, ${cardioDist.toFixed(1)} mi` : ""}` : ""}<br>${avgNow != null ? `Average weight ${avgNow.toFixed(1)} lb` : "No weigh-ins"}${avgNow != null && avgPrev != null ? ` (${avgNow - avgPrev >= 0 ? "+" : "−"}${Math.abs(avgNow - avgPrev).toFixed(1)} vs the week before)` : ""}</div><div class="meta" style="margin-top:10px;">Calories burned aren't measured here, so training shows as activity.</div>`);
-  if (right.length) cards.push(`${big("What went right")}${bullets(right, "#2FBFA6")}`);
-  if (wrong.length) cards.push(`${big("What went wrong")}${bullets(wrong, "#D96C5B")}`);
-  cards.push(`${big("Needs attention")}${bullets(attn, "#D9A441")}`);
+  // Each point gets its own card.
+  const one = (title, items, color) => items.forEach((x, k) => cards.push(`<div class="field-label" style="text-transform:uppercase; letter-spacing:0.6px; color:${color}; margin-bottom:8px;">${title} · ${k + 1} of ${items.length}</div><div style="font-size:21px; line-height:1.4; padding-left:12px; border-left:3px solid ${color};">${escapeHtml(x)}</div>`));
+  one("What went right", right, "#2FBFA6");
+  one("What went wrong", wrong, "#D96C5B");
+  one("Needs attention", attn, "#D9A441");
   jumps.forEach(j => { const h = explainJump(j.date); if (h) cards.push(`<div style="font-size:15px; line-height:1.45;">${h}</div>`); });
   cards.push(`${big("Next week's focus")}<div style="font-size:18px; line-height:1.4;">${escapeHtml(focus)}</div>`);
   if (weekCloseStep >= cards.length) weekCloseStep = cards.length - 1;
@@ -3954,7 +3956,7 @@ function renderWeekClose() {
   el.innerHTML = `
     <div class="row" style="gap:8px;">${tab("Last week", -1)}${tab("This week", 0)}</div>
     <div class="meta" style="margin:8px 0;">${rangeLab}${complete ? "" : ` · ${elapsed.length} of 7 days so far`}</div>
-    <div style="min-height:230px; padding:14px; border:1px solid var(--border); border-radius:14px;">${cards[weekCloseStep]}</div>
+    <div style="min-height:200px; padding:14px; border:1px solid var(--border); border-radius:14px;">${cards[weekCloseStep]}</div>
     <div style="text-align:center; margin:12px 0 8px;">${dots}</div>
     <div class="row" style="gap:8px;"><button type="button" class="secondary" data-weekstep="-1" style="flex:1;" ${weekCloseStep === 0 ? "disabled" : ""}>Back</button><button type="button" class="primary" data-weekstep="1" style="flex:1;" ${weekCloseStep === cards.length - 1 ? "disabled" : ""}>Next</button></div>`;
 }
