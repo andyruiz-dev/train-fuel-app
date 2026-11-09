@@ -296,7 +296,7 @@
   /* Food tab: compact so the whole screen fits without scrolling */
   #tab-food .tf-screen-head{padding:8px 4px 4px; display:flex; flex-direction:row-reverse; justify-content:space-between; align-items:baseline;}
   #tab-food .tf-screen-head h1{font-size:22px;}
-  #tab-food .tf-label{padding:8px 4px 5px;}
+  #tab-food .tf-label{padding:8px 4px 4px;}
   #tab-food .tf-hero-food{margin-bottom:6px;}
   #tab-food .tf-add{height:58px; padding:9px 12px; border-radius:12px;}
   #tab-food .tf-add svg{width:20px; height:20px;}
@@ -306,7 +306,7 @@
   #tab-food #foodLogList .tf-fl-head{padding:8px 12px; margin-bottom:5px;}
   #tab-food #foodLogList .tf-fl-main{padding:6px 12px;}
   #tab-food #foodLogList .tf-fl-row{margin-bottom:4px;}
-  #tab-food .tf-now .meta{padding:2px 0;}
+  #tab-food .tf-now:empty{display:none;}
   .tf-now{font-size:12px; color:var(--text-muted); padding:0 4px;}
   .tf-now .meta{font-family:Inter,sans-serif; font-size:12px;}
   .tf-now button.secondary{width:100% !important; padding:9px 12px; font-size:12px !important; font-family:Inter,sans-serif; border-radius:10px; line-height:1.35; margin-top:6px !important;}
@@ -694,7 +694,7 @@
     <div class="tf-label" style="display:flex; justify-content:space-between; align-items:center; padding-top:4px; padding-bottom:2px;"><span id="tfLogLabel">Today's log</span><span style="display:flex; gap:14px; align-items:center;"><span id="tfBackToday" class="hidden" role="button" tabindex="0" style="color:var(--accent); cursor:pointer;">Back to today</span><span id="foodLogPartialRow" style="position:relative;"></span></span></div>
     <div id="foodLogList" class="empty">Nothing logged for this day.</div>
 
-    <div class="tf-label" style="display:flex; justify-content:space-between; margin-top:4px;"><span>Last 7 days</span><span style="text-transform:none; letter-spacing:0; font-family:Inter,sans-serif;">tap a day to open it</span></div>
+    <div class="tf-label" style="display:flex; justify-content:space-between; margin-top:0;"><span>Last 7 days</span><span style="text-transform:none; letter-spacing:0; font-family:Inter,sans-serif;">tap a day to open it</span></div>
     <div id="dayStrip" class="tf-hero-food" style="display:block; padding:8px 14px 6px; margin-bottom:6px;"></div>
     <details class="exercise-group tf-row" id="foodHistoryDetails" style="margin-top:0;">
       <summary>Older days and date jump</summary>
@@ -1097,7 +1097,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-09 11:00 CT";
+const APP_BUILD = "2026-11-09 11:15 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -6414,12 +6414,6 @@ function renderFoodNow() {
     html = `<div class="meta" style="color:var(--text);"><strong>Tracking ended for today</strong> at ${timeLabel(new Date(closedAt))}. ${cal} cal · ${pro} g protein logged. Nothing more to log.</div>
       <button class="danger-link" data-food-reopen style="color:var(--accent); margin-top:6px;">Reopen today</button>`;
   } else {
-    if (last) html += `<div class="meta">Last ate ${timeLabel(new Date(last.date))} · ${gapLabel(now - new Date(last.date))} ago</div>`;
-    const n = foodNudge(now);
-    if (n) {
-      html += `<div class="meta" style="margin-top:8px; color:var(--text);">${gapLabel(n.gapMs)} since your last logged meal${n.ateToday ? "" : " (nothing logged yet today)"}. You may be busy, so here are two quick options:</div>`;
-      html += n.options.map((o, i) => `<button class="tf-sugg" data-food-combo="${i}"><span class="rn"><em>Suggested</em>${o.items.map(x => escapeHtml(x.name)).join(" + ")}</span><span class="rp"><b>${o.pro} g</b><br>${o.cal} cal</span></button>`).join("");
-    }
   }
   el.innerHTML = html;
 }
@@ -6778,7 +6772,7 @@ function renderFoodLogList() {
   const totCal = dayLogs.reduce((n, f) => n + (f.calories || 0), 0);
   const totPro = dayLogs.reduce((n, f) => n + (f.protein || 0), 0);
   const newest = dayLogs.slice().reverse();                  // newest first
-  const shown = foodLogOpen ? newest : newest.slice(0, 1);   // collapsed: just the latest entry
+  const shown = foodLogOpen ? newest : newest.slice(0, 2);   // collapsed: the latest two entries
   const rowHtml = (f) => {
     const realIndex = state.foodLogs.indexOf(f);
     const open = foodRowOpen === realIndex;
