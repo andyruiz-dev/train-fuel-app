@@ -303,7 +303,8 @@
   .tf-add.main span{color:#0F1A17; font-family:var(--font-display); font-size:17px; letter-spacing:.5px;}
   .tf-add.open{border-color:var(--accent);}
   .tf-photo-extra{display:flex; flex-direction:column; align-items:flex-start; gap:2px; margin-top:8px;}
-  .tf-recent{display:flex; flex-direction:column; gap:8px;}
+  .tf-recent{display:flex; flex-direction:row; gap:8px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch;}
+  .tf-recent .chip{flex:0 0 auto; min-width:150px; max-width:240px;}
   .tf-recent .chip{border-radius:12px; font-size:14px; padding:11px 14px; display:flex; justify-content:space-between; align-items:center; gap:12px; text-align:left;}
   .tf-recent .chip .rn{min-width:0; flex:1; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
   .tf-recent .chip .rx{flex:none; width:32px; height:32px; margin:-6px -6px -6px 0; border:0; background:none; color:var(--text-muted); font-size:20px; line-height:1; cursor:pointer; border-radius:50%;}
@@ -579,8 +580,14 @@
   <section id="tab-food" class="tab-panel hidden">
     <div class="tf-screen-head"><div class="tf-kicker" id="tfFoodKicker"></div><h1>Food</h1></div>
 
-    <div id="foodHero"></div>
-    <div id="weekBudget" class="card" style="margin:10px 0; padding:14px;"></div>
+    <div class="tf-hero-food" id="todayCard" style="flex-direction:column; align-items:stretch; gap:0; padding:14px;">
+      <div id="foodHero"></div>
+      <div id="todayDetails" class="hidden" style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border);">
+        <div id="todayMacros"></div>
+        <div id="weekBudget" style="margin-top:12px;"></div>
+        <div id="weeklyIntake" style="margin-top:12px;"></div>
+      </div>
+    </div>
     <div id="proteinRemaining" class="hidden"></div>
     <div id="macroSummary" class="hidden"></div>
     <div id="foodNow" class="tf-now"></div>
@@ -601,7 +608,9 @@
         <span>Exact numbers</span>
       </div>
     </div>
-    <div class="tf-label" style="margin-top:10px;">What is it? (optional, helps the estimate)</div>
+    <button type="button" class="danger-link" id="photoOptionsToggle" style="color:var(--accent); margin-top:10px; text-align:left;">Photo options ▾</button>
+    <div id="photoOptions" class="hidden">
+    <div class="tf-label" style="margin-top:6px;">What is it? (optional, helps the estimate)</div>
     <div class="row" id="scanKindChips" style="gap:6px; flex-wrap:wrap;">
       <div class="chip active" data-kind="">Auto</div>
       <div class="chip" data-kind="package">Package</div>
@@ -613,6 +622,7 @@
       <input type="text" id="scanNote" style="border-radius:12px;" placeholder="Note for the photo, e.g. 'half portion' (optional)">
       <button class="danger-link" id="foodPhotoChoose" style="color:var(--accent);">or choose one from your gallery</button>
       <button class="danger-link" id="barcodeBtn" style="color:var(--accent);">Scan a barcode (exact label numbers)</button>
+    </div>
     </div>
     <input type="file" id="foodPhotoInput" accept="image/*" style="display:none;">
     <div id="foodScanStatus" class="empty" style="display:none; margin-top:8px;"></div>
@@ -667,16 +677,17 @@
     <div id="foodLogPartialRow" style="margin-bottom:8px;"></div>
     <div id="foodLogList" class="empty">Nothing logged for this day.</div>
 
+    <div class="tf-label" style="margin-top:16px;"><span>Last 7 days</span></div>
+    <div id="dayStrip" class="tf-hero-food" style="display:block; padding:12px 14px 10px;"></div>
     <details class="exercise-group tf-row" id="foodHistoryDetails" style="margin-top:14px;">
-      <summary>Past days</summary>
+      <summary>Older days and date jump</summary>
       <div id="foodHistory" style="margin-top:10px;"></div>
       <div class="field-label" style="margin-top:12px;">Jump to a date</div>
       <input type="date" id="foodLogDate">
     </details>
     <details class="exercise-group tf-row">
-      <summary>7-day average and day options</summary>
+      <summary>Day options</summary>
       <div style="padding-top:6px;">
-        <div id="weeklyIntake" style="margin-top:6px;"></div>
         <button class="danger-link" id="markTodayPartialBtn" style="margin-top:8px; color:var(--accent);"></button>
       </div>
     </details>
@@ -1074,7 +1085,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-09 11:30 CT";
+const APP_BUILD = "2026-11-09 12:10 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -6449,6 +6460,19 @@ function renderMacroSummary() {
 }
 
 // Protein is the headline; calories stay small and neutral (no red, no "over" wording).
+let todayOpen = false;
+function weekBudgetNumbers() {
+  const budget = state.settings.weeklyCalBudget || DEFAULT_WEEK_BUDGET;
+  const now = new Date(), mon = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+  let eaten = 0;
+  for (let i = 0; i < 7; i++) { const d = new Date(mon); d.setDate(mon.getDate() + i); eaten += foodLogsForDate(localDateStr(d)).reduce((n, f) => n + (f.calories || 0), 0); }
+  return { budget, eaten, left: budget - eaten };
+}
+function foodRing(frac, centerTop, centerSub, color) {
+  const C = 2 * Math.PI * 34;
+  return `<svg width="92" height="92" viewBox="0 0 84 84" role="img"><circle cx="42" cy="42" r="34" fill="none" stroke="#3A3F33" stroke-width="8"/><circle cx="42" cy="42" r="34" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - Math.max(0, Math.min(1, frac)))).toFixed(1)}" transform="rotate(-90 42 42)"/>${centerTop === "✓" ? `<path d="M30 43l9 9 16-18" fill="none" stroke="#2FBFA6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>` : `<text x="42" y="44" text-anchor="middle" font-family="Oswald, sans-serif" font-size="${String(centerTop).length > 5 ? 17 : 21}" font-weight="600" fill="#EDEAE0">${centerTop}</text>`}<text x="42" y="58" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="8" fill="#9B9C8E" letter-spacing="1">${centerSub}</text></svg>`;
+}
 function renderFoodHero(totals, t, entryCount) {
   const kick = document.getElementById("tfFoodKicker");
   if (kick) {
@@ -6457,32 +6481,30 @@ function renderFoodHero(totals, t, entryCount) {
   }
   const el = document.getElementById("foodHero");
   if (!el) return;
-  const target = t.protein || 0;
-  const left = Math.max(0, target - totals.protein);
-  const frac = target ? Math.min(1, totals.protein / target) : 0;
-  const C = 2 * Math.PI * 44;
-  const center = target && left === 0
-    ? `<path d="M36 54l12 12 22-26" fill="none" stroke="#2FBFA6" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>`
-    : `<text x="52" y="55" text-anchor="middle" font-family="Oswald, sans-serif" font-size="30" font-weight="600" fill="#EDEAE0">${target ? left + "g" : totals.protein + "g"}</text>
-       <text x="52" y="73" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="9" fill="#9B9C8E" letter-spacing="1">${target ? "LEFT" : "TODAY"}</text>`;
-  const calPct = t.calories ? Math.min(100, Math.round(totals.calories / t.calories * 100)) : 0;
-  el.innerHTML = `<div class="tf-hero-food">
-    <svg width="104" height="104" viewBox="0 0 104 104" role="img" aria-label="Protein: ${totals.protein} of ${target || "?"} grams">
-      <circle cx="52" cy="52" r="44" fill="none" stroke="#3A3F33" stroke-width="9"/>
-      <circle cx="52" cy="52" r="44" fill="none" stroke="#2FBFA6" stroke-width="9" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - frac)).toFixed(1)}" transform="rotate(-90 52 52)"/>
-      ${center}
-    </svg>
-    <div style="flex:1; min-width:0;">
-      <div class="tf-kv">Protein today</div>
-      <div class="tf-pro-n">${totals.protein}${target ? " / " + target : ""} g</div>
-      <div class="tf-mini">
-        <div class="r"><span>Calories</span><b>${totals.calories.toLocaleString()}${t.calories ? " / " + t.calories.toLocaleString() : ""}</b></div>
-        ${t.calories ? `<div class="bar"><i style="width:${calPct}%"></i></div>` : ""}
-        <div class="r"><span>Carbs · Fat</span><b>${totals.carbs} g · ${totals.fat} g</b></div>
-      </div>
+  const pT = t.protein || 0, cT = t.calories || 0;
+  const pLeft = Math.max(0, pT - totals.protein);
+  const pRing = foodRing(pT ? totals.protein / pT : 0, pT && pLeft === 0 ? "✓" : (pT ? pLeft + "g" : totals.protein + "g"), pT ? "LEFT" : "TODAY", "#2FBFA6");
+  const cLeft = cT - totals.calories;
+  const cRing = foodRing(cT ? totals.calories / cT : 0, cT ? Math.abs(cLeft).toLocaleString() : totals.calories.toLocaleString(), cT ? (cLeft >= 0 ? "LEFT" : "OVER") : "TODAY", cLeft < 0 ? "#D9A441" : "#2FBFA6");
+  const wk = weekBudgetNumbers();
+  const wkPct = wk.budget ? Math.min(100, Math.round(wk.eaten / wk.budget * 100)) : 0;
+  el.innerHTML = `<div style="display:flex; justify-content:space-around; align-items:flex-start;">
+      <div style="text-align:center;">${pRing}<div class="tf-mini" style="margin-top:4px;"><b>${totals.protein}${pT ? " / " + pT : ""} g</b> protein</div></div>
+      <div style="text-align:center;">${cRing}<div class="tf-mini" style="margin-top:4px;"><b>${totals.calories.toLocaleString()}${cT ? " / " + cT.toLocaleString() : ""}</b> cal</div></div>
     </div>
-  </div>`;
+    <div class="tf-mini" style="margin-top:12px;"><div class="r"><span>This week</span><b>${wk.left >= 0 ? wk.left.toLocaleString() + " left of " : Math.abs(wk.left).toLocaleString() + " over "}${wk.budget.toLocaleString()}</b></div><div class="bar"><i style="width:${wkPct}%; ${wk.left < 0 ? "background:#D9A441;" : ""}"></i></div></div>
+    <button type="button" class="danger-link" data-today-toggle style="display:block; margin:10px auto 0; color:var(--accent);">${todayOpen ? "less ▴" : "details ▾"}</button>`;
+  const det = document.getElementById("todayDetails");
+  if (det) det.classList.toggle("hidden", !todayOpen);
+  const tm = document.getElementById("todayMacros");
+  if (tm) tm.innerHTML = macroBar("Carbs (g)", totals.carbs, t.carbs) + macroBar("Fat (g)", totals.fat, t.fat);
 }
+document.getElementById("todayCard").addEventListener("click", (e) => {
+  if (!e.target.closest("[data-today-toggle]")) return;
+  todayOpen = !todayOpen;
+  document.getElementById("todayDetails").classList.toggle("hidden", !todayOpen);
+  e.target.closest("[data-today-toggle]").textContent = todayOpen ? "less ▴" : "details ▾";
+});
 
 // Foods you log often, re-addable in one tap.
 let recentFoodList = [];
@@ -6509,11 +6531,8 @@ function renderRecentFoods() {
     .slice(0, 12).map(m => m.last)
     .sort((a, b) => (a.alcohol ? 1 : 0) - (b.alcohol ? 1 : 0)).slice(0, 6);
   wrap.classList.toggle("hidden", !recentFoodList.length);
-  const shownRecent = recentFoodsOpen ? recentFoodList.length : Math.min(3, recentFoodList.length);
+  const shownRecent = recentFoodList.length;
   el.innerHTML = recentFoodList.slice(0, shownRecent).map((f, i) => `<div class="chip" data-recent-food="${i}"><span class="rn">${escapeHtml(f.name)}</span><span class="rp"><b style="font-size:14px;">${f.protein || 0} g</b>${f.calories ? "<br>" + f.calories + " cal" : ""}</span><button type="button" class="rx" data-recent-hide="${i}" aria-label="Hide ${escapeHtml(f.name)} from recent foods">×</button></div>`).join("");
-  if (recentFoodList.length > 3) {
-    el.insertAdjacentHTML("beforeend", `<button type="button" class="tf-recent-more" data-recent-more>${recentFoodsOpen ? "Show fewer" : "Show " + (recentFoodList.length - 3) + " more"}</button>`);
-  }
 }
 document.getElementById("recentFoods").addEventListener("click", async (e) => {
   if (e.target.closest("[data-recent-more]")) { recentFoodsOpen = !recentFoodsOpen; renderRecentFoods(); return; }
@@ -6612,7 +6631,37 @@ function renderFoodHistory() {
     rows.push(`<div class="tf-hist-row" data-hist-date="${k}" role="button" tabindex="0"><div><div class="d">${label}</div><div class="s">${logs.length} ${logs.length === 1 ? "entry" : "entries"} · ${cal.toLocaleString()} cal${isDayMarkedPartial(k) ? " · partial day" : ""}</div></div><div class="p">${pro}<small> g protein</small></div></div>`);
   }
   el.innerHTML = rows.length ? rows.join("") : '<div class="empty">Nothing logged in the last 14 days.</div>';
+  try { renderDayStrip(); } catch (e) {}
 }
+function renderDayStrip() {
+  const el = document.getElementById("dayStrip");
+  if (!el) return;
+  const now = new Date();
+  const dailyBudget = (state.settings.weeklyCalBudget || DEFAULT_WEEK_BUDGET) / 7;
+  const sel = (document.getElementById("foodLogDate").value || localDateStr());
+  const cols = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i), k = localDateStr(d);
+    const logs = foodLogsForDate(k), cal = logs.reduce((n, f) => n + (f.calories || 0), 0);
+    cols.push({ k, cal, n: logs.length, lab: d.toLocaleDateString("en-US", { weekday: "short" })[0] });
+  }
+  const top = Math.max(dailyBudget * 1.3, ...cols.map(c => c.cal)) * 1.05, H = 64;
+  const yb = H - (dailyBudget / top) * H;
+  el.innerHTML = `<div style="position:relative;"><div style="display:flex; align-items:flex-end; gap:6px; height:${H}px; position:relative;">${cols.map(c => {
+    const h = c.n ? Math.max(4, Math.round(c.cal / top * H)) : 4;
+    const col = !c.n ? "#3A3F33" : c.cal <= dailyBudget * 1.1 ? "#2FBFA6" : c.cal <= dailyBudget * 1.3 ? "#D9A441" : "#D96C5B";
+    return `<div data-strip-date="${c.k}" role="button" tabindex="0" style="flex:1; height:${H}px; display:flex; align-items:flex-end; cursor:pointer;"><i style="display:block; width:100%; height:${h}px; border-radius:4px; background:${col};${c.k === sel ? " outline:2px solid #EDEAE0; outline-offset:1px;" : ""}"></i></div>`;
+  }).join("")}<div style="position:absolute; left:0; right:0; top:${yb.toFixed(1)}px; border-top:1px dashed rgba(237,234,224,.5); pointer-events:none;"></div></div>
+  <div style="display:flex; gap:6px; margin-top:4px;">${cols.map(c => `<div style="flex:1; text-align:center; font-size:11px; color:${c.k === sel ? "#EDEAE0" : "#9B9C8E"};">${c.lab}</div>`).join("")}</div></div>
+  <div class="meta" style="margin-top:6px; font-size:11px;">Tap a day to open its log. Dashed line is your daily share of the budget.</div>`;
+}
+document.getElementById("dayStrip").addEventListener("click", (e) => {
+  const c = e.target.closest("[data-strip-date]");
+  if (!c) return;
+  document.getElementById("foodLogDate").value = c.dataset.stripDate === localDateStr() ? "" : c.dataset.stripDate;
+  renderFoodLogList();
+  window.scrollTo({ top: document.getElementById("tfLogLabel").getBoundingClientRect().top + window.scrollY - 120, behavior: "smooth" });
+});
 document.getElementById("foodHistory").addEventListener("click", (e) => {
   const row = e.target.closest("[data-hist-date]");
   if (!row) return;
@@ -6620,6 +6669,16 @@ document.getElementById("foodHistory").addEventListener("click", (e) => {
   renderFoodLogList();
   window.scrollTo({ top: document.getElementById("tfLogLabel").getBoundingClientRect().top + window.scrollY - 120, behavior: "smooth" });
 });
+function updatePhotoOptionsLabel() {
+  const open = !document.getElementById("photoOptions").classList.contains("hidden");
+  const names = { package: "Package", plated: "Plated", restaurant: "Restaurant", drink: "Drink" };
+  document.getElementById("photoOptionsToggle").textContent = "Photo options" + (scanKind && names[scanKind] ? ": " + names[scanKind] : "") + (open ? " ▴" : " ▾");
+}
+document.getElementById("photoOptionsToggle").addEventListener("click", () => {
+  document.getElementById("photoOptions").classList.toggle("hidden");
+  updatePhotoOptionsLabel();
+});
+document.getElementById("scanKindChips").addEventListener("click", () => setTimeout(updatePhotoOptionsLabel, 0));
 document.getElementById("tfBackToday").addEventListener("click", () => {
   document.getElementById("foodLogDate").value = "";
   renderFoodLogList();
@@ -6667,6 +6726,7 @@ function renderFoodLogList() {
     pb.classList.toggle("hidden", !t.past);
     document.getElementById("pastDayBannerText").textContent = t.past ? "Adding to " + t.label + ", not today" : "";
   }
+  try { renderDayStrip(); } catch (e) {}
   const dayLogs = foodLogsForDate(selectedDate).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
   if (!dayLogs.length) {
     el.innerHTML = isToday
@@ -6797,11 +6857,18 @@ document.getElementById("foodLogList").addEventListener("click", async (e) => {
   }
   const idx = e.target.dataset.delFood;
   if (idx === undefined) return;
-  state.foodLogs.splice(parseInt(idx, 10), 1);
+  const delIdx = parseInt(idx, 10), removed = state.foodLogs[delIdx];
+  state.foodLogs.splice(delIdx, 1);
   foodRowOpen = null;
   await persistNow();
   renderMacroSummary();
   renderFoodLogList();
+  if (removed) showToast(`Deleted ${removed.name || "entry"}`, async () => {
+    state.foodLogs.push(removed);
+    await persistNow();
+    renderMacroSummary();
+    renderFoodLogList();
+  });
 });
 
 // Small confirmation toast so a tap on a quick-add chip visibly registers.
@@ -7274,6 +7341,7 @@ document.getElementById("saveScanBtn").addEventListener("click", async () => {
   ["scanName", "scanCalories", "scanProtein", "scanCarbs", "scanFat"].forEach(id => document.getElementById(id).value = "");
   document.getElementById("scanServings").value = "1";
   scanKind = "";
+  try { updatePhotoOptionsLabel(); } catch (e) {}
   document.querySelectorAll("#scanKindChips .chip").forEach(x => x.classList.toggle("active", !x.dataset.kind));
   document.getElementById("scanServingInfo").textContent = "";
   document.getElementById("scanServingChips").innerHTML = "";
