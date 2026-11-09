@@ -420,6 +420,36 @@
   #todayWorkout:has(.tf-hero){display:contents; color:var(--text);}
   #todayWorkout > .empty{padding:16px 4px;}
   .tf-hero{order:-1; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; margin:0 0 14px; display:flex; gap:16px; align-items:center;}
+  /* Today: session card + week strip + coloured phases */
+  #todayWorkout:has(.tf-hero2){display:contents; color:var(--text); text-align:left;}
+  .tf-hero2{color:var(--text);}
+  .tf-hero2{order:-2; border:1px solid #2b5c51; border-radius:16px; overflow:hidden; background:linear-gradient(160deg,#1E4A41 0%,#20231C 65%); margin:0 0 10px;}
+  .tf-hero2-in{padding:14px 16px 12px;}
+  .tf-hero2-k{font-family:var(--font-mono); font-size:10px; letter-spacing:1.2px; text-transform:uppercase; color:#8fd9c9;}
+  .tf-hero2-title{font-family:var(--font-display); font-weight:600; font-size:32px; line-height:1.05; text-transform:uppercase; margin-top:4px;}
+  .tf-hero2-sub{font-size:14px; color:#cfe9e3; margin-top:2px;}
+  .tf-hero2-stats{display:flex; gap:22px; margin-top:12px;}
+  .tf-hero2-stats b{font-family:var(--font-display); font-size:22px; display:block; line-height:1; font-weight:600;}
+  .tf-hero2-stats span{font-size:11px; color:var(--text-muted);}
+  .tf-hero2-bar{display:flex; height:6px;}
+  .tf-weekcard{order:-1; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:10px 14px; margin:0 0 10px;}
+  .tf-wk-top{display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted);}
+  .tf-wk-top b{color:var(--accent); font-weight:500;}
+  .tf-wk{display:flex; gap:8px; margin-top:8px;}
+  .tf-wd{flex:1; text-align:center; font-size:10px; color:var(--text-muted);}
+  .tf-wd i{display:flex; align-items:center; justify-content:center; width:100%; aspect-ratio:1; max-width:26px; margin:0 auto 3px; border-radius:50%; border:2px solid var(--border); font-style:normal; font-size:13px; color:#0F1A17;}
+  .tf-wd.done i{background:var(--accent); border-color:var(--accent);}
+  .tf-wd.today i{border-color:var(--accent); box-shadow:0 0 0 3px rgba(47,191,166,.25);}
+  #todayWorkout details.tf-ph-warm summary, #todayWorkout details.tf-ph-cool summary{justify-content:flex-start;}
+  #todayWorkout details.tf-ph-warm summary::after, #todayWorkout details.tf-ph-cool summary::after{margin-left:auto;}
+  .tf-dot{display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:10px;}
+  .tf-ph-main{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:11px 14px; margin:0 0 8px;}
+  .tf-ph-main .tf-moves-head{font-family:var(--font-body,Inter,sans-serif); font-size:15px; font-weight:600; letter-spacing:0; text-transform:none; color:var(--text); padding:0; cursor:pointer; align-items:center;}
+  .tf-ph-main .tf-moves-head > span:last-child{font-family:var(--font-mono); font-size:11px; letter-spacing:1px; text-transform:uppercase; font-weight:400;}
+  .tf-moves-names{font-size:12px; color:var(--text-muted); margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .tf-ph-main .tf-mv{margin-top:8px;}
+  #todayWorkout details.tf-ph-warm summary::before, #todayWorkout details.tf-ph-cool summary::before{content:""; display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:10px; background:#2FBFA6;}
+  #todayWorkout details.tf-ph-cool summary::before{background:#5DA89A;}
   .tf-hero svg{flex:0 0 auto;}
   #tab-today .tf-hero{padding:12px 14px; margin-bottom:8px; gap:12px;}
   #tab-today .tf-hero svg{width:56px; height:56px;}
@@ -1103,7 +1133,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-09 11:30 CT";
+const APP_BUILD = "2026-11-09 12:00 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -4931,24 +4961,31 @@ function todayHeroHtml(workout) {
       total = Math.max(...prog.structure.phases.map(x => x.week_end || 0)) || 0;
     }
   } catch (e) {}
-  const title = escapeHtml(String(workout.day || "Today's workout"));
+  const full = String(workout.day || "Today's workout");
+  const ci = full.indexOf(":");
+  const title = escapeHtml(ci > 0 ? full.slice(0, ci).trim() : full);
+  const sub = ci > 0 ? escapeHtml(full.slice(ci + 1).trim().replace(/^./, c => c.toUpperCase()).replace(/,\s*/g, " · ")) : "";
   const mins = estimateWorkoutMinutes(workout);
   const moves = (workout.exercises || []).length;
   const sets = (workout.exercises || []).reduce((a, e) => a + (e.sets || 0), 0);
-  const C = 2 * Math.PI * 31;
-  const frac = total ? Math.min(1, week / total) : 0;
-  const ring = `<svg width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="${total ? `Week ${week} of ${total}` : "Program progress"}">
-      <circle cx="38" cy="38" r="31" fill="none" stroke="#3A3F33" stroke-width="7"/>
-      <circle cx="38" cy="38" r="31" fill="none" stroke="#2FBFA6" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - frac)).toFixed(1)}" transform="rotate(-90 38 38)"/>
-      <text x="38" y="40" text-anchor="middle" font-family="Oswald, sans-serif" font-size="20" font-weight="600" fill="#EDEAE0">${week || "·"}</text>
-      <text x="38" y="53" text-anchor="middle" font-family="Oswald, sans-serif" font-size="9" letter-spacing="1.5" fill="#9A9A8C">WEEK</text>
-    </svg>`;
-  return `<div class="tf-hero">${ring}
-    <div style="flex:1; min-width:0;">
-      <div class="tf-hero-title">${title}</div>
-      <div class="tf-hero-sub">${mins} min · ${moves} moves · ${sets} sets</div>
-    </div>
-  </div>`;
+  const blocks = workoutBlocks(workout);
+  const segs = [];
+  if (workout.warmup && workout.warmup.length) segs.push(["#2FBFA6", 1.2]);
+  blocks.forEach(bk => segs.push([bk.color, Math.max(1, bk.sets)]));
+  if (workout.cooldown && workout.cooldown.length) segs.push(["#5DA89A", 0.8]);
+  const bar = segs.map(sg => `<i style="flex:${sg[1]}; background:${sg[0]};"></i>`).join("");
+  const kicker = week ? `Week ${week}${total ? " of " + total : ""}` : "Today's session";
+  const goal = state.settings?.weeklyWorkoutGoal || 3;
+  const days = weekDayList(0), todayS = localDateStr();
+  const doneSet = new Set((state.logs || []).map(l => dayKeyOf(l.date)));
+  const doneN = days.filter(d => doneSet.has(d)).length;
+  const letters = ["M", "T", "W", "T", "F", "S", "S"];
+  const strip = `<div class="tf-weekcard"><div class="tf-wk-top"><span>This week</span><b>${doneN} of ${goal} done</b></div><div class="tf-wk">${days.map((d, i) => `<div class="tf-wd${doneSet.has(d) ? " done" : ""}${d === todayS ? " today" : ""}"><i>${doneSet.has(d) ? "✓" : ""}</i>${letters[i]}</div>`).join("")}</div></div>`;
+  return `<div class="tf-hero2"><div class="tf-hero2-in">
+      <div class="tf-hero2-k">${kicker}</div>
+      <div class="tf-hero2-title">${title}</div>${sub ? `<div class="tf-hero2-sub">${sub}</div>` : ""}
+      <div class="tf-hero2-stats"><div><b>${mins}</b><span>min</span></div><div><b>${moves}</b><span>moves</span></div><div><b>${sets}</b><span>sets</span></div></div>
+    </div><div class="tf-hero2-bar">${bar}</div></div>${strip}`;
 }
 function todayKickerText() {
   const d = new Date();
@@ -5046,27 +5083,35 @@ document.getElementById("todayWorkout").addEventListener("click", (e) => {
 });
 
 let movesOpen = false;
+const PH_COLORS = ["#4fa8c9", "#C79A45", "#9B6FB0", "#6FBF8E"];
+// Breaks a workout into blocks (each superset, each standalone move, a finisher) with a colour per block.
+function workoutBlocks(workout) {
+  const ex = workout.exercises || [], seen = new Set(), blocks = [];
+  ex.forEach((e, i) => {
+    if (e.superset_group) {
+      if (seen.has(e.superset_group)) return;
+      seen.add(e.superset_group);
+      const idx = ex.map((x, j) => x.superset_group === e.superset_group ? j : -1).filter(j => j >= 0);
+      blocks.push({ type: "ss", label: "SUPERSET " + e.superset_group, idx });
+    } else if (e.emom && i === ex.length - 1) blocks.push({ type: "fin", label: "FINISHER", idx: [i] });
+    else blocks.push({ type: "one", label: "", idx: [i] });
+  });
+  let c = 0;
+  blocks.forEach(bk => { bk.color = bk.type === "fin" ? "#D9603B" : PH_COLORS[c++ % PH_COLORS.length]; bk.sets = bk.idx.reduce((n, j) => n + (ex[j].sets || 0), 0); });
+  return blocks;
+}
 function movesListHtml(workout) {
   const ex = workout.exercises || [];
   const secNote = (e) => /^\s*seconds?\b/i.test(String(e.note || ""));
   const noteOf = (e) => { let n = e.note ? String(e.note) : ""; if (isHoldExercise(e.name) || secNote(e)) n = n.replace(/^\s*seconds?\s*/i, "").replace(/^\s*[,·-]\s*/, ""); return n; };
   const det = (e) => `${e.sets} × ${escapeHtml(String(e.reps))}${isHoldExercise(e.name) || secNote(e) ? " s" + (isHoldExercise(e.name) ? " hold" : "") : ""}${noteOf(e) ? " · " + escapeHtml(noteOf(e)) : ""}`;
-  const seen = new Set();
-  const rows = ex.map((e, i) => {
-    if (e.superset_group) {
-      if (seen.has(e.superset_group)) return "";
-      seen.add(e.superset_group);
-      const mem = ex.filter(x => x.superset_group === e.superset_group);
-      return `<div class="tf-mv ss"><div class="tf-mv-tag">SUPERSET ${escapeHtml(String(e.superset_group))}</div>` +
-        mem.map(x => `<div class="tf-mv-line"><div class="tf-mv-name" data-exidx="${ex.indexOf(x)}" data-exinfo="${escapeHtml(x.name)}">${escapeHtml(x.name)}</div><div class="tf-mv-det">${det(x)}</div></div>`).join("") + `</div>`;
-    }
-    const fin = e.emom && i === ex.length - 1;
-    return `<div class="tf-mv${fin ? " fin" : ""}" style="flex-wrap:wrap;">${fin ? '<div class="tf-mv-tag" style="flex:1 0 100%;">FINISHER</div>' : ""}<div class="tf-mv-name" data-exidx="${i}" data-exinfo="${escapeHtml(e.name)}" style="flex:1 1 0; min-width:0;">${escapeHtml(e.name)}</div><div class="tf-mv-det" style="text-align:right;">${det(e)}${e.emom ? ' <span class="tf-pill">EMOM</span>' : ""}</div></div>`;
-  }).join("");
+  const blocks = workoutBlocks(workout);
+  const line = (j) => { const x = ex[j]; return `<div class="tf-mv-line"><div class="tf-mv-name" data-exidx="${j}" data-exinfo="${escapeHtml(x.name)}">${escapeHtml(x.name)}</div><div class="tf-mv-det">${det(x)}${x.emom ? ' <span class="tf-pill">EMOM</span>' : ""}</div></div>`; };
+  const rows = blocks.map(bk => `<div class="tf-mv ss" style="border-left-color:${bk.color};">${bk.label ? `<div class="tf-mv-tag" style="color:${bk.color};">${bk.label}</div>` : ""}${bk.idx.map(line).join("")}</div>`).join("");
   const names = [...new Set(ex.map(e => String(e.name).replace(/^(kettlebell|kb)\s+/i, "")))].map(n => escapeHtml(n)).join(" · ");
-  const head = `<div class="tf-moves-head" data-moves-toggle role="button" tabindex="0" style="cursor:pointer;"><span>${ex.length} moves${movesOpen ? " · tap one for details" : ""}</span><span style="color:var(--accent);">${movesOpen ? "Hide ▴" : "See all ▾"}</span></div>`;
-  if (!movesOpen) return `<div class="tf-moves">${head}<div data-moves-toggle style="cursor:pointer; font-size:13px; color:var(--text-muted); line-height:1.45; padding:2px 4px 0;">${names}</div></div>`;
-  return `<div class="tf-moves">${head}${rows}</div>`;
+  const head = `<div class="tf-moves-head" data-moves-toggle role="button" tabindex="0"><span><i class="tf-dot" style="background:var(--accent);"></i>Main work · ${ex.length} moves</span><span style="color:var(--accent);">${movesOpen ? "Hide ▴" : "See all ▾"}</span></div>`;
+  if (!movesOpen) return `<div class="tf-moves tf-ph-main" data-moves-toggle style="cursor:pointer;">${head}<div class="tf-moves-names">${names}</div></div>`;
+  return `<div class="tf-moves tf-ph-main">${head}${rows}</div>`;
 }
 function renderTodayWorkout(workout) {
   currentWorkout = workout;
@@ -5221,14 +5266,14 @@ function renderTodayWorkout(workout) {
   // howToHtml()/demo-link pattern the main exercise list already has.
   const mobilityCue = (name) => exercises.find(e => e.name === name)?.cue || "";
   const warmupHtml = (workout.warmup && workout.warmup.length) ? `
-    <details class="exercise-group" style="margin-bottom:10px;">
+    <details class="exercise-group tf-ph-warm" style="margin-bottom:10px;">
       <summary>Warmup (~3-4 min)</summary>
       <div style="padding-top:6px;">
         ${workout.warmup.map((w, i) => `<div class="list-item" style="flex-direction:column; align-items:stretch;"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div class="name">${w.name}</div><div class="meta">${w.detail || ""}</div></div><button class="danger-link" style="color:var(--accent);" data-warmcool-swap="warmup:${i}">Swap</button></div>${howToHtml(`warmup-${i}`, w.name, mobilityCue(w.name))}</div>`).join("")}
       </div>
     </details>` : "";
   const cooldownHtml = (workout.cooldown && workout.cooldown.length) ? `
-    <details class="exercise-group" style="margin-top:10px;">
+    <details class="exercise-group tf-ph-cool" style="margin-top:10px;">
       <summary>Cool-down (~2 min)</summary>
       <div style="padding-top:6px;">
         ${workout.cooldown.map((c, i) => `<div class="list-item" style="flex-direction:column; align-items:stretch;"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div class="name">${c.name}</div><div class="meta">${c.detail || ""}</div></div><button class="danger-link" style="color:var(--accent);" data-warmcool-swap="cooldown:${i}">Swap</button></div>${howToHtml(`cooldown-${i}`, c.name, mobilityCue(c.name))}</div>`).join("")}
