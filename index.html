@@ -1158,7 +1158,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-09 17:15 CT";
+const APP_BUILD = "2026-11-11 08:15 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3035,17 +3035,19 @@ function renderCelebrations() {
 // un-acknowledges it, since that's new information you haven't seen yet.
 // Returns whether anything actually changed, so callers only persist when
 // there's something to save.
-function upsertFlag(type, message) {
+function upsertFlag(type, message, key) {
   state.flags = state.flags || [];
   const existing = state.flags.find(f => f.type === type);
   if (existing) {
-    if (existing.message === message) return false;
+    // With a key, only a real change re-raises the flag; the text can drift quietly.
+    if (key !== undefined ? existing.key === key : existing.message === message) { existing.message = message; return false; }
     existing.message = message;
+    existing.key = key;
     existing.date = localDateStr();
     existing.acknowledged = false;
     return true;
   }
-  state.flags.push({ id: `${type}-${Date.now()}`, type, message, date: localDateStr(), acknowledged: false });
+  state.flags.push({ id: `${type}-${Date.now()}`, type, message, key, date: localDateStr(), acknowledged: false });
   return true;
 }
 
@@ -3771,8 +3773,13 @@ function renderWeeklyReview() {
   // "not enough data yet" aren't actionable, so they clear any stale flag
   // instead of creating one.
   const suggestionIsNotable = suggestion && (suggestion.deltaCalories !== 0 || suggestion.message.includes("recomposition"));
-  const flagChanged = suggestionIsNotable
-    ? upsertFlag("macroSuggestion", suggestion.message)
+  // Calorie-target suggestions are on hold until the Nov 17 review (the card says so),
+  // so no flag until then. After that, a flag re-raises only when the suggestion itself
+  // changes (the direction/size), not every morning when a daily average in the text moves.
+  const holdingSuggestions = localDateStr() < "2026-11-17";
+  const flagKey = suggestionIsNotable ? `${suggestion.deltaCalories}|${suggestion.message.includes("recomposition")}` : "";
+  const flagChanged = (suggestionIsNotable && !holdingSuggestions)
+    ? upsertFlag("macroSuggestion", suggestion.message, flagKey)
     : clearFlagType("macroSuggestion");
   if (flagChanged) { persistNow(); renderFlagsBanner(); }
 
@@ -7653,7 +7660,7 @@ function renderBodyFatSummary() {
       if (goalPct && bfg.status === "reached") extra = "goal reached";
       else if (goalPct && bfg.status === "onTrack" && Math.abs(bfg.weeksToGoal) <= 104) extra = "~" + Math.round(Math.abs(bfg.weeksToGoal)) + " wk to " + goalPct + "%";
       notes += `<div class="tf-hl"><span class="t">${word} · ${bf.ptsPerWeek >= 0 ? "+" : ""}${bf.ptsPerWeek.toFixed(2)} pts/wk</span>${extra ? `<span class="tf-pill2">${extra}</span>` : `<span class="tf-pill2 gray">${down ? "good" : "steady"}</span>`}</div>`;
-      const flagChanged = Math.abs(bf.ptsPerWeek) >= 0.1 ? upsertFlag("bodyFatTrend", message) : clearFlagType("bodyFatTrend");
+      const flagChanged = Math.abs(bf.ptsPerWeek) >= 0.1 ? upsertFlag("bodyFatTrend", message, bf.ptsPerWeek > 0 ? "up" : "down") : clearFlagType("bodyFatTrend");
       if (flagChanged) { persistNow(); renderFlagsBanner(); }
     }
   }
