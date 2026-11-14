@@ -76,6 +76,7 @@
   .swap-regression{border-color:var(--slate); color:var(--slate);}
   .swap-same{border-color:var(--text-muted);}
   .swap-progression{border-color:var(--gold); color:var(--gold);}
+  button.primary, .tf-add.main, .chip.active, .tf-cta{text-shadow:none;}
   button.primary{
     background:var(--accent); color:#fff; border:none; border-radius:var(--radius);
     padding:12px 16px; font-size:15px; font-weight:600; cursor:pointer; width:100%;
@@ -310,6 +311,20 @@
   .tf-hero-food svg{flex:0 0 auto;}
   .tf-kv{font-family:var(--font-mono); font-size:10px; color:var(--accent); letter-spacing:1px; text-transform:uppercase;}
   .tf-pro-n{font-family:var(--font-display); font-size:22px; font-weight:600; margin-top:2px;}
+  .fh-row{display:flex; gap:10px; align-items:center;}
+  .fh-half{display:flex; align-items:center; gap:8px; flex:1; min-width:0;}
+  .fh-t{display:flex; flex-direction:column; gap:2px; min-width:0;}
+  .fh-k{font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-muted);}
+  .fh-v{display:block; font-family:var(--font-display); font-weight:600; line-height:1; white-space:nowrap;}
+  .fh-v em{font-style:normal; font-size:28px; color:var(--accent);}
+  .fh-v i{font-style:normal; font-size:14px; color:var(--text-muted); margin-left:4px; font-weight:500;}
+  .fh-week{margin-top:12px; padding-top:10px; border-top:1px solid var(--border); cursor:pointer;}
+  .fh-wr{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:7px;}
+  .fh-wn{font-size:12px; color:var(--text-muted);}
+  .fh-wn em{font-style:normal; font-family:var(--font-display); font-size:20px; font-weight:600; color:var(--gold);}
+  .fh-wn em.over{color:var(--danger);}
+  .fh-bar{height:9px; border-radius:5px; background:#2E251F; overflow:hidden;}
+  .fh-bar i{display:block; height:100%; border-radius:5px; background:linear-gradient(90deg,var(--accent),var(--gold));}
   .tf-mini{margin-top:12px; display:flex; flex-direction:column; gap:7px; font-size:12px; color:var(--text-muted);}
   .tf-mini div.r{display:flex; justify-content:space-between;}
   .tf-mini b{color:var(--text); font-weight:500;}
@@ -1221,7 +1236,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-14 14:35 CT";
+const APP_BUILD = "2026-11-14 15:00 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -6874,7 +6889,7 @@ function weekBudgetNumbers() {
 }
 function foodRing(frac, centerTop, centerSub, color) {
   const C = 2 * Math.PI * 34;
-  return `<svg width="68" height="68" viewBox="0 0 84 84" role="img"><circle cx="42" cy="42" r="34" fill="none" stroke="#3A3029" stroke-width="8"/><circle cx="42" cy="42" r="34" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - Math.max(0, Math.min(1, frac)))).toFixed(1)}" transform="rotate(-90 42 42)"/>${centerTop === "✓" ? `<path d="M30 43l9 9 16-18" fill="none" stroke="#FF7A3D" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>` : `<text x="42" y="44" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="${String(centerTop).length > 5 ? 17 : 21}" font-weight="600" fill="#D2C7BB">${centerTop}</text>`}<text x="42" y="58" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="8" fill="#9A8F85" letter-spacing="1">${centerSub}</text></svg>`;
+  return `<svg width="80" height="80" viewBox="0 0 84 84" role="img"><circle cx="42" cy="42" r="34" fill="none" stroke="#4A3A2E" stroke-width="9"/><circle cx="42" cy="42" r="34" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - Math.max(0, Math.min(1, frac)))).toFixed(1)}" transform="rotate(-90 42 42)"/>${centerTop === "✓" ? `<path d="M30 43l9 9 16-18" fill="none" stroke="#FF7A3D" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>` : `<text x="42" y="44" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="${String(centerTop).length > 5 ? 17 : 21}" font-weight="600" fill="#D2C7BB">${centerTop}</text>`}<text x="42" y="58" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="8" fill="#9A8F85" letter-spacing="1">${centerSub}</text></svg>`;
 }
 function renderFoodHero(totals, t, entryCount) {
   const kick = document.getElementById("tfFoodKicker");
@@ -6891,11 +6906,13 @@ function renderFoodHero(totals, t, entryCount) {
   const cRing = foodRing(cT ? totals.calories / cT : 0, cT ? Math.abs(cLeft).toLocaleString() : totals.calories.toLocaleString(), cT ? (cLeft >= 0 ? "LEFT" : "OVER") : "TODAY", cLeft < 0 ? "#E8B04A" : "#FF7A3D");
   const wk = weekBudgetNumbers();
   const wkPct = wk.budget ? Math.min(100, Math.round(wk.eaten / wk.budget * 100)) : 0;
-  el.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-      <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">${pRing}<div style="line-height:1.3; font-size:12px; color:var(--text-muted);"><b style="color:var(--text); font-size:13px;">${totals.protein}${pT ? " / " + pT : ""} g</b><br>protein</div></div>
-      <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">${cRing}<div style="line-height:1.3; font-size:12px; color:var(--text-muted);"><b style="color:var(--text); font-size:13px;">${totals.calories.toLocaleString()}${cT ? " / " + cT.toLocaleString() : ""}</b><br>cal</div></div>
+  const side = (k, cur, goal, unit) => `<div class="fh-t"><span class="fh-k">${k}</span><b class="fh-v"><em>${cur}</em>${goal ? `<i>/ ${goal}${unit}</i>` : `<i>${unit}</i>`}</b></div>`;
+  const wkTxt = wk.left >= 0 ? `<em>${wk.left.toLocaleString()}</em> left of ${wk.budget.toLocaleString()}` : `<em class="over">${Math.abs(wk.left).toLocaleString()}</em> over ${wk.budget.toLocaleString()}`;
+  el.innerHTML = `<div class="fh-row">
+      <div class="fh-half">${pRing}${side("Protein", totals.protein, pT, " g")}</div>
+      <div class="fh-half">${cRing}${side("Calories", totals.calories.toLocaleString(), cT ? cT.toLocaleString() : 0, "")}</div>
     </div>
-    <div class="tf-mini" data-today-toggle role="button" tabindex="0" style="margin-top:8px; cursor:pointer;"><div class="r"><span>This week</span><b>${wk.left >= 0 ? wk.left.toLocaleString() + " left of " : Math.abs(wk.left).toLocaleString() + " over "}${wk.budget.toLocaleString()} <span class="tf-chev" style="color:var(--accent);">${todayOpen ? "▴" : "▾"}</span></b></div><div class="bar"><i style="width:${wkPct}%; ${wk.left < 0 ? "background:#E8B04A;" : ""}"></i></div></div>`;
+    <div class="fh-week" data-today-toggle role="button" tabindex="0"><div class="fh-wr"><span class="fh-k">This week</span><span class="fh-wn">${wkTxt} <span class="tf-chev">${todayOpen ? "▴" : "▾"}</span></span></div><div class="fh-bar"><i style="width:${wkPct}%; ${wk.left < 0 ? "background:#E8B04A;" : ""}"></i></div></div>`;
   const det = document.getElementById("todayDetails");
   if (det) det.classList.toggle("hidden", !todayOpen);
   const tm = document.getElementById("todayMacros");
