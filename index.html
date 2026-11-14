@@ -419,7 +419,7 @@
   .tf-focus button small{font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:#8fd9c9; min-height:11px;}
   .tf-focus button.on{background:#1E4A41; color:var(--text);}
   .tf-today-col.tf-has-focus:not(.tf-focus-chest) #chestBoosterToday{display:none;}
-  .tf-today-col.tf-focus-chest > :not(#todayWorkout):not(.tf-focus), .tf-today-col.tf-focus-chest #todayWorkout > :not(#chestBoosterToday):not(.tf-focus){display:none !important;}
+  .tf-today-col.tf-focus-chest > :not(#todayWorkout):not(.tf-focus):not(#tfMore), .tf-today-col.tf-focus-chest #todayWorkout > :not(#chestBoosterToday):not(.tf-focus){display:none !important;}
   .tf-today-col.tf-focus-chest #todayWorkout{display:contents;}
   .tf-today-col > .card{order:-2;}
   .tf-today-col.tf-off #startSessionBtn, .tf-today-col.tf-off #minimumDayBtn{display:none;}
@@ -1169,7 +1169,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-14 09:45 CT";
+const APP_BUILD = "2026-11-14 12:40 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
