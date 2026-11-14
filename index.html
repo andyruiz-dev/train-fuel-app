@@ -6,25 +6,26 @@
 <title>Train &amp; Fuel</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png">
-<meta name="theme-color" content="#15170F">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#120F0D">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Roboto+Mono:wght@500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Roboto+Mono:wght@500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --accent:#2FBFA6;
-    --accent-dark:#1B8674;
-    --gold:#C79A45;
+    --accent:#FF7A3D;
+    --accent-dark:#D9541C;
+    --gold:#F2B84B;
     --slate:#9B6FB0;
-    --bg:#15170F;
-    --surface:#20231C;
-    --surface-2:#2A2E24;
-    --border:#3A3F33;
-    --text:#EDEAE0;
-    --text-muted:#9B9C8E;
-    --danger:#C4622E;
+    --bg:#120F0D;
+    --surface:#1E1915;
+    --surface-2:#2A221C;
+    --border:#3A3029;
+    --text:#F4EEE8;
+    --text-muted:#9A8F85;
+    --danger:#E5534B;
     --radius:4px;
-    --font-display:'Oswald', -apple-system, sans-serif;
+    --font-display:'Barlow Condensed', -apple-system, sans-serif;
     --font-mono:'Roboto Mono', ui-monospace, monospace;
   }
   *{box-sizing:border-box;}
@@ -150,13 +151,13 @@
   #tfExSheet .lab{font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--gold); margin:18px 0 6px; text-transform:uppercase;}
   #tfExSheet p,#tfExSheet li{font-size:14px; line-height:1.55; color:var(--text); margin:0;}
   #tfExSheet ul{margin:0; padding-left:18px;}
-  #tfExSheet .demo{display:block; margin-top:20px; text-align:center; text-decoration:none; background:var(--accent); color:#0F1A17; font-weight:600; border-radius:12px; padding:14px;}
+  #tfExSheet .demo{display:block; margin-top:20px; text-align:center; text-decoration:none; background:var(--accent); color:#120F0D; font-weight:600; border-radius:12px; padding:14px;}
   #tfExSheet .demo2{display:block; width:100%; margin-top:10px; background:none; border:1px solid var(--border); color:var(--text); border-radius:12px; padding:12px; font-size:14px; cursor:pointer;}
   #tfExSheet .close{display:block; width:100%; margin-top:10px; background:none; border:0; color:var(--text-muted); font-size:14px; padding:10px; cursor:pointer;}
   .tf-mv-name[data-exinfo]{cursor:pointer;}
   #sessionPanel .card > h2{cursor:pointer;}
   #sessionPanel .card > h2::after{content:"ⓘ"; font-size:.6em; margin-left:8px; color:inherit; opacity:.55; vertical-align:middle;}
-  .tf-recap{background:linear-gradient(135deg,#20231C,#1B2A25); border:1px solid #2E4A42;}
+  .tf-recap{background:linear-gradient(135deg,#1E1915,#2A1C14); border:1px solid #5A3A28;}
   .tf-recap .row3{display:flex; gap:10px; margin-top:14px;}
   .tf-recap .cell{flex:1; min-width:0;}
   .tf-recap .cell .v{font-family:var(--font-display); font-size:26px; font-weight:600; line-height:1.1;}
@@ -171,9 +172,9 @@
   .tf-rt .rl{font-size:11px; color:var(--text-muted); line-height:1.3;}
   .tf-rt .rv{font-family:var(--font-display); font-size:20px; font-weight:600; line-height:1;}
   .tf-rt .rv small{font-size:11px; color:var(--text-muted); font-weight:500;}
-  .tf-pill2{display:inline-block; font-size:12px; font-weight:600; padding:5px 11px; border-radius:99px; background:#1B3A33; color:var(--accent);}
+  .tf-pill2{display:inline-block; font-size:12px; font-weight:600; padding:5px 11px; border-radius:99px; background:#3A2314; color:var(--accent);}
   .tf-pill2.gold{background:#3A2F18; color:var(--gold);}
-  .tf-pill2.gray{background:#2A2E24; color:var(--text-muted);}
+  .tf-pill2.gray{background:#2A221C; color:var(--text-muted);}
   .tf-bars{display:flex; flex-direction:column; gap:8px; margin-top:6px;}
   .tf-bar{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:0;}
   .tf-bar summary{list-style:none; cursor:pointer; padding:10px 12px; display:block;}
@@ -181,12 +182,12 @@
   .tf-bar summary::after{content:none !important;}
   .tf-bar .bt{display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px;}
   .tf-bar .bt b{font-family:var(--font-mono); font-size:12px; color:var(--text-muted); font-weight:500;}
-  .tf-bar .tr{height:6px; border-radius:3px; background:#2A2E24;}
+  .tf-bar .tr{height:6px; border-radius:3px; background:#2A221C;}
   .tf-bar .tr i{display:block; height:6px; border-radius:3px; background:var(--gold);}
   .tf-bar.dn .tr i{background:var(--accent);}
   .tf-bar .bd{padding:0 12px 12px; font-size:13px; line-height:1.5; color:var(--text-muted);}
   .tf-dots7{display:flex; gap:5px; justify-content:center;}
-  .tf-dots7 i{width:9px; height:9px; border-radius:50%; background:#2A2E24; display:block;}
+  .tf-dots7 i{width:9px; height:9px; border-radius:50%; background:#2A221C; display:block;}
   .tf-dots7 i.on{background:var(--accent);}
   .tf-hl{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 14px; margin-top:10px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
   .tf-hl .t{font-size:14px; font-weight:600;}
@@ -209,26 +210,26 @@
   .tf-clamp{display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
   .tf-clamp-btn{background:none; border:0; color:var(--accent); font-size:13px; padding:6px 0 0; cursor:pointer;}
   /* Program screen, "Steady" look */
-  .tf-prog-head{margin:-4px -16px 0; padding:18px 20px 16px; background:linear-gradient(180deg,#1B3A33,#15170F);}
+  .tf-prog-head{margin:-4px -16px 0; padding:18px 20px 16px; background:linear-gradient(180deg,#3A2314,#120F0D);}
   .tf-prog-head .chg{font-size:13px; color:var(--accent); font-weight:600; background:none; border:0; padding:0; cursor:pointer;}
   .tf-prog-head .pills{display:flex; gap:8px; margin-top:26px; flex-wrap:wrap;}
-  .tf-prog-head .pills span{font-family:var(--font-mono); font-size:11px; background:#0F1A17; border:1px solid var(--border); color:var(--text-muted); border-radius:99px; padding:5px 10px; text-transform:uppercase;}
+  .tf-prog-head .pills span{font-family:var(--font-mono); font-size:11px; background:#120F0D; border:1px solid var(--border); color:var(--text-muted); border-radius:99px; padding:5px 10px; text-transform:uppercase;}
   .tf-prog-head .pills span.on{border-color:var(--accent); color:var(--accent);}
   .tf-prog-head h2{font-family:var(--font-display); font-size:32px; font-weight:600; line-height:1.05; margin:10px 0 0;}
   .tf-wktabs{display:flex; gap:8px; overflow-x:auto; padding:4px 0 2px; margin:0 -16px; padding-left:16px; padding-right:16px; scrollbar-width:none;}
   .tf-wktabs::-webkit-scrollbar{display:none;}
   .tf-wktabs button{flex:0 0 auto; font-size:13px; padding:9px 14px; border-radius:10px; background:var(--surface); color:var(--text-muted); border:0; cursor:pointer; font-family:inherit;}
-  .tf-wktabs button.on{background:var(--accent); color:#0F1A17; font-weight:600;}
+  .tf-wktabs button.on{background:var(--accent); color:#120F0D; font-weight:600;}
   .tf-pbar{display:flex; align-items:center; gap:12px; padding:18px 4px 6px;}
   .tf-pbar b{font-family:var(--font-display); font-size:20px; font-weight:600;}
-  .tf-pbar .bar{flex:1; height:8px; border-radius:4px; background:#2A2E24;}
+  .tf-pbar .bar{flex:1; height:8px; border-radius:4px; background:#2A221C;}
   .tf-pbar .bar i{display:block; height:8px; border-radius:4px; background:var(--accent);}
   .tf-pbar span{font-family:var(--font-mono); font-size:11px; color:var(--text-muted);}
   .tf-pnote{padding:0 4px; font-size:12px; color:var(--text-muted);}
   .tf-days-list{display:flex; flex-direction:column; gap:10px; padding-top:16px;}
   .tf-dcard{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; cursor:pointer;}
   .tf-dcard.next{border:1.5px solid var(--accent);}
-  .tf-dcard.pre{background:#1A1D15; border-color:#2A2E24;}
+  .tf-dcard.pre{background:#1A1D15; border-color:#2A221C;}
   .tf-dcard .r{display:flex; justify-content:space-between; align-items:center; gap:10px;}
   .tf-dcard .k{font-size:12px; color:var(--text-muted);}
   .tf-dcard.next .k{color:var(--accent); font-weight:600;}
@@ -238,17 +239,17 @@
   .tf-hint b{font-family:var(--font-mono); font-size:11px; letter-spacing:.6px; text-transform:uppercase; color:var(--accent); margin-right:6px;}
   .tf-hint .t{margin-top:6px; color:var(--text-muted);}
   .tf-recent-more{display:block; width:100%; background:none; border:0; color:var(--accent); font-family:var(--font-mono); font-size:12px; letter-spacing:.5px; text-transform:uppercase; text-align:left; padding:8px 2px; cursor:pointer;}
-  .tf-dcard .tf-exlink{display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; background:none; border:0; border-bottom:1px solid #2A2E24; color:var(--text); font:inherit; font-size:14px; text-align:left; padding:9px 0; cursor:pointer;}
+  .tf-dcard .tf-exlink{display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; background:none; border:0; border-bottom:1px solid #2A221C; color:var(--text); font:inherit; font-size:14px; text-align:left; padding:9px 0; cursor:pointer;}
   .tf-dcard .tf-exlink:last-child{border-bottom:0;}
   .tf-dcard .tf-exlink b{font-family:var(--font-mono); font-size:11px; font-weight:500; letter-spacing:.5px; color:var(--accent); text-transform:uppercase; white-space:nowrap;}
-  .tf-dcard .ex{margin-top:10px; padding-top:10px; border-top:1px solid #2A2E24; font-size:13px; color:var(--text-muted); line-height:1.6;}
+  .tf-dcard .ex{margin-top:10px; padding-top:10px; border-top:1px solid #2A221C; font-size:13px; color:var(--text-muted); line-height:1.6;}
   /* Progress screen, "Steady" look */
-  .tf-pg-hero{background:linear-gradient(135deg,#2FBFA6 0%,#1B8674 100%); color:#0B1512; border-radius:22px; padding:20px; display:flex; gap:18px; align-items:center; margin-bottom:14px;}
+  .tf-pg-hero{background:linear-gradient(135deg,#FF7A3D 0%,#D9541C 100%); color:#120F0D; border-radius:22px; padding:20px; display:flex; gap:18px; align-items:center; margin-bottom:14px;}
   .tf-pg-hero .k{font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase;}
   .tf-pg-hero .n{font-family:var(--font-display); font-size:34px; font-weight:700; line-height:1; margin-top:4px;}
   .tf-pg-hero .n small{font-size:18px; font-weight:600;}
   .tf-pg-hero .s{font-size:13px; font-weight:500; margin-top:4px;}
-  .tf-pg-hero .pill{margin-top:12px; display:inline-block; background:#0B1512; color:#EDEAE0; border-radius:99px; padding:6px 12px; font-size:12px; font-weight:600;}
+  .tf-pg-hero .pill{margin-top:12px; display:inline-block; background:#120F0D; color:#F4EEE8; border-radius:99px; padding:6px 12px; font-size:12px; font-weight:600;}
   .tf-ptiles{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
   .tf-ptile{text-align:left; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px 14px; height:150px; display:flex; flex-direction:column; color:var(--text); cursor:pointer; font-family:Inter,sans-serif;}
   .tf-ptile .n{font-size:12px; color:var(--text-muted); font-weight:600; display:flex; justify-content:space-between; width:100%;}
@@ -262,12 +263,12 @@
   #tfPSheet{position:fixed; inset:0; z-index:60;}
   #tfPSheet.hidden{display:none;}
   .tf-pscrim{position:absolute; inset:0; background:rgba(0,0,0,.6);}
-  .tf-ppanel{position:absolute; left:0; right:0; bottom:0; top:72px; background:#1c1e17; border:1px solid var(--border); border-radius:22px 22px 0 0; padding:8px 16px 90px; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  .tf-ppanel{position:absolute; left:0; right:0; bottom:0; top:72px; background:#1A1612; border:1px solid var(--border); border-radius:22px 22px 0 0; padding:8px 16px 90px; overflow-y:auto; -webkit-overflow-scrolling:touch;}
   .tf-pgrab{display:flex; justify-content:center; padding:4px 0 8px;}
-  .tf-pgrab span{width:40px; height:4px; border-radius:2px; background:#4a4f40; display:block;}
+  .tf-pgrab span{width:40px; height:4px; border-radius:2px; background:#4F443A; display:block;}
   .tf-pclose{position:absolute; top:8px; right:14px; background:none; border:0; color:var(--accent); font-size:14px; font-weight:600; padding:6px 4px; cursor:pointer;}
   .tf-ppanel .tf-pcard{margin-top:6px;}
-  .tf-prow{display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid #2d3127; font-size:14px;}
+  .tf-prow{display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid #2E2620; font-size:14px;}
   .tf-prow:last-child{border:0;}
   .tf-prow .r{margin-left:auto; color:var(--text-muted); font-size:13px;}
   .tf-stats{display:flex; gap:10px; margin-bottom:14px;}
@@ -275,7 +276,7 @@
   .tf-stat .l{font-size:11px; color:var(--text-muted);}
   .tf-stat .v{font-family:var(--font-display); font-size:30px; font-weight:600; line-height:1.1; margin-top:4px;}
   .tf-stat .v small{font-size:13px; color:var(--text-muted); font-weight:500;}
-  .tf-stat .p{margin-top:8px; font-size:11px; border-radius:99px; padding:3px 8px; font-weight:600; display:inline-block; background:#1B3A33; color:var(--accent);}
+  .tf-stat .p{margin-top:8px; font-size:11px; border-radius:99px; padding:3px 8px; font-weight:600; display:inline-block; background:#3A2314; color:var(--accent);}
   .tf-stat .p.gold{background:#3A2F18; color:var(--gold);}
   .tf-pcard{background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:18px 16px; margin-bottom:14px;}
   .tf-pcard .h{display:flex; justify-content:space-between; align-items:baseline; padding:0 2px;}
@@ -292,15 +293,15 @@
   .tf-wk .dots i{width:22px; height:22px; border-radius:50%; background:#252920; display:block;}
   .tf-wk .dots i.on{background:var(--accent);}
   .tf-wk .dots i.today{box-shadow:inset 0 0 0 2px var(--accent); background:none;}
-  .tf-wk .dots i.fut{background:none; box-shadow:inset 0 0 0 1px #2A2E24;}
+  .tf-wk .dots i.fut{background:none; box-shadow:inset 0 0 0 1px #2A221C;}
   .tf-wk .cnt{font-size:12px; color:var(--text-muted); width:18px; text-align:right;}
   .tf-days{display:flex; gap:9px; margin-left:56px; margin-top:8px; font-family:var(--font-mono); font-size:10px; color:var(--text-muted);}
   .tf-days span{width:22px; text-align:center;}
   .tf-badges{display:flex; gap:10px; margin-top:14px;}
   .tf-badge{flex:1; text-align:center; min-width:0;}
-  .tf-badge .c{width:54px; height:54px; border-radius:50%; margin:0 auto; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:20px; font-weight:700; color:#0B1512; background:var(--accent);}
+  .tf-badge .c{width:54px; height:54px; border-radius:50%; margin:0 auto; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:20px; font-weight:700; color:#120F0D; background:var(--accent);}
   .tf-badge .c.gold{background:var(--gold);}
-  .tf-badge .c.lock{background:none; border:2px dashed var(--border); color:#5A5F50;}
+  .tf-badge .c.lock{background:none; border:2px dashed var(--border); color:#5E544B;}
   .tf-badge .t{font-size:11px; margin-top:6px; font-weight:600;}
   .tf-badge .t.lock{color:var(--text-muted); font-weight:400;}
   /* Food screen, "Steady" look */
@@ -335,8 +336,8 @@
   .tf-adds{display:flex; gap:10px;}
   .tf-add{flex:1; min-width:0; height:92px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; color:var(--accent); font-size:14px; font-weight:600; cursor:pointer; box-sizing:border-box;}
   .tf-add span{color:var(--text);}
-  .tf-add.main{flex:1.3; background:var(--accent); border-color:var(--accent); color:#0F1A17;}
-  .tf-add.main span{color:#0F1A17; font-family:var(--font-display); font-size:17px; letter-spacing:.5px;}
+  .tf-add.main{flex:1.3; background:var(--accent); border-color:var(--accent); color:#120F0D;}
+  .tf-add.main span{color:#120F0D; font-family:var(--font-display); font-size:17px; letter-spacing:.5px;}
   .tf-add.open{border-color:var(--accent);}
   .tf-photo-extra{display:flex; flex-direction:column; align-items:flex-start; gap:2px; margin-top:8px;}
   .tf-recent{display:flex; flex-direction:row; gap:8px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch;}
@@ -401,7 +402,7 @@
   .tf-tile-sub{font-size:12px; color:var(--text-muted); margin-top:4px;}
   .tf-tile button.primary{margin-top:12px; height:38px; padding:0; border-radius:10px; font-family:Inter,sans-serif; font-size:14px; letter-spacing:0;}
   .tf-tile .chip{flex:1; text-align:center; font-size:12px; padding:9px 0; border-radius:10px; margin-top:12px;}
-  .tf-tile .chip.active{background:var(--accent); border-color:var(--accent); color:#0F1A17; font-weight:600;}
+  .tf-tile .chip.active{background:var(--accent); border-color:var(--accent); color:#120F0D; font-weight:600;}
   #checkinTagChips .chip{flex:0 0 auto; margin-top:0; padding:8px 10px;}
   .tf-more{margin-top:10px; font-size:12px; color:var(--text-muted);}
   .tf-more summary{cursor:pointer; list-style:none; text-decoration:underline;}
@@ -437,8 +438,8 @@
   .tf-today-col{display:flex; flex-direction:column;}
   .tf-focus{order:-3; display:flex; gap:6px; margin:0 0 10px; padding:4px; background:var(--surface); border:1px solid var(--border); border-radius:14px;}
   .tf-focus button{flex:1; min-width:0; border:0; background:none; color:var(--text-muted); font-size:14px; font-weight:600; padding:9px 6px 8px; border-radius:10px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;}
-  .tf-focus button small{font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:#8fd9c9; min-height:11px;}
-  .tf-focus button.on{background:#1E4A41; color:var(--text);}
+  .tf-focus button small{font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:#FFC49A; min-height:11px;}
+  .tf-focus button.on{background:#4A2412; color:var(--text);}
   .tf-today-col.tf-has-focus:not(.tf-focus-chest) #chestBoosterToday{display:none;}
   .tf-today-col.tf-focus-chest > :not(#todayWorkout):not(.tf-focus):not(#tfMore):not(#tfQuickRow), .tf-today-col.tf-focus-chest #todayWorkout > :not(#chestBoosterToday):not(.tf-focus){display:none !important;}
   .tf-today-col.tf-focus-chest #todayWorkout{display:contents;}
@@ -477,9 +478,9 @@
   .tf-cchip b{display:block; font-family:var(--font-display); font-size:19px; font-weight:600; line-height:1.1;}
   .tf-cchip b small{font-size:11px; color:var(--text-muted); font-family:Inter,sans-serif; font-weight:500;}
   .tf-cchip span{font-size:11px; color:var(--text-muted);}
-  .tf-coachhero{border:1px solid #2b5c51; border-radius:16px; background:linear-gradient(160deg,#1E4A41 0%,#20231C 65%); padding:14px 16px 10px; margin:0 0 10px; color:var(--text);}
+  .tf-coachhero{border:1px solid #7A3A1C; border-radius:16px; background:linear-gradient(160deg,#4A2412 0%,#1E1915 65%); padding:14px 16px 10px; margin:0 0 10px; color:var(--text);}
   .tf-coachhero .meta, .tf-coachhero li, .tf-coachhero p{color:var(--text); font-size:15px; line-height:1.4;}
-  .tf-coachhero .tf-clamp-btn{color:#8fd9c9; font-size:12px; padding:6px 0 2px;}
+  .tf-coachhero .tf-clamp-btn{color:#FFC49A; font-size:12px; padding:6px 0 2px;}
   #tab-coach #bellCoachCard{margin-bottom:10px;}
   #tab-coach .tf-tiles{margin-bottom:10px;}
   .tf-coachhero .tf-hero2-k{margin-bottom:6px;}
@@ -494,11 +495,11 @@
   /* Today: session card + week strip + coloured phases */
   #todayWorkout:has(.tf-hero2){display:contents; color:var(--text); text-align:left;}
   .tf-hero2{color:var(--text);}
-  .tf-hero2{order:-2; border:1px solid #2b5c51; border-radius:16px; overflow:hidden; background:linear-gradient(160deg,#1E4A41 0%,#20231C 65%); margin:0 0 10px;}
+  .tf-hero2{order:-2; border:1px solid #7A3A1C; border-radius:16px; overflow:hidden; background:linear-gradient(160deg,#4A2412 0%,#1E1915 65%); margin:0 0 10px;}
   .tf-hero2-in{padding:14px 16px 12px;}
-  .tf-hero2-k{font-family:var(--font-mono); font-size:10px; letter-spacing:1.2px; text-transform:uppercase; color:#8fd9c9;}
+  .tf-hero2-k{font-family:var(--font-mono); font-size:10px; letter-spacing:1.2px; text-transform:uppercase; color:#FFC49A;}
   .tf-hero2-title{font-family:var(--font-display); font-weight:600; font-size:32px; line-height:1.05; text-transform:uppercase; margin-top:4px;}
-  .tf-hero2-sub{font-size:14px; color:#cfe9e3; margin-top:2px;}
+  .tf-hero2-sub{font-size:14px; color:#FFE4D0; margin-top:2px;}
   .tf-hero2-stats{display:flex; gap:22px; margin-top:12px;}
   .tf-hero2-stats b{font-family:var(--font-display); font-size:22px; display:block; line-height:1; font-weight:600;}
   .tf-hero2-stats span{font-size:11px; color:var(--text-muted);}
@@ -508,9 +509,9 @@
   .tf-wk-top b{color:var(--accent); font-weight:500;}
   .tf-wk{display:flex; gap:8px; margin-top:8px;}
   .tf-wd{flex:1; text-align:center; font-size:10px; color:var(--text-muted);}
-  .tf-wd i{display:flex; align-items:center; justify-content:center; width:100%; aspect-ratio:1; max-width:26px; margin:0 auto 3px; border-radius:50%; border:2px solid var(--border); font-style:normal; font-size:13px; color:#0F1A17;}
+  .tf-wd i{display:flex; align-items:center; justify-content:center; width:100%; aspect-ratio:1; max-width:26px; margin:0 auto 3px; border-radius:50%; border:2px solid var(--border); font-style:normal; font-size:13px; color:#120F0D;}
   .tf-wd.done i{background:var(--accent); border-color:var(--accent);}
-  .tf-wd.today i{border-color:var(--accent); box-shadow:0 0 0 3px rgba(47,191,166,.25);}
+  .tf-wd.today i{border-color:var(--accent); box-shadow:0 0 0 3px rgba(255,122,61,.25);}
   #todayWorkout details.tf-ph-warm summary, #todayWorkout details.tf-ph-cool summary{justify-content:flex-start;}
   #todayWorkout details.tf-ph-warm summary::after, #todayWorkout details.tf-ph-cool summary::after{margin-left:auto;}
   .tf-dot{display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:10px;}
@@ -519,7 +520,7 @@
   .tf-ph-main .tf-moves-head > span:last-child{font-family:var(--font-mono); font-size:11px; letter-spacing:1px; text-transform:uppercase; font-weight:400;}
   .tf-moves-names{font-size:12px; color:var(--text-muted); margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .tf-ph-main .tf-mv{margin-top:8px;}
-  #todayWorkout details.tf-ph-warm summary::before, #todayWorkout details.tf-ph-cool summary::before{content:""; display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:10px; background:#2FBFA6;}
+  #todayWorkout details.tf-ph-warm summary::before, #todayWorkout details.tf-ph-cool summary::before{content:""; display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:10px; background:#FF7A3D;}
   #todayWorkout details.tf-ph-cool summary::before{background:#5DA89A;}
   .tf-hero svg{flex:0 0 auto;}
   #tab-today .tf-hero{padding:12px 14px; margin-bottom:8px; gap:12px;}
@@ -534,7 +535,7 @@
   .tf-moves-head{display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; padding:0 4px;}
   .tf-mv{background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:10px; padding:7px 12px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
   .tf-mv.ss{border-left-color:var(--gold); display:block;}
-  .tf-mv.fin{background:linear-gradient(90deg,#1B3A33,var(--surface)); border-color:var(--accent);}
+  .tf-mv.fin{background:linear-gradient(90deg,#3A2314,var(--surface)); border-color:var(--accent);}
   .tf-mv-name{font-size:15px; font-weight:600;}
   .tf-mv-det{font-size:12px; color:var(--text-muted); font-weight:400;}
   .tf-mv-tag{font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--gold); margin-bottom:5px;}
@@ -544,7 +545,7 @@
   .tf-mv-line .tf-mv-name{flex:1 1 0; min-width:0;}
   .tf-mv-line .tf-mv-det,.tf-mv > .tf-mv-det{flex:0 0 auto; text-align:right; max-width:46%;}
   .tf-mv-tag{margin-bottom:2px;}
-  .tf-pill{font-family:var(--font-mono); font-size:10px; color:#0F1A17; background:var(--accent); border-radius:99px; padding:4px 8px; flex:0 0 auto;}
+  .tf-pill{font-family:var(--font-mono); font-size:10px; color:#120F0D; background:var(--accent); border-radius:99px; padding:4px 8px; flex:0 0 auto;}
   #todayWorkout details.exercise-group{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 14px; margin:0 0 8px;}
   #startSessionBtn{order:1; position:sticky; bottom:66px; z-index:4; height:56px; border-radius:14px; font-size:20px; letter-spacing:1px; text-transform:uppercase; margin-top:10px; box-shadow:0 -14px 14px -4px var(--bg);}
   #minimumDayBtn{order:2; background:none; border:0; color:var(--text-muted); font-family:Inter,sans-serif; font-size:13px; padding:12px 0 4px;}
@@ -570,29 +571,29 @@
   .tf-today-col.tf-off #completeWorkoutBtn, .tf-today-col.tf-off #genWorkoutBtn{display:none;}
     /* ---- Guided session: full-screen "Block" look. Colour = state (teal = work, dark = rest/warm-up). ---- */
   #sessionPanel[data-sx]{position:fixed; inset:0; z-index:40; overflow-y:auto; padding:18px 22px 28px; display:flex; flex-direction:column; -webkit-overflow-scrolling:touch;}
-  #sessionPanel[data-sx="work"], #sessionPanel[data-sx="emom"], #sessionPanel[data-sx="hold"], #sessionPanel[data-sx="done"]{background:var(--accent); color:#0B1512;}
-  #sessionPanel[data-sx="rest"], #sessionPanel[data-sx="warm"]{background:#101209; color:var(--text);}
+  #sessionPanel[data-sx="work"], #sessionPanel[data-sx="emom"], #sessionPanel[data-sx="hold"], #sessionPanel[data-sx="done"]{background:var(--accent); color:#120F0D;}
+  #sessionPanel[data-sx="rest"], #sessionPanel[data-sx="warm"]{background:#0E0B09; color:var(--text);}
   #sessionPanel[data-sx] .card{background:none; border:none; padding:0; margin:0; flex:1; display:flex; flex-direction:column; box-shadow:none;}
   #sessionPanel[data-sx] h2{font-family:var(--font-display); font-weight:700; font-size:38px; line-height:1.02; text-transform:uppercase; letter-spacing:0.2px; margin:18px 0 8px; color:inherit;}
   #sessionPanel[data-sx] .meta, #sessionPanel[data-sx] .list-item .meta{color:inherit; opacity:.82; font-size:13px; line-height:1.45;}
   #sessionPanel[data-sx] .name{font-size:16px; color:inherit;}
   #sessionPanel[data-sx] .list-item{border-bottom-color:rgba(255,255,255,.12);}
-  #sessionPanel[data-sx="work"] .list-item, #sessionPanel[data-sx="emom"] .list-item{border-bottom-color:rgba(11,21,18,.2);}
+  #sessionPanel[data-sx="work"] .list-item, #sessionPanel[data-sx="emom"] .list-item{border-bottom-color:rgba(18,15,13,.2);}
   #sessionPanel[data-sx] button.danger-link{color:inherit !important; opacity:.85; text-decoration:underline; font-size:14px; padding:8px 0;}
   #sessionPanel[data-sx] button.primary{height:60px; border-radius:30px; font-size:20px; letter-spacing:1px; text-transform:uppercase;}
-  #sessionPanel[data-sx="work"] button.primary, #sessionPanel[data-sx="emom"] button.primary, #sessionPanel[data-sx="hold"] button.primary, #sessionPanel[data-sx="done"] button.primary{background:#0B1512; color:#EDEAE0;}
+  #sessionPanel[data-sx="work"] button.primary, #sessionPanel[data-sx="emom"] button.primary, #sessionPanel[data-sx="hold"] button.primary, #sessionPanel[data-sx="done"] button.primary{background:#120F0D; color:#F4EEE8;}
   #sessionPanel[data-sx] button.secondary{height:48px; border-radius:24px; color:inherit; border-color:currentColor; opacity:.9;}
   .tf-fin-kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:2px; margin-top:26px;}
   .tf-fin-big{font-family:var(--font-display); font-weight:700; font-size:118px; white-space:nowrap; line-height:.95; text-transform:uppercase; margin-top:8px;}
   .tf-fin-day{font-size:16px; font-weight:500; margin-top:6px;}
   .tf-fin-tiles{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:28px;}
-  .tf-fin-tile{background:#0B1512; color:#EDEAE0; border-radius:16px; padding:14px 16px;}
+  .tf-fin-tile{background:#120F0D; color:#F4EEE8; border-radius:16px; padding:14px 16px;}
   .tf-fin-tile b{display:block; font-family:var(--font-display); font-size:34px; font-weight:600; line-height:1;}
-  .tf-fin-tile span{font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:#9B9C8E; text-transform:uppercase;}
+  .tf-fin-tile span{font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:#9A8F85; text-transform:uppercase;}
   .tf-fin-note{margin-top:22px; font-size:15px; font-weight:500; line-height:1.45;}
-  #sessionPanel[data-sx="work"] #actualRepsInput{background:#0B1512; color:#EDEAE0; border:none; border-radius:16px; font-size:30px; text-align:center; font-family:var(--font-display); padding:14px;}
+  #sessionPanel[data-sx="work"] #actualRepsInput{background:#120F0D; color:#F4EEE8; border:none; border-radius:16px; font-size:30px; text-align:center; font-family:var(--font-display); padding:14px;}
   #sessionPanel[data-sx="work"] #actualRepsInput::placeholder{color:#7C857F; font-size:16px;}
-  #sessionPanel[data-sx] #sessionSwapPanel{background:#101209; color:var(--text); padding:12px; border-radius:14px; margin-top:10px;}
+  #sessionPanel[data-sx] #sessionSwapPanel{background:#0E0B09; color:var(--text); padding:12px; border-radius:14px; margin-top:10px;}
   #sessionPanel[data-sx] #restClock, #sessionPanel[data-sx] #holdClock, #sessionPanel[data-sx] #emomClock{font-family:var(--font-display) !important; font-weight:700 !important; font-size:150px !important; line-height:.9; margin:10px 0 !important; letter-spacing:-2px;}
   .sx-top{display:flex; justify-content:space-between; align-items:center; font-family:var(--font-mono); font-size:11px; letter-spacing:1px; text-transform:uppercase; opacity:.85;}
   .sx-bar{height:6px; border-radius:3px; background:rgba(128,128,128,.28); margin:10px 0 0; overflow:hidden;}
@@ -983,7 +984,7 @@
       <summary>Chest booster</summary>
       <div id="chestBoosterCoach" style="margin-top:10px;"></div>
     </details>
-    <details class="exercise-group tf-row tf-dotrow" id="notesDetails" style="--dc:#C79A45;">
+    <details class="exercise-group tf-row tf-dotrow" id="notesDetails" style="--dc:#F2B84B;">
         <summary id="notesSummary">Notes and questions</summary>
         <div style="padding-top:6px;">
           <p class="meta" style="margin-top:0;">Jot down questions or how a session felt. Each note remembers which exercise you were on. Ask me to check your notes and I'll answer them.</p>
@@ -992,7 +993,7 @@
           <div id="notesList" style="margin-top:12px;"></div>
         </div>
       </details>
-    <details class="exercise-group tf-row tf-dotrow" id="weeklyReviewDetails" style="--dc:#C79A45;">
+    <details class="exercise-group tf-row tf-dotrow" id="weeklyReviewDetails" style="--dc:#F2B84B;">
       <summary>Weekly review</summary>
       <div id="weeklyReview" style="margin-top:10px;"></div>
     </details>
@@ -1219,7 +1220,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-14 16:00 CT";
+const APP_BUILD = "2026-11-14 17:00 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -2369,8 +2370,8 @@ function renderProgramView() {
     if (wk < cur) st = "done"; else if (wk === cur) st = i < upIdx ? "done" : i === upIdx ? "next" : "pre";
     const label = st === "done" ? `Day ${i + 1} · done` : st === "next" ? `Day ${i + 1} · up next` : `Day ${i + 1}`;
     const icon = st === "done"
-      ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2FBFA6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Done"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
-      : st === "next" ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2FBFA6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Open"><path d="M9 5l7 7-7 7"/></svg>'
+      ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF7A3D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Done"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
+      : st === "next" ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF7A3D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Open"><path d="M9 5l7 7-7 7"/></svg>'
       : '<span style="font-size:12px;color:var(--text-muted);">Preview</span>';
     let exs = "";
     if (d.fixed) {
@@ -3772,7 +3773,7 @@ let weeklyReviewLogsOpen = false;
 function tfRing(frac, center, label, color, size) {
   const r = 30, C = 2 * Math.PI * r, f = Math.max(0, Math.min(1, frac || 0));
   size = size || 78;
-  return `<svg width="${size}" height="${size}" viewBox="0 0 76 76" role="img" aria-label="${escapeHtml(label)}"><circle cx="38" cy="38" r="${r}" fill="none" stroke="#2A2E24" stroke-width="7"/><circle cx="38" cy="38" r="${r}" fill="none" stroke="${color || "#2FBFA6"}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - f)).toFixed(1)}" transform="rotate(-90 38 38)"/><text x="38" y="43" text-anchor="middle" font-family="Oswald, sans-serif" font-size="15" font-weight="600" fill="#EDEAE0">${escapeHtml(center)}</text></svg>`;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 76 76" role="img" aria-label="${escapeHtml(label)}"><circle cx="38" cy="38" r="${r}" fill="none" stroke="#2A221C" stroke-width="7"/><circle cx="38" cy="38" r="${r}" fill="none" stroke="${color || "#FF7A3D"}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - f)).toFixed(1)}" transform="rotate(-90 38 38)"/><text x="38" y="43" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="15" font-weight="600" fill="#F4EEE8">${escapeHtml(center)}</text></svg>`;
 }
 function tfBarRows(items, cls) {
   const max = Math.max(1, ...items.map(c => c.count));
@@ -3979,7 +3980,7 @@ function tfDonut(slices, centerTop, centerBottom) {
     arcs += `<circle cx="60" cy="60" r="${r}" fill="none" stroke="${s.c}" stroke-width="16" stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 60 60)"/>`;
     off += len;
   });
-  return `<svg width="132" height="132" viewBox="0 0 120 120" role="img" aria-label="Calories by source"><circle cx="60" cy="60" r="${r}" fill="none" stroke="#2A2E24" stroke-width="16"/>${arcs}<text x="60" y="58" text-anchor="middle" font-family="Oswald, sans-serif" font-size="19" font-weight="600" fill="#EDEAE0">${escapeHtml(centerTop)}</text><text x="60" y="74" text-anchor="middle" font-size="9" fill="#9A9D8E">${escapeHtml(centerBottom)}</text></svg>`;
+  return `<svg width="132" height="132" viewBox="0 0 120 120" role="img" aria-label="Calories by source"><circle cx="60" cy="60" r="${r}" fill="none" stroke="#2A221C" stroke-width="16"/>${arcs}<text x="60" y="58" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="19" font-weight="600" fill="#F4EEE8">${escapeHtml(centerTop)}</text><text x="60" y="74" text-anchor="middle" font-size="9" fill="#9A9D8E">${escapeHtml(centerBottom)}</text></svg>`;
 }
 function renderWeekClose() {
   const el = document.getElementById("weeklyReview");
@@ -4005,8 +4006,8 @@ function renderWeekClose() {
     src.protein += p; src.carbs += c; src.fat += fa; src.unsorted += Math.max(0, cal - (p + c + fa));
   }));
   const slices = [
-    { k: "Protein", v: src.protein, c: "#2FBFA6" }, { k: "Carbs", v: src.carbs, c: "#D9A441" },
-    { k: "Fat", v: src.fat, c: "#8E7CC3" }, { k: "Alcohol", v: src.alcohol, c: "#D96C5B" }, { k: "Unsorted", v: src.unsorted, c: "#6B6F60" },
+    { k: "Protein", v: src.protein, c: "#FF7A3D" }, { k: "Carbs", v: src.carbs, c: "#E8B04A" },
+    { k: "Fat", v: src.fat, c: "#8E7CC3" }, { k: "Alcohol", v: src.alcohol, c: "#E5534B" }, { k: "Unsorted", v: src.unsorted, c: "#6B6F60" },
   ];
   const sTot = slices.reduce((s, x) => s + x.v, 0) || 1;
   const legend = slices.filter(s => s.v > 0).map(s => `<div style="display:flex; align-items:center; gap:8px; font-size:13px; margin:3px 0;"><i style="width:10px; height:10px; border-radius:3px; background:${s.c}; display:inline-block;"></i><span style="flex:1;">${s.k}</span><b style="font-family:var(--font-mono); font-weight:500;">${Math.round(s.v).toLocaleString()}</b><span class="meta" style="width:36px; text-align:right;">${Math.round(s.v / sTot * 100)}%</span></div>`).join("");
@@ -4047,7 +4048,7 @@ function renderWeekClose() {
   else if (t.protein && loggedDays.length >= 3 && proteinAvg < t.protein * 0.9) focus = "Hit protein earlier in the day.";
   else if (complete && total > budget) focus = "Plan the lighter days around your biggest day.";
   // One card at a time: read it, tap Next.
-  const big = (t) => `<div style="font-family:Oswald,sans-serif; font-size:22px; font-weight:600; line-height:1.25; margin-bottom:10px;">${escapeHtml(t)}</div>`;
+  const big = (t) => `<div style="font-family:Barlow Condensed,sans-serif; font-size:22px; font-weight:600; line-height:1.25; margin-bottom:10px;">${escapeHtml(t)}</div>`;
   const bullets = (items, color) => items.map(x => `<div style="margin-top:10px; font-size:16px; line-height:1.4; padding-left:12px; border-left:3px solid ${color};">${escapeHtml(x)}</div>`).join("");
   const rangeLab = `${formatDateOnly(days[0])} to ${formatDateOnly(days[6])}`;
   const cards = [];
@@ -4056,10 +4057,10 @@ function renderWeekClose() {
   // 1. Scoreboard: the only summary, everything after it is the "why".
   const wDelta = avgNow != null && avgPrev != null ? avgNow - avgPrev : null;
   cards.push(`<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-    <div class="tf-rt">${tfRing(budget ? total / budget : 0, kfmt(total), "Calories against weekly budget", total > budget ? "#D96C5B" : "#2FBFA6")}<div class="rl">of ${budget.toLocaleString()} budget</div></div>
+    <div class="tf-rt">${tfRing(budget ? total / budget : 0, kfmt(total), "Calories against weekly budget", total > budget ? "#E5534B" : "#FF7A3D")}<div class="rl">of ${budget.toLocaleString()} budget</div></div>
     <div class="tf-rt"><div class="rv" style="margin-top:6px;">${loggedDays.length}<small> / ${elapsed.length}</small></div><div class="tf-dots7">${Array.from({ length: 7 }, (_, k) => `<i class="${infos[k] && infos[k].n > 0 ? "on" : ""}"></i>`).join("")}</div><div class="rl">days logged</div></div>
-    <div class="tf-rt">${tfRing(goal ? Math.min(1, workoutDays / goal) : 0, `${workoutDays}/${goal}`, "Workouts against goal", "#2FBFA6")}<div class="rl">workouts</div></div>
-    <div class="tf-rt"><div class="rv" style="margin-top:6px;">${avgNow != null ? avgNow.toFixed(1) : "·"}<small> lb</small></div><div class="rl" style="color:${wDelta == null ? "inherit" : wDelta > 0.2 ? "#D96C5B" : wDelta < -0.2 ? "#2FBFA6" : "inherit"};">${wDelta == null ? "no comparison yet" : `${wDelta > 0.2 ? "▲" : wDelta < -0.2 ? "▼" : "▬"} ${Math.abs(wDelta).toFixed(1)} vs last week`}</div><div class="rl">average weight</div></div>
+    <div class="tf-rt">${tfRing(goal ? Math.min(1, workoutDays / goal) : 0, `${workoutDays}/${goal}`, "Workouts against goal", "#FF7A3D")}<div class="rl">workouts</div></div>
+    <div class="tf-rt"><div class="rv" style="margin-top:6px;">${avgNow != null ? avgNow.toFixed(1) : "·"}<small> lb</small></div><div class="rl" style="color:${wDelta == null ? "inherit" : wDelta > 0.2 ? "#E5534B" : wDelta < -0.2 ? "#FF7A3D" : "inherit"};">${wDelta == null ? "no comparison yet" : `${wDelta > 0.2 ? "▲" : wDelta < -0.2 ? "▼" : "▬"} ${Math.abs(wDelta).toFixed(1)} vs last week`}</div><div class="rl">average weight</div></div>
   </div><div class="meta" style="margin-top:10px;">${complete ? "" : `${elapsed.length} of 7 days so far. `}Tap Next for the why.</div>`);
   // 2. Daily calories against the budget line
   {
@@ -4071,10 +4072,10 @@ function renderWeekClose() {
       const xx = gap + k * (bw + gap);
       if (x.v == null) return `<text x="${xx + bw / 2}" y="${H + 16}" text-anchor="middle" font-size="10" fill="#6B6F60">${dayName(x.d)[0]}</text>`;
       if (!x.n) return `<rect x="${xx}" y="${H - 4}" width="${bw}" height="4" rx="2" fill="#3A3E34"/><text x="${xx + bw / 2}" y="${H - 8}" text-anchor="middle" font-size="9" fill="#9A9D8E">none</text><text x="${xx + bw / 2}" y="${H + 16}" text-anchor="middle" font-size="10" fill="#9A9D8E">${dayName(x.d)[0]}</text>`;
-      const col = x.v <= dailyBudget * 1.1 ? "#2FBFA6" : x.v <= dailyBudget * 1.3 ? "#D9A441" : "#D96C5B";
-      return `<rect x="${xx}" y="${yOf(x.v)}" width="${bw}" height="${H - yOf(x.v)}" rx="4" fill="${col}"/><text x="${xx + bw / 2}" y="${yOf(x.v) - 4}" text-anchor="middle" font-size="10" fill="#EDEAE0">${kfmt(x.v)}</text><text x="${xx + bw / 2}" y="${H + 16}" text-anchor="middle" font-size="10" fill="#9A9D8E">${dayName(x.d)[0]}</text>`;
+      const col = x.v <= dailyBudget * 1.1 ? "#FF7A3D" : x.v <= dailyBudget * 1.3 ? "#E8B04A" : "#E5534B";
+      return `<rect x="${xx}" y="${yOf(x.v)}" width="${bw}" height="${H - yOf(x.v)}" rx="4" fill="${col}"/><text x="${xx + bw / 2}" y="${yOf(x.v) - 4}" text-anchor="middle" font-size="10" fill="#F4EEE8">${kfmt(x.v)}</text><text x="${xx + bw / 2}" y="${H + 16}" text-anchor="middle" font-size="10" fill="#9A9D8E">${dayName(x.d)[0]}</text>`;
     }).join("");
-    cards.push(`${big("Day by day")}<svg viewBox="0 -6 ${W} ${H + 26}" width="100%" role="img" aria-label="Daily calories against budget line"><line x1="0" x2="${W}" y1="${yOf(dailyBudget)}" y2="${yOf(dailyBudget)}" stroke="#EDEAE0" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>${bars}</svg><div class="meta" style="margin-top:6px;">Dashed line is your daily share of the budget (${Math.round(dailyBudget).toLocaleString()}). Teal is at or near it, gold is over, red is well over.</div>`);
+    cards.push(`${big("Day by day")}<svg viewBox="0 -6 ${W} ${H + 26}" width="100%" role="img" aria-label="Daily calories against budget line"><line x1="0" x2="${W}" y1="${yOf(dailyBudget)}" y2="${yOf(dailyBudget)}" stroke="#F4EEE8" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>${bars}</svg><div class="meta" style="margin-top:6px;">Dashed line is your daily share of the budget (${Math.round(dailyBudget).toLocaleString()}). Teal is at or near it, gold is over, red is well over.</div>`);
   }
   // 3. Where it came from
   cards.push(total > 0
@@ -4084,10 +4085,10 @@ function renderWeekClose() {
   {
     const prog = programs.find(p => p.id === state.activeProgramId);
     let ring = "";
-    if (prog) { const pace = getProgramPace(prog); if (pace.mode === "count") { const tot = totalProgramWorkouts(prog); ring = `<div class="tf-rt" style="flex:0 0 110px;">${tfRing(tot ? pace.completed / tot : 0, `${pace.completed}/${tot}`, "Program progress", "#2FBFA6")}<div class="rl">program</div></div>`; } }
+    if (prog) { const pace = getProgramPace(prog); if (pace.mode === "count") { const tot = totalProgramWorkouts(prog); ring = `<div class="tf-rt" style="flex:0 0 110px;">${tfRing(tot ? pace.completed / tot : 0, `${pace.completed}/${tot}`, "Program progress", "#FF7A3D")}<div class="rl">program</div></div>`; } }
     const cnt = { max: 0, hold: 0, missed: 0 }; wkLogs.forEach(l => { if (cnt[l.result] !== undefined) cnt[l.result]++; });
     const tl = cnt.max + cnt.hold + cnt.missed;
-    const row = (lab, n, col) => `<div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-muted); margin:4px 0;"><span style="width:70px;">${lab}</span><span style="flex:1; height:8px; border-radius:4px; background:#2A2E24;"><i style="display:block; height:8px; border-radius:4px; width:${tl ? Math.round(n / tl * 100) : 0}%; background:${col};"></i></span><b style="font-family:var(--font-mono); font-weight:500; width:18px; text-align:right;">${n}</b></div>`;
+    const row = (lab, n, col) => `<div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-muted); margin:4px 0;"><span style="width:70px;">${lab}</span><span style="flex:1; height:8px; border-radius:4px; background:#2A221C;"><i style="display:block; height:8px; border-radius:4px; width:${tl ? Math.round(n / tl * 100) : 0}%; background:${col};"></i></span><b style="font-family:var(--font-mono); font-weight:500; width:18px; text-align:right;">${n}</b></div>`;
     cards.push(`${big("Training")}<div style="display:flex; gap:12px; align-items:center;">${ring}<div style="flex:1;">${row("Hit max", cnt.max, "var(--accent)")}${row("As planned", cnt.hold, "#7FA89F")}${row("Short", cnt.missed, "#6B6F60")}</div></div><div style="margin-top:12px; font-size:15px;">${workoutDays} workout day${workoutDays === 1 ? "" : "s"} (goal ${goal})${wkCardio.length ? ` · ${wkCardio.length} cardio, ${Math.round(cardioMin)} min${cardioDist ? `, ${cardioDist.toFixed(1)} mi` : ""}` : ""}</div>${chestSetsInWeek(days) ? `<div style="margin-top:6px; font-size:13px; color:var(--text-muted);">Chest booster: ${chestSetsInWeek(days)} of ${CHEST_WEEKLY_SETS} sets</div>` : ""}<div class="meta" style="margin-top:8px;">Calories burned aren't measured here, so training shows as activity.</div>`);
   }
   // 5. Weight line with jumps marked
@@ -4103,15 +4104,15 @@ function renderWeekClose() {
       const span = daysBetween(from, days[6]) || 1;
       const X = d => 10 + (daysBetween(from, d) / span) * (W - 20), Y = v => H - ((v - lo) / (hi - lo)) * (H - 10) - 4;
       const jd = new Set(jumps.map(j => j.date));
-      chart = `<svg viewBox="0 0 ${W} ${H + 14}" width="100%" role="img" aria-label="Weight this week"><polyline fill="none" stroke="#2FBFA6" stroke-width="2" points="${pts.map(p => `${X(p.date).toFixed(1)},${Y(p.weight).toFixed(1)}`).join(" ")}"/>${pts.map(p => `<circle cx="${X(p.date).toFixed(1)}" cy="${Y(p.weight).toFixed(1)}" r="${jd.has(p.date) ? 5 : 3}" fill="${jd.has(p.date) ? "#D96C5B" : "#2FBFA6"}"/>${jd.has(p.date) ? `<text x="${X(p.date).toFixed(1)}" y="${(Y(p.weight) - 8).toFixed(1)}" text-anchor="middle" font-size="10" fill="#EDEAE0">${p.weight}</text>` : ""}`).join("")}<text x="2" y="${H + 12}" font-size="9" fill="#6B6F60">${lo.toFixed(0)} to ${hi.toFixed(0)} lb · red dot = jump of 1.5+ lb</text></svg>`;
+      chart = `<svg viewBox="0 0 ${W} ${H + 14}" width="100%" role="img" aria-label="Weight this week"><polyline fill="none" stroke="#FF7A3D" stroke-width="2" points="${pts.map(p => `${X(p.date).toFixed(1)},${Y(p.weight).toFixed(1)}`).join(" ")}"/>${pts.map(p => `<circle cx="${X(p.date).toFixed(1)}" cy="${Y(p.weight).toFixed(1)}" r="${jd.has(p.date) ? 5 : 3}" fill="${jd.has(p.date) ? "#E5534B" : "#FF7A3D"}"/>${jd.has(p.date) ? `<text x="${X(p.date).toFixed(1)}" y="${(Y(p.weight) - 8).toFixed(1)}" text-anchor="middle" font-size="10" fill="#F4EEE8">${p.weight}</text>` : ""}`).join("")}<text x="2" y="${H + 12}" font-size="9" fill="#6B6F60">${lo.toFixed(0)} to ${hi.toFixed(0)} lb · red dot = jump of 1.5+ lb</text></svg>`;
     }
     cards.push(`${big("Weight")}${chart}<div style="margin-top:8px; font-size:15px;">${avgNow != null ? `Average ${avgNow.toFixed(1)} lb` : "No weigh-ins"}${wDelta != null ? ` (${wDelta >= 0 ? "+" : "−"}${Math.abs(wDelta).toFixed(1)} vs the week before)` : ""}</div>${chips ? `<div style="margin-top:6px;">${chips}</div>` : ""}`);
   }
   // 6. Each point gets its own card.
   const one = (title, items, color) => items.forEach((x, k) => cards.push(`<div class="field-label" style="text-transform:uppercase; letter-spacing:0.6px; color:${color}; margin-bottom:8px;">${title} · ${k + 1} of ${items.length}</div><div style="font-size:21px; line-height:1.4; padding-left:12px; border-left:3px solid ${color};">${escapeHtml(x)}</div>`));
-  one("What went right", right, "#2FBFA6");
-  one("What went wrong", wrong, "#D96C5B");
-  one("Needs attention", attn, "#D9A441");
+  one("What went right", right, "#FF7A3D");
+  one("What went wrong", wrong, "#E5534B");
+  one("Needs attention", attn, "#E8B04A");
   jumps.forEach(j => { const h = explainJump(j.date); if (h) cards.push(`<div style="font-size:15px; line-height:1.45;">${h}</div>`); });
   // 7. Calorie target suggestion (merged in from the old review). Held until the Nov 17 review.
   {
@@ -5060,7 +5061,7 @@ function renderCoachHero() {
     const Y = w => 4 + (1 - (w - lo) / (hi - lo)) * (H - 8);
     const line = pts.map(m => `${X(m).toFixed(1)},${Y(m.weight).toFixed(1)}`).join(" ");
     const l = pts[pts.length - 1];
-    spark = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight, last 14 days"><polyline fill="none" stroke="#2FBFA6" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="${line}"/><circle cx="${X(l).toFixed(1)}" cy="${Y(l.weight).toFixed(1)}" r="4.5" fill="#EDEAE0"/></svg>`;
+    spark = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight, last 14 days"><polyline fill="none" stroke="#FF7A3D" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="${line}"/><circle cx="${X(l).toFixed(1)}" cy="${Y(l.weight).toFixed(1)}" r="4.5" fill="#F4EEE8"/></svg>`;
   }
   const wb = weekBudgetNumbers();
   const pT = state.settings?.macroTargets?.protein || 0;
@@ -5105,7 +5106,7 @@ function todayHeroHtml(workout) {
   const sets = (workout.exercises || []).reduce((a, e) => a + (e.sets || 0), 0);
   const blocks = workoutBlocks(workout);
   const segs = [];
-  if (workout.warmup && workout.warmup.length) segs.push(["#2FBFA6", 1.2]);
+  if (workout.warmup && workout.warmup.length) segs.push(["#FF7A3D", 1.2]);
   blocks.forEach(bk => segs.push([bk.color, Math.max(1, bk.sets)]));
   if (workout.cooldown && workout.cooldown.length) segs.push(["#5DA89A", 0.8]);
   const bar = segs.map(sg => `<i style="flex:${sg[1]}; background:${sg[0]};"></i>`).join("");
@@ -5213,7 +5214,7 @@ document.getElementById("todayWorkout").addEventListener("click", (e) => {
 });
 
 let movesOpen = false;
-const PH_COLORS = ["#4fa8c9", "#C79A45", "#9B6FB0", "#6FBF8E"];
+const PH_COLORS = ["#4fa8c9", "#F2B84B", "#9B6FB0", "#6FBF8E"];
 // Breaks a workout into blocks (each superset, each standalone move, a finisher) with a colour per block.
 function workoutBlocks(workout) {
   const ex = workout.exercises || [], seen = new Set(), blocks = [];
@@ -5298,14 +5299,14 @@ function chestBoosterHtml(opts) {
   const done = wk >= CHEST_WEEKLY_SETS;
   const today = chestTodayLogs();
   const pct = Math.min(1, wk / CHEST_WEEKLY_SETS), C = 2 * Math.PI * 31;
-  const ring = `<svg width="60" height="60" viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="31" fill="none" stroke="#3A3F33" stroke-width="7"/><circle cx="38" cy="38" r="31" fill="none" stroke="#2FBFA6" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - pct)).toFixed(1)}" transform="rotate(-90 38 38)"/><text x="38" y="${done ? 46 : 43}" text-anchor="middle" font-family="Oswald" font-size="${done ? 24 : 18}" fill="#EDEAE0">${done ? "✓" : wk + "/" + CHEST_WEEKLY_SETS}</text>${done ? "" : '<text x="38" y="55" text-anchor="middle" font-family="Oswald" font-size="8" fill="#9A9A8C" letter-spacing="1.2">THIS WEEK</text>'}</svg>`;
+  const ring = `<svg width="60" height="60" viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="31" fill="none" stroke="#3A3029" stroke-width="7"/><circle cx="38" cy="38" r="31" fill="none" stroke="#FF7A3D" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - pct)).toFixed(1)}" transform="rotate(-90 38 38)"/><text x="38" y="${done ? 46 : 43}" text-anchor="middle" font-family="Barlow Condensed" font-size="${done ? 24 : 18}" fill="#F4EEE8">${done ? "✓" : wk + "/" + CHEST_WEEKLY_SETS}</text>${done ? "" : '<text x="38" y="55" text-anchor="middle" font-family="Barlow Condensed" font-size="8" fill="#9A9A8C" letter-spacing="1.2">THIS WEEK</text>'}</svg>`;
   if (done && !chestExtraOpen && (today.length === 0 || chestPhaseDone("chestCool").length >= 2)) {
     return `<div class="tf-hero2" style="order:-3;"><div class="tf-hero2-in" style="display:flex; align-items:center; justify-content:space-between; gap:12px;"><div><div class="tf-hero2-k">Chest booster</div><div style="font-family:var(--font-display); font-size:22px; text-transform:uppercase; margin-top:2px;">Chest done this week</div><div style="font-size:12px; color:var(--text-muted); margin-top:2px;">${wk} sets logged · <span data-chest-extra style="color:var(--accent); cursor:pointer;">Log extra</span></div></div>${ring}</div></div>`;
   }
   const rows = plan.moves.slice();
   while (rows.length < today.length) rows.push(plan.moves[plan.moves.length - 1]);
   const nextIdx = today.length;
-  const rowHtml = rows.map((m, i) => { const l = today[i]; return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; ${i < rows.length - 1 ? "border-bottom:1px solid #2d3127;" : ""} font-size:14px;"><span style="width:22px; height:22px; border-radius:50%; border:2px solid ${l ? "var(--accent)" : "var(--border)"}; background:${l ? "var(--accent)" : "transparent"}; color:#0F1A17; display:flex; align-items:center; justify-content:center; font-size:12px;">${l ? "✓" : ""}</span><span style="flex:1;">${escapeHtml(m)}</span><span style="font-family:var(--font-display); font-size:18px; color:${l ? "var(--text)" : "var(--text-muted)"};">${l ? l.reps + ' <small style="font-size:11px; color:var(--text-muted); font-family:Inter,sans-serif;">reps</small>' : "—"}</span>${l ? `<span data-chest-undo="${l.id}" style="color:var(--text-muted); font-size:16px; cursor:pointer; padding:0 2px;" aria-label="Remove set">×</span>` : ""}</div>`; }).join("");
+  const rowHtml = rows.map((m, i) => { const l = today[i]; return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; ${i < rows.length - 1 ? "border-bottom:1px solid #2E2620;" : ""} font-size:14px;"><span style="width:22px; height:22px; border-radius:50%; border:2px solid ${l ? "var(--accent)" : "var(--border)"}; background:${l ? "var(--accent)" : "transparent"}; color:#120F0D; display:flex; align-items:center; justify-content:center; font-size:12px;">${l ? "✓" : ""}</span><span style="flex:1;">${escapeHtml(m)}</span><span style="font-family:var(--font-display); font-size:18px; color:${l ? "var(--text)" : "var(--text-muted)"};">${l ? l.reps + ' <small style="font-size:11px; color:var(--text-muted); font-family:Inter,sans-serif;">reps</small>' : "—"}</span>${l ? `<span data-chest-undo="${l.id}" style="color:var(--text-muted); font-size:16px; cursor:pointer; padding:0 2px;" aria-label="Remove set">×</span>` : ""}</div>`; }).join("");
   const nextMove = rows[Math.min(nextIdx, rows.length - 1)];
   const restLeft = chestRestRemaining();
   const restCard = restLeft > 0 ? `<div class="card" style="margin-top:10px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;"><div><div class="tf-hero2-k" style="color:var(--text-muted);">Rest</div><div data-chest-rest-clock style="font-family:var(--font-display); font-size:28px; line-height:1.1;">${Math.floor(restLeft / 60)}:${String(restLeft % 60).padStart(2, "0")}</div></div><button class="secondary" data-chest-skip-rest>Skip</button></div>` : "";
@@ -5318,7 +5319,7 @@ function chestBoosterHtml(opts) {
   const stepDots = [0, 1].map(i => wd.includes(i) ? "d" : (phase === "warm" && wd.length === i ? "n" : ""))
     .concat([0, 1, 2, 3].map(i => i < today.length ? "d" : (phase === "sets" && today.length === i ? "n" : "")))
     .concat([0, 1].map(i => cd.includes(i) ? "d" : (phase === "cool" && cd.length === i ? "n" : "")));
-  const dotsHtml = `<div style="display:flex; gap:5px; margin:0 0 10px;">${stepDots.map(c => `<i style="flex:1; height:5px; border-radius:3px; background:${c === "d" ? "var(--accent)" : c === "n" ? "#8fd9c9" : "#3a3f33"};"></i>`).join("")}</div>`;
+  const dotsHtml = `<div style="display:flex; gap:5px; margin:0 0 10px;">${stepDots.map(c => `<i style="flex:1; height:5px; border-radius:3px; background:${c === "d" ? "var(--accent)" : c === "n" ? "#FFC49A" : "#3A3029"};"></i>`).join("")}</div>`;
   const nextIn = (list, doneIds) => { const i = list.findIndex((_, k) => !doneIds.includes(k)); return i < 0 ? list.length - 1 : i; };
   let kick, title, sub, action = "", extra = "";
   if (phase === "warm") {
@@ -5329,12 +5330,12 @@ function chestBoosterHtml(opts) {
     action = `<button class="primary" data-chest-cool="${i}" style="width:100%; height:58px; font-size:18px; margin-top:10px;">Done</button>`;
   } else if (phase === "sets") {
     kick = nextIdx >= CHEST_SESSION_SETS ? `Chest · extra set ${nextIdx + 1}` : `Chest · set ${nextIdx + 1} of ${CHEST_SESSION_SETS}`; title = nextMove; sub = "Stop 1–3 reps shy of failure";
-    extra = `${restCard}${repsPanel}${chestRepsOpen ? "" : `<div class="card" style="margin-top:10px; padding:10px 14px; border-color:#5b4a2a;"><div class="tf-hero2-k" style="color:#C79A45;">Next step</div><div style="font-size:13px; margin-top:3px;">${escapeHtml(chestHint(plan.moves))}</div></div>`}`;
+    extra = `${restCard}${repsPanel}${chestRepsOpen ? "" : `<div class="card" style="margin-top:10px; padding:10px 14px; border-color:#5b4a2a;"><div class="tf-hero2-k" style="color:#F2B84B;">Next step</div><div style="font-size:13px; margin-top:3px;">${escapeHtml(chestHint(plan.moves))}</div></div>`}`;
     action = chestRepsOpen ? "" : `<button class="primary" data-chest-open style="width:100%; height:58px; font-size:18px; margin-top:10px;">${nextIdx >= CHEST_SESSION_SETS ? "Log extra set" : `Log set · ${nextIdx + 1} of ${CHEST_SESSION_SETS}`}</button>`;
   } else {
     kick = "Session done"; title = "Nice work"; sub = `${wk} of ${CHEST_WEEKLY_SETS} sets this week`;
   }
-  const rowFor = (key, label, summary, ok) => `<div data-chest-phase="${key}" style="display:flex; align-items:center; gap:10px; margin-top:8px; padding:0 14px; height:44px; background:var(--surface); border:1px solid var(--border); border-radius:12px; font-size:14px; cursor:pointer;"><span style="width:20px; height:20px; border-radius:50%; border:2px solid ${ok ? "var(--accent)" : "var(--border)"}; background:${ok ? "var(--accent)" : "transparent"}; color:#0F1A17; display:flex; align-items:center; justify-content:center; font-size:11px; flex:none;">${ok ? "✓" : ""}</span><span>${label}</span><span style="margin-left:auto; font-size:12px; color:var(--text-muted); text-align:right;">${summary}</span></div>`;
+  const rowFor = (key, label, summary, ok) => `<div data-chest-phase="${key}" style="display:flex; align-items:center; gap:10px; margin-top:8px; padding:0 14px; height:44px; background:var(--surface); border:1px solid var(--border); border-radius:12px; font-size:14px; cursor:pointer;"><span style="width:20px; height:20px; border-radius:50%; border:2px solid ${ok ? "var(--accent)" : "var(--border)"}; background:${ok ? "var(--accent)" : "transparent"}; color:#120F0D; display:flex; align-items:center; justify-content:center; font-size:11px; flex:none;">${ok ? "✓" : ""}</span><span>${label}</span><span style="margin-left:auto; font-size:12px; color:var(--text-muted); text-align:right;">${summary}</span></div>`;
   const rowsHtml = (phase === "sets" && chestRepsOpen) ? "" : [
     phase !== "warm" ? rowFor("warm", "Warm-up", warmOk ? "done" : "2 moves · 2 min", warmOk) : "",
     phase !== "sets" ? rowFor("sets", "Chest sets", `${[...new Set(plan.moves)].map(m => m.replace(/ \(.*\)/, "")).join(", ")} · ${today.length}/${CHEST_SESSION_SETS}`, setsOk) : "",
@@ -5343,7 +5344,7 @@ function chestBoosterHtml(opts) {
   return `${dotsHtml}<div class="tf-hero2" style="order:-3;"><div class="tf-hero2-in" style="padding:16px;">
       <div style="display:flex; justify-content:space-between; align-items:center;"><div class="tf-hero2-k">${kick}</div>${ring}</div>
       <div style="font-family:var(--font-display); font-size:32px; line-height:1.05; text-transform:uppercase; margin-top:6px;">${escapeHtml(title)}</div>
-      <div style="font-size:14px; color:#cfe9e3; margin-top:6px;">${escapeHtml(sub)}</div>
+      <div style="font-size:14px; color:#FFE4D0; margin-top:6px;">${escapeHtml(sub)}</div>
       ${action}
     </div></div>${extra}${rowsHtml}`;
 }
@@ -5444,7 +5445,7 @@ function renderTodayWorkout(workout) {
   const genBtn = document.getElementById("genWorkoutBtn");
   if (state.pendingWorkout?.completed) {
     cautionEl.innerHTML = ""; // nothing to caution about — this session is already done
-    box.innerHTML = `<div class="tf-hero tf-done"><svg width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="Done"><circle cx="38" cy="38" r="31" fill="none" stroke="#2FBFA6" stroke-width="7"/><path d="M25 39l9 9 17-19" fill="none" stroke="#2FBFA6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><div style="flex:1; min-width:0;"><div class="tf-hero-title">Done for today</div><div class="tf-hero-sub">${escapeHtml(String(workout.day || "Workout"))} · ${workout.exercises.length} moves logged. Your next workout will be ready when you come back.</div></div></div>`;
+    box.innerHTML = `<div class="tf-hero tf-done"><svg width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="Done"><circle cx="38" cy="38" r="31" fill="none" stroke="#FF7A3D" stroke-width="7"/><path d="M25 39l9 9 17-19" fill="none" stroke="#FF7A3D" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><div style="flex:1; min-width:0;"><div class="tf-hero-title">Done for today</div><div class="tf-hero-sub">${escapeHtml(String(workout.day || "Workout"))} · ${workout.exercises.length} moves logged. Your next workout will be ready when you come back.</div></div></div>`;
     sessionBtn.textContent = "Session already logged";
     sessionBtn.disabled = true;
     minDayBtn.disabled = true;
@@ -6428,7 +6429,7 @@ function renderBarChart(containerId, bars) {
     const x = pad + i * ((w - pad * 2) / bars.length);
     const barH = (b.value / max) * (h - pad * 2 - 10);
     const y = h - pad - barH;
-    return `<text x="${(x + barW / 2).toFixed(1)}" y="${(y - 6).toFixed(1)}" font-size="12" fill="#EDEAE0" text-anchor="middle" font-family="monospace">${b.value}</text>
+    return `<text x="${(x + barW / 2).toFixed(1)}" y="${(y - 6).toFixed(1)}" font-size="12" fill="#F4EEE8" text-anchor="middle" font-family="monospace">${b.value}</text>
             <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${barH.toFixed(1)}" fill="#0F6E63" rx="2"/>
             <text x="${(x + barW / 2).toFixed(1)}" y="${h + 4}" font-size="10" fill="#6B6A63" text-anchor="middle">${b.label}</text>`;
   }).join("");
@@ -6872,7 +6873,7 @@ function weekBudgetNumbers() {
 }
 function foodRing(frac, centerTop, centerSub, color) {
   const C = 2 * Math.PI * 34;
-  return `<svg width="68" height="68" viewBox="0 0 84 84" role="img"><circle cx="42" cy="42" r="34" fill="none" stroke="#3A3F33" stroke-width="8"/><circle cx="42" cy="42" r="34" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - Math.max(0, Math.min(1, frac)))).toFixed(1)}" transform="rotate(-90 42 42)"/>${centerTop === "✓" ? `<path d="M30 43l9 9 16-18" fill="none" stroke="#2FBFA6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>` : `<text x="42" y="44" text-anchor="middle" font-family="Oswald, sans-serif" font-size="${String(centerTop).length > 5 ? 17 : 21}" font-weight="600" fill="#EDEAE0">${centerTop}</text>`}<text x="42" y="58" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="8" fill="#9B9C8E" letter-spacing="1">${centerSub}</text></svg>`;
+  return `<svg width="68" height="68" viewBox="0 0 84 84" role="img"><circle cx="42" cy="42" r="34" fill="none" stroke="#3A3029" stroke-width="8"/><circle cx="42" cy="42" r="34" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - Math.max(0, Math.min(1, frac)))).toFixed(1)}" transform="rotate(-90 42 42)"/>${centerTop === "✓" ? `<path d="M30 43l9 9 16-18" fill="none" stroke="#FF7A3D" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>` : `<text x="42" y="44" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="${String(centerTop).length > 5 ? 17 : 21}" font-weight="600" fill="#F4EEE8">${centerTop}</text>`}<text x="42" y="58" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="8" fill="#9A8F85" letter-spacing="1">${centerSub}</text></svg>`;
 }
 function renderFoodHero(totals, t, entryCount) {
   const kick = document.getElementById("tfFoodKicker");
@@ -6884,16 +6885,16 @@ function renderFoodHero(totals, t, entryCount) {
   if (!el) return;
   const pT = t.protein || 0, cT = t.calories || 0;
   const pLeft = Math.max(0, pT - totals.protein);
-  const pRing = foodRing(pT ? totals.protein / pT : 0, pT && pLeft === 0 ? "✓" : (pT ? pLeft + "g" : totals.protein + "g"), pT ? "LEFT" : "TODAY", "#2FBFA6");
+  const pRing = foodRing(pT ? totals.protein / pT : 0, pT && pLeft === 0 ? "✓" : (pT ? pLeft + "g" : totals.protein + "g"), pT ? "LEFT" : "TODAY", "#FF7A3D");
   const cLeft = cT - totals.calories;
-  const cRing = foodRing(cT ? totals.calories / cT : 0, cT ? Math.abs(cLeft).toLocaleString() : totals.calories.toLocaleString(), cT ? (cLeft >= 0 ? "LEFT" : "OVER") : "TODAY", cLeft < 0 ? "#D9A441" : "#2FBFA6");
+  const cRing = foodRing(cT ? totals.calories / cT : 0, cT ? Math.abs(cLeft).toLocaleString() : totals.calories.toLocaleString(), cT ? (cLeft >= 0 ? "LEFT" : "OVER") : "TODAY", cLeft < 0 ? "#E8B04A" : "#FF7A3D");
   const wk = weekBudgetNumbers();
   const wkPct = wk.budget ? Math.min(100, Math.round(wk.eaten / wk.budget * 100)) : 0;
   el.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
       <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">${pRing}<div style="line-height:1.3; font-size:12px; color:var(--text-muted);"><b style="color:var(--text); font-size:13px;">${totals.protein}${pT ? " / " + pT : ""} g</b><br>protein</div></div>
       <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">${cRing}<div style="line-height:1.3; font-size:12px; color:var(--text-muted);"><b style="color:var(--text); font-size:13px;">${totals.calories.toLocaleString()}${cT ? " / " + cT.toLocaleString() : ""}</b><br>cal</div></div>
     </div>
-    <div class="tf-mini" data-today-toggle role="button" tabindex="0" style="margin-top:8px; cursor:pointer;"><div class="r"><span>This week</span><b>${wk.left >= 0 ? wk.left.toLocaleString() + " left of " : Math.abs(wk.left).toLocaleString() + " over "}${wk.budget.toLocaleString()} <span class="tf-chev" style="color:var(--accent);">${todayOpen ? "▴" : "▾"}</span></b></div><div class="bar"><i style="width:${wkPct}%; ${wk.left < 0 ? "background:#D9A441;" : ""}"></i></div></div>`;
+    <div class="tf-mini" data-today-toggle role="button" tabindex="0" style="margin-top:8px; cursor:pointer;"><div class="r"><span>This week</span><b>${wk.left >= 0 ? wk.left.toLocaleString() + " left of " : Math.abs(wk.left).toLocaleString() + " over "}${wk.budget.toLocaleString()} <span class="tf-chev" style="color:var(--accent);">${todayOpen ? "▴" : "▾"}</span></b></div><div class="bar"><i style="width:${wkPct}%; ${wk.left < 0 ? "background:#E8B04A;" : ""}"></i></div></div>`;
   const det = document.getElementById("todayDetails");
   if (det) det.classList.toggle("hidden", !todayOpen);
   const tm = document.getElementById("todayMacros");
@@ -7049,10 +7050,10 @@ function renderDayStrip() {
   const yb = H - (dailyBudget / top) * H;
   el.innerHTML = `<div style="position:relative;"><div style="display:flex; align-items:flex-end; gap:6px; height:${H}px; position:relative;">${cols.map(c => {
     const h = c.n ? Math.max(4, Math.round(c.cal / top * H)) : 4;
-    const col = !c.n ? "#3A3F33" : c.cal <= dailyBudget * 1.1 ? "#2FBFA6" : c.cal <= dailyBudget * 1.3 ? "#D9A441" : "#D96C5B";
-    return `<div data-strip-date="${c.k}" role="button" tabindex="0" style="flex:1; height:${H}px; display:flex; align-items:flex-end; cursor:pointer;"><i style="display:block; width:100%; height:${h}px; border-radius:4px; background:${col};${c.k === sel ? " outline:2px solid #EDEAE0; outline-offset:1px;" : ""}"></i></div>`;
+    const col = !c.n ? "#3A3029" : c.cal <= dailyBudget * 1.1 ? "#FF7A3D" : c.cal <= dailyBudget * 1.3 ? "#E8B04A" : "#E5534B";
+    return `<div data-strip-date="${c.k}" role="button" tabindex="0" style="flex:1; height:${H}px; display:flex; align-items:flex-end; cursor:pointer;"><i style="display:block; width:100%; height:${h}px; border-radius:4px; background:${col};${c.k === sel ? " outline:2px solid #F4EEE8; outline-offset:1px;" : ""}"></i></div>`;
   }).join("")}<div style="position:absolute; left:0; right:0; top:${yb.toFixed(1)}px; border-top:1px dashed rgba(237,234,224,.5); pointer-events:none;"></div></div>
-  <div style="display:flex; gap:6px; margin-top:4px;">${cols.map(c => `<div style="flex:1; text-align:center; font-size:11px; color:${c.k === sel ? "#EDEAE0" : "#9B9C8E"};">${c.lab}</div>`).join("")}</div></div>
+  <div style="display:flex; gap:6px; margin-top:4px;">${cols.map(c => `<div style="flex:1; text-align:center; font-size:11px; color:${c.k === sel ? "#F4EEE8" : "#9A8F85"};">${c.lab}</div>`).join("")}</div></div>
 `;
 }
 document.getElementById("dayStrip").addEventListener("click", (e) => {
@@ -7873,7 +7874,7 @@ function renderBodyFatSummary() {
       frac = span !== 0 ? (wg.startWeight - wg.currentWeight) / span : 0;
       sub = "goal " + wg.goalWeight;
     }
-    tiles.push(`<div class="tf-rt">${tfRing(frac, String(wg.currentWeight), "Weight " + wg.currentWeight + " pounds", "#2FBFA6", 96)}<div class="rv">${wg.currentWeight}<small> lb</small></div><div class="rl">${sub}${wg.goalWeight ? "<br>started " + wg.startWeight : ""}</div></div>`);
+    tiles.push(`<div class="tf-rt">${tfRing(frac, String(wg.currentWeight), "Weight " + wg.currentWeight + " pounds", "#FF7A3D", 96)}<div class="rv">${wg.currentWeight}<small> lb</small></div><div class="rl">${sub}${wg.goalWeight ? "<br>started " + wg.startWeight : ""}</div></div>`);
     if (!wg.goalWeight) notes += `<div class="rl" style="color:var(--text-muted); font-size:13px; margin-top:8px;">Set a goal weight in Settings to see a forecast.</div>`;
     else if (wg.status === "reached") notes += `<div class="tf-hl"><span class="t" style="color:var(--accent);">Goal weight reached</span></div>`;
     else if (wg.status === "onTrack" && Math.abs(wg.weeksToGoal) <= 104) {
@@ -7896,7 +7897,7 @@ function renderBodyFatSummary() {
     const firstBf = (state.measurements || []).filter(m => typeof m.bodyFatPct === "number").sort((a, b) => new Date(a.date) - new Date(b.date))[0];
     let frac = 0;
     if (goalPct && firstBf && firstBf.bodyFatPct !== goalPct) frac = (firstBf.bodyFatPct - bf.latest) / (firstBf.bodyFatPct - goalPct);
-    tiles.push(`<div class="tf-rt">${tfRing(frac, bf.latest + "%", "Body fat " + bf.latest + " percent", "#C79A45", 96)}<div class="rv">${bf.latest}<small> % body fat</small></div><div class="rl">${goalPct ? "goal " + goalPct + "%" : "RFM estimate"}<br>${formatDateOnly(bf.latestDate)}</div></div>`);
+    tiles.push(`<div class="tf-rt">${tfRing(frac, bf.latest + "%", "Body fat " + bf.latest + " percent", "#F2B84B", 96)}<div class="rv">${bf.latest}<small> % body fat</small></div><div class="rl">${goalPct ? "goal " + goalPct + "%" : "RFM estimate"}<br>${formatDateOnly(bf.latestDate)}</div></div>`);
     if (bf.ptsPerWeek === null) {
       notes += `<div class="tf-hl"><span class="t">Log again next weigh-in to start a trend</span></div>`;
       if (clearFlagType("bodyFatTrend")) { persistNow(); renderFlagsBanner(); }
@@ -8029,10 +8030,10 @@ function renderProgressTop() {
     const C = 2 * Math.PI * 52;
     heroHtml = `<div class="tf-pg-hero">
       <svg width="124" height="124" viewBox="0 0 124 124" role="img" aria-label="${done} of ${denom} ${pace.mode === "count" ? "workouts" : "weeks"} done">
-        <circle cx="62" cy="62" r="52" fill="none" stroke="rgba(11,21,18,.22)" stroke-width="12"/>
-        <circle cx="62" cy="62" r="52" fill="none" stroke="#0B1512" stroke-width="12" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - frac)).toFixed(1)}" transform="rotate(-90 62 62)"/>
-        <text x="62" y="68" text-anchor="middle" font-family="Oswald, sans-serif" font-size="36" font-weight="700" fill="#0B1512">${Math.round(frac * 100)}%</text>
-        <text x="62" y="86" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="9" fill="#0B1512" letter-spacing="1.5">OF PROGRAM</text>
+        <circle cx="62" cy="62" r="52" fill="none" stroke="rgba(18,15,13,.22)" stroke-width="12"/>
+        <circle cx="62" cy="62" r="52" fill="none" stroke="#120F0D" stroke-width="12" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - frac)).toFixed(1)}" transform="rotate(-90 62 62)"/>
+        <text x="62" y="68" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="36" font-weight="700" fill="#120F0D">${Math.round(frac * 100)}%</text>
+        <text x="62" y="86" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="9" fill="#120F0D" letter-spacing="1.5">OF PROGRAM</text>
       </svg>
       <div style="flex:1; min-width:0;">
         <div class="k">${esc(phaseName || "Program")}</div>
@@ -8066,7 +8067,7 @@ function renderProgressTop() {
     const down = delta <= 0;
     const wkAgo = ms.filter(m => new Date(m.date + "T12:00:00").getTime() <= Date.now() - 7 * 86400000).pop();
     const wkDelta = wkAgo ? ms[ms.length - 1].weight - wkAgo.weight : null;
-    weightTile = `<div class="tf-stat"><div class="l">Since ${formatDateOnly(ms[0].date)}</div><div class="v" style="color:${down ? "var(--accent)" : "#D96C5B"};">${down ? "−" : "+"}${Math.abs(delta).toFixed(1)}<small> lb</small></div>${wkDelta === null ? `<div class="p">total change</div>` : `<div class="p">${wkDelta <= 0 ? "▼" : "▲"} ${Math.abs(wkDelta).toFixed(1)} this week</div>`}</div>`;
+    weightTile = `<div class="tf-stat"><div class="l">Since ${formatDateOnly(ms[0].date)}</div><div class="v" style="color:${down ? "var(--accent)" : "#E5534B"};">${down ? "−" : "+"}${Math.abs(delta).toFixed(1)}<small> lb</small></div>${wkDelta === null ? `<div class="p">total change</div>` : `<div class="p">${wkDelta <= 0 ? "▼" : "▲"} ${Math.abs(wkDelta).toFixed(1)} this week</div>`}</div>`;
   }
   const bestTile = `<div class="tf-stat"><div class="l">Best week</div><div class="v">${best.count}<small> ${best.count === 1 ? "workout" : "workouts"}</small></div><div class="p gold">${best.count ? "wk of " + best.start.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "none yet"}</div></div>`;
   // Protein days hit in the last 7 completed-or-current days
@@ -8105,30 +8106,30 @@ function renderProgressTop() {
     weightCard = `<div class="tf-pcard">
       <div class="h"><b>Weight</b>${avg7 ? `<span>7-day avg <em>${avg7.toFixed(1)} lb</em></span>` : ""}</div>
       <svg width="100%" viewBox="0 0 ${W} ${H}" style="margin-top:8px; overflow:visible;" role="img" aria-label="Weight trend, latest ${last.weight} pounds">
-        <defs><linearGradient id="tfWg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2FBFA6" stop-opacity=".38"/><stop offset="1" stop-color="#2FBFA6" stop-opacity="0"/></linearGradient></defs>
-        <line x1="0" y1="${H - bot}" x2="${W}" y2="${H - bot}" stroke="#2A2E24"/>
-        ${goalW ? `<line x1="0" y1="${Y(goalW).toFixed(1)}" x2="${W}" y2="${Y(goalW).toFixed(1)}" stroke="#C79A45" stroke-width="1.5" stroke-dasharray="5 5"/><text x="${W - 4}" y="${(Y(goalW) - 5).toFixed(1)}" text-anchor="end" font-family="Roboto Mono, monospace" font-size="9" fill="#C79A45">GOAL ${goalW}</text>` : ""}
+        <defs><linearGradient id="tfWg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF7A3D" stop-opacity=".38"/><stop offset="1" stop-color="#FF7A3D" stop-opacity="0"/></linearGradient></defs>
+        <line x1="0" y1="${H - bot}" x2="${W}" y2="${H - bot}" stroke="#2A221C"/>
+        ${goalW ? `<line x1="0" y1="${Y(goalW).toFixed(1)}" x2="${W}" y2="${Y(goalW).toFixed(1)}" stroke="#F2B84B" stroke-width="1.5" stroke-dasharray="5 5"/><text x="${W - 4}" y="${(Y(goalW) - 5).toFixed(1)}" text-anchor="end" font-family="Roboto Mono, monospace" font-size="9" fill="#F2B84B">GOAL ${goalW}</text>` : ""}
         <path d="${area}" fill="url(#tfWg)"/>
-        <polyline fill="none" stroke="#2FBFA6" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="${line}"/>
+        <polyline fill="none" stroke="#FF7A3D" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="${line}"/>
         ${(() => {
           const jd = new Set(findJumps().map(j => j.date));
-          const dots = use.filter(m => jd.has(m.date)).map(m => `<circle cx="${X(m).toFixed(1)}" cy="${Y(m.weight).toFixed(1)}" r="5" fill="#D96C5B" stroke="#20231C" stroke-width="2"/>`).join("");
+          const dots = use.filter(m => jd.has(m.date)).map(m => `<circle cx="${X(m).toFixed(1)}" cy="${Y(m.weight).toFixed(1)}" r="5" fill="#E5534B" stroke="#1E1915" stroke-width="2"/>`).join("");
           let ticks = "";
           const dayMs = 86400000, startD = new Date(use[0].date + "T12:00:00"), endD = new Date(use[use.length - 1].date + "T12:00:00");
           for (let d = new Date(startD); d <= endD; d = new Date(d.getTime() + dayMs)) {
             const ds = localDateStr(d), di = dayInfo(ds), x = X({ date: ds }).toFixed(1);
-            if (di.alc >= 200) ticks += `<rect x="${(x - 2).toFixed(1)}" y="${H - bot + 5}" width="4" height="9" rx="2" fill="#D96C5B"/>`;
-            else if (di.salty >= 700) ticks += `<rect x="${(x - 2).toFixed(1)}" y="${H - bot + 5}" width="4" height="9" rx="2" fill="#D9A441"/>`;
+            if (di.alc >= 200) ticks += `<rect x="${(x - 2).toFixed(1)}" y="${H - bot + 5}" width="4" height="9" rx="2" fill="#E5534B"/>`;
+            else if (di.salty >= 700) ticks += `<rect x="${(x - 2).toFixed(1)}" y="${H - bot + 5}" width="4" height="9" rx="2" fill="#E8B04A"/>`;
           }
           return ticks + dots;
         })()}
-        <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="12" fill="#2FBFA6" fill-opacity=".2"/>
-        <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="6" fill="${findJumps().some(j => j.date === last.date) ? "#D96C5B" : "#2FBFA6"}" stroke="#20231C" stroke-width="2.5"/>
-        <rect x="${(bubbleX - 31).toFixed(1)}" y="${Math.max(0, ly - 40).toFixed(1)}" width="62" height="24" rx="12" fill="#EDEAE0"/>
-        <text x="${bubbleX.toFixed(1)}" y="${Math.max(16, ly - 24).toFixed(1)}" text-anchor="middle" font-family="Oswald, sans-serif" font-size="14" font-weight="600" fill="#0B1512">${last.weight}</text>
+        <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="12" fill="#FF7A3D" fill-opacity=".2"/>
+        <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="6" fill="${findJumps().some(j => j.date === last.date) ? "#E5534B" : "#FF7A3D"}" stroke="#1E1915" stroke-width="2.5"/>
+        <rect x="${(bubbleX - 31).toFixed(1)}" y="${Math.max(0, ly - 40).toFixed(1)}" width="62" height="24" rx="12" fill="#F4EEE8"/>
+        <text x="${bubbleX.toFixed(1)}" y="${Math.max(16, ly - 24).toFixed(1)}" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="14" font-weight="600" fill="#120F0D">${last.weight}</text>
       </svg>
       <div class="tf-axis"><span>${fmt(use[0])}</span><span>TODAY</span></div>
-      <div class="meta" style="font-size:11px; margin-top:8px;"><span style="color:#D96C5B;">●</span> jump of 1.5+ lb · <span style="color:#D96C5B;">▮</span> alcohol day · <span style="color:#D9A441;">▮</span> salty or restaurant day</div>
+      <div class="meta" style="font-size:11px; margin-top:8px;"><span style="color:#E5534B;">●</span> jump of 1.5+ lb · <span style="color:#E5534B;">▮</span> alcohol day · <span style="color:#E8B04A;">▮</span> salty or restaurant day</div>
     </div>`;
   }
 
@@ -8152,7 +8153,7 @@ function renderProgressTop() {
   const nextL = lLadder.filter(m => lost < m);
   const lShow = earnedL.length ? [earnedL[earnedL.length - 1]] : [nextL[0]];
   const badge = (label, face, earned, gold) => `<div class="tf-badge"><div class="c${gold ? " gold" : ""}${earned ? "" : " lock"}">${face}</div><div class="t${earned ? "" : " lock"}">${label}</div></div>`;
-  const check = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0B1512" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+  const check = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#120F0D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
   const badges = wShow.map(m => badge(m === 1 ? "First workout" : `${m} workouts`, m === 1 ? check : m, totalDays >= m, false))
     .concat(lShow.map(m => badge(`${m} lb down`, `−${m}`, lost >= m, true))).join("");
   const milestonesCard = `<div class="tf-pcard"><div class="h"><b>Milestones</b></div><div class="tf-badges">${badges}</div></div>`;
@@ -8164,11 +8165,11 @@ function renderProgressTop() {
     const h = Math.round((w.count / maxC) * (stemH - 16));
     const isBest = w === best && w.count > 0;
     const isNow = i === weeks.length - 1;
-    const col = isBest ? "#C79A45" : (w.count >= goal ? "#2FBFA6" : "#5A5F50");
+    const col = isBest ? "#F2B84B" : (w.count >= goal ? "#FF7A3D" : "#5E544B");
     return `<div style="flex:1; height:${stemH}px; position:relative;">
       <div style="position:absolute; left:50%; bottom:0; width:4px; margin-left:-2px; height:${h + 7}px; border-radius:2px; background:${col}; opacity:.45;"></div>
-      <div style="position:absolute; left:50%; bottom:${h}px; width:16px; height:16px; margin-left:-8px; border-radius:50%; background:${col};${isNow ? " box-shadow:0 0 0 4px rgba(47,191,166,.25);" : ""}"></div>
-      <div style="position:absolute; left:0; right:0; bottom:${h + 20}px; text-align:center; font-size:11px; color:${col === "#5A5F50" ? "var(--text-muted)" : col}; font-weight:600;">${w.count}</div>
+      <div style="position:absolute; left:50%; bottom:${h}px; width:16px; height:16px; margin-left:-8px; border-radius:50%; background:${col};${isNow ? " box-shadow:0 0 0 4px rgba(255,122,61,.25);" : ""}"></div>
+      <div style="position:absolute; left:0; right:0; bottom:${h + 20}px; text-align:center; font-size:11px; color:${col === "#5E544B" ? "var(--text-muted)" : col}; font-weight:600;">${w.count}</div>
     </div>`;
   }).join("");
   const goalBottom = Math.round((goal / maxC) * (stemH - 16)) + 8;
@@ -8176,7 +8177,7 @@ function renderProgressTop() {
   const weeklyCard = `<div class="tf-pcard">
     <div class="h"><b>Workouts per week</b><span>avg <em>${avgWk}</em> · goal ${goal}</span></div>
     <div style="position:relative; margin-top:26px;">
-      <div style="position:absolute; left:0; right:0; bottom:${goalBottom}px; border-top:1.5px dashed rgba(199,154,69,.7);"></div>
+      <div style="position:absolute; left:0; right:0; bottom:${goalBottom}px; border-top:1.5px dashed rgba(242,184,75,.7);"></div>
       <div style="display:flex; gap:12px;">${cols}</div>
     </div>
     <div style="display:flex; gap:12px; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); margin-top:8px;">${weeks.map((w, i) => `<span style="flex:1; text-align:center;${i === weeks.length - 1 ? " color:var(--accent);" : ""}">${w.start.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()}</span>`).join("")}</div>
@@ -8208,7 +8209,7 @@ function renderProgressTop() {
       const kf = n => n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(Math.round(n));
       recapCard = `<div class="tf-pcard tf-recap"><div class="h"><b>Last week</b><span>${rng}</span></div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 10px; margin-top:12px;">
-          <div class="cell"><div class="v" style="color:${over ? "#D96C5B" : "var(--accent)"};">${kf(lwCal)}<small> / ${kf(wkBudget)}</small></div><div class="l">calories vs budget</div></div>
+          <div class="cell"><div class="v" style="color:${over ? "#E5534B" : "var(--accent)"};">${kf(lwCal)}<small> / ${kf(wkBudget)}</small></div><div class="l">calories vs budget</div></div>
           <div class="cell"><div class="v">${lwLogged}<small> / 7</small></div><div class="l">days logged</div></div>
           <div class="cell"><div class="v"${hitGoal ? ' style="color:var(--gold);"' : ""}>${lw.count}<small> / ${goal}</small></div><div class="l">workouts</div></div>
           <div class="cell"><div class="v">${wDelta === null ? "·" : (wDelta <= 0 ? "−" : "+") + Math.abs(wDelta).toFixed(1)}<small>${wDelta === null ? "" : " lb"}</small></div><div class="l">weight change</div></div>
@@ -8226,21 +8227,21 @@ function renderProgressTop() {
     const r7 = ms.filter(m => new Date(m.date + "T12:00:00").getTime() >= Date.now() - 7 * 86400000);
     wBig = (r7.length ? r7.reduce((a, m) => a + m.weight, 0) / r7.length : ms[ms.length - 1].weight).toFixed(1);
     wSub = `${down ? "−" : "+"}${Math.abs(delta).toFixed(1)} lb since ${formatDateOnly(ms[0].date)}`;
-    wSubCol = down ? "var(--accent)" : "#D96C5B";
+    wSubCol = down ? "var(--accent)" : "#E5534B";
     const pts = ms.filter(m => new Date(m.date + "T12:00:00").getTime() >= Date.now() - 35 * 86400000);
     const u = pts.length >= 2 ? pts : ms.slice(-2), vv = u.map(m => m.weight), lo = Math.min(...vv), hi = Math.max(...vv), span = Math.max(0.5, hi - lo);
     const xy = u.map((m, i) => `${((i / (u.length - 1)) * 140).toFixed(1)} ${(40 - ((m.weight - lo) / span) * 34).toFixed(1)}`);
     const path = "M" + xy.join(" L");
-    wViz = `<svg width="100%" height="44" viewBox="0 0 140 44" preserveAspectRatio="none"><path d="${path} L140 44 L0 44Z" fill="rgba(47,191,166,.18)"/><path d="${path}" fill="none" stroke="#2FBFA6" stroke-width="2.2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
+    wViz = `<svg width="100%" height="44" viewBox="0 0 140 44" preserveAspectRatio="none"><path d="${path} L140 44 L0 44Z" fill="rgba(255,122,61,.18)"/><path d="${path}" fill="none" stroke="#FF7A3D" stroke-width="2.2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
   }
   // workouts tile
   const curWk = weeks[weeks.length - 1];
-  const wkBars = weeks.map(w => `<i style="height:${Math.max(4, Math.round((w.count / Math.max(goal, 3)) * 44))}px; background:${w.count ? "#2FBFA6" : "#2d3127"};"></i>`).join("");
+  const wkBars = weeks.map(w => `<i style="height:${Math.max(4, Math.round((w.count / Math.max(goal, 3)) * 44))}px; background:${w.count ? "#FF7A3D" : "#2E2620"};"></i>`).join("");
   // calories tile
   const wb = weekBudgetNumbers();
   const perDay = weekDs.map(d => d > todayDs ? 0 : foodLogsForDate(d).reduce((n, f) => n + (f.calories || 0), 0));
   const maxDay = Math.max(wb.budget / 7 * 1.25, ...perDay, 1);
-  const calBars = perDay.map(v => `<i style="height:${v ? Math.max(4, Math.round((v / maxDay) * 44)) : 4}px; background:${v ? (v > wb.budget / 7 ? "#D96C5B" : "#2FBFA6") : "#2d3127"};"></i>`).join("");
+  const calBars = perDay.map(v => `<i style="height:${v ? Math.max(4, Math.round((v / maxDay) * 44)) : 4}px; background:${v ? (v > wb.budget / 7 ? "#E5534B" : "#FF7A3D") : "#2E2620"};"></i>`).join("");
   // protein tile
   const protDays = [];
   for (let i = 6; i >= 0; i--) {
@@ -8248,7 +8249,7 @@ function renderProgressTop() {
     const g = foodLogsForDate(d).reduce((n, f) => n + (f.protein || 0), 0);
     protDays.push({ d, g, ok: !!pTarget && g >= pTarget });
   }
-  const protDots = protDays.map(x => `<i style="flex:none; width:14px; height:14px; border-radius:50%; ${x.ok ? "background:#2FBFA6; border:2px solid #2FBFA6;" : "border:2px solid #4a4f40;"}"></i>`).join("");
+  const protDots = protDays.map(x => `<i style="flex:none; width:14px; height:14px; border-radius:50%; ${x.ok ? "background:#FF7A3D; border:2px solid #FF7A3D;" : "border:2px solid #4F443A;"}"></i>`).join("");
   // milestones tile
   const prevW = [0, ...wLadder].filter(m => m <= totalDays).pop() || 0, nxtW = nextW[0];
   const msBig = nxtW ? `${totalDays}<small>/ ${nxtW} workouts</small>` : `${totalDays}<small>workouts</small>`;
@@ -8257,14 +8258,14 @@ function renderProgressTop() {
   // walks tile
   const wkCardio = (state.cardioLogs || []).filter(c => weekDs.includes(dayKeyOf(c.date)));
   const wkMiles = wkCardio.reduce((n, c) => n + (c.distance || 0), 0), wkMin = wkCardio.reduce((n, c) => n + (c.duration || 0), 0);
-  const walkBars = weekDs.map(d => { const m = wkCardio.filter(c => dayKeyOf(c.date) === d).reduce((n, c) => n + (c.distance || 0), 0); return `<i style="height:${m ? Math.max(4, Math.round((m / Math.max(3, wkMiles)) * 44 * 2.2)) : 4}px; background:${m ? "#4fa8c9" : "#2d3127"};"></i>`; }).join("");
+  const walkBars = weekDs.map(d => { const m = wkCardio.filter(c => dayKeyOf(c.date) === d).reduce((n, c) => n + (c.distance || 0), 0); return `<i style="height:${m ? Math.max(4, Math.round((m / Math.max(3, wkMiles)) * 44 * 2.2)) : 4}px; background:${m ? "#4fa8c9" : "#2E2620"};"></i>`; }).join("");
   const tile = (key, name, big, sub, subCol, viz, vizStyle) => `<button type="button" class="tf-ptile" data-ptile="${key}"><span class="n">${name}<b>›</b></span><span class="big">${big}</span><span class="sub"${subCol ? ` style="color:${subCol};"` : ""}>${sub}</span><span class="viz"${vizStyle ? ` style="${vizStyle}"` : ""}>${viz}</span></button>`;
   el.innerHTML = `<div class="tf-ptiles">`
     + tile("weight", "Weight", `${wBig}<small>lb</small>`, wSub, wSubCol, wViz)
     + tile("workouts", "Workouts", `${curWk.count}<small>of ${goal} this week</small>`, `${fiveWeekTotal} in 5 weeks`, "", wkBars)
-    + tile("calories", "Calories", `${Math.abs(wb.left).toLocaleString()}<small>${wb.left >= 0 ? "left" : "over"}</small>`, `of ${wb.budget.toLocaleString()} this week`, wb.left < 0 ? "#D96C5B" : "", calBars)
+    + tile("calories", "Calories", `${Math.abs(wb.left).toLocaleString()}<small>${wb.left >= 0 ? "left" : "over"}</small>`, `of ${wb.budget.toLocaleString()} this week`, wb.left < 0 ? "#E5534B" : "", calBars)
     + tile("protein", "Protein", `${hit}<small>/ 7 days hit</small>`, pTarget ? `goal ${pTarget} g` : "set a goal in Settings", "", protDots, "align-items:center; justify-content:space-between;")
-    + tile("milestones", "Milestones", msBig, msSub, "", `<span style="flex:1; height:8px; border-radius:5px; background:#2d3127; display:block;"><span style="display:block; width:${Math.round(msFrac * 100)}%; height:8px; border-radius:5px; background:#2FBFA6;"></span></span>`, "align-items:center;")
+    + tile("milestones", "Milestones", msBig, msSub, "", `<span style="flex:1; height:8px; border-radius:5px; background:#2E2620; display:block;"><span style="display:block; width:${Math.round(msFrac * 100)}%; height:8px; border-radius:5px; background:#FF7A3D;"></span></span>`, "align-items:center;")
     + tile("walks", "Walks &amp; rucks", `${mi(wkMiles)}<small>mi this week</small>`, `${wkCardio.length} ${wkCardio.length === 1 ? "walk" : "walks"}${wkMin ? " · " + Math.floor(wkMin / 60) + "h " + (wkMin % 60) + "m" : ""}`, "", walkBars)
     + `</div>`;
   // ---- sheet sections ----
@@ -8272,7 +8273,7 @@ function renderProgressTop() {
   setSec("psWeight", weightCard);
   setSec("psWorkouts", consistencyCard + weeklyCard);
   const dn = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const dRows = weekDs.map((d, i) => { const k = perDay[i]; const over = k > wb.budget / 7; return `<div class="tf-prow"><span>${dn[i]}</span><span class="r" style="${over ? "color:#D96C5B;" : ""}">${d > todayDs ? "—" : (k ? k.toLocaleString() + " cal" : "not logged")}</span></div>`; }).join("");
+  const dRows = weekDs.map((d, i) => { const k = perDay[i]; const over = k > wb.budget / 7; return `<div class="tf-prow"><span>${dn[i]}</span><span class="r" style="${over ? "color:#E5534B;" : ""}">${d > todayDs ? "—" : (k ? k.toLocaleString() + " cal" : "not logged")}</span></div>`; }).join("");
   setSec("psCalories", `<div class="tf-pcard"><div class="h"><b>This week</b><span><em>${wb.eaten.toLocaleString()}</em> of ${wb.budget.toLocaleString()} cal</span></div><div style="margin-top:8px;">${dRows}</div></div>` + recapCard);
   const pRows = protDays.slice().reverse().map(x => `<div class="tf-prow"><span>${new Date(x.d + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span><span class="r" style="${x.ok ? "color:var(--accent);" : ""}">${Math.round(x.g)} g ${x.ok ? "✓" : ""}</span></div>`).join("");
   setSec("psProtein", `<div class="tf-pcard"><div class="h"><b>Protein</b><span>goal <em>${pTarget || "—"} g</em> · ${hit} of 7 days hit</span></div><div style="margin-top:8px;">${pRows}</div></div>`);
