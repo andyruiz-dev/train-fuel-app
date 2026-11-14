@@ -32,6 +32,7 @@
   body{
     margin:0; font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     background:var(--bg); color:var(--text); padding-bottom:72px;
+    text-shadow:0 1px 2px rgba(0,0,0,.75), 0 0 1px rgba(0,0,0,.6);
   }
   header{
     padding:22px 16px 14px; position:sticky; top:0; background:var(--bg); z-index:5;
@@ -1220,7 +1221,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-14 14:20 CT";
+const APP_BUILD = "2026-11-14 14:35 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
