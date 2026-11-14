@@ -1191,7 +1191,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-14 14:05 CT";
+const APP_BUILD = "2026-11-14 14:30 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -5221,6 +5221,18 @@ const CHEST_PLANS = {
   home: { label: "Home · rings", moves: ["Ring push-up", "Ring push-up", "Ring dips (feet down)", "Ring dips (feet down)"] },
   travel: { label: "Travel", moves: ["Decline push-up", "Decline push-up", "Slow push-up (4 s down)", "Slow push-up (4 s down)"] },
 };
+const CHEST_WARM = {
+  home: ["Band pull-aparts · 15", "Ring scap push-ups · 10", "Doorway chest stretch · 20 s each side"],
+  travel: ["Wall slides · 10", "Floor scap push-ups · 10", "Doorway chest stretch · 20 s each side"]
+};
+function chestWarmDone() { const w = state.chestWarm; return w && w.day === localDateStr() && Array.isArray(w.ids) ? w.ids : []; }
+function chestWarmHtml() {
+  const list = CHEST_WARM[state.chestMode] || CHEST_WARM.home;
+  const done = chestWarmDone();
+  if (done.length >= list.length) return `<div class="card" style="margin-top:10px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--text-muted);"><span>Warm-up done</span><span style="color:var(--accent);">✓</span></div>`;
+  const rows = list.map((t, i) => { const d = done.includes(i); return `<div data-chest-warm="${i}" style="display:flex; align-items:center; gap:10px; padding:9px 0; ${i < list.length - 1 ? "border-bottom:1px solid #2d3127;" : ""} font-size:14px; cursor:pointer;"><span style="width:22px; height:22px; border-radius:50%; border:2px solid ${d ? "var(--accent)" : "var(--border)"}; background:${d ? "var(--accent)" : "transparent"}; color:#0F1A17; display:flex; align-items:center; justify-content:center; font-size:13px; flex:none;">${d ? "✓" : ""}</span><span style="${d ? "color:var(--text-muted); text-decoration:line-through;" : ""}">${escapeHtml(t)}</span></div>`; }).join("");
+  return `<div class="card" style="margin-top:10px; padding:10px 14px 4px;"><div class="tf-hero2-k" style="color:#8fd9c9;">Warm-up · ~2 min · shoulder balance</div>${rows}</div>`;
+}
 const CHEST_NEXT = {
   "Ring push-up": "raise your feet",
   "Ring dips (feet down)": "lean forward, then lift one foot off the floor",
@@ -5278,7 +5290,8 @@ function chestBoosterHtml(opts) {
       <div class="tf-hero2-k">Chest booster</div>
       <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:4px;"><div><div style="font-family:var(--font-display); font-size:26px; line-height:1.05; text-transform:uppercase;">${plan.label}</div><div style="font-size:12px; color:#cfe9e3; margin-top:4px;">${CHEST_SESSION_SETS} sets · stop 1–3 reps shy of failure</div></div>${ring}</div>
     </div></div>
-    <div class="card" style="padding:4px 14px; margin-bottom:0;">${rowHtml}</div>${restCard}${repsPanel}
+    ${chestWarmHtml()}
+    <div class="card" style="margin-top:10px; padding:4px 14px; margin-bottom:0;">${rowHtml}</div>${restCard}${repsPanel}
     <div class="card" style="margin-top:10px; padding:10px 14px; border-color:#5b4a2a;"><div class="tf-hero2-k" style="color:#C79A45;">Next step</div><div style="font-size:13px; margin-top:3px;">${escapeHtml(chestHint(plan.moves))}</div></div>
     ${chestRepsOpen ? "" : `<button class="primary" data-chest-open style="width:100%; margin-top:10px;">Log set · ${Math.min(nextIdx + 1, Math.max(rows.length, nextIdx + 1))} of ${Math.max(CHEST_SESSION_SETS, rows.length)}</button>`}`;
 }
@@ -5339,6 +5352,11 @@ document.addEventListener("click", async (e) => {
     chestRestTimer = setInterval(chestTickRest, 1000);
   }
   else if (q("[data-chest-skip-rest]")) { chestRestEnd = 0; if (chestRestTimer) { clearInterval(chestRestTimer); chestRestTimer = null; } }
+  else if (q("[data-chest-warm]")) {
+    const i = Number(q("[data-chest-warm]").dataset.chestWarm), cur = chestWarmDone().slice();
+    const at = cur.indexOf(i); if (at >= 0) cur.splice(at, 1); else cur.push(i);
+    state.chestWarm = { day: localDateStr(), ids: cur }; changed = true;
+  }
   else if (q("[data-chest-undo]")) {
     state.chestLogs = state.chestLogs.filter(l => l.id !== q("[data-chest-undo]").dataset.chestUndo); changed = true;
   } else return;
