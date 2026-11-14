@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Roboto+Mono:wght@500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script>try{var __tv=localStorage.getItem("tf_theme_vars");if(__tv){var __o=JSON.parse(__tv),__r=document.documentElement;for(var __k in __o.vars)__r.style.setProperty(__k,__o.vars[__k]);}}catch(e){}</script>
 <style>
   :root{
     --accent:#FF7A3D;
@@ -356,6 +357,14 @@
   .fh-wn em.over{color:var(--danger);}
   .fh-bar{height:9px; border-radius:5px; background:var(--surface-3); overflow:hidden;}
   .fh-bar i{display:block; height:100%; border-radius:5px; background:linear-gradient(90deg,var(--accent),var(--gold));}
+  .tf-themecard{display:flex; align-items:center; gap:12px; background:linear-gradient(180deg,var(--accent-bg),var(--surface)); border:1px solid var(--accent-line); border-radius:14px; padding:10px 14px; margin:0 0 10px;}
+  .tf-themecard .tx{flex:1; font-size:13px; line-height:1.35;}
+  .tf-themecard .tx b{display:block; font-family:var(--font-display); font-size:17px; font-weight:600;}
+  .tf-themecard button{height:36px; padding:0 14px; border-radius:18px; border:1px solid var(--border-2); background:none; color:var(--text); font-size:13px;}
+  .tf-themecard button.go{background:var(--accent); border-color:var(--accent); color:var(--ink); font-weight:600; text-shadow:none;}
+  .tf-themechip{height:38px; padding:0 14px; border-radius:19px; border:1px solid var(--border-2); background:var(--surface); color:var(--text); font-size:14px; display:flex; align-items:center; gap:8px;}
+  .tf-themechip i{width:12px; height:12px; border-radius:50%; display:block;}
+  .tf-themechip.on{border-color:var(--accent); color:var(--accent);}
   .tf-mini{margin-top:12px; display:flex; flex-direction:column; gap:7px; font-size:12px; color:var(--text-muted);}
   .tf-mini div.r{display:flex; justify-content:space-between;}
   .tf-mini b{color:var(--text); font-weight:500;}
@@ -669,6 +678,7 @@
   <section id="tab-today" class="tab-panel hidden">
     <div class="tf-screen-head"><div class="tf-kicker" id="tfKicker"></div><h1>Today</h1></div>
     <div id="tfPending" class="tf-pending hidden" role="button" tabindex="0"><span></span><b aria-hidden="true">›</b></div>
+    <div id="themeSuggest" class="hidden"></div>
     <div id="coachTeaser" class="hidden"></div>
     <div id="welcomeBackBanner" class="hidden"></div>
     <div id="celebrationBanner" class="hidden"></div>
@@ -1209,6 +1219,12 @@
     </div>
       </div>
     </details>
+    <div class="tf-sec">Look</div>
+    <div class="card">
+      <h2>Theme</h2>
+      <p class="meta" style="margin:0 0 10px;">Seasonal looks. The app will offer a new one when the season changes. You pick whether to switch.</p>
+      <div id="themePicker" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+    </div>
     <div class="tf-sec">Data</div>
     <details class="exercise-group tf-row" id="setDataDetails">
       <summary>Cloud sync, backup, start date</summary>
@@ -1267,7 +1283,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-14 16:00 CT";
+const APP_BUILD = "2026-11-14 16:40 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -10093,6 +10109,48 @@ document.getElementById("dismissSkillIntroBtn").addEventListener("click", async 
   await persistNow();
   syncSkillPracticeIntroVisibility();
 });
+
+// ---- Seasonal themes. Autumn is the base look (the :root values), so it overrides nothing.
+// A theme only lists the CSS variables it changes. The chosen id is saved in state.settings.theme (server), and its
+// variables are cached on the phone too, only so the right colours show before the app finishes loading.
+const THEMES = {
+  autumn: { label: "Autumn", season: "autumn", swatch: "#FF7A3D", meta: "#120F0D", vars: {} },
+};
+function currentSeason(d = new Date()) {
+  const m = d.getMonth();
+  return m === 11 || m <= 1 ? "winter" : m <= 4 ? "spring" : m <= 7 ? "summer" : "autumn";
+}
+function themeBaseVars() { return Object.assign({}, ...Object.values(THEMES).map(th => th.vars)); }
+function applyTheme(id) {
+  const th = THEMES[id] || THEMES.autumn, root = document.documentElement;
+  Object.keys(themeBaseVars()).forEach(k => root.style.removeProperty(k));
+  Object.entries(th.vars).forEach(([k, v]) => root.style.setProperty(k, v));
+  const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute("content", th.meta || "#120F0D");
+  try { localStorage.setItem("tf_theme_vars", JSON.stringify({ id, vars: th.vars })); } catch (e) {}
+}
+function renderThemePicker() {
+  const el = document.getElementById("themePicker"); if (!el) return;
+  const cur = state.settings?.theme || "autumn";
+  el.innerHTML = Object.entries(THEMES).map(([id, th]) => `<button class="tf-themechip${id === cur ? " on" : ""}" data-theme-pick="${id}"><i style="background:${th.swatch}"></i>${th.label}</button>`).join("");
+}
+function renderThemeSuggest() {
+  const el = document.getElementById("themeSuggest"); if (!el) return;
+  const season = currentSeason(), cur = THEMES[state.settings?.theme || "autumn"] || THEMES.autumn;
+  const key = season + new Date().getFullYear();
+  const match = Object.entries(THEMES).find(([, th]) => th.season === season);
+  if (!match || cur.season === season || state.settings?.themeDismissed === key) { el.classList.add("hidden"); el.innerHTML = ""; return; }
+  el.classList.remove("hidden");
+  el.innerHTML = `<div class="tf-themecard"><div class="tx"><b>${match[1].label} is here</b>Want the ${match[1].label.toLowerCase()} look?</div><button data-theme-no="${key}">Not now</button><button class="go" data-theme-pick="${match[0]}">Switch</button></div>`;
+}
+document.addEventListener("click", async (e) => {
+  const pick = e.target.closest("[data-theme-pick]"), no = e.target.closest("[data-theme-no]");
+  if (!pick && !no) return;
+  state.settings = state.settings || {};
+  if (pick) { state.settings.theme = pick.dataset.themePick; applyTheme(state.settings.theme); }
+  else state.settings.themeDismissed = no.dataset.themeNo;
+  renderThemePicker(); renderThemeSuggest();
+  await persistNow();
+});
 function applyFeedbackSetting() { document.body.classList.toggle("tf-calm", state.settings?.feedback === false); }
 function buzz(p) { try { if (state.settings?.feedback !== false && navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
 document.getElementById("feedbackToggle").addEventListener("change", async (e) => {
@@ -10392,6 +10450,7 @@ document.addEventListener("visibilitychange", syncWakeLock);
 
 async function init() {
   await loadState();
+  try { applyTheme(state.settings?.theme || "autumn"); renderThemePicker(); renderThemeSuggest(); } catch (e) {}
   await loadExercises();
   await loadPrograms();
   await migrateKbProgramArms();
