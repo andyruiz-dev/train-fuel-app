@@ -518,9 +518,13 @@
   #travelModeExplainer p{font-size:12px; line-height:1.5; color:var(--text-muted); text-align:center; margin:6px 0 4px;}
   #travelModeExplainer button{display:block; margin:0 auto; font-size:12px;}
   #tab-today details.exercise-group summary{text-transform:none;}
+  #tfWorkoutLinks{order:3; display:flex; justify-content:center; align-items:center; gap:18px; padding:2px 0;}
+  #tfWorkoutLinks .tf-linkbtn{width:auto; padding:8px 0;}
+  #tfWorkoutLinks #genWorkoutBtn{padding:8px 0 !important;}
   #tfQuickRow{order:4; margin-top:12px;}
   #tfQuickRow .tf-qr{display:flex; gap:8px;}
   #tfQuickRow .tf-qbtn{flex:1; min-width:0; background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:12px; padding:11px 6px; font-size:13px; font-weight:600; cursor:pointer; font-family:Inter,sans-serif; display:flex; align-items:center; justify-content:center; gap:5px; white-space:nowrap;}
+  #tfQuickRow #findBarLink{margin-top:10px;}
   #tfQuickRow #travelModeState{font-family:var(--font-mono); font-size:11px; font-weight:500;}
   #tfMore{order:5; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-top:14px;}
   #tfMore details.tf-sub{border-top:1px solid var(--border); padding:12px 0 0; margin-top:12px;}
@@ -595,6 +599,7 @@
           <div id="todayWorkout" class="empty">Pick an active program first.</div>
           <button class="primary" id="startSessionBtn" style="margin-top:10px; width:100%;" disabled>Start workout</button>
           <button class="secondary" id="minimumDayBtn" style="margin-top:8px; width:100%;" disabled>Not feeling it? Do the minimum</button>
+          <div id="tfWorkoutLinks"><button id="genWorkoutBtn" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; padding:4px 0;" disabled>Regenerate</button><button id="completeWorkoutBtn" type="button" class="tf-linkbtn">Complete workout without guided session ▸</button></div>
           <div id="tfQuickRow">
             <div class="tf-qr">
               <button type="button" class="tf-qbtn" id="travelModeToggle">✈️ Travel <span id="travelModeState">Off</span></button>
@@ -609,41 +614,19 @@
               <input type="text" inputmode="numeric" id="cardioWeight" placeholder="Weight carried (lbs)" style="margin-top:8px; display:none;">
               <button class="secondary" id="saveCardioBtn" style="margin-top:8px; width:100%;">Save</button>
             </div>
-          </div>
-          <details id="tfMore" class="exercise-group">
-            <summary>More</summary>
-            <div style="padding-top:8px;">
-          <div style="display:flex; justify-content:flex-end;">
-            <button id="genWorkoutBtn" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; padding:4px 0;" disabled>Regenerate</button>
-          </div>
-                    <a id="findBarLink" class="hidden" href="https://www.google.com/maps/search/?api=1&query=calisthenics+park+outdoor+gym+pull-up+bars" target="_blank" rel="noopener" style="display:block; color:var(--accent); font-size:14px; padding:2px 0 10px;">Find an outdoor gym or pull-up bar nearby ↗</a>
-          <div id="travelModeExplainer" style="margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border);">
+            <a id="findBarLink" class="hidden" href="https://www.google.com/maps/search/?api=1&query=calisthenics+park+outdoor+gym+pull-up+bars" target="_blank" rel="noopener" style="display:block; color:var(--accent); font-size:14px; padding:2px 0 10px;">Find an outdoor gym or pull-up bar nearby ↗</a>
+            <div id="travelModeExplainer" style="margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border);">
             <p class="meta" style="margin-top:0; margin-bottom:4px;">Generates a bodyweight-only workout — rings are still available as a swap if you brought them, but nothing else (no dumbbell, band, parallettes, or ab wheel). Turning it on or off regenerates today's exercises.</p>
             <button class="danger-link" id="dismissTravelModeLegendBtn">Got it, don't show this again</button>
           </div>
-              <button id="completeWorkoutBtn" type="button" class="tf-linkbtn">Complete workout without guided session ▸</button>
-      <details class="exercise-group tf-sub">
-        <summary>Cross-training</summary>
-        <div style="padding-top:6px;">
-          <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
-            Log a walk or ruck any day — doesn't touch your program's rotation, just tracked
-            alongside it for your own record and the Progress charts. (A "ruck" is just a walk
-            while carrying extra weight, usually in a backpack — if you don't have a weighted
-            pack, "Log a walk" is the one you want.)
-          </p>
-          <div id="recentCardio" style="margin-top:10px;"></div>
-        </div>
-      </details>      <details class="exercise-group tf-sub" id="notesDetails">
-        <summary id="notesSummary">Notes and questions</summary>
-        <div style="padding-top:6px;">
-          <p class="meta" style="margin-top:0;">Jot down questions or how a session felt. Each note remembers which exercise you were on. Ask me to check your notes and I'll answer them.</p>
-          <textarea id="noteInput" rows="3" placeholder="e.g. Swings felt like all arms, is that normal?" style="width:100%; box-sizing:border-box;"></textarea>
-          <button class="primary" id="noteSaveBtn" style="margin-top:8px; width:100%;">Save note</button>
-          <div id="notesList" style="margin-top:12px;"></div>
-        </div>
-      </details>      <details class="exercise-group tf-sub">
-        <summary>Skill practice</summary>
-        <div style="padding-top:6px;">
+          </div>
+          <details id="tfMore" class="exercise-group">
+            <summary>Skill practice</summary>
+            <div style="padding-top:8px;">
+                    
+          
+              
+                  <div style="padding-top:6px;">
           <div id="skillPracticeIntro">
             <p class="meta" style="margin-top:0;">
               Handstand, L-sit, planche, back lever, front lever, and muscle-up each track their own
@@ -656,7 +639,7 @@
           </div>
           <div id="skillPracticeList"></div>
         </div>
-      </details>
+
             </div>
           </details>
         </div>
@@ -964,6 +947,15 @@
       <summary>Chest booster</summary>
       <div id="chestBoosterCoach" style="margin-top:10px;"></div>
     </details>
+    <details class="exercise-group tf-row tf-dotrow" id="notesDetails" style="--dc:#C79A45;">
+        <summary id="notesSummary">Notes and questions</summary>
+        <div style="padding-top:6px;">
+          <p class="meta" style="margin-top:0;">Jot down questions or how a session felt. Each note remembers which exercise you were on. Ask me to check your notes and I'll answer them.</p>
+          <textarea id="noteInput" rows="3" placeholder="e.g. Swings felt like all arms, is that normal?" style="width:100%; box-sizing:border-box;"></textarea>
+          <button class="primary" id="noteSaveBtn" style="margin-top:8px; width:100%;">Save note</button>
+          <div id="notesList" style="margin-top:12px;"></div>
+        </div>
+      </details>
     <details class="exercise-group tf-row tf-dotrow" id="weeklyReviewDetails" style="--dc:#C79A45;">
       <summary>Weekly review</summary>
       <div id="weeklyReview" style="margin-top:10px;"></div>
@@ -1031,6 +1023,18 @@
     </div>
       </div>
     </details>
+    <details class="exercise-group tf-row tf-dotrow" style="--dc:#4fa8c9;">
+        <summary>Cross-training</summary>
+        <div style="padding-top:6px;">
+          <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+            Log a walk or ruck any day — doesn't touch your program's rotation, just tracked
+            alongside it for your own record and the Progress charts. (A "ruck" is just a walk
+            while carrying extra weight, usually in a backpack — if you don't have a weighted
+            pack, "Log a walk" is the one you want.)
+          </p>
+          <div id="recentCardio" style="margin-top:10px;"></div>
+        </div>
+      </details>
   </section>
 
   <!-- SETTINGS -->
@@ -1172,7 +1176,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-14 13:05 CT";
+const APP_BUILD = "2026-11-14 13:25 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
