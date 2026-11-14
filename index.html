@@ -204,7 +204,7 @@
   #tab-settings .card .tf-more{margin:0 0 12px;}
   #tab-settings .card .tf-more p{margin:8px 0 0; line-height:1.5;}
   #tab-settings input[type=text], #tab-settings input[type=number], #tab-settings input[type=date]{border-radius:12px;}
-  #tab-settings details.tf-row .card{background:#1A1D15;}
+  #tab-settings details.tf-row .card{background:#1E1915;}
   #startingLevelSettings .row{flex-wrap:nowrap; gap:6px;}
   #startingLevelSettings .chip{flex:1; text-align:center; padding:9px 4px; font-size:13px;}
   .tf-more summary::after{content:none !important;}
@@ -231,7 +231,7 @@
   .tf-days-list{display:flex; flex-direction:column; gap:10px; padding-top:16px;}
   .tf-dcard{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; cursor:pointer;}
   .tf-dcard.next{border:1.5px solid var(--accent);}
-  .tf-dcard.pre{background:#1A1D15; border-color:#2A221C;}
+  .tf-dcard.pre{background:#1E1915; border-color:#2A221C;}
   .tf-dcard .r{display:flex; justify-content:space-between; align-items:center; gap:10px;}
   .tf-dcard .k{font-size:12px; color:var(--text-muted);}
   .tf-dcard.next .k{color:var(--accent); font-weight:600;}
@@ -537,7 +537,7 @@
   .tf-moves-names{font-size:12px; color:var(--text-muted); margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .tf-ph-main .tf-mv{margin-top:8px;}
   #todayWorkout details.tf-ph-warm summary::before, #todayWorkout details.tf-ph-cool summary::before{content:""; display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:10px; background:#FF7A3D;}
-  #todayWorkout details.tf-ph-cool summary::before{background:#5DA89A;}
+  #todayWorkout details.tf-ph-cool summary::before{background:#D9B88A;}
   .tf-hero svg{flex:0 0 auto;}
   #tab-today .tf-hero{padding:12px 14px; margin-bottom:8px; gap:12px;}
   #tab-today .tf-hero svg{width:56px; height:56px;}
@@ -585,7 +585,7 @@
   #genWorkoutBtn{font-size:13px !important; color:var(--text-muted);}
   .tf-linkbtn{background:none; border:none; color:var(--accent); font-size:13px; cursor:pointer; padding:10px 0; display:block; width:100%; text-align:center;}
   .tf-today-col.tf-off #completeWorkoutBtn, .tf-today-col.tf-off #genWorkoutBtn{display:none;}
-    /* ---- Guided session: full-screen "Block" look. Colour = state (teal = work, dark = rest/warm-up). ---- */
+    /* ---- Guided session: full-screen "Block" look. Colour = state (orange = work, dark = rest/warm-up). ---- */
   #sessionPanel[data-sx]{position:fixed; inset:0; z-index:40; overflow-y:auto; padding:18px 22px 28px; display:flex; flex-direction:column; -webkit-overflow-scrolling:touch;}
   #sessionPanel[data-sx="work"], #sessionPanel[data-sx="emom"], #sessionPanel[data-sx="hold"], #sessionPanel[data-sx="done"]{background:var(--accent); color:#120F0D;}
   #sessionPanel[data-sx="rest"], #sessionPanel[data-sx="warm"]{background:#0E0B09; color:var(--text);}
@@ -1236,7 +1236,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-14 15:00 CT";
+const APP_BUILD = "2026-11-14 15:20 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -4023,7 +4023,7 @@ function renderWeekClose() {
   }));
   const slices = [
     { k: "Protein", v: src.protein, c: "#FF7A3D" }, { k: "Carbs", v: src.carbs, c: "#E8B04A" },
-    { k: "Fat", v: src.fat, c: "#8E7CC3" }, { k: "Alcohol", v: src.alcohol, c: "#E5534B" }, { k: "Unsorted", v: src.unsorted, c: "#6B6F60" },
+    { k: "Fat", v: src.fat, c: "#8E7CC3" }, { k: "Alcohol", v: src.alcohol, c: "#E5534B" }, { k: "Unsorted", v: src.unsorted, c: "#7A6A5A" },
   ];
   const sTot = slices.reduce((s, x) => s + x.v, 0) || 1;
   const legend = slices.filter(s => s.v > 0).map(s => `<div style="display:flex; align-items:center; gap:8px; font-size:13px; margin:3px 0;"><i style="width:10px; height:10px; border-radius:3px; background:${s.c}; display:inline-block;"></i><span style="flex:1;">${s.k}</span><b style="font-family:var(--font-mono); font-weight:500;">${Math.round(s.v).toLocaleString()}</b><span class="meta" style="width:36px; text-align:right;">${Math.round(s.v / sTot * 100)}%</span></div>`).join("");
@@ -4086,12 +4086,12 @@ function renderWeekClose() {
     const yOf = v => H - (v / top) * H;
     const bars = vals.map((x, k) => {
       const xx = gap + k * (bw + gap);
-      if (x.v == null) return `<text x="${xx + bw / 2}" y="${H + 16}" text-anchor="middle" font-size="10" fill="#6B6F60">${dayName(x.d)[0]}</text>`;
+      if (x.v == null) return `<text x="${xx + bw / 2}" y="${H + 16}" text-anchor="middle" font-size="10" fill="#7A6A5A">${dayName(x.d)[0]}</text>`;
       if (!x.n) return `<rect x="${xx}" y="${H - 4}" width="${bw}" height="4" rx="2" fill="#3A3E34"/><text x="${xx + bw / 2}" y="${H - 8}" text-anchor="middle" font-size="9" fill="#9A9D8E">none</text><text x="${xx + bw / 2}" y="${H + 16}" text-anchor="middle" font-size="10" fill="#9A9D8E">${dayName(x.d)[0]}</text>`;
       const col = x.v <= dailyBudget * 1.1 ? "#FF7A3D" : x.v <= dailyBudget * 1.3 ? "#E8B04A" : "#E5534B";
       return `<rect x="${xx}" y="${yOf(x.v)}" width="${bw}" height="${H - yOf(x.v)}" rx="4" fill="${col}"/><text x="${xx + bw / 2}" y="${yOf(x.v) - 4}" text-anchor="middle" font-size="10" fill="#D2C7BB">${kfmt(x.v)}</text><text x="${xx + bw / 2}" y="${H + 16}" text-anchor="middle" font-size="10" fill="#9A9D8E">${dayName(x.d)[0]}</text>`;
     }).join("");
-    cards.push(`${big("Day by day")}<svg viewBox="0 -6 ${W} ${H + 26}" width="100%" role="img" aria-label="Daily calories against budget line"><line x1="0" x2="${W}" y1="${yOf(dailyBudget)}" y2="${yOf(dailyBudget)}" stroke="#D2C7BB" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>${bars}</svg><div class="meta" style="margin-top:6px;">Dashed line is your daily share of the budget (${Math.round(dailyBudget).toLocaleString()}). Teal is at or near it, gold is over, red is well over.</div>`);
+    cards.push(`${big("Day by day")}<svg viewBox="0 -6 ${W} ${H + 26}" width="100%" role="img" aria-label="Daily calories against budget line"><line x1="0" x2="${W}" y1="${yOf(dailyBudget)}" y2="${yOf(dailyBudget)}" stroke="#D2C7BB" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>${bars}</svg><div class="meta" style="margin-top:6px;">Dashed line is your daily share of the budget (${Math.round(dailyBudget).toLocaleString()}). Orange is at or near it, gold is over, red is well over.</div>`);
   }
   // 3. Where it came from
   cards.push(total > 0
@@ -4105,7 +4105,7 @@ function renderWeekClose() {
     const cnt = { max: 0, hold: 0, missed: 0 }; wkLogs.forEach(l => { if (cnt[l.result] !== undefined) cnt[l.result]++; });
     const tl = cnt.max + cnt.hold + cnt.missed;
     const row = (lab, n, col) => `<div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-muted); margin:4px 0;"><span style="width:70px;">${lab}</span><span style="flex:1; height:8px; border-radius:4px; background:#2A221C;"><i style="display:block; height:8px; border-radius:4px; width:${tl ? Math.round(n / tl * 100) : 0}%; background:${col};"></i></span><b style="font-family:var(--font-mono); font-weight:500; width:18px; text-align:right;">${n}</b></div>`;
-    cards.push(`${big("Training")}<div style="display:flex; gap:12px; align-items:center;">${ring}<div style="flex:1;">${row("Hit max", cnt.max, "var(--accent)")}${row("As planned", cnt.hold, "#7FA89F")}${row("Short", cnt.missed, "#6B6F60")}</div></div><div style="margin-top:12px; font-size:15px;">${workoutDays} workout day${workoutDays === 1 ? "" : "s"} (goal ${goal})${wkCardio.length ? ` · ${wkCardio.length} cardio, ${Math.round(cardioMin)} min${cardioDist ? `, ${cardioDist.toFixed(1)} mi` : ""}` : ""}</div>${chestSetsInWeek(days) ? `<div style="margin-top:6px; font-size:13px; color:var(--text-muted);">Chest booster: ${chestSetsInWeek(days)} of ${CHEST_WEEKLY_SETS} sets</div>` : ""}<div class="meta" style="margin-top:8px;">Calories burned aren't measured here, so training shows as activity.</div>`);
+    cards.push(`${big("Training")}<div style="display:flex; gap:12px; align-items:center;">${ring}<div style="flex:1;">${row("Hit max", cnt.max, "var(--accent)")}${row("As planned", cnt.hold, "#F2B84B")}${row("Short", cnt.missed, "#7A6A5A")}</div></div><div style="margin-top:12px; font-size:15px;">${workoutDays} workout day${workoutDays === 1 ? "" : "s"} (goal ${goal})${wkCardio.length ? ` · ${wkCardio.length} cardio, ${Math.round(cardioMin)} min${cardioDist ? `, ${cardioDist.toFixed(1)} mi` : ""}` : ""}</div>${chestSetsInWeek(days) ? `<div style="margin-top:6px; font-size:13px; color:var(--text-muted);">Chest booster: ${chestSetsInWeek(days)} of ${CHEST_WEEKLY_SETS} sets</div>` : ""}<div class="meta" style="margin-top:8px;">Calories burned aren't measured here, so training shows as activity.</div>`);
   }
   // 5. Weight line with jumps marked
   {
@@ -4120,7 +4120,7 @@ function renderWeekClose() {
       const span = daysBetween(from, days[6]) || 1;
       const X = d => 10 + (daysBetween(from, d) / span) * (W - 20), Y = v => H - ((v - lo) / (hi - lo)) * (H - 10) - 4;
       const jd = new Set(jumps.map(j => j.date));
-      chart = `<svg viewBox="0 0 ${W} ${H + 14}" width="100%" role="img" aria-label="Weight this week"><polyline fill="none" stroke="#FF7A3D" stroke-width="2" points="${pts.map(p => `${X(p.date).toFixed(1)},${Y(p.weight).toFixed(1)}`).join(" ")}"/>${pts.map(p => `<circle cx="${X(p.date).toFixed(1)}" cy="${Y(p.weight).toFixed(1)}" r="${jd.has(p.date) ? 5 : 3}" fill="${jd.has(p.date) ? "#E5534B" : "#FF7A3D"}"/>${jd.has(p.date) ? `<text x="${X(p.date).toFixed(1)}" y="${(Y(p.weight) - 8).toFixed(1)}" text-anchor="middle" font-size="10" fill="#D2C7BB">${p.weight}</text>` : ""}`).join("")}<text x="2" y="${H + 12}" font-size="9" fill="#6B6F60">${lo.toFixed(0)} to ${hi.toFixed(0)} lb · red dot = jump of 1.5+ lb</text></svg>`;
+      chart = `<svg viewBox="0 0 ${W} ${H + 14}" width="100%" role="img" aria-label="Weight this week"><polyline fill="none" stroke="#FF7A3D" stroke-width="2" points="${pts.map(p => `${X(p.date).toFixed(1)},${Y(p.weight).toFixed(1)}`).join(" ")}"/>${pts.map(p => `<circle cx="${X(p.date).toFixed(1)}" cy="${Y(p.weight).toFixed(1)}" r="${jd.has(p.date) ? 5 : 3}" fill="${jd.has(p.date) ? "#E5534B" : "#FF7A3D"}"/>${jd.has(p.date) ? `<text x="${X(p.date).toFixed(1)}" y="${(Y(p.weight) - 8).toFixed(1)}" text-anchor="middle" font-size="10" fill="#D2C7BB">${p.weight}</text>` : ""}`).join("")}<text x="2" y="${H + 12}" font-size="9" fill="#7A6A5A">${lo.toFixed(0)} to ${hi.toFixed(0)} lb · red dot = jump of 1.5+ lb</text></svg>`;
     }
     cards.push(`${big("Weight")}${chart}<div style="margin-top:8px; font-size:15px;">${avgNow != null ? `Average ${avgNow.toFixed(1)} lb` : "No weigh-ins"}${wDelta != null ? ` (${wDelta >= 0 ? "+" : "−"}${Math.abs(wDelta).toFixed(1)} vs the week before)` : ""}</div>${chips ? `<div style="margin-top:6px;">${chips}</div>` : ""}`);
   }
@@ -5070,7 +5070,7 @@ function renderCoachHero() {
     const wk = ms.filter(m => new Date(m.date + "T12:00:00").getTime() >= Date.now() - 7 * msDay);
     const avg = (wk.length ? wk : ms.slice(-1)).reduce((a, m) => a + m.weight, 0) / (wk.length || 1);
     const delta = ms[ms.length - 1].weight - ms[0].weight, down = delta <= 0;
-    left = `<div class="big">${avg.toFixed(1)}<small> lb</small></div><div class="d" style="color:${down ? "#7fe0cc" : "#F0907D"};">${down ? "−" : "+"}${Math.abs(delta).toFixed(1)} lb since ${formatDateOnly(ms[0].date)}</div>`;
+    left = `<div class="big">${avg.toFixed(1)}<small> lb</small></div><div class="d" style="color:${down ? "#F2B84B" : "#F0907D"};">${down ? "−" : "+"}${Math.abs(delta).toFixed(1)} lb since ${formatDateOnly(ms[0].date)}</div>`;
     const vals = pts.map(m => m.weight), lo = Math.min(...vals) - 0.6, hi = Math.max(...vals) + 0.6, W = 130, H = 52;
     const t0 = new Date(pts[0].date + "T12:00:00").getTime(), t1 = new Date(pts[pts.length - 1].date + "T12:00:00").getTime();
     const X = m => t1 === t0 ? W / 2 : ((new Date(m.date + "T12:00:00").getTime() - t0) / (t1 - t0)) * (W - 8) + 4;
@@ -5124,7 +5124,7 @@ function todayHeroHtml(workout) {
   const segs = [];
   if (workout.warmup && workout.warmup.length) segs.push(["#FF7A3D", 1.2]);
   blocks.forEach(bk => segs.push([bk.color, Math.max(1, bk.sets)]));
-  if (workout.cooldown && workout.cooldown.length) segs.push(["#5DA89A", 0.8]);
+  if (workout.cooldown && workout.cooldown.length) segs.push(["#D9B88A", 0.8]);
   const bar = segs.map(sg => `<i style="flex:${sg[1]}; background:${sg[0]};"></i>`).join("");
   const kicker = week ? `Week ${week}${total ? " of " + total : ""}` : "Today's session";
   const strip = weekStripHtml();
@@ -5230,7 +5230,7 @@ document.getElementById("todayWorkout").addEventListener("click", (e) => {
 });
 
 let movesOpen = false;
-const PH_COLORS = ["#FF7A3D", "#F2B84B", "#C98A5E", "#9DB36B"];
+const PH_COLORS = ["#FF7A3D", "#F2B84B", "#C98A5E", "#E3C9A0"];
 // Breaks a workout into blocks (each superset, each standalone move, a finisher) with a colour per block.
 function workoutBlocks(workout) {
   const ex = workout.exercises || [], seen = new Set(), blocks = [];
