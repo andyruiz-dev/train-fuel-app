@@ -249,6 +249,27 @@
   .tf-pg-hero .n small{font-size:18px; font-weight:600;}
   .tf-pg-hero .s{font-size:13px; font-weight:500; margin-top:4px;}
   .tf-pg-hero .pill{margin-top:12px; display:inline-block; background:#0B1512; color:#EDEAE0; border-radius:99px; padding:6px 12px; font-size:12px; font-weight:600;}
+  .tf-ptiles{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .tf-ptile{text-align:left; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px 14px; height:150px; display:flex; flex-direction:column; color:var(--text); cursor:pointer; font-family:Inter,sans-serif;}
+  .tf-ptile .n{font-size:12px; color:var(--text-muted); font-weight:600; display:flex; justify-content:space-between; width:100%;}
+  .tf-ptile .n b{font-weight:400;}
+  .tf-ptile .big{font-family:var(--font-display); font-size:30px; font-weight:600; line-height:1.05; margin-top:6px;}
+  .tf-ptile .big small{font-family:Inter,sans-serif; font-size:12px; font-weight:500; color:var(--text-muted); margin-left:3px;}
+  .tf-ptile .sub{font-size:12px; margin-top:2px; color:var(--text-muted);}
+  .tf-ptile .viz{margin-top:auto; height:44px; width:100%; display:flex; align-items:flex-end; gap:5px;}
+  .tf-ptile .viz i{flex:1; border-radius:3px; display:block;}
+  #tfProgress{margin-bottom:12px;}
+  #tfPSheet{position:fixed; inset:0; z-index:60;}
+  #tfPSheet.hidden{display:none;}
+  .tf-pscrim{position:absolute; inset:0; background:rgba(0,0,0,.6);}
+  .tf-ppanel{position:absolute; left:0; right:0; bottom:0; top:72px; background:#1c1e17; border:1px solid var(--border); border-radius:22px 22px 0 0; padding:8px 16px 90px; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  .tf-pgrab{display:flex; justify-content:center; padding:4px 0 8px;}
+  .tf-pgrab span{width:40px; height:4px; border-radius:2px; background:#4a4f40; display:block;}
+  .tf-pclose{position:absolute; top:8px; right:14px; background:none; border:0; color:var(--accent); font-size:14px; font-weight:600; padding:6px 4px; cursor:pointer;}
+  .tf-ppanel .tf-pcard{margin-top:6px;}
+  .tf-prow{display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid #2d3127; font-size:14px;}
+  .tf-prow:last-child{border:0;}
+  .tf-prow .r{margin-left:auto; color:var(--text-muted); font-size:13px;}
   .tf-stats{display:flex; gap:10px; margin-bottom:14px;}
   .tf-stat{flex:1; min-width:0; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px;}
   .tf-stat .l{font-size:11px; color:var(--text-muted);}
@@ -1038,18 +1059,25 @@
     </div>
       </div>
     </details>
-    <details class="exercise-group tf-row tf-dotrow" style="--dc:#4fa8c9;">
-        <summary>Cross-training</summary>
-        <div style="padding-top:6px;">
-          <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
-            Log a walk or ruck any day — doesn't touch your program's rotation, just tracked
-            alongside it for your own record and the Progress charts. (A "ruck" is just a walk
-            while carrying extra weight, usually in a backpack — if you don't have a weighted
-            pack, "Log a walk" is the one you want.)
-          </p>
-          <div id="recentCardio" style="margin-top:10px;"></div>
+    
+  <div id="tfPSheet" class="hidden">
+      <div class="tf-pscrim" data-psheet-close></div>
+      <div class="tf-ppanel">
+        <div class="tf-pgrab"><span></span></div>
+        <button type="button" class="tf-pclose" data-psheet-close>Done</button>
+        <div data-psec="weight" id="psWeight" class="hidden"></div>
+        <div data-psec="workouts" id="psWorkouts" class="hidden"></div>
+        <div data-psec="calories" id="psCalories" class="hidden"></div>
+        <div data-psec="protein" id="psProtein" class="hidden"></div>
+        <div data-psec="milestones" id="psMilestones" class="hidden"></div>
+        <div data-psec="walks" id="psWalks" class="hidden">
+          <div class="tf-pcard"><div class="h"><b>Walks &amp; rucks</b><span id="psWalkSum"></span></div>
+            <p style="font-size:13px; color:var(--text-muted); margin:10px 0 0;">Log a walk or ruck from the Today tab. They don't touch your program's rotation, and a "ruck" is a walk carrying extra weight.</p>
+            <div id="recentCardio" style="margin-top:10px;"></div>
+          </div>
         </div>
-      </details>
+      </div>
+    </div>
   </section>
 
   <!-- SETTINGS -->
@@ -1191,7 +1219,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-14 15:10 CT";
+const APP_BUILD = "2026-11-14 16:00 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -8188,9 +8216,82 @@ function renderProgressTop() {
         <button type="button" class="secondary" data-open-review style="margin-top:14px; width:100%;">Open the full weekly review</button></div>`;
     }
   }
-  el.innerHTML = heroHtml + `<div class="tf-stats">${weightTile}${bestTile}${proteinTile}</div>` + recapCard + weightCard + consistencyCard + milestonesCard;
+  // ---- tiles (preview + tap for detail) ----
+  const mi = (n) => (Math.round(n * 10) / 10).toFixed(1);
+  const weekDs = weekDayList(0), todayDs = localDateStr();
+  // weight tile
+  let wBig = "·", wSub = "log 2 weigh-ins", wSubCol = "var(--text-muted)", wViz = "";
+  if (ms.length >= 2) {
+    const delta = ms[ms.length - 1].weight - ms[0].weight, down = delta <= 0;
+    const r7 = ms.filter(m => new Date(m.date + "T12:00:00").getTime() >= Date.now() - 7 * 86400000);
+    wBig = (r7.length ? r7.reduce((a, m) => a + m.weight, 0) / r7.length : ms[ms.length - 1].weight).toFixed(1);
+    wSub = `${down ? "−" : "+"}${Math.abs(delta).toFixed(1)} lb since ${formatDateOnly(ms[0].date)}`;
+    wSubCol = down ? "var(--accent)" : "#D96C5B";
+    const pts = ms.filter(m => new Date(m.date + "T12:00:00").getTime() >= Date.now() - 35 * 86400000);
+    const u = pts.length >= 2 ? pts : ms.slice(-2), vv = u.map(m => m.weight), lo = Math.min(...vv), hi = Math.max(...vv), span = Math.max(0.5, hi - lo);
+    const xy = u.map((m, i) => `${((i / (u.length - 1)) * 140).toFixed(1)} ${(40 - ((m.weight - lo) / span) * 34).toFixed(1)}`);
+    const path = "M" + xy.join(" L");
+    wViz = `<svg width="100%" height="44" viewBox="0 0 140 44" preserveAspectRatio="none"><path d="${path} L140 44 L0 44Z" fill="rgba(47,191,166,.18)"/><path d="${path}" fill="none" stroke="#2FBFA6" stroke-width="2.2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
+  }
+  // workouts tile
+  const curWk = weeks[weeks.length - 1];
+  const wkBars = weeks.map(w => `<i style="height:${Math.max(4, Math.round((w.count / Math.max(goal, 3)) * 44))}px; background:${w.count ? "#2FBFA6" : "#2d3127"};"></i>`).join("");
+  // calories tile
+  const wb = weekBudgetNumbers();
+  const perDay = weekDs.map(d => d > todayDs ? 0 : foodLogsForDate(d).reduce((n, f) => n + (f.calories || 0), 0));
+  const maxDay = Math.max(wb.budget / 7 * 1.25, ...perDay, 1);
+  const calBars = perDay.map(v => `<i style="height:${v ? Math.max(4, Math.round((v / maxDay) * 44)) : 4}px; background:${v ? (v > wb.budget / 7 ? "#D96C5B" : "#2FBFA6") : "#2d3127"};"></i>`).join("");
+  // protein tile
+  const protDays = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = localDateStr(new Date(now.getFullYear(), now.getMonth(), now.getDate() - i));
+    const g = foodLogsForDate(d).reduce((n, f) => n + (f.protein || 0), 0);
+    protDays.push({ d, g, ok: !!pTarget && g >= pTarget });
+  }
+  const protDots = protDays.map(x => `<i style="flex:none; width:14px; height:14px; border-radius:50%; ${x.ok ? "background:#2FBFA6; border:2px solid #2FBFA6;" : "border:2px solid #4a4f40;"}"></i>`).join("");
+  // milestones tile
+  const prevW = [0, ...wLadder].filter(m => m <= totalDays).pop() || 0, nxtW = nextW[0];
+  const msBig = nxtW ? `${totalDays}<small>/ ${nxtW} workouts</small>` : `${totalDays}<small>workouts</small>`;
+  const msSub = nxtW ? `next badge in ${nxtW - totalDays}` : "all badges earned";
+  const msFrac = nxtW ? Math.max(0.04, (totalDays - prevW) / (nxtW - prevW)) : 1;
+  // walks tile
+  const wkCardio = (state.cardioLogs || []).filter(c => weekDs.includes(dayKeyOf(c.date)));
+  const wkMiles = wkCardio.reduce((n, c) => n + (c.distance || 0), 0), wkMin = wkCardio.reduce((n, c) => n + (c.duration || 0), 0);
+  const walkBars = weekDs.map(d => { const m = wkCardio.filter(c => dayKeyOf(c.date) === d).reduce((n, c) => n + (c.distance || 0), 0); return `<i style="height:${m ? Math.max(4, Math.round((m / Math.max(3, wkMiles)) * 44 * 2.2)) : 4}px; background:${m ? "#4fa8c9" : "#2d3127"};"></i>`; }).join("");
+  const tile = (key, name, big, sub, subCol, viz, vizStyle) => `<button type="button" class="tf-ptile" data-ptile="${key}"><span class="n">${name}<b>›</b></span><span class="big">${big}</span><span class="sub"${subCol ? ` style="color:${subCol};"` : ""}>${sub}</span><span class="viz"${vizStyle ? ` style="${vizStyle}"` : ""}>${viz}</span></button>`;
+  el.innerHTML = `<div class="tf-ptiles">`
+    + tile("weight", "Weight", `${wBig}<small>lb</small>`, wSub, wSubCol, wViz)
+    + tile("workouts", "Workouts", `${curWk.count}<small>of ${goal} this week</small>`, `${fiveWeekTotal} in 5 weeks`, "", wkBars)
+    + tile("calories", "Calories", `${Math.abs(wb.left).toLocaleString()}<small>${wb.left >= 0 ? "left" : "over"}</small>`, `of ${wb.budget.toLocaleString()} this week`, wb.left < 0 ? "#D96C5B" : "", calBars)
+    + tile("protein", "Protein", `${hit}<small>/ 7 days hit</small>`, pTarget ? `goal ${pTarget} g` : "set a goal in Settings", "", protDots, "align-items:center; justify-content:space-between;")
+    + tile("milestones", "Milestones", msBig, msSub, "", `<span style="flex:1; height:8px; border-radius:5px; background:#2d3127; display:block;"><span style="display:block; width:${Math.round(msFrac * 100)}%; height:8px; border-radius:5px; background:#2FBFA6;"></span></span>`, "align-items:center;")
+    + tile("walks", "Walks &amp; rucks", `${mi(wkMiles)}<small>mi this week</small>`, `${wkCardio.length} ${wkCardio.length === 1 ? "walk" : "walks"}${wkMin ? " · " + Math.floor(wkMin / 60) + "h " + (wkMin % 60) + "m" : ""}`, "", walkBars)
+    + `</div>`;
+  // ---- sheet sections ----
+  const setSec = (id, html) => { const e = document.getElementById(id); if (e) e.innerHTML = html; };
+  setSec("psWeight", weightCard);
+  setSec("psWorkouts", consistencyCard + weeklyCard);
+  const dn = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const dRows = weekDs.map((d, i) => { const k = perDay[i]; const over = k > wb.budget / 7; return `<div class="tf-prow"><span>${dn[i]}</span><span class="r" style="${over ? "color:#D96C5B;" : ""}">${d > todayDs ? "—" : (k ? k.toLocaleString() + " cal" : "not logged")}</span></div>`; }).join("");
+  setSec("psCalories", `<div class="tf-pcard"><div class="h"><b>This week</b><span><em>${wb.eaten.toLocaleString()}</em> of ${wb.budget.toLocaleString()} cal</span></div><div style="margin-top:8px;">${dRows}</div></div>` + recapCard);
+  const pRows = protDays.slice().reverse().map(x => `<div class="tf-prow"><span>${new Date(x.d + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span><span class="r" style="${x.ok ? "color:var(--accent);" : ""}">${Math.round(x.g)} g ${x.ok ? "✓" : ""}</span></div>`).join("");
+  setSec("psProtein", `<div class="tf-pcard"><div class="h"><b>Protein</b><span>goal <em>${pTarget || "—"} g</em> · ${hit} of 7 days hit</span></div><div style="margin-top:8px;">${pRows}</div></div>`);
+  setSec("psMilestones", heroHtml + milestonesCard);
+  const sumEl = document.getElementById("psWalkSum"); if (sumEl) sumEl.textContent = `${mi(wkMiles)} mi this week`;
 }
-document.getElementById("tfProgress").addEventListener("click", (e) => {
+function openProgressSheet(key) {
+  const sh = document.getElementById("tfPSheet"); if (!sh) return;
+  sh.querySelectorAll("[data-psec]").forEach(x => x.classList.toggle("hidden", x.dataset.psec !== key));
+  sh.classList.remove("hidden");
+  const pn = sh.querySelector(".tf-ppanel"); if (pn) pn.scrollTop = 0;
+}
+function closeProgressSheet() { const sh = document.getElementById("tfPSheet"); if (sh) sh.classList.add("hidden"); }
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-ptile]"); if (t) { openProgressSheet(t.dataset.ptile); return; }
+  if (e.target.closest("[data-psheet-close]")) closeProgressSheet();
+  if (e.target.closest("nav.tabs .tab-btn")) closeProgressSheet();
+});
+function progressClick(e) {
   if (e.target.closest("[data-open-review]")) {
     weekCloseOffset = -1; weekCloseStep = 0;
     const t = document.querySelector('nav.tabs .tab-btn[data-tab="coach"]'); if (t) t.click();
@@ -8201,7 +8302,9 @@ document.getElementById("tfProgress").addEventListener("click", (e) => {
   if (!b) return;
   const t = document.querySelector(`nav.tabs .tab-btn[data-tab="${b.dataset.gotoTab}"]`);
   if (t) t.click();
-});
+}
+document.getElementById("tfProgress").addEventListener("click", progressClick);
+document.getElementById("tfPSheet").addEventListener("click", (e) => { if (e.target.closest("[data-open-review]")) closeProgressSheet(); progressClick(e); });
 
 function renderProgressCharts() {
   try { renderProgressTop(); } catch (e) { console.error("renderProgressTop", e); }
