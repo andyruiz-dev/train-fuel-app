@@ -1220,7 +1220,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-14 13:50 CT";
+const APP_BUILD = "2026-11-14 14:05 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -6404,12 +6404,12 @@ function renderLineChart(containerId, points, { yLabel = "", avg = null } = {}) 
     avgSvg = `<path d="${avgD}" fill="none" style="stroke:var(--gold);" stroke-width="2" stroke-dasharray="5 4"/>
       <text x="${w - pad}" y="14" font-size="11" style="fill:var(--gold);" text-anchor="end">- - 7-day avg</text>`;
   }
-  const dots = coords.map(c => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3" fill="#0F6E63"/>`).join("");
+  const dots = coords.map(c => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3" fill="#FF7A3D"/>`).join("");
   const firstLabel = coords[0]?.label || "";
   const lastLabel = coords[coords.length - 1]?.label || "";
   el.innerHTML = `
     <svg width="100%" viewBox="0 0 ${w} ${h + 20}" style="overflow:visible;">
-      <path d="${pathD}" fill="none" stroke="#0F6E63" stroke-width="2"/>
+      <path d="${pathD}" fill="none" stroke="#FF7A3D" stroke-width="2"/>
       ${avgSvg}
       ${dots}
       <text x="${pad}" y="${h + 16}" font-size="11" fill="#6B6A63">${firstLabel}</text>
@@ -6430,7 +6430,7 @@ function renderBarChart(containerId, bars) {
     const barH = (b.value / max) * (h - pad * 2 - 10);
     const y = h - pad - barH;
     return `<text x="${(x + barW / 2).toFixed(1)}" y="${(y - 6).toFixed(1)}" font-size="12" fill="#F4EEE8" text-anchor="middle" font-family="monospace">${b.value}</text>
-            <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${barH.toFixed(1)}" fill="#0F6E63" rx="2"/>
+            <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${barH.toFixed(1)}" fill="#FF7A3D" rx="2"/>
             <text x="${(x + barW / 2).toFixed(1)}" y="${h + 4}" font-size="10" fill="#6B6A63" text-anchor="middle">${b.label}</text>`;
   }).join("");
   el.innerHTML = `<svg width="100%" viewBox="0 0 ${w} ${h + 16}" style="overflow:visible;">${barsSvg}</svg>`;
@@ -8258,7 +8258,7 @@ function renderProgressTop() {
   // walks tile
   const wkCardio = (state.cardioLogs || []).filter(c => weekDs.includes(dayKeyOf(c.date)));
   const wkMiles = wkCardio.reduce((n, c) => n + (c.distance || 0), 0), wkMin = wkCardio.reduce((n, c) => n + (c.duration || 0), 0);
-  const walkBars = weekDs.map(d => { const m = wkCardio.filter(c => dayKeyOf(c.date) === d).reduce((n, c) => n + (c.distance || 0), 0); return `<i style="height:${m ? Math.max(4, Math.round((m / Math.max(3, wkMiles)) * 44 * 2.2)) : 4}px; background:${m ? "#4fa8c9" : "#2E2620"};"></i>`; }).join("");
+  const walkBars = weekDs.map(d => { const m = wkCardio.filter(c => dayKeyOf(c.date) === d).reduce((n, c) => n + (c.distance || 0), 0); return `<i style="height:${m ? Math.max(4, Math.round((m / Math.max(3, wkMiles)) * 44 * 2.2)) : 4}px; background:${m ? "#F2B84B" : "#2E2620"};"></i>`; }).join("");
   const tile = (key, name, big, sub, subCol, viz, vizStyle) => `<button type="button" class="tf-ptile" data-ptile="${key}"><span class="n">${name}<b>›</b></span><span class="big">${big}</span><span class="sub"${subCol ? ` style="color:${subCol};"` : ""}>${sub}</span><span class="viz"${vizStyle ? ` style="${vizStyle}"` : ""}>${viz}</span></button>`;
   el.innerHTML = `<div class="tf-ptiles">`
     + tile("weight", "Weight", `${wBig}<small>lb</small>`, wSub, wSubCol, wViz)
