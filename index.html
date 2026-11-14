@@ -1283,7 +1283,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-14 16:40 CT";
+const APP_BUILD = "2026-11-14 17:10 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -10115,6 +10115,7 @@ document.getElementById("dismissSkillIntroBtn").addEventListener("click", async 
 // variables are cached on the phone too, only so the right colours show before the app finishes loading.
 const THEMES = {
   autumn: { label: "Autumn", season: "autumn", swatch: "#FF7A3D", meta: "#120F0D", vars: {} },
+  winter: { label: "Winter", season: "winter", swatch: "#5EB6E8", meta: "#0D1218", vars: {"--accent": "#5EB6E8", "--accent-dark": "#2F86B8", "--accent-soft": "#A9D8F2", "--accent-pale": "#DDF0FA", "--accent-bg": "#14283A", "--accent-bg-2": "#183247", "--accent-deep": "#1D4A66", "--accent-hot": "#3C9BD0", "--accent-line": "#2A5573", "--gold": "#D6E6F2", "--gold-bg": "#1A2A38", "--gold-deep": "#33505F", "--warn": "#9FD0EA", "--slate": "#8FA8C0", "--sand": "#9DB8CC", "--sand-pale": "#C2D6E4", "--bg": "#0D1218", "--ink": "#0D1218", "--surface": "#151C25", "--surface-2": "#1D2631", "--surface-3": "#232F3B", "--surface-deep": "#0A0E13", "--surface-deep-2": "#10161D", "--surface-warm": "#16212B", "--border": "#2A3644", "--border-2": "#38475A", "--border-3": "#4A5B70", "--border-4": "#2E3A48", "--track": "#2E3C4B", "--text": "#CBD6DF", "--text-muted": "#8393A3", "--text-dim": "#6C7C8C", "--text-faint": "#667585", "--text-faint-2": "#8493A2", "--text-faint-3": "#74838F", "--surface-neutral": "#222A33", "--accent-rgb": "94,182,232", "--gold-rgb": "214,230,242", "--ink-rgb": "13,18,24"} },
 };
 function currentSeason(d = new Date()) {
   const m = d.getMonth();
