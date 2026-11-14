@@ -950,6 +950,10 @@
     </div>
 
     <div id="tfWeekCard"></div>
+    <details class="exercise-group tf-row tf-dotrow" id="chestBoosterDetails" style="--dc:#4fa8c9;">
+      <summary>Chest booster</summary>
+      <div id="chestBoosterCoach" style="margin-top:10px;"></div>
+    </details>
     <details class="exercise-group tf-row tf-dotrow" id="weeklyReviewDetails" style="--dc:#C79A45;">
       <summary>Weekly review</summary>
       <div id="weeklyReview" style="margin-top:10px;"></div>
@@ -1158,7 +1162,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-11 08:15 CT";
+const APP_BUILD = "2026-11-14 09:30 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1345,6 +1349,8 @@ async function loadState() {
   if (!state.milestonesSeen) state.milestonesSeen = { weightLbs: [], workoutDays: [] };
   if (!state.celebrations) state.celebrations = [];
   if (!state.flags) state.flags = [];
+  if (!Array.isArray(state.chestLogs)) state.chestLogs = [];
+  if (state.chestMode !== "travel") state.chestMode = "home";
   if (typeof state.welcomeBackDismissedDate !== "string") state.welcomeBackDismissedDate = "";
   if (!state.settings.macroTargets) state.settings.macroTargets = { calories: 2300, protein: 160, carbs: 200, fat: 70 };
   // One-time: protein target moves to 145 g (Andy's pick). The flag keeps later edits in Settings from being overwritten.
@@ -3399,6 +3405,7 @@ function renderCoachTop(rows) {
   const wkc = document.getElementById("tfWeekCard");
   if (wkc) wkc.innerHTML = weekStripHtml();
   renderCoachHero();
+  if (typeof renderChestBoosters === "function") renderChestBoosters();
 }
 function renderMorningChecklist() {
   const el = document.getElementById("morningChecklist");
@@ -4024,7 +4031,7 @@ function renderWeekClose() {
     const cnt = { max: 0, hold: 0, missed: 0 }; wkLogs.forEach(l => { if (cnt[l.result] !== undefined) cnt[l.result]++; });
     const tl = cnt.max + cnt.hold + cnt.missed;
     const row = (lab, n, col) => `<div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-muted); margin:4px 0;"><span style="width:70px;">${lab}</span><span style="flex:1; height:8px; border-radius:4px; background:#2A2E24;"><i style="display:block; height:8px; border-radius:4px; width:${tl ? Math.round(n / tl * 100) : 0}%; background:${col};"></i></span><b style="font-family:var(--font-mono); font-weight:500; width:18px; text-align:right;">${n}</b></div>`;
-    cards.push(`${big("Training")}<div style="display:flex; gap:12px; align-items:center;">${ring}<div style="flex:1;">${row("Hit max", cnt.max, "var(--accent)")}${row("As planned", cnt.hold, "#7FA89F")}${row("Short", cnt.missed, "#6B6F60")}</div></div><div style="margin-top:12px; font-size:15px;">${workoutDays} workout day${workoutDays === 1 ? "" : "s"} (goal ${goal})${wkCardio.length ? ` · ${wkCardio.length} cardio, ${Math.round(cardioMin)} min${cardioDist ? `, ${cardioDist.toFixed(1)} mi` : ""}` : ""}</div><div class="meta" style="margin-top:8px;">Calories burned aren't measured here, so training shows as activity.</div>`);
+    cards.push(`${big("Training")}<div style="display:flex; gap:12px; align-items:center;">${ring}<div style="flex:1;">${row("Hit max", cnt.max, "var(--accent)")}${row("As planned", cnt.hold, "#7FA89F")}${row("Short", cnt.missed, "#6B6F60")}</div></div><div style="margin-top:12px; font-size:15px;">${workoutDays} workout day${workoutDays === 1 ? "" : "s"} (goal ${goal})${wkCardio.length ? ` · ${wkCardio.length} cardio, ${Math.round(cardioMin)} min${cardioDist ? `, ${cardioDist.toFixed(1)} mi` : ""}` : ""}</div>${chestSetsInWeek(days) ? `<div style="margin-top:6px; font-size:13px; color:var(--text-muted);">Chest booster: ${chestSetsInWeek(days)} of ${CHEST_WEEKLY_SETS} sets</div>` : ""}<div class="meta" style="margin-top:8px;">Calories burned aren't measured here, so training shows as activity.</div>`);
   }
   // 5. Weight line with jumps marked
   {
@@ -5179,6 +5186,109 @@ function movesListHtml(workout) {
   if (!movesOpen) return `<div class="tf-moves tf-ph-main" data-moves-toggle style="cursor:pointer;">${head}<div class="tf-moves-names">${names}</div></div>`;
   return `<div class="tf-moves tf-ph-main">${head}${rows}</div>`;
 }
+// ---- Chest booster: optional extra sets on rest days (counts toward a weekly chest-set goal, not the workout goal)
+const CHEST_WEEKLY_SETS = 8, CHEST_SESSION_SETS = 4, CHEST_REST_SECONDS = 75;
+const CHEST_PLANS = {
+  home: { label: "Home · rings", moves: ["Ring push-up", "Ring push-up", "Ring dips (feet down)", "Ring dips (feet down)"] },
+  travel: { label: "Travel", moves: ["Decline push-up", "Decline push-up", "Slow push-up (4 s down)", "Slow push-up (4 s down)"] },
+};
+const CHEST_NEXT = {
+  "Ring push-up": "raise your feet",
+  "Ring dips (feet down)": "lean forward, then lift one foot off the floor",
+  "Decline push-up": "put your feet higher or add a 1 s pause at the bottom",
+  "Slow push-up (4 s down)": "add a 2 s pause at the bottom",
+};
+let chestExtraOpen = false, chestRepsOpen = false, chestRestEnd = 0, chestRestTimer = null, chestDraftReps = 10;
+function chestSetsInWeek(days) { const set = new Set(days); return (state.chestLogs || []).filter(l => set.has(l.day)).length; }
+function chestTodayLogs() { const t = localDateStr(); return (state.chestLogs || []).filter(l => l.day === t); }
+function chestHint(moves) {
+  // Look at the last two days each move was trained: all sets at 15+ means level up; falling reps means hold back.
+  const byDay = {};
+  (state.chestLogs || []).filter(l => moves.includes(l.move)).forEach(l => { (byDay[l.day] = byDay[l.day] || []).push(l); });
+  const dayKeys = Object.keys(byDay).sort();
+  if (!dayKeys.length) return "Stop 1–3 reps shy of failure. Aim for 8–15 clean reps a set.";
+  const last = byDay[dayKeys[dayKeys.length - 1]];
+  const mvs = [...new Set(last.map(l => l.move))];
+  for (const m of mvs) {
+    const r = last.filter(l => l.move === m).map(l => l.reps);
+    if (r.length >= 2 && r.every(x => x >= 15)) return `Hit 15 on every ${m.toLowerCase()} set → make it harder: ${CHEST_NEXT[m] || "slow the tempo"}.`;
+  }
+  if (dayKeys.length >= 2) {
+    const avg = arr => arr.reduce((a, l) => a + l.reps, 0) / arr.length;
+    const prev = byDay[dayKeys[dayKeys.length - 2]];
+    if (avg(last) < avg(prev) - 1) return "Reps dipped from last time. Hold this level and check sleep and calories before pushing.";
+  }
+  return "Add a rep or two per set. At 15 on every set, make the move harder.";
+}
+function chestRestRemaining() { return Math.max(0, Math.ceil((chestRestEnd - Date.now()) / 1000)); }
+function chestTickRest() {
+  const left = chestRestRemaining();
+  document.querySelectorAll("[data-chest-rest-clock]").forEach(el => { el.textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`; });
+  if (left <= 0) { clearInterval(chestRestTimer); chestRestTimer = null; try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} renderChestBoosters(); }
+}
+function chestBoosterHtml(opts) {
+  const plan = CHEST_PLANS[state.chestMode] || CHEST_PLANS.home;
+  const wk = chestSetsInWeek(weekDayList(0));
+  const done = wk >= CHEST_WEEKLY_SETS;
+  const today = chestTodayLogs();
+  const pct = Math.min(1, wk / CHEST_WEEKLY_SETS), C = 2 * Math.PI * 31;
+  const ring = `<svg width="60" height="60" viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="31" fill="none" stroke="#3A3F33" stroke-width="7"/><circle cx="38" cy="38" r="31" fill="none" stroke="#2FBFA6" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - pct)).toFixed(1)}" transform="rotate(-90 38 38)"/><text x="38" y="${done ? 46 : 43}" text-anchor="middle" font-family="Oswald" font-size="${done ? 24 : 18}" fill="#EDEAE0">${done ? "✓" : wk + "/" + CHEST_WEEKLY_SETS}</text>${done ? "" : '<text x="38" y="55" text-anchor="middle" font-family="Oswald" font-size="8" fill="#9A9A8C" letter-spacing="1.2">THIS WEEK</text>'}</svg>`;
+  if (done && !chestExtraOpen) {
+    return `<div class="tf-hero2" style="order:-3;"><div class="tf-hero2-in" style="display:flex; align-items:center; justify-content:space-between; gap:12px;"><div><div class="tf-hero2-k">Chest booster</div><div style="font-family:var(--font-display); font-size:22px; text-transform:uppercase; margin-top:2px;">Chest done this week</div><div style="font-size:12px; color:var(--text-muted); margin-top:2px;">${wk} sets logged · <span data-chest-extra style="color:var(--accent); cursor:pointer;">Log extra</span></div></div>${ring}</div></div>`;
+  }
+  const rows = plan.moves.slice();
+  while (rows.length < today.length) rows.push(plan.moves[plan.moves.length - 1]);
+  const nextIdx = today.length;
+  const rowHtml = rows.map((m, i) => { const l = today[i]; return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; ${i < rows.length - 1 ? "border-bottom:1px solid #2d3127;" : ""} font-size:14px;"><span style="width:22px; height:22px; border-radius:50%; border:2px solid ${l ? "var(--accent)" : "var(--border)"}; background:${l ? "var(--accent)" : "transparent"}; color:#0F1A17; display:flex; align-items:center; justify-content:center; font-size:12px;">${l ? "✓" : ""}</span><span style="flex:1;">${escapeHtml(m)}</span><span style="font-family:var(--font-display); font-size:18px; color:${l ? "var(--text)" : "var(--text-muted)"};">${l ? l.reps + ' <small style="font-size:11px; color:var(--text-muted); font-family:Inter,sans-serif;">reps</small>' : "—"}</span>${l ? `<span data-chest-undo="${l.id}" style="color:var(--text-muted); font-size:16px; cursor:pointer; padding:0 2px;" aria-label="Remove set">×</span>` : ""}</div>`; }).join("");
+  const nextMove = rows[Math.min(nextIdx, rows.length - 1)];
+  const restLeft = chestRestRemaining();
+  const restCard = restLeft > 0 ? `<div class="card" style="margin-top:10px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;"><div><div class="tf-hero2-k" style="color:var(--text-muted);">Rest</div><div data-chest-rest-clock style="font-family:var(--font-display); font-size:28px; line-height:1.1;">${Math.floor(restLeft / 60)}:${String(restLeft % 60).padStart(2, "0")}</div></div><button class="secondary" data-chest-skip-rest>Skip</button></div>` : "";
+  const repsPanel = chestRepsOpen ? `<div class="card" style="margin-top:10px; padding:12px 14px;"><div class="tf-hero2-k" style="color:var(--text-muted);">Reps for ${escapeHtml(nextMove)}</div><div style="display:flex; align-items:center; justify-content:center; gap:22px; margin:8px 0;"><button class="secondary" data-chest-step="-1" style="width:52px; font-size:22px;">−</button><span data-chest-reps style="font-family:var(--font-display); font-size:40px; min-width:60px; text-align:center;">${chestDraftReps}</span><button class="secondary" data-chest-step="1" style="width:52px; font-size:22px;">+</button></div><button class="primary" data-chest-save style="width:100%;">Save set</button></div>` : "";
+  return `<div class="tf-hero2" style="order:-3;"><div class="tf-hero2-in">
+      <div class="tf-hero2-k">Chest booster</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:4px;"><div><div style="font-family:var(--font-display); font-size:26px; line-height:1.05; text-transform:uppercase;">${plan.label}</div><div style="font-size:12px; color:#cfe9e3; margin-top:4px;">${CHEST_SESSION_SETS} sets · stop 1–3 reps shy of failure</div></div>${ring}</div>
+      <div style="display:flex; gap:8px; margin-top:10px;"><span data-chest-mode="home" class="chip${state.chestMode === "home" ? " active selected" : ""}" style="${state.chestMode === "home" ? "background:var(--accent); color:#0F1A17; border-color:var(--accent);" : ""}">Home</span><span data-chest-mode="travel" class="chip${state.chestMode === "travel" ? " active selected" : ""}" style="${state.chestMode === "travel" ? "background:var(--accent); color:#0F1A17; border-color:var(--accent);" : ""}">Travel</span></div>
+    </div></div>
+    <div class="card" style="padding:4px 14px; margin-bottom:0;">${rowHtml}</div>${restCard}${repsPanel}
+    <div class="card" style="margin-top:10px; padding:10px 14px; border-color:#5b4a2a;"><div class="tf-hero2-k" style="color:#C79A45;">Next step</div><div style="font-size:13px; margin-top:3px;">${escapeHtml(chestHint(plan.moves))}</div></div>
+    ${chestRepsOpen ? "" : `<button class="primary" data-chest-open style="width:100%; margin-top:10px;">Log set · ${Math.min(nextIdx + 1, Math.max(rows.length, nextIdx + 1))} of ${Math.max(CHEST_SESSION_SETS, rows.length)}</button>`}`;
+}
+function renderChestBoosters() {
+  const c = document.getElementById("chestBoosterCoach");
+  if (c) c.innerHTML = chestBoosterHtml();
+  const t = document.getElementById("chestBoosterToday");
+  if (t) t.innerHTML = chestBoosterHtml();
+  const d = document.querySelector("#chestBoosterDetails summary");
+  if (d) d.textContent = chestSetsInWeek(weekDayList(0)) >= CHEST_WEEKLY_SETS ? "Chest booster · done this week" : `Chest booster · ${chestSetsInWeek(weekDayList(0))}/${CHEST_WEEKLY_SETS} sets`;
+}
+document.addEventListener("click", async (e) => {
+  const q = (sel) => e.target.closest(sel);
+  let changed = false;
+  if (q("[data-chest-mode]")) { state.chestMode = q("[data-chest-mode]").dataset.chestMode; changed = true; chestRepsOpen = false; }
+  else if (q("[data-chest-extra]")) { chestExtraOpen = true; }
+  else if (q("[data-chest-open]")) {
+    const last = (state.chestLogs || []).slice(-1)[0];
+    chestDraftReps = last ? last.reps : 10; chestRepsOpen = true;
+  }
+  else if (q("[data-chest-step]")) { chestDraftReps = Math.max(1, Math.min(60, chestDraftReps + Number(q("[data-chest-step]").dataset.chestStep))); }
+  else if (q("[data-chest-save]")) {
+    const plan = CHEST_PLANS[state.chestMode] || CHEST_PLANS.home;
+    const n = chestTodayLogs().length;
+    const move = plan.moves[Math.min(n, plan.moves.length - 1)];
+    state.chestLogs.push({ id: "ch" + Date.now(), date: new Date().toISOString(), day: localDateStr(), move, reps: chestDraftReps, mode: state.chestMode });
+    chestRepsOpen = false; changed = true;
+    if (chestSetsInWeek(weekDayList(0)) >= CHEST_WEEKLY_SETS && chestTodayLogs().length >= CHEST_SESSION_SETS) { chestExtraOpen = false; }
+    chestRestEnd = Date.now() + CHEST_REST_SECONDS * 1000;
+    if (chestRestTimer) clearInterval(chestRestTimer);
+    chestRestTimer = setInterval(chestTickRest, 1000);
+  }
+  else if (q("[data-chest-skip-rest]")) { chestRestEnd = 0; if (chestRestTimer) { clearInterval(chestRestTimer); chestRestTimer = null; } }
+  else if (q("[data-chest-undo]")) {
+    state.chestLogs = state.chestLogs.filter(l => l.id !== q("[data-chest-undo]").dataset.chestUndo); changed = true;
+  } else return;
+  renderChestBoosters();
+  if (changed) { try { await persistNow(); } catch (err) {} }
+});
 function renderTodayWorkout(workout) {
   currentWorkout = workout;
   const kick = document.getElementById("tfKicker"); if (kick) kick.textContent = todayKickerText();
@@ -5282,7 +5392,8 @@ function renderTodayWorkout(workout) {
     const restLine = hasLoggedWorkoutToday()
       ? "Nothing scheduled next in the rotation — a rest slot is up."
       : "Nothing scheduled today — rest and recover.";
-    box.innerHTML = `<div class="card">${previewNote}<h2>${workout.day || "Rest day"}</h2><div class="meta">${restLine}</div>${nextUpHtml}${previewAreaHtml}${skipBtnHtml}</div>`;
+    box.innerHTML = `<div id="chestBoosterToday"></div><div class="card">${previewNote}<h2>${workout.day || "Rest day"}</h2><div class="meta">${restLine}</div>${nextUpHtml}${previewAreaHtml}${skipBtnHtml}</div>`;
+    renderChestBoosters();
     const skipBtn = document.getElementById("skipRestDayBtn");
     if (skipBtn) skipBtn.addEventListener("click", skipRestDay, { once: true });
     const previewBtn = document.getElementById("previewNextDayBtn");
