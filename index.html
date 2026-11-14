@@ -16,12 +16,12 @@
     --accent:#FF7A3D;
     --accent-dark:#D9541C;
     --gold:#F2B84B;
-    --slate:#9B6FB0;
+    --slate:#C98A5E;
     --bg:#120F0D;
     --surface:#1E1915;
     --surface-2:#2A221C;
     --border:#3A3029;
-    --text:#F4EEE8;
+    --text:#D2C7BB;
     --text-muted:#9A8F85;
     --danger:#E5534B;
     --radius:4px;
@@ -249,7 +249,7 @@
   .tf-pg-hero .n{font-family:var(--font-display); font-size:34px; font-weight:700; line-height:1; margin-top:4px;}
   .tf-pg-hero .n small{font-size:18px; font-weight:600;}
   .tf-pg-hero .s{font-size:13px; font-weight:500; margin-top:4px;}
-  .tf-pg-hero .pill{margin-top:12px; display:inline-block; background:#120F0D; color:#F4EEE8; border-radius:99px; padding:6px 12px; font-size:12px; font-weight:600;}
+  .tf-pg-hero .pill{margin-top:12px; display:inline-block; background:#120F0D; color:#D2C7BB; border-radius:99px; padding:6px 12px; font-size:12px; font-weight:600;}
   .tf-ptiles{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
   .tf-ptile{text-align:left; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px 14px; height:150px; display:flex; flex-direction:column; color:var(--text); cursor:pointer; font-family:Inter,sans-serif;}
   .tf-ptile .n{font-size:12px; color:var(--text-muted); font-weight:600; display:flex; justify-content:space-between; width:100%;}
@@ -581,17 +581,17 @@
   #sessionPanel[data-sx="work"] .list-item, #sessionPanel[data-sx="emom"] .list-item{border-bottom-color:rgba(18,15,13,.2);}
   #sessionPanel[data-sx] button.danger-link{color:inherit !important; opacity:.85; text-decoration:underline; font-size:14px; padding:8px 0;}
   #sessionPanel[data-sx] button.primary{height:60px; border-radius:30px; font-size:20px; letter-spacing:1px; text-transform:uppercase;}
-  #sessionPanel[data-sx="work"] button.primary, #sessionPanel[data-sx="emom"] button.primary, #sessionPanel[data-sx="hold"] button.primary, #sessionPanel[data-sx="done"] button.primary{background:#120F0D; color:#F4EEE8;}
+  #sessionPanel[data-sx="work"] button.primary, #sessionPanel[data-sx="emom"] button.primary, #sessionPanel[data-sx="hold"] button.primary, #sessionPanel[data-sx="done"] button.primary{background:#120F0D; color:#D2C7BB;}
   #sessionPanel[data-sx] button.secondary{height:48px; border-radius:24px; color:inherit; border-color:currentColor; opacity:.9;}
   .tf-fin-kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:2px; margin-top:26px;}
   .tf-fin-big{font-family:var(--font-display); font-weight:700; font-size:118px; white-space:nowrap; line-height:.95; text-transform:uppercase; margin-top:8px;}
   .tf-fin-day{font-size:16px; font-weight:500; margin-top:6px;}
   .tf-fin-tiles{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:28px;}
-  .tf-fin-tile{background:#120F0D; color:#F4EEE8; border-radius:16px; padding:14px 16px;}
+  .tf-fin-tile{background:#120F0D; color:#D2C7BB; border-radius:16px; padding:14px 16px;}
   .tf-fin-tile b{display:block; font-family:var(--font-display); font-size:34px; font-weight:600; line-height:1;}
   .tf-fin-tile span{font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:#9A8F85; text-transform:uppercase;}
   .tf-fin-note{margin-top:22px; font-size:15px; font-weight:500; line-height:1.45;}
-  #sessionPanel[data-sx="work"] #actualRepsInput{background:#120F0D; color:#F4EEE8; border:none; border-radius:16px; font-size:30px; text-align:center; font-family:var(--font-display); padding:14px;}
+  #sessionPanel[data-sx="work"] #actualRepsInput{background:#120F0D; color:#D2C7BB; border:none; border-radius:16px; font-size:30px; text-align:center; font-family:var(--font-display); padding:14px;}
   #sessionPanel[data-sx="work"] #actualRepsInput::placeholder{color:#7C857F; font-size:16px;}
   #sessionPanel[data-sx] #sessionSwapPanel{background:#0E0B09; color:var(--text); padding:12px; border-radius:14px; margin-top:10px;}
   #sessionPanel[data-sx] #restClock, #sessionPanel[data-sx] #holdClock, #sessionPanel[data-sx] #emomClock{font-family:var(--font-display) !important; font-weight:700 !important; font-size:150px !important; line-height:.9; margin:10px 0 !important; letter-spacing:-2px;}
@@ -980,7 +980,7 @@
     </div>
 
     <div id="tfWeekCard"></div>
-    <details class="exercise-group tf-row tf-dotrow" id="chestBoosterDetails" style="--dc:#4fa8c9;">
+    <details class="exercise-group tf-row tf-dotrow" id="chestBoosterDetails" style="--dc:#FF7A3D;">
       <summary>Chest booster</summary>
       <div id="chestBoosterCoach" style="margin-top:10px;"></div>
     </details>
@@ -997,7 +997,7 @@
       <summary>Weekly review</summary>
       <div id="weeklyReview" style="margin-top:10px;"></div>
     </details>
-    <details class="exercise-group tf-row tf-dotrow" id="bodyCompDetails" style="--dc:#9B6FB0;">
+    <details class="exercise-group tf-row tf-dotrow" id="bodyCompDetails" style="--dc:#C98A5E;">
       <summary>Body composition</summary>
       <div id="bodyFatSummary" style="margin-top:10px;">Log neck + waist with a weigh-in to get a body-fat estimate here.</div>
     </details>
@@ -1220,7 +1220,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-14 14:05 CT";
+const APP_BUILD = "2026-11-14 14:20 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3773,7 +3773,7 @@ let weeklyReviewLogsOpen = false;
 function tfRing(frac, center, label, color, size) {
   const r = 30, C = 2 * Math.PI * r, f = Math.max(0, Math.min(1, frac || 0));
   size = size || 78;
-  return `<svg width="${size}" height="${size}" viewBox="0 0 76 76" role="img" aria-label="${escapeHtml(label)}"><circle cx="38" cy="38" r="${r}" fill="none" stroke="#2A221C" stroke-width="7"/><circle cx="38" cy="38" r="${r}" fill="none" stroke="${color || "#FF7A3D"}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - f)).toFixed(1)}" transform="rotate(-90 38 38)"/><text x="38" y="43" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="15" font-weight="600" fill="#F4EEE8">${escapeHtml(center)}</text></svg>`;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 76 76" role="img" aria-label="${escapeHtml(label)}"><circle cx="38" cy="38" r="${r}" fill="none" stroke="#2A221C" stroke-width="7"/><circle cx="38" cy="38" r="${r}" fill="none" stroke="${color || "#FF7A3D"}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - f)).toFixed(1)}" transform="rotate(-90 38 38)"/><text x="38" y="43" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="15" font-weight="600" fill="#D2C7BB">${escapeHtml(center)}</text></svg>`;
 }
 function tfBarRows(items, cls) {
   const max = Math.max(1, ...items.map(c => c.count));
@@ -3980,7 +3980,7 @@ function tfDonut(slices, centerTop, centerBottom) {
     arcs += `<circle cx="60" cy="60" r="${r}" fill="none" stroke="${s.c}" stroke-width="16" stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 60 60)"/>`;
     off += len;
   });
-  return `<svg width="132" height="132" viewBox="0 0 120 120" role="img" aria-label="Calories by source"><circle cx="60" cy="60" r="${r}" fill="none" stroke="#2A221C" stroke-width="16"/>${arcs}<text x="60" y="58" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="19" font-weight="600" fill="#F4EEE8">${escapeHtml(centerTop)}</text><text x="60" y="74" text-anchor="middle" font-size="9" fill="#9A9D8E">${escapeHtml(centerBottom)}</text></svg>`;
+  return `<svg width="132" height="132" viewBox="0 0 120 120" role="img" aria-label="Calories by source"><circle cx="60" cy="60" r="${r}" fill="none" stroke="#2A221C" stroke-width="16"/>${arcs}<text x="60" y="58" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="19" font-weight="600" fill="#D2C7BB">${escapeHtml(centerTop)}</text><text x="60" y="74" text-anchor="middle" font-size="9" fill="#9A9D8E">${escapeHtml(centerBottom)}</text></svg>`;
 }
 function renderWeekClose() {
   const el = document.getElementById("weeklyReview");
@@ -4073,9 +4073,9 @@ function renderWeekClose() {
       if (x.v == null) return `<text x="${xx + bw / 2}" y="${H + 16}" text-anchor="middle" font-size="10" fill="#6B6F60">${dayName(x.d)[0]}</text>`;
       if (!x.n) return `<rect x="${xx}" y="${H - 4}" width="${bw}" height="4" rx="2" fill="#3A3E34"/><text x="${xx + bw / 2}" y="${H - 8}" text-anchor="middle" font-size="9" fill="#9A9D8E">none</text><text x="${xx + bw / 2}" y="${H + 16}" text-anchor="middle" font-size="10" fill="#9A9D8E">${dayName(x.d)[0]}</text>`;
       const col = x.v <= dailyBudget * 1.1 ? "#FF7A3D" : x.v <= dailyBudget * 1.3 ? "#E8B04A" : "#E5534B";
-      return `<rect x="${xx}" y="${yOf(x.v)}" width="${bw}" height="${H - yOf(x.v)}" rx="4" fill="${col}"/><text x="${xx + bw / 2}" y="${yOf(x.v) - 4}" text-anchor="middle" font-size="10" fill="#F4EEE8">${kfmt(x.v)}</text><text x="${xx + bw / 2}" y="${H + 16}" text-anchor="middle" font-size="10" fill="#9A9D8E">${dayName(x.d)[0]}</text>`;
+      return `<rect x="${xx}" y="${yOf(x.v)}" width="${bw}" height="${H - yOf(x.v)}" rx="4" fill="${col}"/><text x="${xx + bw / 2}" y="${yOf(x.v) - 4}" text-anchor="middle" font-size="10" fill="#D2C7BB">${kfmt(x.v)}</text><text x="${xx + bw / 2}" y="${H + 16}" text-anchor="middle" font-size="10" fill="#9A9D8E">${dayName(x.d)[0]}</text>`;
     }).join("");
-    cards.push(`${big("Day by day")}<svg viewBox="0 -6 ${W} ${H + 26}" width="100%" role="img" aria-label="Daily calories against budget line"><line x1="0" x2="${W}" y1="${yOf(dailyBudget)}" y2="${yOf(dailyBudget)}" stroke="#F4EEE8" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>${bars}</svg><div class="meta" style="margin-top:6px;">Dashed line is your daily share of the budget (${Math.round(dailyBudget).toLocaleString()}). Teal is at or near it, gold is over, red is well over.</div>`);
+    cards.push(`${big("Day by day")}<svg viewBox="0 -6 ${W} ${H + 26}" width="100%" role="img" aria-label="Daily calories against budget line"><line x1="0" x2="${W}" y1="${yOf(dailyBudget)}" y2="${yOf(dailyBudget)}" stroke="#D2C7BB" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>${bars}</svg><div class="meta" style="margin-top:6px;">Dashed line is your daily share of the budget (${Math.round(dailyBudget).toLocaleString()}). Teal is at or near it, gold is over, red is well over.</div>`);
   }
   // 3. Where it came from
   cards.push(total > 0
@@ -4104,7 +4104,7 @@ function renderWeekClose() {
       const span = daysBetween(from, days[6]) || 1;
       const X = d => 10 + (daysBetween(from, d) / span) * (W - 20), Y = v => H - ((v - lo) / (hi - lo)) * (H - 10) - 4;
       const jd = new Set(jumps.map(j => j.date));
-      chart = `<svg viewBox="0 0 ${W} ${H + 14}" width="100%" role="img" aria-label="Weight this week"><polyline fill="none" stroke="#FF7A3D" stroke-width="2" points="${pts.map(p => `${X(p.date).toFixed(1)},${Y(p.weight).toFixed(1)}`).join(" ")}"/>${pts.map(p => `<circle cx="${X(p.date).toFixed(1)}" cy="${Y(p.weight).toFixed(1)}" r="${jd.has(p.date) ? 5 : 3}" fill="${jd.has(p.date) ? "#E5534B" : "#FF7A3D"}"/>${jd.has(p.date) ? `<text x="${X(p.date).toFixed(1)}" y="${(Y(p.weight) - 8).toFixed(1)}" text-anchor="middle" font-size="10" fill="#F4EEE8">${p.weight}</text>` : ""}`).join("")}<text x="2" y="${H + 12}" font-size="9" fill="#6B6F60">${lo.toFixed(0)} to ${hi.toFixed(0)} lb · red dot = jump of 1.5+ lb</text></svg>`;
+      chart = `<svg viewBox="0 0 ${W} ${H + 14}" width="100%" role="img" aria-label="Weight this week"><polyline fill="none" stroke="#FF7A3D" stroke-width="2" points="${pts.map(p => `${X(p.date).toFixed(1)},${Y(p.weight).toFixed(1)}`).join(" ")}"/>${pts.map(p => `<circle cx="${X(p.date).toFixed(1)}" cy="${Y(p.weight).toFixed(1)}" r="${jd.has(p.date) ? 5 : 3}" fill="${jd.has(p.date) ? "#E5534B" : "#FF7A3D"}"/>${jd.has(p.date) ? `<text x="${X(p.date).toFixed(1)}" y="${(Y(p.weight) - 8).toFixed(1)}" text-anchor="middle" font-size="10" fill="#D2C7BB">${p.weight}</text>` : ""}`).join("")}<text x="2" y="${H + 12}" font-size="9" fill="#6B6F60">${lo.toFixed(0)} to ${hi.toFixed(0)} lb · red dot = jump of 1.5+ lb</text></svg>`;
     }
     cards.push(`${big("Weight")}${chart}<div style="margin-top:8px; font-size:15px;">${avgNow != null ? `Average ${avgNow.toFixed(1)} lb` : "No weigh-ins"}${wDelta != null ? ` (${wDelta >= 0 ? "+" : "−"}${Math.abs(wDelta).toFixed(1)} vs the week before)` : ""}</div>${chips ? `<div style="margin-top:6px;">${chips}</div>` : ""}`);
   }
@@ -5061,7 +5061,7 @@ function renderCoachHero() {
     const Y = w => 4 + (1 - (w - lo) / (hi - lo)) * (H - 8);
     const line = pts.map(m => `${X(m).toFixed(1)},${Y(m.weight).toFixed(1)}`).join(" ");
     const l = pts[pts.length - 1];
-    spark = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight, last 14 days"><polyline fill="none" stroke="#FF7A3D" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="${line}"/><circle cx="${X(l).toFixed(1)}" cy="${Y(l.weight).toFixed(1)}" r="4.5" fill="#F4EEE8"/></svg>`;
+    spark = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight, last 14 days"><polyline fill="none" stroke="#FF7A3D" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="${line}"/><circle cx="${X(l).toFixed(1)}" cy="${Y(l.weight).toFixed(1)}" r="4.5" fill="#D2C7BB"/></svg>`;
   }
   const wb = weekBudgetNumbers();
   const pT = state.settings?.macroTargets?.protein || 0;
@@ -5214,7 +5214,7 @@ document.getElementById("todayWorkout").addEventListener("click", (e) => {
 });
 
 let movesOpen = false;
-const PH_COLORS = ["#4fa8c9", "#F2B84B", "#9B6FB0", "#6FBF8E"];
+const PH_COLORS = ["#FF7A3D", "#F2B84B", "#C98A5E", "#9DB36B"];
 // Breaks a workout into blocks (each superset, each standalone move, a finisher) with a colour per block.
 function workoutBlocks(workout) {
   const ex = workout.exercises || [], seen = new Set(), blocks = [];
@@ -5299,7 +5299,7 @@ function chestBoosterHtml(opts) {
   const done = wk >= CHEST_WEEKLY_SETS;
   const today = chestTodayLogs();
   const pct = Math.min(1, wk / CHEST_WEEKLY_SETS), C = 2 * Math.PI * 31;
-  const ring = `<svg width="60" height="60" viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="31" fill="none" stroke="#3A3029" stroke-width="7"/><circle cx="38" cy="38" r="31" fill="none" stroke="#FF7A3D" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - pct)).toFixed(1)}" transform="rotate(-90 38 38)"/><text x="38" y="${done ? 46 : 43}" text-anchor="middle" font-family="Barlow Condensed" font-size="${done ? 24 : 18}" fill="#F4EEE8">${done ? "✓" : wk + "/" + CHEST_WEEKLY_SETS}</text>${done ? "" : '<text x="38" y="55" text-anchor="middle" font-family="Barlow Condensed" font-size="8" fill="#9A9A8C" letter-spacing="1.2">THIS WEEK</text>'}</svg>`;
+  const ring = `<svg width="60" height="60" viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="31" fill="none" stroke="#3A3029" stroke-width="7"/><circle cx="38" cy="38" r="31" fill="none" stroke="#FF7A3D" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - pct)).toFixed(1)}" transform="rotate(-90 38 38)"/><text x="38" y="${done ? 46 : 43}" text-anchor="middle" font-family="Barlow Condensed" font-size="${done ? 24 : 18}" fill="#D2C7BB">${done ? "✓" : wk + "/" + CHEST_WEEKLY_SETS}</text>${done ? "" : '<text x="38" y="55" text-anchor="middle" font-family="Barlow Condensed" font-size="8" fill="#9A9A8C" letter-spacing="1.2">THIS WEEK</text>'}</svg>`;
   if (done && !chestExtraOpen && (today.length === 0 || chestPhaseDone("chestCool").length >= 2)) {
     return `<div class="tf-hero2" style="order:-3;"><div class="tf-hero2-in" style="display:flex; align-items:center; justify-content:space-between; gap:12px;"><div><div class="tf-hero2-k">Chest booster</div><div style="font-family:var(--font-display); font-size:22px; text-transform:uppercase; margin-top:2px;">Chest done this week</div><div style="font-size:12px; color:var(--text-muted); margin-top:2px;">${wk} sets logged · <span data-chest-extra style="color:var(--accent); cursor:pointer;">Log extra</span></div></div>${ring}</div></div>`;
   }
@@ -6429,7 +6429,7 @@ function renderBarChart(containerId, bars) {
     const x = pad + i * ((w - pad * 2) / bars.length);
     const barH = (b.value / max) * (h - pad * 2 - 10);
     const y = h - pad - barH;
-    return `<text x="${(x + barW / 2).toFixed(1)}" y="${(y - 6).toFixed(1)}" font-size="12" fill="#F4EEE8" text-anchor="middle" font-family="monospace">${b.value}</text>
+    return `<text x="${(x + barW / 2).toFixed(1)}" y="${(y - 6).toFixed(1)}" font-size="12" fill="#D2C7BB" text-anchor="middle" font-family="monospace">${b.value}</text>
             <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${barH.toFixed(1)}" fill="#FF7A3D" rx="2"/>
             <text x="${(x + barW / 2).toFixed(1)}" y="${h + 4}" font-size="10" fill="#6B6A63" text-anchor="middle">${b.label}</text>`;
   }).join("");
@@ -6873,7 +6873,7 @@ function weekBudgetNumbers() {
 }
 function foodRing(frac, centerTop, centerSub, color) {
   const C = 2 * Math.PI * 34;
-  return `<svg width="68" height="68" viewBox="0 0 84 84" role="img"><circle cx="42" cy="42" r="34" fill="none" stroke="#3A3029" stroke-width="8"/><circle cx="42" cy="42" r="34" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - Math.max(0, Math.min(1, frac)))).toFixed(1)}" transform="rotate(-90 42 42)"/>${centerTop === "✓" ? `<path d="M30 43l9 9 16-18" fill="none" stroke="#FF7A3D" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>` : `<text x="42" y="44" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="${String(centerTop).length > 5 ? 17 : 21}" font-weight="600" fill="#F4EEE8">${centerTop}</text>`}<text x="42" y="58" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="8" fill="#9A8F85" letter-spacing="1">${centerSub}</text></svg>`;
+  return `<svg width="68" height="68" viewBox="0 0 84 84" role="img"><circle cx="42" cy="42" r="34" fill="none" stroke="#3A3029" stroke-width="8"/><circle cx="42" cy="42" r="34" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - Math.max(0, Math.min(1, frac)))).toFixed(1)}" transform="rotate(-90 42 42)"/>${centerTop === "✓" ? `<path d="M30 43l9 9 16-18" fill="none" stroke="#FF7A3D" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>` : `<text x="42" y="44" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="${String(centerTop).length > 5 ? 17 : 21}" font-weight="600" fill="#D2C7BB">${centerTop}</text>`}<text x="42" y="58" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="8" fill="#9A8F85" letter-spacing="1">${centerSub}</text></svg>`;
 }
 function renderFoodHero(totals, t, entryCount) {
   const kick = document.getElementById("tfFoodKicker");
@@ -7051,9 +7051,9 @@ function renderDayStrip() {
   el.innerHTML = `<div style="position:relative;"><div style="display:flex; align-items:flex-end; gap:6px; height:${H}px; position:relative;">${cols.map(c => {
     const h = c.n ? Math.max(4, Math.round(c.cal / top * H)) : 4;
     const col = !c.n ? "#3A3029" : c.cal <= dailyBudget * 1.1 ? "#FF7A3D" : c.cal <= dailyBudget * 1.3 ? "#E8B04A" : "#E5534B";
-    return `<div data-strip-date="${c.k}" role="button" tabindex="0" style="flex:1; height:${H}px; display:flex; align-items:flex-end; cursor:pointer;"><i style="display:block; width:100%; height:${h}px; border-radius:4px; background:${col};${c.k === sel ? " outline:2px solid #F4EEE8; outline-offset:1px;" : ""}"></i></div>`;
+    return `<div data-strip-date="${c.k}" role="button" tabindex="0" style="flex:1; height:${H}px; display:flex; align-items:flex-end; cursor:pointer;"><i style="display:block; width:100%; height:${h}px; border-radius:4px; background:${col};${c.k === sel ? " outline:2px solid #D2C7BB; outline-offset:1px;" : ""}"></i></div>`;
   }).join("")}<div style="position:absolute; left:0; right:0; top:${yb.toFixed(1)}px; border-top:1px dashed rgba(237,234,224,.5); pointer-events:none;"></div></div>
-  <div style="display:flex; gap:6px; margin-top:4px;">${cols.map(c => `<div style="flex:1; text-align:center; font-size:11px; color:${c.k === sel ? "#F4EEE8" : "#9A8F85"};">${c.lab}</div>`).join("")}</div></div>
+  <div style="display:flex; gap:6px; margin-top:4px;">${cols.map(c => `<div style="flex:1; text-align:center; font-size:11px; color:${c.k === sel ? "#D2C7BB" : "#9A8F85"};">${c.lab}</div>`).join("")}</div></div>
 `;
 }
 document.getElementById("dayStrip").addEventListener("click", (e) => {
@@ -8125,7 +8125,7 @@ function renderProgressTop() {
         })()}
         <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="12" fill="#FF7A3D" fill-opacity=".2"/>
         <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="6" fill="${findJumps().some(j => j.date === last.date) ? "#E5534B" : "#FF7A3D"}" stroke="#1E1915" stroke-width="2.5"/>
-        <rect x="${(bubbleX - 31).toFixed(1)}" y="${Math.max(0, ly - 40).toFixed(1)}" width="62" height="24" rx="12" fill="#F4EEE8"/>
+        <rect x="${(bubbleX - 31).toFixed(1)}" y="${Math.max(0, ly - 40).toFixed(1)}" width="62" height="24" rx="12" fill="#D2C7BB"/>
         <text x="${bubbleX.toFixed(1)}" y="${Math.max(16, ly - 24).toFixed(1)}" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="14" font-weight="600" fill="#120F0D">${last.weight}</text>
       </svg>
       <div class="tf-axis"><span>${fmt(use[0])}</span><span>TODAY</span></div>
