@@ -414,6 +414,13 @@
   #todayWorkoutDetails > summary{display:none;}
   #tab-today > .card > details.exercise-group:not(#todayWorkoutDetails){order:1; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-top:10px;}
   .tf-today-col{display:flex; flex-direction:column;}
+  .tf-focus{order:-3; display:flex; gap:6px; margin:0 0 10px; padding:4px; background:var(--surface); border:1px solid var(--border); border-radius:14px;}
+  .tf-focus button{flex:1; min-width:0; border:0; background:none; color:var(--text-muted); font-size:14px; font-weight:600; padding:9px 6px 8px; border-radius:10px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;}
+  .tf-focus button small{font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:#8fd9c9; min-height:11px;}
+  .tf-focus button.on{background:#1E4A41; color:var(--text);}
+  .tf-today-col.tf-has-focus:not(.tf-focus-chest) #chestBoosterToday{display:none;}
+  .tf-today-col.tf-focus-chest > :not(#todayWorkout):not(.tf-focus), .tf-today-col.tf-focus-chest #todayWorkout > :not(#chestBoosterToday):not(.tf-focus){display:none !important;}
+  .tf-today-col.tf-focus-chest #todayWorkout{display:contents;}
   .tf-today-col > .card{order:-2;}
   .tf-today-col.tf-off #startSessionBtn, .tf-today-col.tf-off #minimumDayBtn{display:none;}
   #todayWorkout > .card{border-left:1px solid var(--border); border-radius:14px; padding:18px;}
@@ -1162,7 +1169,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-14 09:15 CT";
+const APP_BUILD = "2026-11-14 09:45 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1349,7 +1356,7 @@ async function loadState() {
   if (!state.milestonesSeen) state.milestonesSeen = { weightLbs: [], workoutDays: [] };
   if (!state.celebrations) state.celebrations = [];
   if (!state.flags) state.flags = [];
-  if (!Array.isArray(state.chestLogs)) state.chestLogs = [];
+  if (state.todayFocus && typeof state.todayFocus !== "object") state.todayFocus = null; if (!Array.isArray(state.chestLogs)) state.chestLogs = [];
   if (state.chestMode !== "travel") state.chestMode = "home";
   if (typeof state.welcomeBackDismissedDate !== "string") state.welcomeBackDismissedDate = "";
   if (!state.settings.macroTargets) state.settings.macroTargets = { calories: 2300, protein: 160, carbs: 200, fat: 70 };
@@ -5253,6 +5260,32 @@ function chestBoosterHtml(opts) {
     <div class="card" style="margin-top:10px; padding:10px 14px; border-color:#5b4a2a;"><div class="tf-hero2-k" style="color:#C79A45;">Next step</div><div style="font-size:13px; margin-top:3px;">${escapeHtml(chestHint(plan.moves))}</div></div>
     ${chestRepsOpen ? "" : `<button class="primary" data-chest-open style="width:100%; margin-top:10px;">Log set · ${Math.min(nextIdx + 1, Math.max(rows.length, nextIdx + 1))} of ${Math.max(CHEST_SESSION_SETS, rows.length)}</button>`}`;
 }
+function chestRecommended() {
+  if (chestSetsInWeek(weekDayList(0)) >= CHEST_WEEKLY_SETS) return "workout";
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  const yd = localDateStr(y);
+  return (state.logs || []).some(l => localDateStr(new Date(l.date)) === yd) ? "chest" : "workout";
+}
+function chestFocus() { const f = state.todayFocus; return f && f.day === localDateStr() ? f.v : chestRecommended(); }
+function focusSwitchHtml(label) {
+  const rec = chestRecommended(), cur = chestFocus();
+  const b = (v, t) => `<button data-focus="${v}" class="${cur === v ? "on" : ""}">${t}<small>${rec === v ? "Suggested today" : ""}</small></button>`;
+  return `<div class="tf-focus">${b("workout", escapeHtml(String(label || "Workout")))}${b("chest", "Chest booster")}</div>`;
+}
+function applyTodayFocus(on) {
+  const col = document.querySelector("#tab-today .tf-today-col");
+  if (!col) return;
+  col.classList.toggle("tf-has-focus", !!on);
+  col.classList.toggle("tf-focus-chest", !!on && chestFocus() === "chest");
+}
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-focus]");
+  if (!b) return;
+  state.todayFocus = { day: localDateStr(), v: b.dataset.focus };
+  document.querySelectorAll(".tf-focus button").forEach(x => x.classList.toggle("on", x === b));
+  applyTodayFocus(true);
+  try { await persistNow(); } catch (err) {}
+});
 function renderChestBoosters() {
   const c = document.getElementById("chestBoosterCoach");
   if (c) c.innerHTML = chestBoosterHtml();
@@ -5394,6 +5427,7 @@ function renderTodayWorkout(workout) {
       : "Nothing scheduled today — rest and recover.";
     box.innerHTML = `<div id="chestBoosterToday"></div><div class="card">${previewNote}<h2>${workout.day || "Rest day"}</h2><div class="meta">${restLine}</div>${nextUpHtml}${previewAreaHtml}${skipBtnHtml}</div>`;
     renderChestBoosters();
+    applyTodayFocus(false);
     const skipBtn = document.getElementById("skipRestDayBtn");
     if (skipBtn) skipBtn.addEventListener("click", skipRestDay, { once: true });
     const previewBtn = document.getElementById("previewNextDayBtn");
@@ -5474,9 +5508,11 @@ function renderTodayWorkout(workout) {
       <div class="meta">You were ${resumeSnap.session.pos} of ${resumeSnap.session.queue.length} sets in when the app closed. Your finished sets were kept.</div>
       <button class="primary" id="resumeSessionBtn" style="margin-top:8px; width:100%;">Resume where I left off</button>
     </div>` : "";
-  const chestMount = hasLoggedWorkoutToday() ? "" : `<div id="chestBoosterToday" style="margin-top:6px;"></div>`;
+  const showFocus = !hasLoggedWorkoutToday();
+   const chestMount = showFocus ? focusSwitchHtml(String(workout.day || "").split(/[:·—-]/)[0].trim()) + `<div id="chestBoosterToday" style="margin-top:6px;"></div>` : "";
    box.innerHTML = resumeHtml + todayHeroHtml(workout) + warmupHtml + movesListHtml(workout) + workoutHtml + cooldownHtml + chestMount;
    renderChestBoosters();
+   applyTodayFocus(showFocus);
   const resumeBtnEl = document.getElementById("resumeSessionBtn");
   if (resumeBtnEl) resumeBtnEl.addEventListener("click", resumeSessionFromSnapshot);
   const dismissLegendBtn = document.getElementById("dismissExerciseLegendBtn");
