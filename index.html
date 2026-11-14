@@ -430,7 +430,22 @@
   /* Coach: match Today/Food */
   #tab-coach .tf-screen-head{padding:8px 4px 4px; display:flex; flex-direction:row-reverse; justify-content:space-between; align-items:baseline;}
   #tab-coach .tf-screen-head h1{font-size:22px;}
-  #tab-coach .tf-label{padding:8px 4px 5px;}
+  #tab-coach .tf-label{display:none;}
+  #coachNoteCard .tf-clamp-btn, #coachNoteCard a, #coachNoteCard button{padding-top:2px !important; padding-bottom:0 !important; margin-top:2px;}
+  #tab-coach .tf-tile button.tf-linkbtn, #tab-coach .tf-tile .tf-clamp-btn, #tab-coach .tf-tile a{padding-top:4px; padding-bottom:0;}
+  #tab-coach details.tf-row{margin-bottom:5px !important; padding:9px 14px !important;}
+  #tab-coach .tf-hero2 .big{font-size:34px;}
+  #tab-coach .tf-tile{padding:10px 12px;}
+  #tab-coach .tf-tile-big{margin-top:2px;}
+  #tab-coach .tf-tile-big input{font-size:26px;}
+  #tab-coach .tf-tile button.primary{margin-top:8px; height:36px;}
+  #tab-coach .tf-tile .chip{margin-top:8px; padding:7px 0;}
+  #tab-coach .tf-tile-q{margin-top:4px;}
+  #tab-coach #tfWeekCard{display:none;}
+  #tab-coach details.tf-row{padding:11px 14px; margin:0 0 7px;}
+  #coachNoteCard{padding:11px 14px 8px; margin-bottom:8px;}
+  #coachNoteCard .meta, #coachNoteCard p, #coachNoteCard li{font-size:14px; line-height:1.35;}
+  #coachNoteCard .tf-hero2-k{margin-bottom:4px;}
   #tab-coach .tf-hero2{order:0; margin:0 0 10px;}
   #tab-coach .tf-hero2 .big{font-family:var(--font-display); font-size:38px; font-weight:600; line-height:1; color:var(--text);}
   #tab-coach .tf-hero2 .big small{font-size:12px; font-family:Inter,sans-serif; color:var(--text-muted); font-weight:500;}
@@ -1176,7 +1191,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-14 13:25 CT";
+const APP_BUILD = "2026-11-14 14:05 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
