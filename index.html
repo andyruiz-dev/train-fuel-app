@@ -1162,7 +1162,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-14 09:30 CT";
+const APP_BUILD = "2026-11-14 09:15 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -5474,7 +5474,9 @@ function renderTodayWorkout(workout) {
       <div class="meta">You were ${resumeSnap.session.pos} of ${resumeSnap.session.queue.length} sets in when the app closed. Your finished sets were kept.</div>
       <button class="primary" id="resumeSessionBtn" style="margin-top:8px; width:100%;">Resume where I left off</button>
     </div>` : "";
-  box.innerHTML = resumeHtml + todayHeroHtml(workout) + warmupHtml + movesListHtml(workout) + workoutHtml + cooldownHtml;
+  const chestMount = hasLoggedWorkoutToday() ? "" : `<div id="chestBoosterToday" style="margin-top:6px;"></div>`;
+   box.innerHTML = resumeHtml + todayHeroHtml(workout) + warmupHtml + movesListHtml(workout) + workoutHtml + cooldownHtml + chestMount;
+   renderChestBoosters();
   const resumeBtnEl = document.getElementById("resumeSessionBtn");
   if (resumeBtnEl) resumeBtnEl.addEventListener("click", resumeSessionFromSnapshot);
   const dismissLegendBtn = document.getElementById("dismissExerciseLegendBtn");
