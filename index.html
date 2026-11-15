@@ -816,6 +816,12 @@
   #foodLogList .tf-fl-name .m{font-size:12px;}
   #foodLogList .tf-fl-main{padding:10px 16px}
   #tab-food #dayStrip{background:var(--surface) !important; padding:14px 16px 10px !important;}
+
+  /* Notes now lives inside History (no tile): match the other History cards */
+  #notesDetails > p.meta{font-size:13px; color:var(--text-muted);}
+  #notesDetails textarea{background:var(--surface-2); border:1px solid var(--border-2); border-radius:12px; color:var(--text); padding:12px; font-family:Inter,sans-serif; font-size:15px; resize:vertical;}
+  #notesDetails textarea::placeholder{color:var(--text-muted);}
+  #notesDetails h2 .tf-sv{margin-left:8px;}
 </style>
 </head>
 <body>
@@ -1202,15 +1208,6 @@
       <summary>Chest</summary>
       <div id="chestBoosterCoach" style="margin-top:10px;"></div>
     </details>
-    <details class="exercise-group tf-row tf-dotrow" id="notesDetails" style="--dc:var(--gold);">
-        <summary id="notesSummary">Notes</summary>
-        <div style="padding-top:6px;">
-          <p class="meta" style="margin-top:0;">Jot down questions or how a session felt. Each note remembers which exercise you were on. Ask me to check your notes and I'll answer them.</p>
-          <textarea id="noteInput" rows="3" placeholder="e.g. Swings felt like all arms, is that normal?" style="width:100%; box-sizing:border-box;"></textarea>
-          <button class="primary" id="noteSaveBtn" style="margin-top:8px; width:100%;">Save note</button>
-          <div id="notesList" style="margin-top:12px;"></div>
-        </div>
-      </details>
     <details class="exercise-group tf-row tf-dotrow" id="weeklyReviewDetails" style="--dc:var(--gold);">
       <summary>Weekly review</summary>
       <div id="weeklyReview" style="margin-top:10px;"></div>
@@ -1219,8 +1216,8 @@
       <summary>Body comp</summary>
       <div id="bodyFatSummary" style="margin-top:10px;">Log neck + waist with a weigh-in to get a body-fat estimate here.</div>
     </details>
-    <details class="exercise-group tf-row tf-dotrow tf-wide" id="progressDetails">
-      <summary>Details and history</summary>
+    <details class="exercise-group tf-row tf-dotrow" id="progressDetails">
+      <summary>History</summary>
       <div style="margin-top:12px;">
     <div class="card">
       <h2>Your journey so far</h2>
@@ -1269,6 +1266,13 @@
       <div id="reasonPatterns" class="empty">Not enough repeated reasons yet to spot a pattern.</div>
       <div class="meta" id="reasonPatternsHint" style="margin-top:6px; cursor:pointer;"></div>
       <div id="bloatPatterns" style="margin-top:14px;"></div>
+    </div>
+    <div class="card" id="notesDetails">
+      <h2 id="notesSummary">Notes</h2>
+      <p class="meta" style="margin-top:0;">Jot down questions or how a session felt. Each note remembers which exercise you were on. Ask me to check your notes and I'll answer them.</p>
+      <textarea id="noteInput" rows="3" placeholder="e.g. Swings felt like all arms, is that normal?" style="width:100%; box-sizing:border-box;"></textarea>
+      <button class="primary" id="noteSaveBtn" style="margin-top:8px; width:100%;">Save note</button>
+      <div id="notesList" style="margin-top:12px;"></div>
     </div>
       </div>
     </details>
@@ -1446,7 +1450,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-15 16:40 CT";
+const APP_BUILD = "2026-11-15 17:05 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
