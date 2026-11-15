@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#120F0D">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Roboto+Mono:wght@500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700&family=Roboto+Mono:wght@500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script>try{var __tv=localStorage.getItem("tf_theme_vars");if(__tv){var __o=JSON.parse(__tv),__r=document.documentElement;for(var __k in __o.vars)__r.style.setProperty(__k,__o.vars[__k]);}}catch(e){}</script>
 <style>
   /* ---------------------------------------------------------------------
@@ -33,12 +33,12 @@
     --accent-dark:#D9541C;
     --gold:#F2B84B;
     --slate:#C98A5E;
-    --bg:#120F0D;
-    --surface:#1E1915;
-    --surface-2:#2A221C;
-    --border:#3A3029;
-    --text:#D2C7BB;
-    --text-muted:#9A8F85;
+    --bg:#15110D;
+    --surface:#1D1712;
+    --surface-2:#241D17;
+    --border:#33291F;
+    --text:#F2E8D6;
+    --text-muted:#A99A84;
     --danger:#E5534B;
     --accent-soft:#FFC49A;
     --accent-pale:#FFE4D0;
@@ -55,8 +55,8 @@
     --surface-deep:#0E0B09;
     --surface-deep-2:#1A1612;
     --surface-warm:#2A1C14;
-    --surface-3:#2E2620;
-    --border-2:#4F443A;
+    --surface-3:#2C241C;
+    --border-2:#473A2C;
     --border-3:#5E544B;
     --track:#4A3A2E;
     --text-dim:#7A6A5A;
@@ -72,7 +72,7 @@
     --gold-rgb:242,184,75;
     --ink-rgb:18,15,13;
     --radius:4px;
-    --font-display:'Barlow Condensed', -apple-system, sans-serif;
+    --font-display:'Rubik', -apple-system, sans-serif;
     --font-mono:'Roboto Mono', ui-monospace, monospace;
   }
   *{box-sizing:border-box;}
@@ -798,10 +798,10 @@
   #foodHistoryDetails[open]{margin-top:8px !important}
 
   /* ===== Food, match Coach/Today: Inter numerals, 48px buttons, same radii and rhythm ===== */
-  #tab-food .fh-v, #tab-food .fh-wn em, #foodLogList .tf-fl-pro, #tab-food .tf-add.main span{font-family:Inter,sans-serif; font-variant-numeric:tabular-nums}
+  #tab-food .fh-v, #tab-food .fh-wn em, #foodLogList .tf-fl-pro, #tab-food .tf-add.main span{font-family:var(--font-display); font-variant-numeric:tabular-nums}
   #tab-food .fh-v em{ font-size:21px}
   #tab-food .fh-wn em{font-weight:600; font-size:17px;}
-  #tab-food .fh-ring text{font-family:Inter,sans-serif; font-weight:600; font-size:17px}
+  #tab-food .fh-ring text{font-family:var(--font-display); font-weight:600; font-size:17px}
   #tab-food .tf-add.main span{ font-weight:600}
   #tab-food .tf-add{height:48px; border-radius:14px; font-size:15px; font-weight:500;}
   #tab-food .tf-add.tf-more{flex-basis:48px;}
@@ -822,6 +822,35 @@
   #notesDetails textarea{background:var(--surface-2); border:1px solid var(--border-2); border-radius:12px; color:var(--text); padding:12px; font-family:Inter,sans-serif; font-size:15px; resize:vertical;}
   #notesDetails textarea::placeholder{color:var(--text-muted);}
   #notesDetails h2 .tf-sv{margin-left:8px;}
+
+  /* ===== Editorial: Rubik display face, hairline cards, small-caps labels, week ribbon =====
+     Final override layer. !important is used here on purpose: the older per-screen blocks use ID selectors. */
+  #hTitle{font-family:var(--font-display) !important; font-weight:600 !important; font-size:34px !important; letter-spacing:-.01em;}
+  #hDate{font-size:14px !important; color:var(--text-muted);}
+  header{border-bottom:1px solid var(--border-2) !important; padding-bottom:10px !important;}
+  .tf-hero2 .big, #tab-coach .tf-hero2 .big, .tf-hero2-title, .tf-tile-big input, .tf-stat b, .tf-cchip b, .tf-hero2-stats b, #foodLogList .tf-fl-name .n, #todayWorkout .tf-fk{font-family:var(--font-display) !important; font-weight:600; letter-spacing:-.01em;}
+  button.primary{font-family:var(--font-display) !important; font-weight:600; letter-spacing:.01em;}
+  .tf-label, .tf-kicker, .tf-hero2-k, .fh-k, .tf-tile-tag{text-transform:uppercase !important; letter-spacing:.14em !important; font-size:10.5px !important; color:var(--text-muted);}
+  .tf-hero-food, .tf-hero, .tf-focus .tf-fcard, #coachNoteCard{background:var(--surface) !important; border:1px solid var(--border-2) !important; border-radius:12px !important;}
+  .tf-tile, .tf-tiles, .tf-wk3, #coachWeekCard, .tf-g2 > details.tf-row, details.tf-row, #foodLogList .tf-fl-group, #tab-food #dayStrip, .tf-qbtn, .tf-add, #tab-food .tf-recent .chip{border-radius:10px !important; background:var(--surface) !important; border:1px solid var(--border) !important;}
+  #tab-food .tf-add.main, button.primary, #logTodayBtn, #startSessionBtn{background:var(--accent) !important; border-radius:10px !important; border:0 !important;}
+  nav.tabs .pill{border-radius:10px !important;}
+  #foodLogList .tf-fl-row{border-color:var(--border) !important;}
+  .tf-weekcard{display:none !important;}
+
+  #wkRibbon{padding:8px 18px 6px; border-bottom:1px solid var(--border); margin-bottom:6px;}
+  #wkRibbon[hidden]{display:none;}
+  #wkRibbon .wr-row{display:flex; justify-content:space-between;}
+  #wkRibbon .wr-d{flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-muted);}
+  #wkRibbon .wr-c{width:20px; height:20px; border-radius:50%; box-sizing:border-box; display:grid; place-items:center;}
+  #wkRibbon .train .wr-c{border:2px solid var(--accent);}
+  #wkRibbon .chest .wr-c{border:2px solid var(--gold);}
+  #wkRibbon .rest .wr-c{border:1.5px dashed var(--border-2);}
+  #wkRibbon .done .wr-c{background:var(--accent); border-color:var(--accent); color:var(--ink);}
+  #wkRibbon .done.chest .wr-c{background:var(--gold); border-color:var(--gold);}
+  #wkRibbon .missed .wr-c{opacity:.4;}
+  #wkRibbon .today .wr-c{box-shadow:0 0 0 3px var(--accent-bg);}
+  #wkRibbon .today{color:var(--text); font-weight:600;}
 </style>
 </head>
 <body>
@@ -834,6 +863,7 @@
   </div>
   <span id="headerProgramName" hidden></span><span id="syncLabel" hidden>connecting…</span>
 </header>
+<div id="wkRibbon" role="group" aria-label="This week"></div>
 
 <main>
 
@@ -1450,7 +1480,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-15 17:05 CT";
+const APP_BUILD = "2026-11-15 18:00 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -1754,6 +1784,7 @@ async function persistNow() {
   saveStateLocal();
   try { if (typeof renderMorningChecklist === "function") renderMorningChecklist(); } catch (e) {}
   try { if (typeof renderProgressTop === "function") renderProgressTop(); } catch (e) {}
+  try { if (typeof renderWeekRibbon === "function") renderWeekRibbon(); } catch (e) {}
   try { if (typeof renderProgramView === "function") renderProgramView(); } catch (e) {}
   try { applyFeedbackSetting(); } catch (e) {}
   clearTimeout(saveTimer);
@@ -4022,7 +4053,7 @@ let weeklyReviewLogsOpen = false;
 function tfRing(frac, center, label, color, size) {
   const r = 30, C = 2 * Math.PI * r, f = Math.max(0, Math.min(1, frac || 0));
   size = size || 78;
-  return `<svg width="${size}" height="${size}" viewBox="0 0 76 76" role="img" aria-label="${escapeHtml(label)}"><circle cx="38" cy="38" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="7"/><circle cx="38" cy="38" r="${r}" fill="none" stroke="${color || "var(--accent)"}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - f)).toFixed(1)}" transform="rotate(-90 38 38)"/><text x="38" y="43" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="15" font-weight="600" fill="var(--text)">${escapeHtml(center)}</text></svg>`;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 76 76" role="img" aria-label="${escapeHtml(label)}"><circle cx="38" cy="38" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="7"/><circle cx="38" cy="38" r="${r}" fill="none" stroke="${color || "var(--accent)"}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - f)).toFixed(1)}" transform="rotate(-90 38 38)"/><text x="38" y="43" text-anchor="middle" font-family="Rubik, sans-serif" font-size="15" font-weight="600" fill="var(--text)">${escapeHtml(center)}</text></svg>`;
 }
 function tfBarRows(items, cls) {
   const max = Math.max(1, ...items.map(c => c.count));
@@ -4229,7 +4260,7 @@ function tfDonut(slices, centerTop, centerBottom) {
     arcs += `<circle cx="60" cy="60" r="${r}" fill="none" stroke="${s.c}" stroke-width="16" stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 60 60)"/>`;
     off += len;
   });
-  return `<svg width="132" height="132" viewBox="0 0 120 120" role="img" aria-label="Calories by source"><circle cx="60" cy="60" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="16"/>${arcs}<text x="60" y="58" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="19" font-weight="600" fill="var(--text)">${escapeHtml(centerTop)}</text><text x="60" y="74" text-anchor="middle" font-size="9" fill="var(--text-faint-2)">${escapeHtml(centerBottom)}</text></svg>`;
+  return `<svg width="132" height="132" viewBox="0 0 120 120" role="img" aria-label="Calories by source"><circle cx="60" cy="60" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="16"/>${arcs}<text x="60" y="58" text-anchor="middle" font-family="Rubik, sans-serif" font-size="19" font-weight="600" fill="var(--text)">${escapeHtml(centerTop)}</text><text x="60" y="74" text-anchor="middle" font-size="9" fill="var(--text-faint-2)">${escapeHtml(centerBottom)}</text></svg>`;
 }
 function renderWeekClose() {
   const el = document.getElementById("weeklyReview");
@@ -4297,7 +4328,7 @@ function renderWeekClose() {
   else if (t.protein && loggedDays.length >= 3 && proteinAvg < t.protein * 0.9) focus = "Hit protein earlier in the day.";
   else if (complete && total > budget) focus = "Plan the lighter days around your biggest day.";
   // One card at a time: read it, tap Next.
-  const big = (t) => `<div style="font-family:Barlow Condensed,sans-serif; font-size:22px; font-weight:600; line-height:1.25; margin-bottom:10px;">${escapeHtml(t)}</div>`;
+  const big = (t) => `<div style="font-family:Rubik,sans-serif; font-size:22px; font-weight:600; line-height:1.25; margin-bottom:10px;">${escapeHtml(t)}</div>`;
   const bullets = (items, color) => items.map(x => `<div style="margin-top:10px; font-size:16px; line-height:1.4; padding-left:12px; border-left:3px solid ${color};">${escapeHtml(x)}</div>`).join("");
   const rangeLab = `${formatDateOnly(days[0])} to ${formatDateOnly(days[6])}`;
   const cards = [];
@@ -5548,7 +5579,7 @@ function chestBoosterHtml(opts) {
   const done = wk >= CHEST_WEEKLY_SETS;
   const today = chestTodayLogs();
   const pct = Math.min(1, wk / CHEST_WEEKLY_SETS), C = 2 * Math.PI * 31;
-  const ring = `<svg width="60" height="60" viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="31" fill="none" stroke="var(--border)" stroke-width="7"/><circle cx="38" cy="38" r="31" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - pct)).toFixed(1)}" transform="rotate(-90 38 38)"/><text x="38" y="${done ? 46 : 43}" text-anchor="middle" font-family="Barlow Condensed" font-size="${done ? 24 : 18}" fill="var(--text)">${done ? "✓" : wk + "/" + CHEST_WEEKLY_SETS}</text>${done ? "" : '<text x="38" y="55" text-anchor="middle" font-family="Barlow Condensed" font-size="8" fill="var(--text-faint-2)" letter-spacing="1.2">THIS WEEK</text>'}</svg>`;
+  const ring = `<svg width="60" height="60" viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="31" fill="none" stroke="var(--border)" stroke-width="7"/><circle cx="38" cy="38" r="31" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - pct)).toFixed(1)}" transform="rotate(-90 38 38)"/><text x="38" y="${done ? 46 : 43}" text-anchor="middle" font-family="Rubik" font-size="${done ? 24 : 18}" fill="var(--text)">${done ? "✓" : wk + "/" + CHEST_WEEKLY_SETS}</text>${done ? "" : '<text x="38" y="55" text-anchor="middle" font-family="Rubik" font-size="8" fill="var(--text-faint-2)" letter-spacing="1.2">THIS WEEK</text>'}</svg>`;
   if (done && !chestExtraOpen && (today.length === 0 || chestPhaseDone("chestCool").length >= 2)) {
     return `<div class="tf-hero2" style="order:-3;"><div class="tf-hero2-in" style="display:flex; align-items:center; justify-content:space-between; gap:12px;"><div><div class="tf-hero2-k">Chest booster</div><div style="font-family:var(--font-display); font-size:22px; text-transform:uppercase; margin-top:2px;">Chest done this week</div><div style="font-size:12px; color:var(--text-muted); margin-top:2px;">${wk} sets logged · <span data-chest-extra style="color:var(--accent); cursor:pointer;">Log extra</span></div></div>${ring}</div></div>`;
   }
@@ -5634,6 +5665,7 @@ document.addEventListener("click", async (e) => {
   const bar = b.closest(".tf-focus");
   if (bar) bar.outerHTML = focusSwitchHtml(bar.dataset.label);
   applyTodayFocus(true);
+  try { renderWeekRibbon(); } catch (err) {}
   try { await persistNow(); } catch (err) {}
 });
 function renderChestBoosters() {
@@ -7139,7 +7171,7 @@ function weekBudgetNumbers() {
 }
 function foodRing(frac, centerTop, centerSub, color) {
   const C = 2 * Math.PI * 34;
-  return `<svg class="fh-ring" width="80" height="80" viewBox="0 0 84 84" role="img"><circle cx="42" cy="42" r="34" fill="none" stroke="var(--track)" stroke-width="9"/><circle cx="42" cy="42" r="34" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - Math.max(0, Math.min(1, frac)))).toFixed(1)}" transform="rotate(-90 42 42)"/>${centerTop === "✓" ? `<path d="M30 43l9 9 16-18" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>` : `<text x="42" y="44" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="${String(centerTop).length > 5 ? 17 : 21}" font-weight="600" fill="var(--text)">${centerTop}</text>`}<text x="42" y="58" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="8" fill="var(--text-muted)" letter-spacing="1">${centerSub}</text></svg>`;
+  return `<svg class="fh-ring" width="80" height="80" viewBox="0 0 84 84" role="img"><circle cx="42" cy="42" r="34" fill="none" stroke="var(--track)" stroke-width="9"/><circle cx="42" cy="42" r="34" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - Math.max(0, Math.min(1, frac)))).toFixed(1)}" transform="rotate(-90 42 42)"/>${centerTop === "✓" ? `<path d="M30 43l9 9 16-18" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>` : `<text x="42" y="44" text-anchor="middle" font-family="Rubik, sans-serif" font-size="${String(centerTop).length > 5 ? 17 : 21}" font-weight="600" fill="var(--text)">${centerTop}</text>`}<text x="42" y="58" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="8" fill="var(--text-muted)" letter-spacing="1">${centerSub}</text></svg>`;
 }
 function renderFoodHero(totals, t, entryCount) {
   const kick = document.getElementById("tfFoodKicker");
@@ -8322,7 +8354,7 @@ function renderProgressTop() {
       <svg width="124" height="124" viewBox="0 0 124 124" role="img" aria-label="${done} of ${denom} ${pace.mode === "count" ? "workouts" : "weeks"} done">
         <circle cx="62" cy="62" r="52" fill="none" stroke="rgba(var(--ink-rgb),.22)" stroke-width="12"/>
         <circle cx="62" cy="62" r="52" fill="none" stroke="var(--ink)" stroke-width="12" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - frac)).toFixed(1)}" transform="rotate(-90 62 62)"/>
-        <text x="62" y="68" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="36" font-weight="700" fill="var(--ink)">${Math.round(frac * 100)}%</text>
+        <text x="62" y="68" text-anchor="middle" font-family="Rubik, sans-serif" font-size="36" font-weight="700" fill="var(--ink)">${Math.round(frac * 100)}%</text>
         <text x="62" y="86" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="9" fill="var(--ink)" letter-spacing="1.5">OF PROGRAM</text>
       </svg>
       <div style="flex:1; min-width:0;">
@@ -8416,7 +8448,7 @@ function renderProgressTop() {
         <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="12" fill="var(--accent)" fill-opacity=".2"/>
         <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="6" fill="${findJumps().some(j => j.date === last.date) ? "var(--danger)" : "var(--accent)"}" stroke="var(--surface)" stroke-width="2.5"/>
         <rect x="${(bubbleX - 31).toFixed(1)}" y="${Math.max(0, ly - 40).toFixed(1)}" width="62" height="24" rx="12" fill="var(--text)"/>
-        <text x="${bubbleX.toFixed(1)}" y="${Math.max(16, ly - 24).toFixed(1)}" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="14" font-weight="600" fill="var(--ink)">${last.weight}</text>
+        <text x="${bubbleX.toFixed(1)}" y="${Math.max(16, ly - 24).toFixed(1)}" text-anchor="middle" font-family="Rubik, sans-serif" font-size="14" font-weight="600" fill="var(--ink)">${last.weight}</text>
       </svg>
       <div class="tf-axis"><span>${fmt(use[0])}</span><span>TODAY</span></div>
       <div class="meta" style="font-size:11px; margin-top:8px;"><span style="color:var(--danger);">●</span> jump of 1.5+ lb · <span style="color:var(--danger);">▮</span> alcohol day · <span style="color:var(--warn);">▮</span> salty or restaurant day</div>
@@ -10035,6 +10067,29 @@ document.getElementById("profileBtn").addEventListener("click", () => {
   document.getElementById("tab-settings").classList.remove("hidden");
 });
 
+// ---- week ribbon: this week as the plan sees it (Mon to Sun) ----
+// Kind comes from the fixed DAY_PLAN; done comes from logged sessions (and chest booster logs on chest days).
+// Today follows the Rest/Train switch. Past planned days with nothing logged are dimmed.
+function renderWeekRibbon() {
+  const el = document.getElementById("wkRibbon");
+  if (!el) return;
+  const days = weekDayList(0), todayS = localDateStr();
+  const done = new Set((state.logs || []).map(l => dayKeyOf(l.date)));
+  const chest = new Set((state.chestLogs || []).map(l => dayKeyOf(l.date)));
+  const names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const letters = ["M", "T", "W", "T", "F", "S", "S"];
+  const check = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
+  el.innerHTML = '<div class="wr-row">' + days.map((d, i) => {
+    let kind = DAY_PLAN[(i + 1) % 7] || "rest";
+    const isToday = d === todayS;
+    if (isToday) { const f = chestFocus(); kind = f === "chest" ? (kind === "chest" ? "chest" : "rest") : "train"; }
+    const isDone = done.has(d) || (kind === "chest" && chest.has(d));
+    const missed = !isDone && d < todayS && kind !== "rest";
+    const label = names[i] + ", " + (kind === "train" ? "training" : kind === "chest" ? "chest day" : "rest") + (isDone ? ", done" : "") + (isToday ? ", today" : "");
+    return `<div class="wr-d ${kind}${isDone ? " done" : ""}${isToday ? " today" : ""}${missed ? " missed" : ""}" role="img" aria-label="${label}"><div class="wr-c">${isDone ? check : ""}</div><span>${letters[i]}</span></div>`;
+  }).join("") + "</div>";
+}
+
 // ---- header title follows the visible screen ----
 function syncHeaderTitle() {
   const names = { coach: "Coach", food: "Food", today: "Today", programs: "Programs", settings: "Settings" };
@@ -10042,6 +10097,7 @@ function syncHeaderTitle() {
   const id = open ? open.id.replace("tab-", "") : "coach";
   const t = document.getElementById("hTitle"); if (t) t.textContent = names[id] || "Train & Fuel";
   const d = document.getElementById("hDate");
+  const wr = document.getElementById("wkRibbon"); if (wr) { wr.hidden = id === "settings" || id === "programs"; try { renderWeekRibbon(); } catch (e) {} }
   if (d) d.textContent = id === "settings" ? "" : new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 }
 document.querySelectorAll(".tab-btn").forEach(b => b.addEventListener("click", syncHeaderTitle));
