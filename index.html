@@ -1283,7 +1283,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-15 09:30 CT";
+const APP_BUILD = "2026-11-14 19:10 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -5416,7 +5416,6 @@ function workoutDaysThisWeek() {
   return days.filter(d => done.has(d)).length;
 }
 function weekGoalMet() { return workoutDaysThisWeek() >= (state.settings?.weeklyWorkoutGoal || 3); }
-function weekAllDone() { return weekGoalMet() && chestSetsInWeek(weekDayList(0)) >= CHEST_WEEKLY_SETS; }
 function chestRecommended() {
   if (chestSetsInWeek(weekDayList(0)) >= CHEST_WEEKLY_SETS) return "workout";
   // Weekly workout goal already met: the rest of the week is rest, with the chest booster as the optional extra.
@@ -5428,8 +5427,7 @@ function chestRecommended() {
 function chestFocus() { const f = state.todayFocus; return f && f.day === localDateStr() ? f.v : chestRecommended(); }
 function focusSwitchHtml(label) {
   const rec = chestRecommended(), cur = chestFocus();
-  const done = weekAllDone();
-  const b = (v, t) => `<button data-focus="${v}" class="${cur === v ? "on" : ""}">${t}<small>${done ? "Optional" : rec === v ? "Suggested today" : ""}</small></button>`;
+  const b = (v, t) => `<button data-focus="${v}" class="${cur === v ? "on" : ""}">${t}<small>${rec === v ? "Suggested today" : ""}</small></button>`;
   return `<div class="tf-focus">${b("workout", escapeHtml(String(label || "Workout")))}${b("chest", "Chest booster")}</div>`;
 }
 function applyTodayFocus(on) {
@@ -5536,7 +5534,7 @@ function renderTodayWorkout(workout) {
   const previewNote = hasLoggedWorkoutToday()
     ? `<div class="meta" style="color:var(--accent); margin-bottom:8px;">Already logged a session today — this is a preview of what's queued up next.</div>`
     : weekGoalMet()
-      ? `<div class="meta" style="color:var(--accent); margin-bottom:8px;">${weekAllDone() ? "Week done: workouts and chest sets complete. Rest today." : `Weekly goal met (${workoutDaysThisWeek()} of ${state.settings?.weeklyWorkoutGoal || 3}).`} This session is optional.</div>`
+      ? `<div class="meta" style="color:var(--accent); margin-bottom:8px;">Weekly goal met (${workoutDaysThisWeek()} of ${state.settings?.weeklyWorkoutGoal || 3}). Today is rest. This session is optional.</div>`
       : "";
 
   // A day in the rotation can legitimately have zero slots (the rest day
