@@ -643,7 +643,7 @@
   #tab-coach .tf-hero2 .d{ font-weight:500}
   #tab-coach .tf-cchips{ padding:0 4px}
   .tf-cchip{ padding:0 8px 0 0}
-  .tf-coachhero{ border:0 !important; border-left:3px solid var(--accent) !important; padding:2px 0 2px 14px !important}
+  .tf-coachhero{ border:0; border-left:3px solid var(--accent); padding:2px 0 2px 14px}
   .tf-coachhero .tf-hero2-k{display:none;}
   .tf-coachhero .tf-clamp-btn{color:var(--text-muted);}
   .tf-tiles{ background:var(--surface); border-radius:var(--r2); padding:16px}
@@ -669,7 +669,7 @@
   #tab-food .tf-add.main{ background:var(--accent); color:var(--ink)}
   .tf-recent .chip{border:0; background:var(--surface); min-height:36px}
   #foodLogList .tf-fl-row:only-of-type{border-radius:16px !important;}
-  #dayStrip{ border:0 !important}
+  #dayStrip{ border:0}
   /* Progress */
   .tf-ptile{border:0; background:var(--surface)}
   .tf-pcard{ border-radius:var(--r2)}
@@ -719,7 +719,7 @@
   #tab-coach .tf-hero2 .d{ font-size:14px}
   #tab-coach .tf-cchips{margin:4px 0 8px;}
   .tf-cchip b{font-size:19px;}
-  #coachNoteCard{margin:0 4px 10px !important;}
+  #coachNoteCard{margin:0 4px 10px}
   #coachNoteCard .meta{display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:14px; line-height:1.4}
   #coachNoteCard .tf-clamp-btn, #coachNoteCard button, #coachNoteCard a{display:none;}
   #coachNoteCard.open .meta{-webkit-line-clamp:unset; overflow:visible;}
@@ -822,7 +822,7 @@
   #foodLogList .tf-fl-name .n{font-size:15px; font-weight:500;}
   #foodLogList .tf-fl-name .m{font-size:12px;}
   #foodLogList .tf-fl-main{padding:10px 16px}
-  #tab-food #dayStrip{background:var(--surface) !important; padding:14px 16px 10px !important;}
+  #tab-food #dayStrip{background:var(--surface); padding:14px 16px 10px !important}
 
   /* Notes now lives inside History (no tile): match the other History cards */
   #notesDetails > p.meta{font-size:13px; color:var(--text-muted);}
@@ -832,18 +832,18 @@
 
   /* ===== Editorial: Rubik display face, hairline cards, small-caps labels, week ribbon =====
      Final override layer. !important is used here on purpose: the older per-screen blocks use ID selectors. */
-  #hTitle{font-family:var(--font-display) !important; font-weight:600 !important; font-size:34px !important; letter-spacing:-.01em;}
-  #hDate{font-size:14px !important; color:var(--text-muted);}
-  header{border-bottom:1px solid var(--border-2) !important; padding-bottom:10px !important;}
-  .tf-hero2 .big, #tab-coach .tf-hero2 .big, .tf-hero2-title, .tf-tile-big input, .tf-stat b, .tf-cchip b, .tf-hero2-stats b, #foodLogList .tf-fl-name .n, #todayWorkout .tf-fk{font-family:var(--font-display) !important; font-weight:600; letter-spacing:-.01em;}
+  #hTitle{font-family:var(--font-display); font-weight:600; font-size:34px; letter-spacing:-.01em}
+  #hDate{font-size:14px; color:var(--text-muted)}
+  header{border-bottom:1px solid var(--border-2); padding-bottom:10px}
+  .tf-hero2 .big, #tab-coach .tf-hero2 .big, .tf-hero2-title, .tf-tile-big input, .tf-stat b, .tf-cchip b, .tf-hero2-stats b, #foodLogList .tf-fl-name .n, #todayWorkout .tf-fk{font-family:var(--font-display) !important; font-weight:600; letter-spacing:-.01em}
   button.primary{font-family:var(--font-display) !important; font-weight:600; letter-spacing:.01em;}
   .tf-label, .tf-kicker, .tf-hero2-k, .fh-k, .tf-tile-tag{text-transform:uppercase !important; letter-spacing:.14em !important; font-size:10.5px !important; color:var(--text-muted);}
   .tf-hero-food, .tf-hero, .tf-focus .tf-fcard, #coachNoteCard{background:var(--surface) !important; border:1px solid var(--border-2) !important; border-radius:12px !important;}
   .tf-tile, .tf-tiles, .tf-wk3, #coachWeekCard, .tf-g2 > details.tf-row, details.tf-row, #foodLogList .tf-fl-group, #tab-food #dayStrip, .tf-qbtn, .tf-add, #tab-food .tf-recent .chip{border-radius:10px !important; background:var(--surface) !important; border:1px solid var(--border) !important;}
   #tab-food .tf-add.main, button.primary, #logTodayBtn, #startSessionBtn{background:var(--accent) !important; border-radius:10px !important; border:0 !important;}
-  nav.tabs .pill{border-radius:10px !important;}
+  nav.tabs .pill{border-radius:10px}
   #foodLogList .tf-fl-row{border-color:var(--border) !important;}
-  .tf-weekcard{display:none !important;}
+  .tf-weekcard{display:none !important}
 
   #wkRibbon{padding:8px 18px 6px; border-bottom:1px solid var(--border); margin-bottom:6px;}
   #wkRibbon[hidden]{display:none;}
@@ -857,6 +857,11 @@
   #wkRibbon .done.chest .wr-c{background:var(--gold); border-color:var(--gold);}
   #wkRibbon .today .wr-c{box-shadow:0 0 0 3px var(--accent-bg);}
   #wkRibbon .today{color:var(--text); font-weight:600;}
+
+  /* Spacing utilities (replace repeated inline style="margin-top:..") */
+  .mt0{margin-top:0}.mt4{margin-top:4px}.mt6{margin-top:6px}.mt8{margin-top:8px}.mt10{margin-top:10px}.mt12{margin-top:12px}
+  .mb4{margin-bottom:4px}.mb6{margin-bottom:6px}.mb8{margin-bottom:8px}.mb10{margin-bottom:10px}
+  .fx1{flex:1}.w100{width:100%}.mlauto{margin-left:auto}
 </style>
 </head>
 <body>
@@ -885,13 +890,13 @@
     <div class="card">
 
 
-      <details id="todayWorkoutDetails" open style="margin-top:10px;">
+      <details class="mt10" id="todayWorkoutDetails" open>
         <summary style="cursor:pointer; font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:0.2px; list-style:none;">Today's workout</summary>
-        <div class="tf-today-col" style="margin-top:10px;">
+        <div class="tf-today-col mt10">
           <div id="recoveryCautionNote"></div>
           <div id="todayWorkout" class="empty">Pick an active program first.</div>
-          <button class="primary" id="startSessionBtn" style="margin-top:10px; width:100%;" disabled>Start workout</button>
-          <button class="secondary" id="minimumDayBtn" style="margin-top:8px; width:100%;" disabled>Not feeling it? Do the minimum</button>
+          <button class="primary mt10 w100" id="startSessionBtn" disabled>Start workout</button>
+          <button class="secondary mt8 w100" id="minimumDayBtn" disabled>Not feeling it? Do the minimum</button>
           <div id="tfWorkoutLinks"><button id="genWorkoutBtn" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; padding:4px 0;" disabled>Regenerate</button><button id="completeWorkoutBtn" type="button" class="tf-linkbtn">Complete workout without guided session ▸</button></div>
           <div id="tfQuickRow">
             <div class="tf-qr">
@@ -899,13 +904,13 @@
               <button type="button" class="tf-qbtn" id="logWalkChip">Log walk</button>
               <button type="button" class="tf-qbtn" id="logRuckChip">Log ruck</button>
             </div>
-            <div id="cardioForm" class="hidden" style="margin-top:10px;">
+            <div id="cardioForm" class="hidden mt10">
               <div class="row">
-                <input type="text" inputmode="decimal" id="cardioDistance" placeholder="Distance (mi)" style="flex:1;">
-                <input type="text" inputmode="numeric" id="cardioDuration" placeholder="Duration (min)" style="flex:1;">
+                <input class="fx1" type="text" inputmode="decimal" id="cardioDistance" placeholder="Distance (mi)">
+                <input class="fx1" type="text" inputmode="numeric" id="cardioDuration" placeholder="Duration (min)">
               </div>
               <input type="text" inputmode="numeric" id="cardioWeight" placeholder="Weight carried (lbs)" style="margin-top:8px; display:none;">
-              <button class="secondary" id="saveCardioBtn" style="margin-top:8px; width:100%;">Save</button>
+              <button class="secondary mt8 w100" id="saveCardioBtn">Save</button>
             </div>
             <a id="findBarLink" class="hidden" href="https://www.google.com/maps/search/?api=1&query=calisthenics+park+outdoor+gym+pull-up+bars" target="_blank" rel="noopener" style="display:block; color:var(--accent); font-size:14px; padding:2px 0 10px;">Find an outdoor gym or pull-up bar nearby ↗</a>
             <div id="travelModeExplainer" style="margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border);">
@@ -921,14 +926,14 @@
               
                   <div style="padding-top:6px;">
           <div id="skillPracticeIntro">
-            <p class="meta" style="margin-top:0;">
+            <p class="meta mt0">
               Handstand, L-sit, planche, back lever, front lever, and muscle-up each track their own
               progression, separate from today's auto-generated workout — practice on your own
               schedule (Overcoming Gravity recommends skill work done fresh, a few times a week), log
               your attempt here, and the right exercise moves up on its own once you've actually
               earned it. Each rung needs 3 solid sessions in a row before the next one unlocks.
             </p>
-            <button class="danger-link" id="dismissSkillIntroBtn" style="margin-bottom:8px;">Got it, don't show this again</button>
+            <button class="danger-link mb8" id="dismissSkillIntroBtn">Got it, don't show this again</button>
           </div>
           <div id="skillPracticeList"></div>
         </div>
@@ -953,8 +958,8 @@
       <div id="foodHero"></div>
       <div id="todayDetails" class="hidden" style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border);">
         <div id="todayMacros"></div>
-        <div id="weekBudget" style="margin-top:12px;"></div>
-        <div id="weeklyIntake" style="margin-top:12px;"></div>
+        <div class="mt12" id="weekBudget"></div>
+        <div class="mt12" id="weeklyIntake"></div>
       </div>
     </div>
     <div id="proteinRemaining" class="hidden"></div>
@@ -979,7 +984,7 @@
       <button type="button" class="tf-add tf-more" id="photoOptionsToggle" aria-label="Photo options" aria-expanded="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
     </div>
     <div id="photoOptions" class="hidden">
-    <div class="tf-label" style="margin-top:6px;">What is it? (optional, helps the estimate)</div>
+    <div class="tf-label mt6">What is it? (optional, helps the estimate)</div>
     <div class="row" id="scanKindChips" style="gap:6px; flex-wrap:wrap;">
       <div class="chip active" data-kind="">Auto</div>
       <div class="chip" data-kind="package">Package</div>
@@ -996,40 +1001,40 @@
     <input type="file" id="foodPhotoInput" accept="image/*" style="display:none;">
     <div id="foodScanStatus" class="empty" style="display:none; margin-top:8px;"></div>
     <div id="foodScanReview" class="hidden tf-panel">
-      <input type="text" id="scanName" placeholder="Food name" style="margin-bottom:8px;">
-      <div class="field" style="margin-bottom:8px;">
+      <input class="mb8" type="text" id="scanName" placeholder="Food name">
+      <div class="field mb8">
         <div class="field-label">Servings (scales the estimate below)</div>
         <input type="text" inputmode="decimal" id="scanServings" value="1">
-        <div id="scanServingInfo" class="meta" style="margin-top:6px;"></div>
+        <div id="scanServingInfo" class="meta mt6"></div>
         <div class="row" id="scanServingChips" style="gap:6px; flex-wrap:wrap; margin-top:6px;"></div>
       </div>
       <div class="row">
         <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="scanCalories"></div>
         <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="scanProtein"></div>
       </div>
-      <div class="row" style="margin-top:8px;">
+      <div class="row mt8">
         <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="scanCarbs"></div>
         <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="scanFat"></div>
       </div>
-      <button class="primary" id="saveScanBtn" style="margin-top:10px;">Add to log</button>
+      <button class="primary mt10" id="saveScanBtn">Add to log</button>
     </div>
     <div id="quickAddPanel" class="hidden tf-panel">
-      <div class="meta" style="margin-bottom:6px;">Protein staples. Tap to log instantly.</div>
+      <div class="meta mb6">Protein staples. Tap to log instantly.</div>
       <div class="row" id="quickProteinChips"></div>
       <div class="meta" style="margin:12px 0 6px;">Drinks</div>
       <div class="row" id="quickDrinkChips"></div>
     </div>
     <div id="exactPanel" class="hidden tf-panel">
-      <input type="text" id="manualName" placeholder="Food name" style="margin-bottom:8px;">
+      <input class="mb8" type="text" id="manualName" placeholder="Food name">
       <div class="row">
         <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="manualCalories"></div>
         <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="manualProtein"></div>
       </div>
-      <div class="row" style="margin-top:8px;">
+      <div class="row mt8">
         <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="manualCarbs"></div>
         <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="manualFat"></div>
       </div>
-      <button class="primary" id="saveManualBtn" style="margin-top:10px; width:100%;">Add to log</button>
+      <button class="primary mt10 w100" id="saveManualBtn">Add to log</button>
       <button class="danger-link" id="dayTotalBtn" style="color:var(--accent); margin-top:8px;">Log a whole-day total (estimate)</button>
     </div>
 
@@ -1038,7 +1043,7 @@
       <div class="tf-recent" id="recentFoods"></div>
     </div>
     <div id="myFoodsPanel" class="hidden tf-panel">
-      <input type="text" id="myFoodsSearch" placeholder="Search your foods" style="margin-bottom:8px;">
+      <input class="mb8" type="text" id="myFoodsSearch" placeholder="Search your foods">
       <div id="myFoodsList"></div>
     </div>
 
@@ -1047,10 +1052,10 @@
 
     <div class="tf-label" style="display:flex; justify-content:space-between; margin-top:0;"><span>Last 7 days</span><span id="foodHistoryOpen" role="button" tabindex="0" style="cursor:pointer;">History ›</span></div>
     <div id="dayStrip" class="tf-hero-food" style="display:block; padding:8px 14px 6px; margin-bottom:6px;"></div>
-    <details class="exercise-group tf-row" id="foodHistoryDetails" style="margin-top:0;">
+    <details class="exercise-group tf-row mt0" id="foodHistoryDetails">
       <summary>Older days and date jump</summary>
-      <div id="foodHistory" style="margin-top:10px;"></div>
-      <div class="field-label" style="margin-top:12px;">Jump to a date</div>
+      <div class="mt10" id="foodHistory"></div>
+      <div class="field-label mt12">Jump to a date</div>
       <input type="date" id="foodLogDate">
     </details>
     <button class="hidden" id="markTodayPartialBtn" type="button"></button>
@@ -1061,7 +1066,7 @@
     <div id="tfProgramView"></div>
     <details class="exercise-group tf-row" id="programManage" style="margin-top:16px;">
       <summary>All programs, generate new, exercise library</summary>
-      <div style="margin-top:12px;">
+      <div class="mt12">
     <div class="row" id="programsSubNav" style="margin-bottom:14px;">
       <div class="chip active" data-subtab="my-programs">My programs</div>
       <div class="chip" data-subtab="library">Exercise library</div>
@@ -1079,23 +1084,23 @@
               <div class="chip" data-months="9">9 months</div>
               <div class="chip" data-months="12">12 months</div>
             </div>
-            <div class="meta" style="margin-top:12px;">Training days per week</div>
+            <div class="meta mt12">Training days per week</div>
             <div class="row" id="daysChips">
               <div class="chip" data-days="3">3</div>
               <div class="chip active" data-days="4">4</div>
               <div class="chip" data-days="5">5</div>
               <div class="chip" data-days="6">6</div>
             </div>
-            <div class="meta" style="margin-top:12px;">Session length (with warm-up and cool-down)</div>
+            <div class="meta mt12">Session length (with warm-up and cool-down)</div>
             <div class="row" id="minutesChips">
               <div class="chip" data-minutes="25-35">25-35 min</div>
               <div class="chip active" data-minutes="35-45">35-45 min</div>
               <div class="chip" data-minutes="45-60">45-60 min</div>
             </div>
-            <div style="margin-top:12px;">
+            <div class="mt12">
               <input type="text" id="programFocus" placeholder="Focus, e.g. rings + rucking, upper body strength">
             </div>
-            <button class="primary" id="generateProgramBtn" style="margin-top:12px;">Generate program</button>
+            <button class="primary mt12" id="generateProgramBtn">Generate program</button>
           </div>
         </details>
       </div>
@@ -1105,7 +1110,7 @@
           <summary>Kettlebell program (one bell)</summary>
           <div style="padding-top:6px;">
             <div class="meta">A 12-week A/B full-body plan: swings, goblet squats, presses, rows, cleans, carries and get-ups, with posture and hip warm-ups and cool-downs. Same exercises every time, so it won't shuffle. Travel mode swaps each bell move for a bodyweight one, so it works in a hotel room. Add it here, then tap Use under Saved programs.</div>
-            <button class="primary" id="addKbProgramBtn" style="margin-top:12px;">Add kettlebell program</button>
+            <button class="primary mt12" id="addKbProgramBtn">Add kettlebell program</button>
           </div>
         </details>
       </div>
@@ -1135,7 +1140,7 @@
       <div class="card">
         <h2>Exercise library</h2>
         <input type="text" id="exerciseSearch" placeholder="Search exercises…">
-        <div class="row" id="muscleFilterChips" style="margin-top:10px;">
+        <div class="row mt10" id="muscleFilterChips">
           <div class="chip active" data-mg="all">All</div>
           <div class="chip" data-mg="push">Push</div>
           <div class="chip" data-mg="pull">Pull</div>
@@ -1145,13 +1150,13 @@
           <div class="chip" data-mg="ruck">Ruck</div>
           <div class="chip" data-mg="mobility">Mobility</div>
         </div>
-        <div class="row" id="levelFilterChips" style="margin-top:8px;">
+        <div class="row mt8" id="levelFilterChips">
           <div class="chip active" data-level="all">All levels</div>
           <div class="chip" data-level="beginner">Beginner (1-2)</div>
           <div class="chip" data-level="standard">Intermediate (3)</div>
           <div class="chip" data-level="advanced">Advanced (4-5)</div>
         </div>
-        <div class="row" id="equipmentFilterChips" style="margin-top:8px;">
+        <div class="row mt8" id="equipmentFilterChips">
           <div class="chip active" data-equip="all">All equipment</div>
           <div class="chip" data-equip="bodyweight">Bodyweight</div>
           <div class="chip" data-equip="rings">Rings</div>
@@ -1161,7 +1166,7 @@
           <div class="chip" data-equip="ab-wheel">Ab wheel</div>
           <div class="chip" data-equip="kettlebell">Kettlebell</div>
         </div>
-        <div id="exerciseList" style="margin-top:12px;" class="empty">Loading…</div>
+        <div id="exerciseList" class="empty mt12">Loading…</div>
       </div>
     </div>
       </div>
@@ -1189,15 +1194,15 @@
         <button class="primary" id="logWeightBtn">Log weight</button>
         <details class="tf-more">
           <summary>More</summary>
-          <div class="field-label" style="margin-top:8px;">Date</div>
+          <div class="field-label mt8">Date</div>
           <input type="date" id="measurementDateInput">
-          <div class="field-label" style="margin-top:8px;">Neck (in, optional)</div>
+          <div class="field-label mt8">Neck (in, optional)</div>
           <input type="text" inputmode="decimal" id="neckInput" placeholder="Neck">
-          <div class="field-label" style="margin-top:8px;">Waist (in, optional)</div>
+          <div class="field-label mt8">Waist (in, optional)</div>
           <input type="text" inputmode="decimal" id="waistInput" placeholder="Waist">
           <div id="waistExplainer">
-            <div class="meta" style="margin-top:6px;">Add waist now and then for a body-fat estimate (Relative Fat Mass). Measure at the belly button, snug but not tight. It helps tell building muscle from a real stall. Needs your height set once in Settings.</div>
-            <button class="danger-link" id="dismissWaistExplainerBtn" style="margin-top:4px;">Got it, don't show this again</button>
+            <div class="meta mt6">Add waist now and then for a body-fat estimate (Relative Fat Mass). Measure at the belly button, snug but not tight. It helps tell building muscle from a real stall. Needs your height set once in Settings.</div>
+            <button class="danger-link mt4" id="dismissWaistExplainerBtn">Got it, don't show this again</button>
           </div>
         </details>
       </div>
@@ -1214,20 +1219,20 @@
           <summary>Anything going on?</summary>
           <div class="row" id="checkinTagChips" style="flex-wrap:wrap; margin-top:8px;"></div>
         </details>
-        <div class="tf-tile-sub" id="dailyCheckinSavedHint" style="margin-top:8px;"></div>
+        <div class="tf-tile-sub mt8" id="dailyCheckinSavedHint"></div>
       </div>
       <button class="primary" id="logTodayBtn" type="button">Save</button>
     </div>
 
     <div id="weightCheckInPanel" class="hidden tf-panel">
-      <div class="meta" id="weightCheckInMessage" style="margin-bottom:8px;"></div>
+      <div class="meta mb8" id="weightCheckInMessage"></div>
       <div class="meta hidden" id="weightJumpExplain" style="margin-bottom:10px; padding:10px 12px; border:1px solid var(--border); border-radius:12px;"></div>
       <div class="row" id="weightCheckInChips"></div>
-      <input type="number" inputmode="decimal" id="weightCheckInWater" class="hidden" placeholder="About how much water? (oz, optional)" style="margin-top:10px;">
-      <input type="text" id="weightCheckInFood" class="hidden" placeholder="Anything specific you ate? (optional)" style="margin-top:10px;">
-      <div class="row" style="margin-top:10px;">
-        <button class="secondary" id="weightCheckInSaveBtn" style="flex:1;">Save</button>
-        <button class="danger-link" id="weightCheckInSkipBtn" style="flex:1;">Skip</button>
+      <input type="number" inputmode="decimal" id="weightCheckInWater" class="hidden mt10" placeholder="About how much water? (oz, optional)">
+      <input type="text" id="weightCheckInFood" class="hidden mt10" placeholder="Anything specific you ate? (optional)">
+      <div class="row mt10">
+        <button class="secondary fx1" id="weightCheckInSaveBtn">Save</button>
+        <button class="danger-link fx1" id="weightCheckInSkipBtn">Skip</button>
       </div>
     </div>
 
@@ -1242,19 +1247,19 @@
     <div id="tfWeekCard"></div>
     <details class="exercise-group tf-row tf-dotrow" id="chestBoosterDetails" style="--dc:var(--accent);">
       <summary>Chest</summary>
-      <div id="chestBoosterCoach" style="margin-top:10px;"></div>
+      <div class="mt10" id="chestBoosterCoach"></div>
     </details>
     <details class="exercise-group tf-row tf-dotrow" id="weeklyReviewDetails" style="--dc:var(--gold);">
       <summary>Weekly review</summary>
-      <div id="weeklyReview" style="margin-top:10px;"></div>
+      <div class="mt10" id="weeklyReview"></div>
     </details>
     <details class="exercise-group tf-row tf-dotrow" id="bodyCompDetails" style="--dc:var(--slate);">
       <summary>Body comp</summary>
-      <div id="bodyFatSummary" style="margin-top:10px;">Log neck + waist with a weigh-in to get a body-fat estimate here.</div>
+      <div class="mt10" id="bodyFatSummary">Log neck + waist with a weigh-in to get a body-fat estimate here.</div>
     </details>
     <details class="exercise-group tf-row tf-dotrow" id="progressDetails">
       <summary>History</summary>
-      <div style="margin-top:12px;">
+      <div class="mt12">
     <div class="card">
       <h2>Your journey so far</h2>
       <div id="journeyStats"></div>
@@ -1262,36 +1267,36 @@
     <div class="card">
       <h2>Weight trend</h2>
       <div id="weightChart" class="empty" style="cursor:pointer;">Log a few measurements to see a trend.</div>
-      <div class="meta" id="weightAvgLine" style="margin-top:6px;"></div>
+      <div class="meta mt6" id="weightAvgLine"></div>
       <div class="meta" id="weightHistoryHint" style="margin-top:6px; cursor:pointer;"></div>
-      <div id="weightHistoryList" class="hidden" style="margin-top:8px;"></div>
+      <div id="weightHistoryList" class="hidden mt8"></div>
     </div>
     <div class="card hidden" id="bodyFatChartBlock">
       <h2>Body-fat trend</h2>
       <div id="bodyFatChart"></div>
-      <div class="meta" id="bodyFatAvgLine" style="margin-top:6px;"></div>
+      <div class="meta mt6" id="bodyFatAvgLine"></div>
     </div>
     <div class="card" id="waistTrendBlock">
       <h2>Waist trend</h2>
       <div id="waistChart" class="empty">Log waist on a couple of days to see it here.</div>
-      <div class="meta" id="waistAvgLine" style="margin-top:6px;"></div>
+      <div class="meta mt6" id="waistAvgLine"></div>
     </div>
     <div class="card">
       <h2>Weight-loss pace</h2>
       <div class="meta" id="recoveryStatusHint" style="cursor:pointer;"></div>
-      <div id="recoveryStatusDetail" class="hidden" style="margin-top:8px;"></div>
+      <div id="recoveryStatusDetail" class="hidden mt8"></div>
     </div>
     <div class="card">
       <h2>Weekly workouts</h2>
       <div id="volumeChart" class="empty" style="cursor:pointer;">Complete a few workouts to see your frequency per week.</div>
       <div class="meta" id="volumeHistoryHint" style="margin-top:6px; cursor:pointer;"></div>
-      <div id="volumeHistoryList" class="hidden" style="margin-top:8px;"></div>
+      <div id="volumeHistoryList" class="hidden mt8"></div>
     </div>
     <div class="card">
       <h2>Weekly walk/ruck minutes</h2>
       <div id="cardioChart" class="empty" style="cursor:pointer;">Log a walk or ruck to see this fill in.</div>
       <div class="meta" id="cardioHistoryHint" style="margin-top:6px; cursor:pointer;"></div>
-      <div id="cardioHistoryList" class="hidden" style="margin-top:8px;"></div>
+      <div id="cardioHistoryList" class="hidden mt8"></div>
     </div>
     <div class="card">
       <h2>Recurring patterns</h2>
@@ -1305,10 +1310,10 @@
     </div>
     <div class="card" id="notesDetails">
       <h2 id="notesSummary">Notes</h2>
-      <p class="meta" style="margin-top:0;">Jot down questions or how a session felt. Each note remembers which exercise you were on. Ask me to check your notes and I'll answer them.</p>
+      <p class="meta mt0">Jot down questions or how a session felt. Each note remembers which exercise you were on. Ask me to check your notes and I'll answer them.</p>
       <textarea id="noteInput" rows="3" placeholder="e.g. Swings felt like all arms, is that normal?" style="width:100%; box-sizing:border-box;"></textarea>
-      <button class="primary" id="noteSaveBtn" style="margin-top:8px; width:100%;">Save note</button>
-      <div id="notesList" style="margin-top:12px;"></div>
+      <button class="primary mt8 w100" id="noteSaveBtn">Save note</button>
+      <div class="mt12" id="notesList"></div>
     </div>
       </div>
     </details>
@@ -1321,12 +1326,12 @@
   <!-- SETTINGS -->
   <section id="tab-settings" class="tab-panel hidden">
     <div class="tf-screen-head"><div class="tf-kicker" id="tfSetKicker">YOUR TARGETS AND TOOLS</div><h1>Settings</h1></div>
-    <div class="tf-tiles" id="tfSetTiles" style="margin-bottom:6px;"></div>
+    <div class="tf-tiles mb6" id="tfSetTiles"></div>
     <button type="button" class="tf-setrow" id="setProgramsRow"><span>Programs</span><b aria-hidden="true">›</b></button>
     <div class="tf-sec">Targets</div>
     <details class="exercise-group tf-row" id="setTargetsDetails">
       <summary>Daily targets<span class="tf-sv" id="setTargetsVal"></span></summary>
-      <div style="margin-top:12px;">
+      <div class="mt12">
       <details class="tf-more"><summary>How to pick targets</summary><p style="font-size:13px; color:var(--text-muted); margin-top:0;">
         New to tracking macros? A simple starting point: protein around 0.7-1g per lb of your
         bodyweight, calories around what keeps your weight roughly steady right now (lower it
@@ -1338,35 +1343,35 @@
         <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" id="targetCalories" placeholder="2300"></div>
         <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" id="targetProtein" placeholder="160"></div>
       </div>
-      <div class="row" style="margin-top:8px;">
+      <div class="row mt8">
         <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" id="targetCarbs" placeholder="255"></div>
         <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="targetFat" placeholder="65"></div>
       </div>
-      <div class="row" style="margin-top:8px;">
+      <div class="row mt8">
         <div class="field"><div class="field-label">Workouts per week</div><input type="text" inputmode="numeric" id="weeklyGoalInput" placeholder="3"></div>
       </div>
       <label class="tf-switch"><span>Buzz and gentle motion</span><input type="checkbox" id="feedbackToggle"><i aria-hidden="true"></i></label>
-      <button class="secondary" id="saveTargetsBtn" style="margin-top:10px;">Save targets</button>
-      <div id="macroSuggestionHistory" style="margin-top:10px;"></div>
+      <button class="secondary mt10" id="saveTargetsBtn">Save targets</button>
+      <div class="mt10" id="macroSuggestionHistory"></div>
       </div>
     </details>
     <div class="tf-sec">Body</div>
     <details class="exercise-group tf-row" id="setBodyDetails">
       <summary>Body composition<span class="tf-sv" id="setBodyVal"></span></summary>
-      <div style="margin-top:12px;">
-      <details class="tf-more"><summary>Why height?</summary><p class="meta" style="margin-bottom:10px;">Height is only needed if you log a waist measurement for a Relative Fat Mass body-fat % estimate. Goals (optional) power the start → goal forecast shown on the Body composition card.</p></details>
+      <div class="mt12">
+      <details class="tf-more"><summary>Why height?</summary><p class="meta mb10">Height is only needed if you log a waist measurement for a Relative Fat Mass body-fat % estimate. Goals (optional) power the start → goal forecast shown on the Body composition card.</p></details>
       <div class="field"><div class="field-label">Height (in)</div><input type="text" inputmode="decimal" id="heightInches" placeholder="70"></div>
-      <div class="row" style="margin-top:8px;">
+      <div class="row mt8">
         <div class="field"><div class="field-label">Goal weight (lb)</div><input type="text" inputmode="decimal" id="goalWeightInput" placeholder="optional"></div>
         <div class="field"><div class="field-label">Goal body fat (%)</div><input type="text" inputmode="decimal" id="goalBodyFatInput" placeholder="optional"></div>
       </div>
-      <button class="secondary" id="saveHeightBtn" style="margin-top:10px;">Save</button>
+      <button class="secondary mt10" id="saveHeightBtn">Save</button>
       </div>
     </details>
     <div class="tf-sec">Training</div>
     <details class="exercise-group tf-row" id="setTrainingDetails">
       <summary>Starting levels and ring straps</summary>
-      <div style="margin-top:12px;">
+      <div class="mt12">
     <div class="card">
       <h2>Starting level per movement pattern</h2>
       <details class="tf-more"><summary>What do the levels mean?</summary><p style="font-size:13px; color:var(--text-muted); margin-top:0;">
@@ -1399,7 +1404,7 @@
         handled by the level system above instead.
       </p></details>
       <div class="field"><div class="field-label">Push straps</div><input type="number" step="0.5" min="1" max="12" inputmode="decimal" id="ringStrapPush" placeholder="8.5"></div>
-      <button class="secondary" id="saveRingStrapBtn" style="margin-top:10px;">Save</button>
+      <button class="secondary mt10" id="saveRingStrapBtn">Save</button>
     </div>
       </div>
     </details>
@@ -1412,22 +1417,22 @@
     <div class="tf-sec">Data</div>
     <details class="exercise-group tf-row" id="setDataDetails">
       <summary>Cloud sync, backup, start date</summary>
-      <div style="margin-top:12px;">
+      <div class="mt12">
     <div class="card">
       <h2>Cloud sync</h2>
-      <p class="meta" style="margin-top:0;">Your data lives in the cloud, not just this phone. Only change this if the app was moved.</p>
+      <p class="meta mt0">Your data lives in the cloud, not just this phone. Only change this if the app was moved.</p>
       <input type="text" id="workerUrlInput" placeholder="https://your-worker.workers.dev">
-      <button class="secondary" id="saveWorkerUrlBtn" style="margin-top:10px;">Save</button>
+      <button class="secondary mt10" id="saveWorkerUrlBtn">Save</button>
     </div>
     <div class="card">
       <h2>Access passphrase</h2>
-      <p class="meta" style="margin-top:0;">Needed once per device so only you can read or change your data. Keep it saved somewhere safe.</p>
+      <p class="meta mt0">Needed once per device so only you can read or change your data. Keep it saved somewhere safe.</p>
       <input type="password" id="tfTokenInput" placeholder="abcd-efgh-jkmn-pqrs" autocomplete="off">
-      <button class="secondary" id="saveTfTokenBtn" style="margin-top:10px;">Save passphrase</button>
+      <button class="secondary mt10" id="saveTfTokenBtn">Save passphrase</button>
     </div>
     <div class="card">
       <h2>Backup</h2>
-      <p class="meta" style="margin-top:0;">A second safety copy, separate from cloud sync.</p>
+      <p class="meta mt0">A second safety copy, separate from cloud sync.</p>
       <div class="row">
         <button class="secondary" id="exportBtn">Export backup file</button>
         <button class="secondary" id="importBtn">Import backup file</button>
@@ -1436,7 +1441,7 @@
     </div>
     <div class="card">
       <h2>Program start date</h2>
-      <p class="meta" style="margin-bottom:10px;">Only used by programs paced by the calendar. Programs paced by workouts (the default) ignore it. Your progress there is the workout count on the Coach tab.</p>
+      <p class="meta mb10">Only used by programs paced by the calendar. Programs paced by workouts (the default) ignore it. Your progress there is the workout count on the Coach tab.</p>
       <input type="date" id="startDateInput">
     </div>
       </div>
@@ -1459,7 +1464,7 @@
         <div data-psec="walks" id="psWalks" class="hidden">
           <div class="tf-pcard"><div class="h"><b>Walks &amp; rucks</b><span id="psWalkSum"></span></div>
             <p style="font-size:13px; color:var(--text-muted); margin:10px 0 0;">Log a walk or ruck from the Today tab. They don't touch your program's rotation, and a "ruck" is a walk carrying extra weight.</p>
-            <div id="recentCardio" style="margin-top:10px;"></div>
+            <div class="mt10" id="recentCardio"></div>
           </div>
         </div>
       </div>
@@ -1486,7 +1491,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-15 19:00 CT";
+const APP_BUILD = "2026-11-15 20:00 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -2682,7 +2687,7 @@ function renderPrograms() {
       <div class="name">${p.name}</div>
       <div class="meta">${p.duration_weeks} weeks · ${p.source}${state.activeProgramId === p.id ? " · active" : ""}</div>
       <div class="meta">${getProgramPace(p).mode === "count" ? `Paced by workouts · ${getProgramPace(p).completed} of ${totalProgramWorkouts(p)} done` : "Paced by calendar"}</div>
-      <div class="row" style="margin-top:10px;">
+      <div class="row mt10">
         <button class="secondary" data-preview-program="${p.id}" style="padding:6px 10px; font-size:13px;">Preview</button>
         <button class="secondary" data-use-program="${p.id}" style="padding:6px 10px; font-size:13px;">Use</button>
         <button class="secondary" data-pace-program="${p.id}" style="padding:6px 10px; font-size:13px;">${getProgramPace(p).mode === "count" ? "Switch to calendar pace" : "Switch to workout pace"}</button>
@@ -2702,7 +2707,7 @@ function renderProgramPreview(program) {
     <div style="border-top:1px solid var(--border); padding-top:8px; margin-top:8px;">
       <div class="name">${ph.phase} · weeks ${ph.week_start}-${ph.week_end}${ph.deload_weeks?.length ? ` (deload: wk ${ph.deload_weeks.join(", ")})` : ""}</div>
       ${(ph.days || []).map(d => `
-        <div class="meta" style="margin-top:6px;"><strong style="color:var(--text);">${d.day}</strong>${d.fixed ? " · about " + estimateWorkoutMinutes(buildFixedWorkout(d, false)) + " min" : ""}</div>
+        <div class="meta mt6"><strong style="color:var(--text);">${d.day}</strong>${d.fixed ? " · about " + estimateWorkoutMinutes(buildFixedWorkout(d, false)) + " min" : ""}</div>
         <div class="meta">${d.fixed ? d.fixed.exercises.map(f => { const x = BUILTIN_EXERCISES.find(b => b.id === f.id); return `${x ? x.name : f.id} ${f.sets}×${f.reps}`; }).join(" · ") : (d.slots || []).map(s => `${s.muscle_group} ${s.sets}×${s.reps}`).join(" · ")}</div>
       `).join("")}
     </div>
@@ -3195,7 +3200,7 @@ function renderMacroSuggestionHistory() {
       Last suggestion applied ${when}: ${fmtDelta(last.deltaCalories)} cal, ${fmtDelta(last.deltaCarbs)}g carbs
       (${last.caloriesBefore} → ${last.caloriesAfter} cal).
     </div>
-    ${canUndo ? `<button class="danger-link" id="undoMacroSuggestionBtn" style="margin-top:6px;">Undo this</button>` : `<div class="meta" style="margin-top:4px;">(Targets changed manually since — undo disabled to avoid overwriting that.)</div>`}
+    ${canUndo ? `<button class="danger-link mt6" id="undoMacroSuggestionBtn">Undo this</button>` : `<div class="meta mt4">(Targets changed manually since — undo disabled to avoid overwriting that.)</div>`}
   `;
   const undoBtn = document.getElementById("undoMacroSuggestionBtn");
   if (undoBtn) undoBtn.addEventListener("click", undoLastMacroSuggestion);
@@ -3252,7 +3257,7 @@ function renderWelcomeBackBanner() {
   el.innerHTML = `
     <div class="card">
       <div class="meta" style="color:var(--text);"><strong>Welcome back.</strong> ${gap} days away — that's just life, and showing up again is the part that counts. Nothing's lost and nothing is owed: your program picks up right where you are, and today's workout is ready whenever you are.</div>
-      <button class="danger-link" id="dismissWelcomeBackBtn" style="margin-top:6px;">Dismiss</button>
+      <button class="danger-link mt6" id="dismissWelcomeBackBtn">Dismiss</button>
     </div>`;
   document.getElementById("dismissWelcomeBackBtn").addEventListener("click", async () => {
     state.welcomeBackDismissedDate = today;
@@ -3348,7 +3353,7 @@ function renderCelebrations() {
   el.innerHTML = `
     <div class="card" style="border-left-color:var(--gold);">
       ${state.celebrations.map(c => `<div class="meta" style="color:var(--text); margin-bottom:4px;">🎉 ${c}</div>`).join("")}
-      <button class="danger-link" id="dismissCelebrationsBtn" style="margin-top:4px;">Dismiss</button>
+      <button class="danger-link mt4" id="dismissCelebrationsBtn">Dismiss</button>
     </div>`;
   document.getElementById("dismissCelebrationsBtn").addEventListener("click", async () => {
     state.celebrations = [];
@@ -3695,7 +3700,7 @@ function renderStartHereBanner() {
     <div class="card" style="border-left-color:var(--accent);">
       <div class="meta" style="font-weight:600; color:var(--text); margin-bottom:6px;">👋 Start here</div>
       <div class="meta">Pick or build a training program to get going — generate one, or upload your own, from Programs.</div>
-      <button class="secondary" id="openProgramsFromStartHere" style="margin-top:8px;">Go to Programs</button>
+      <button class="secondary mt8" id="openProgramsFromStartHere">Go to Programs</button>
     </div>`;
   document.getElementById("openProgramsFromStartHere").addEventListener("click", () => {
     const programsBtn = document.getElementById("programsBtn");
@@ -3927,7 +3932,7 @@ function renderCoachNote() {
           ? "Still gathering enough days to spot real patterns — check back once you've logged a few daily check-ins."
           : `Logged ${result.totalCheckins} daily check-in${result.totalCheckins === 1 ? "" : "s"} so far — keep going and patterns will start showing up here once there's enough matched data (roughly 5 days with and without a given reason).`
       }</div>`;
-  el.innerHTML = body + `<button class="tf-clamp-btn" id="dismissCoachNote" style="margin-top:6px;">Got it, hide for a week</button>`;
+  el.innerHTML = body + `<button class="tf-clamp-btn mt6" id="dismissCoachNote">Got it, hide for a week</button>`;
   document.getElementById("dismissCoachNote").addEventListener("click", async () => {
     state.coachNoteDismissed = { key, at: Date.now() };
     if (card) card.classList.add("hidden");
@@ -3962,8 +3967,8 @@ function renderCoachTeaser() {
       <div class="meta" style="font-weight:600; color:var(--text); margin-bottom:6px;">🧠 Coach found something</div>
       <div class="meta" style="color:var(--text);">${result.insights[0]}</div>
       <div style="display:flex; gap:8px; margin-top:8px;">
-        <button class="secondary" id="openCoachFromTeaser" style="flex:1;">See Coach tab</button>
-        <button class="secondary" id="dismissCoachTeaser" style="flex:1;">Got it</button>
+        <button class="secondary fx1" id="openCoachFromTeaser">See Coach tab</button>
+        <button class="secondary fx1" id="dismissCoachTeaser">Got it</button>
       </div>
     </div>`;
   document.getElementById("dismissCoachTeaser").addEventListener("click", async () => {
@@ -4091,7 +4096,7 @@ function renderWeeklyReview() {
 
   const wi = computeWeeklyIntake();
   const weeklyIntakeLine = wi.counted >= 3
-    ? `<div class="meta" style="margin-bottom:6px;">7-day average intake: ${wi.avg} cal/day${state.settings?.macroTargets?.calories ? ` (target ${state.settings.macroTargets.calories})` : ""} · ${wi.counted} of 7 days counted.</div>`
+    ? `<div class="meta mb6">7-day average intake: ${wi.avg} cal/day${state.settings?.macroTargets?.calories ? ` (target ${state.settings.macroTargets.calories})` : ""} · ${wi.counted} of 7 days counted.</div>`
     : "";
   let paceLine = `Week ${weekNumber} · ${phaseLabel}${deloadNote}`;
   let paceNote = "";
@@ -4209,8 +4214,8 @@ function explainJump(date) {
   const f = jumpFacts(date);
   if (!f) return null;
   return `<div style="font-weight:600; margin-bottom:4px;">Up ${f.delta.toFixed(1)} lb: what likely happened</div>` +
-    f.lines.map(l => `<div style="margin-top:6px;">${escapeHtml(l)}</div>`).join("") +
-    f.causes.map(l => `<div style="margin-top:6px;">• ${escapeHtml(l)}</div>`).join("");
+    f.lines.map(l => `<div class="mt6">${escapeHtml(l)}</div>`).join("") +
+    f.causes.map(l => `<div class="mt6">• ${escapeHtml(l)}</div>`).join("");
 }
 function coachExtraInsights() {
   const out = [];
@@ -4296,7 +4301,7 @@ function renderWeekClose() {
     { k: "Fat", v: src.fat, c: "var(--fat)" }, { k: "Alcohol", v: src.alcohol, c: "var(--danger)" }, { k: "Unsorted", v: src.unsorted, c: "var(--text-dim)" },
   ];
   const sTot = slices.reduce((s, x) => s + x.v, 0) || 1;
-  const legend = slices.filter(s => s.v > 0).map(s => `<div style="display:flex; align-items:center; gap:8px; font-size:13px; margin:3px 0;"><i style="width:10px; height:10px; border-radius:3px; background:${s.c}; display:inline-block;"></i><span style="flex:1;">${s.k}</span><b style="font-family:var(--font-mono); font-weight:500;">${Math.round(s.v).toLocaleString()}</b><span class="meta" style="width:36px; text-align:right;">${Math.round(s.v / sTot * 100)}%</span></div>`).join("");
+  const legend = slices.filter(s => s.v > 0).map(s => `<div style="display:flex; align-items:center; gap:8px; font-size:13px; margin:3px 0;"><i style="width:10px; height:10px; border-radius:3px; background:${s.c}; display:inline-block;"></i><span class="fx1">${s.k}</span><b style="font-family:var(--font-mono); font-weight:500;">${Math.round(s.v).toLocaleString()}</b><span class="meta" style="width:36px; text-align:right;">${Math.round(s.v / sTot * 100)}%</span></div>`).join("");
   const wkLogs = (state.logs || []).filter(l => days.includes(dayKeyOf(l.date)));
   const workoutDays = new Set(wkLogs.map(l => dayKeyOf(l.date))).size;
   const wkCardio = (state.cardioLogs || []).filter(c => days.includes(dayKeyOf(c.date)));
@@ -4344,10 +4349,10 @@ function renderWeekClose() {
   const wDelta = avgNow != null && avgPrev != null ? avgNow - avgPrev : null;
   cards.push(`<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
     <div class="tf-rt">${tfRing(budget ? total / budget : 0, kfmt(total), "Calories against weekly budget", total > budget ? "var(--danger)" : "var(--accent)")}<div class="rl">of ${budget.toLocaleString()} budget</div></div>
-    <div class="tf-rt"><div class="rv" style="margin-top:6px;">${loggedDays.length}<small> / ${elapsed.length}</small></div><div class="tf-dots7">${Array.from({ length: 7 }, (_, k) => `<i class="${infos[k] && infos[k].n > 0 ? "on" : ""}"></i>`).join("")}</div><div class="rl">days logged</div></div>
+    <div class="tf-rt"><div class="rv mt6">${loggedDays.length}<small> / ${elapsed.length}</small></div><div class="tf-dots7">${Array.from({ length: 7 }, (_, k) => `<i class="${infos[k] && infos[k].n > 0 ? "on" : ""}"></i>`).join("")}</div><div class="rl">days logged</div></div>
     <div class="tf-rt">${tfRing(goal ? Math.min(1, workoutDays / goal) : 0, `${workoutDays}/${goal}`, "Workouts against goal", "var(--accent)")}<div class="rl">workouts</div></div>
-    <div class="tf-rt"><div class="rv" style="margin-top:6px;">${avgNow != null ? avgNow.toFixed(1) : "·"}<small> lb</small></div><div class="rl" style="color:${wDelta == null ? "inherit" : wDelta > 0.2 ? "var(--danger)" : wDelta < -0.2 ? "var(--accent)" : "inherit"};">${wDelta == null ? "no comparison yet" : `${wDelta > 0.2 ? "▲" : wDelta < -0.2 ? "▼" : "▬"} ${Math.abs(wDelta).toFixed(1)} vs last week`}</div><div class="rl">average weight</div></div>
-  </div><div class="meta" style="margin-top:10px;">${complete ? "" : `${elapsed.length} of 7 days so far. `}Tap Next for the why.</div>`);
+    <div class="tf-rt"><div class="rv mt6">${avgNow != null ? avgNow.toFixed(1) : "·"}<small> lb</small></div><div class="rl" style="color:${wDelta == null ? "inherit" : wDelta > 0.2 ? "var(--danger)" : wDelta < -0.2 ? "var(--accent)" : "inherit"};">${wDelta == null ? "no comparison yet" : `${wDelta > 0.2 ? "▲" : wDelta < -0.2 ? "▼" : "▬"} ${Math.abs(wDelta).toFixed(1)} vs last week`}</div><div class="rl">average weight</div></div>
+  </div><div class="meta mt10">${complete ? "" : `${elapsed.length} of 7 days so far. `}Tap Next for the why.</div>`);
   // 2. Daily calories against the budget line
   {
     const vals = days.map(d => ({ d, v: d <= today ? dayInfo(d).kcal : null, n: d <= today ? dayInfo(d).n : 0 }));
@@ -4361,11 +4366,11 @@ function renderWeekClose() {
       const col = x.v <= dailyBudget * 1.1 ? "var(--accent)" : x.v <= dailyBudget * 1.3 ? "var(--warn)" : "var(--danger)";
       return `<rect x="${xx}" y="${yOf(x.v)}" width="${bw}" height="${H - yOf(x.v)}" rx="4" fill="${col}"/><text x="${xx + bw / 2}" y="${yOf(x.v) - 4}" text-anchor="middle" font-size="10" fill="var(--text)">${kfmt(x.v)}</text><text x="${xx + bw / 2}" y="${H + 16}" text-anchor="middle" font-size="10" fill="var(--text-faint-2)">${dayName(x.d)[0]}</text>`;
     }).join("");
-    cards.push(`${big("Day by day")}<svg viewBox="0 -6 ${W} ${H + 26}" width="100%" role="img" aria-label="Daily calories against budget line"><line x1="0" x2="${W}" y1="${yOf(dailyBudget)}" y2="${yOf(dailyBudget)}" stroke="var(--text)" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>${bars}</svg><div class="meta" style="margin-top:6px;">Dashed line is your daily share of the budget (${Math.round(dailyBudget).toLocaleString()}). Orange is at or near it, gold is over, red is well over.</div>`);
+    cards.push(`${big("Day by day")}<svg viewBox="0 -6 ${W} ${H + 26}" width="100%" role="img" aria-label="Daily calories against budget line"><line x1="0" x2="${W}" y1="${yOf(dailyBudget)}" y2="${yOf(dailyBudget)}" stroke="var(--text)" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>${bars}</svg><div class="meta mt6">Dashed line is your daily share of the budget (${Math.round(dailyBudget).toLocaleString()}). Orange is at or near it, gold is over, red is well over.</div>`);
   }
   // 3. Where it came from
   cards.push(total > 0
-    ? `${big("Where it came from")}<div style="display:flex; align-items:center; gap:14px;">${tfDonut(slices, Math.round(total).toLocaleString(), "cal logged")}<div style="flex:1;">${legend}</div></div>`
+    ? `${big("Where it came from")}<div style="display:flex; align-items:center; gap:14px;">${tfDonut(slices, Math.round(total).toLocaleString(), "cal logged")}<div class="fx1">${legend}</div></div>`
     : `${big("Where it came from")}<div class="empty">No food logged this week yet.</div>`);
   // 4. Training
   {
@@ -4375,7 +4380,7 @@ function renderWeekClose() {
     const cnt = { max: 0, hold: 0, missed: 0 }; wkLogs.forEach(l => { if (cnt[l.result] !== undefined) cnt[l.result]++; });
     const tl = cnt.max + cnt.hold + cnt.missed;
     const row = (lab, n, col) => `<div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-muted); margin:4px 0;"><span style="width:70px;">${lab}</span><span style="flex:1; height:8px; border-radius:4px; background:var(--surface-2);"><i style="display:block; height:8px; border-radius:4px; width:${tl ? Math.round(n / tl * 100) : 0}%; background:${col};"></i></span><b style="font-family:var(--font-mono); font-weight:500; width:18px; text-align:right;">${n}</b></div>`;
-    cards.push(`${big("Training")}<div style="display:flex; gap:12px; align-items:center;">${ring}<div style="flex:1;">${row("Hit max", cnt.max, "var(--accent)")}${row("As planned", cnt.hold, "var(--gold)")}${row("Short", cnt.missed, "var(--text-dim)")}</div></div><div style="margin-top:12px; font-size:15px;">${workoutDays} workout day${workoutDays === 1 ? "" : "s"} (goal ${goal})${wkCardio.length ? ` · ${wkCardio.length} cardio, ${Math.round(cardioMin)} min${cardioDist ? `, ${cardioDist.toFixed(1)} mi` : ""}` : ""}</div>${chestSetsInWeek(days) ? `<div style="margin-top:6px; font-size:13px; color:var(--text-muted);">Chest booster: ${chestSetsInWeek(days)} of ${CHEST_WEEKLY_SETS} sets</div>` : ""}<div class="meta" style="margin-top:8px;">Calories burned aren't measured here, so training shows as activity.</div>`);
+    cards.push(`${big("Training")}<div style="display:flex; gap:12px; align-items:center;">${ring}<div class="fx1">${row("Hit max", cnt.max, "var(--accent)")}${row("As planned", cnt.hold, "var(--gold)")}${row("Short", cnt.missed, "var(--text-dim)")}</div></div><div style="margin-top:12px; font-size:15px;">${workoutDays} workout day${workoutDays === 1 ? "" : "s"} (goal ${goal})${wkCardio.length ? ` · ${wkCardio.length} cardio, ${Math.round(cardioMin)} min${cardioDist ? `, ${cardioDist.toFixed(1)} mi` : ""}` : ""}</div>${chestSetsInWeek(days) ? `<div style="margin-top:6px; font-size:13px; color:var(--text-muted);">Chest booster: ${chestSetsInWeek(days)} of ${CHEST_WEEKLY_SETS} sets</div>` : ""}<div class="meta mt8">Calories burned aren't measured here, so training shows as activity.</div>`);
   }
   // 5. Weight line with jumps marked
   {
@@ -4392,7 +4397,7 @@ function renderWeekClose() {
       const jd = new Set(jumps.map(j => j.date));
       chart = `<svg viewBox="0 0 ${W} ${H + 14}" width="100%" role="img" aria-label="Weight this week"><polyline fill="none" stroke="var(--accent)" stroke-width="2" points="${pts.map(p => `${X(p.date).toFixed(1)},${Y(p.weight).toFixed(1)}`).join(" ")}"/>${pts.map(p => `<circle cx="${X(p.date).toFixed(1)}" cy="${Y(p.weight).toFixed(1)}" r="${jd.has(p.date) ? 5 : 3}" fill="${jd.has(p.date) ? "var(--danger)" : "var(--accent)"}"/>${jd.has(p.date) ? `<text x="${X(p.date).toFixed(1)}" y="${(Y(p.weight) - 8).toFixed(1)}" text-anchor="middle" font-size="10" fill="var(--text)">${p.weight}</text>` : ""}`).join("")}<text x="2" y="${H + 12}" font-size="9" fill="var(--text-dim)">${lo.toFixed(0)} to ${hi.toFixed(0)} lb · red dot = jump of 1.5+ lb</text></svg>`;
     }
-    cards.push(`${big("Weight")}${chart}<div style="margin-top:8px; font-size:15px;">${avgNow != null ? `Average ${avgNow.toFixed(1)} lb` : "No weigh-ins"}${wDelta != null ? ` (${wDelta >= 0 ? "+" : "−"}${Math.abs(wDelta).toFixed(1)} vs the week before)` : ""}</div>${chips ? `<div style="margin-top:6px;">${chips}</div>` : ""}`);
+    cards.push(`${big("Weight")}${chart}<div style="margin-top:8px; font-size:15px;">${avgNow != null ? `Average ${avgNow.toFixed(1)} lb` : "No weigh-ins"}${wDelta != null ? ` (${wDelta >= 0 ? "+" : "−"}${Math.abs(wDelta).toFixed(1)} vs the week before)` : ""}</div>${chips ? `<div class="mt6">${chips}</div>` : ""}`);
   }
   // 6. Each point gets its own card.
   const one = (title, items, color) => items.forEach((x, k) => cards.push(`<div class="field-label" style="text-transform:uppercase; letter-spacing:0.6px; color:${color}; margin-bottom:8px;">${title} · ${k + 1} of ${items.length}</div><div style="font-size:21px; line-height:1.4; padding-left:12px; border-left:3px solid ${color};">${escapeHtml(x)}</div>`));
@@ -4407,7 +4412,7 @@ function renderWeekClose() {
     const dlt = sug ? sug.deltaCalories : 0;
     let body;
     if (!sug) body = `${big("Calorie target")}<div style="font-size:16px;">Need 2 weigh-ins a week apart before I can suggest anything.</div>`;
-    else if (holding) body = `${big("No target changes yet")}<div style="font-size:16px; line-height:1.45;">Holding until the Nov 17 review, so any change rests on two full weeks of complete logging.</div><div class="meta" style="margin-top:10px;">For reference, the app's current idea: ${dlt === 0 ? "no change" : `${dlt < 0 ? "−" : "+"}${Math.abs(dlt)} cal/day`}.</div>`;
+    else if (holding) body = `${big("No target changes yet")}<div style="font-size:16px; line-height:1.45;">Holding until the Nov 17 review, so any change rests on two full weeks of complete logging.</div><div class="meta mt10">For reference, the app's current idea: ${dlt === 0 ? "no change" : `${dlt < 0 ? "−" : "+"}${Math.abs(dlt)} cal/day`}.</div>`;
     else if (dlt === 0) body = `${big("Calorie target")}<div style="font-size:16px;">No change suggested. ${escapeHtml(sug.message)}</div>`;
     else if (since !== null && since < MACRO_BASELINE_DAYS) body = `${big("Calorie target")}<div style="font-size:16px;">A change was applied ${since < 1 ? "today" : Math.floor(since) + " day(s) ago"}. Give it time before changing again.</div>`;
     else body = `${big(`${dlt < 0 ? "−" : "+"}${Math.abs(dlt)} cal/day suggested`)}<div style="font-size:15px; line-height:1.45;">${escapeHtml(sug.message)}</div><button type="button" class="secondary" id="applyWeeklySuggestionBtn" data-delta="${dlt}" style="margin-top:12px; width:100%;">Apply (moves the weekly budget by ${dlt < 0 ? "−" : "+"}${Math.abs(dlt * 7).toLocaleString()})</button>`;
@@ -5592,11 +5597,11 @@ function chestBoosterHtml(opts) {
   const rows = plan.moves.slice();
   while (rows.length < today.length) rows.push(plan.moves[plan.moves.length - 1]);
   const nextIdx = today.length;
-  const rowHtml = rows.map((m, i) => { const l = today[i]; return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; ${i < rows.length - 1 ? "border-bottom:1px solid var(--surface-3);" : ""} font-size:14px;"><span style="width:22px; height:22px; border-radius:50%; border:2px solid ${l ? "var(--accent)" : "var(--border)"}; background:${l ? "var(--accent)" : "transparent"}; color:var(--ink); display:flex; align-items:center; justify-content:center; font-size:12px;">${l ? "✓" : ""}</span><span style="flex:1;">${escapeHtml(m)}</span><span style="font-family:var(--font-display); font-size:18px; color:${l ? "var(--text)" : "var(--text-muted)"};">${l ? l.reps + ' <small style="font-size:11px; color:var(--text-muted); font-family:Inter,sans-serif;">reps</small>' : "—"}</span>${l ? `<span data-chest-undo="${l.id}" style="color:var(--text-muted); font-size:16px; cursor:pointer; padding:0 2px;" aria-label="Remove set">×</span>` : ""}</div>`; }).join("");
+  const rowHtml = rows.map((m, i) => { const l = today[i]; return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; ${i < rows.length - 1 ? "border-bottom:1px solid var(--surface-3);" : ""} font-size:14px;"><span style="width:22px; height:22px; border-radius:50%; border:2px solid ${l ? "var(--accent)" : "var(--border)"}; background:${l ? "var(--accent)" : "transparent"}; color:var(--ink); display:flex; align-items:center; justify-content:center; font-size:12px;">${l ? "✓" : ""}</span><span class="fx1">${escapeHtml(m)}</span><span style="font-family:var(--font-display); font-size:18px; color:${l ? "var(--text)" : "var(--text-muted)"};">${l ? l.reps + ' <small style="font-size:11px; color:var(--text-muted); font-family:Inter,sans-serif;">reps</small>' : "—"}</span>${l ? `<span data-chest-undo="${l.id}" style="color:var(--text-muted); font-size:16px; cursor:pointer; padding:0 2px;" aria-label="Remove set">×</span>` : ""}</div>`; }).join("");
   const nextMove = rows[Math.min(nextIdx, rows.length - 1)];
   const restLeft = chestRestRemaining();
   const restCard = restLeft > 0 ? `<div class="card" style="margin-top:10px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;"><div><div class="tf-hero2-k" style="color:var(--text-muted);">Rest</div><div data-chest-rest-clock style="font-family:var(--font-display); font-size:28px; line-height:1.1;">${Math.floor(restLeft / 60)}:${String(restLeft % 60).padStart(2, "0")}</div></div><button class="secondary" data-chest-skip-rest>Skip</button></div>` : "";
-  const repsPanel = chestRepsOpen ? `<div class="card" style="margin-top:10px; padding:12px 14px;"><div class="tf-hero2-k" style="color:var(--text-muted);">Reps for ${escapeHtml(nextMove)}</div><div style="display:flex; align-items:center; justify-content:center; gap:22px; margin:8px 0;"><button class="secondary" data-chest-step="-1" style="width:52px; font-size:22px;">−</button><span data-chest-reps style="font-family:var(--font-display); font-size:40px; min-width:60px; text-align:center;">${chestDraftReps}</span><button class="secondary" data-chest-step="1" style="width:52px; font-size:22px;">+</button></div><button class="primary" data-chest-save style="width:100%;">Save set</button></div>` : "";
+  const repsPanel = chestRepsOpen ? `<div class="card" style="margin-top:10px; padding:12px 14px;"><div class="tf-hero2-k" style="color:var(--text-muted);">Reps for ${escapeHtml(nextMove)}</div><div style="display:flex; align-items:center; justify-content:center; gap:22px; margin:8px 0;"><button class="secondary" data-chest-step="-1" style="width:52px; font-size:22px;">−</button><span data-chest-reps style="font-family:var(--font-display); font-size:40px; min-width:60px; text-align:center;">${chestDraftReps}</span><button class="secondary" data-chest-step="1" style="width:52px; font-size:22px;">+</button></div><button class="primary w100" data-chest-save>Save set</button></div>` : "";
   const warmList = CHEST_WARM[state.chestMode] || CHEST_WARM.home;
   const wd = chestPhaseDone("chestWarm"), cd = chestPhaseDone("chestCool");
   const warmOk = wd.length >= 2, setsOk = today.length >= CHEST_SESSION_SETS, coolOk = cd.length >= 2;
@@ -5793,7 +5798,7 @@ function renderTodayWorkout(workout) {
         const slotPreview = (nextDay.slots || []).length
           ? ""
           : "Rest";
-        nextUpHtml = `<div class="meta" style="margin-top:8px;">Next up: ${escapeHtml(String(nextDay.day))}</div>`;
+        nextUpHtml = `<div class="meta mt8">Next up: ${escapeHtml(String(nextDay.day))}</div>`;
 
         // "Preview exercises" runs the same generation that Skip rest would
         // commit to, but only caches the result in state.previewWorkout —
@@ -5810,7 +5815,7 @@ function renderTodayWorkout(workout) {
         if (hasCachedPreview) {
           previewAreaHtml = `<div id="nextDayPreviewBox" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">${previewExerciseListHtml(cached.workout)}</div>`;
         } else {
-          previewAreaHtml = `<button class="secondary" id="previewNextDayBtn" style="margin-top:10px; width:100%;">Preview exercises</button><div id="nextDayPreviewBox" style="margin-top:10px;"></div>`;
+          previewAreaHtml = `<button class="secondary mt10 w100" id="previewNextDayBtn">Preview exercises</button><div class="mt10" id="nextDayPreviewBox"></div>`;
         }
 
         // The rotation is completion-driven, not calendar-driven — this rest
@@ -5855,7 +5860,7 @@ function renderTodayWorkout(workout) {
   function exerciseCardHtml(e, i) {
     return `
       <div class="list-item" data-ex-index="${i}" style="flex-direction:column; align-items:stretch; border-bottom:none; padding:0;">
-        <div class="meta" style="margin-bottom:10px;">${e.muscle_group} · ${e.sets}×${e.reps}${isHoldExercise(e.name) ? "s hold" : ""}${e.note ? " " + e.note : ""} · ${levelLabelFor(e)}${ringStrapNoteFor(e)}</div>
+        <div class="meta mb10">${e.muscle_group} · ${e.sets}×${e.reps}${isHoldExercise(e.name) ? "s hold" : ""}${e.note ? " " + e.note : ""} · ${levelLabelFor(e)}${ringStrapNoteFor(e)}</div>
         <button class="secondary" data-swap-open="${i}" style="width:100%;">Swap this move</button>
         <div class="swap-panel hidden" data-swap-panel="${i}" style="margin-top:8px;">
           <div class="meta">No equipment for this one? Pick a swap, grouped by easier/harder:</div>
@@ -5877,14 +5882,14 @@ function renderTodayWorkout(workout) {
   // howToHtml()/demo-link pattern the main exercise list already has.
   const mobilityCue = (name) => exercises.find(e => e.name === name)?.cue || "";
   const warmupHtml = (workout.warmup && workout.warmup.length) ? `
-    <details class="exercise-group tf-ph-warm" style="margin-bottom:10px;">
+    <details class="exercise-group tf-ph-warm mb10">
       <summary>Warmup (~3-4 min)</summary>
       <div style="padding-top:6px;">
         ${workout.warmup.map((w, i) => `<div class="list-item" style="flex-direction:column; align-items:stretch;"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div class="name">${w.name}</div><div class="meta">${w.detail || ""}</div></div><button class="danger-link" style="color:var(--accent);" data-warmcool-swap="warmup:${i}">Swap</button></div>${howToHtml(`warmup-${i}`, w.name, mobilityCue(w.name))}</div>`).join("")}
       </div>
     </details>` : "";
   const cooldownHtml = (workout.cooldown && workout.cooldown.length) ? `
-    <details class="exercise-group tf-ph-cool" style="margin-top:10px;">
+    <details class="exercise-group tf-ph-cool mt10">
       <summary>Cool-down (~2 min)</summary>
       <div style="padding-top:6px;">
         ${workout.cooldown.map((c, i) => `<div class="list-item" style="flex-direction:column; align-items:stretch;"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div class="name">${c.name}</div><div class="meta">${c.detail || ""}</div></div><button class="danger-link" style="color:var(--accent);" data-warmcool-swap="cooldown:${i}">Swap</button></div>${howToHtml(`cooldown-${i}`, c.name, mobilityCue(c.name))}</div>`).join("")}
@@ -5895,9 +5900,9 @@ function renderTodayWorkout(workout) {
   // who already knows what "level"/"straps"/the result chips mean shouldn't
   // have to see this every single day just to get to their exercises.
   const legendHtml = state.dismissedExerciseLegend ? "" : `
-        <div class="meta" style="margin-bottom:4px;">"Level" is a 1-5 difficulty tier (1 = easiest variation in the library, 5 = hardest); horizontal/vertical marks which push or pull pattern it trains (e.g. push-ups vs. overhead presses — see Settings for your level per pattern); "straps" is your ring-strap length setting, shown on ring exercises only.</div>
-        <div class="meta" style="margin-bottom:4px;">After a set: "Hit max reps" means you could've done more with good form, "As prescribed" means you did the planned amount, "Missed reps" means you couldn't finish them with good form. Stop any set early if form breaks down or something hurts — none of this is about pushing to failure.</div>
-        <button class="danger-link" id="dismissExerciseLegendBtn" style="margin-bottom:8px;">Got it, don't show this again</button>`;
+        <div class="meta mb4">"Level" is a 1-5 difficulty tier (1 = easiest variation in the library, 5 = hardest); horizontal/vertical marks which push or pull pattern it trains (e.g. push-ups vs. overhead presses — see Settings for your level per pattern); "straps" is your ring-strap length setting, shown on ring exercises only.</div>
+        <div class="meta mb4">After a set: "Hit max reps" means you could've done more with good form, "As prescribed" means you did the planned amount, "Missed reps" means you couldn't finish them with good form. Stop any set early if form breaks down or something hurts — none of this is about pushing to failure.</div>
+        <button class="danger-link mb8" id="dismissExerciseLegendBtn">Got it, don't show this again</button>`;
 
   const workoutHtml = `<div id="tfCardStore" class="hidden">${workout.exercises.map((e, i) => exerciseCardHtml(e, i)).join("")}</div>`;
 
@@ -5906,10 +5911,10 @@ function renderTodayWorkout(workout) {
     <div class="card" style="border-color:var(--accent); margin-bottom:10px;">
       <div class="name">Session in progress</div>
       <div class="meta">You were ${resumeSnap.session.pos} of ${resumeSnap.session.queue.length} sets in when the app closed. Your finished sets were kept.</div>
-      <button class="primary" id="resumeSessionBtn" style="margin-top:8px; width:100%;">Resume where I left off</button>
+      <button class="primary mt8 w100" id="resumeSessionBtn">Resume where I left off</button>
     </div>` : "";
   const showFocus = !hasLoggedWorkoutToday();
-   const chestMount = !showFocus ? doneBannerHtml() : focusSwitchHtml(String(workout.day || "").split(/[:·—-]/)[0].trim()) + `<div id="chestBoosterToday" style="margin-top:6px;"></div>`;
+   const chestMount = !showFocus ? doneBannerHtml() : focusSwitchHtml(String(workout.day || "").split(/[:·—-]/)[0].trim()) + `<div class="mt6" id="chestBoosterToday"></div>`;
    box.innerHTML = resumeHtml + todayHeroHtml(workout) + warmupHtml + movesListHtml(workout) + workoutHtml + cooldownHtml + chestMount;
    renderChestBoosters();
    applyTodayFocus(showFocus);
@@ -5969,7 +5974,7 @@ function previewExerciseListHtml(workout) {
   if (!workout || !workout.exercises || !workout.exercises.length) {
     return `<div class="meta">Rest day — nothing to preview.</div>`;
   }
-  return `<div class="meta" style="margin-bottom:6px;">Preview — the exact exercises you'll get when you start this day:</div>` +
+  return `<div class="meta mb6">Preview — the exact exercises you'll get when you start this day:</div>` +
     workout.exercises.map(e => `
       <div class="list-item" style="border-bottom:none; padding:4px 0;">
         <div>
@@ -6248,10 +6253,10 @@ function renderSkillPractice() {
           ${atMax ? "" : `<div class="meta" style="margin-top:2px;">${prescription.text}</div>`}
           ${howToHtml(`skill-${skill}`, current.name, current.cue || "")}
           ${atMax
-            ? `<div class="meta" style="margin-top:6px;">Top of the ladder — nothing further to unlock.</div>`
+            ? `<div class="meta mt6">Top of the ladder — nothing further to unlock.</div>`
             : `<button class="secondary" data-skill-start="${skill}" style="margin-top:8px; width:100%;">Start</button>
               <div class="hidden" data-skill-timer="${skill}" style="margin-top:8px; text-align:center; font-family:var(--font-mono);"></div>
-              <div class="row" style="margin-top:8px;">
+              <div class="row mt8">
                 <div class="chip result-chip" data-skill-log="${skill}" data-result="max">Hit max reps</div>
                 <div class="chip result-chip" data-skill-log="${skill}" data-result="hold">As prescribed</div>
                 <div class="chip result-chip" data-skill-log="${skill}" data-result="missed">Missed reps</div>
@@ -6317,7 +6322,7 @@ function swapAlternatesHtml(currentExercise, uidPrefix) {
     <div class="meta" style="margin-top:8px; margin-bottom:4px;">${label}</div>
     <div class="row">${list.map(x => chip(x, cls)).join("")}</div>
   ` : "";
-  if (!alternates.length) return `<div class="empty" style="margin-top:6px;">${state.travelMode ? "No bodyweight/ring alternates in your library for this muscle group yet." : "No alternates in your library for this muscle group yet."}</div>`;
+  if (!alternates.length) return `<div class="empty mt6">${state.travelMode ? "No bodyweight/ring alternates in your library for this muscle group yet." : "No alternates in your library for this muscle group yet."}</div>`;
   return `<div class="hidden" data-swap-info-panel="${uidPrefix}" style="margin-bottom:8px; padding-bottom:8px; border-bottom:1px dashed var(--border);"></div>` +
          bucket("↓ Regressions (easier)", regressions, "swap-regression") +
          bucket("= Same level", sameLevel, "swap-same") +
@@ -6332,7 +6337,7 @@ function handleSwapInfoClick(e) {
     const name = infoBtn.dataset.infoName;
     const cue = infoBtn.dataset.infoCue;
     panel.innerHTML = `
-      <div class="meta" style="margin-bottom:4px;"><strong style="color:var(--text);">${name}</strong>${cue ? ": " + cue : ""}</div>
+      <div class="meta mb4"><strong style="color:var(--text);">${name}</strong>${cue ? ": " + cue : ""}</div>
       <a href="${buildYoutubeUrl(name)}" target="_blank" rel="noopener" class="meta" style="color:var(--accent); display:inline-block;">Watch a demo ↗</a>`;
     panel.classList.remove("hidden");
     panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -6952,7 +6957,7 @@ function renderWeekBudget() {
     : `<span style="font-family:var(--font-mono); font-size:30px; font-weight:600; color:var(--text-muted);">${Math.abs(left).toLocaleString()}</span> <span class="meta">cal over this week's budget</span>`;
   const perDay = left > 0 && daysLeftInclToday > 1 ? ` · about ${Math.round(left / daysLeftInclToday).toLocaleString()} a day for the ${daysLeftInclToday} day${daysLeftInclToday === 1 ? "" : "s"} left` : "";
   el.innerHTML = `<div class="field-label" style="text-transform:uppercase; letter-spacing:0.6px; display:flex; justify-content:space-between;"><span>This week (Mon to Sun)</span><button class="danger-link" id="editWeekBudget" style="color:var(--accent);">Budget ${budget.toLocaleString()}</button></div>
-    <div style="margin-top:6px;">${big}</div>
+    <div class="mt6">${big}</div>
     <div style="height:8px; border-radius:4px; background:var(--border, var(--surface-neutral)); margin:8px 0; overflow:hidden;"><div style="height:100%; width:${Math.round(frac * 100)}%; background:var(--accent);"></div></div>
     <div class="meta">${eaten.toLocaleString()} logged${perDay}.${notLogged ? ` ${notLogged} day${notLogged === 1 ? "" : "s"} this week with nothing logged. A rough total counts.` : ""}</div>`;
 }
@@ -6973,11 +6978,11 @@ function renderWeeklyIntake() {
   const notCounted = w.partial + w.untracked;
   let html = `<div class="field-label" style="text-transform:uppercase; letter-spacing:0.6px;">7-day average</div>`;
   if (w.counted < 3) {
-    html += `<div class="meta" style="margin-top:6px;">Needs at least 3 tracked days out of the last 7 to show an average (${w.counted} so far). Days you skip or mark as not fully tracked are left out, so nothing here counts against you.</div>`;
+    html += `<div class="meta mt6">Needs at least 3 tracked days out of the last 7 to show an average (${w.counted} so far). Days you skip or mark as not fully tracked are left out, so nothing here counts against you.</div>`;
   } else {
     html += macroBar("Calories per day", w.avg, t);
     const diff = t ? w.avg - t : null;
-    html += `<div class="meta" style="margin-top:6px;">${diff === null ? "" : (Math.abs(diff) <= 75 ? "About on target. " : diff > 0 ? `${diff} cal/day above target. ` : `${Math.abs(diff)} cal/day below target. `)}Based on ${w.counted} of the last 7 days${notCounted ? ` (${notCounted} left out: not tracked or marked partial)` : ""}.</div>`;
+    html += `<div class="meta mt6">${diff === null ? "" : (Math.abs(diff) <= 75 ? "About on target. " : diff > 0 ? `${diff} cal/day above target. ` : `${Math.abs(diff)} cal/day below target. `)}Based on ${w.counted} of the last 7 days${notCounted ? ` (${notCounted} left out: not tracked or marked partial)` : ""}.</div>`;
   }
   el.innerHTML = html;
 }
@@ -7121,7 +7126,7 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) rend
 function macroBar(label, value, target) {
   const pct = target ? Math.min(100, Math.round((value / target) * 100)) : 0;
   return `
-    <div style="margin-top:8px;">
+    <div class="mt8">
       <div class="meta" style="display:flex; justify-content:space-between;">
         <span>${label}</span><span>${value} / ${target || "?"}</span>
       </div>
@@ -7479,7 +7484,7 @@ function renderFoodLogList() {
       <div class="tf-fl-row${open ? " open" : ""}">
         <div class="tf-fl-main" data-row-toggle="${realIndex}" role="button" tabindex="0">
           <div class="tf-fl-name"><div class="n">${f.name}</div>
-          <div class="m">${timeLabel(new Date(f.date))}${open ? ` · ${f.carbs}c · ${f.fat}f` : ""}</div></div>
+          <div class="m">${timeLabel(new Date(f.date))}${f.source === "photo" && f.est !== false ? " · est." : ""}${open ? ` · ${f.carbs}c · ${f.fat}f` : ""}</div></div>
           <div class="tf-fl-pro">${f.calories}<small> cal · ${f.protein}g</small></div>
         </div>
         <div class="tf-fl-actions${open ? "" : " hidden"}">
@@ -7489,11 +7494,11 @@ function renderFoodLogList() {
         </div>
         <div class="hidden" data-edit-panel="${realIndex}" style="margin:8px 12px 12px;">
           <input type="text" data-field="name" value="${f.name.replace(/"/g,'&quot;')}" placeholder="Food name" style="margin-bottom:8px;">
-          <div class="field" style="margin-bottom:8px;">
+          <div class="field mb8">
             <div class="field-label">Time eaten</div>
             <input type="time" data-field="time" value="${String(new Date(f.date).getHours()).padStart(2, "0")}:${String(new Date(f.date).getMinutes()).padStart(2, "0")}">
           </div>
-          <div class="field" style="margin-bottom:8px;">
+          <div class="field mb8">
             <div class="field-label">Servings (scales the numbers below)</div>
             <input type="text" inputmode="decimal" data-servings="${realIndex}" value="1" data-base="${f.calories || 0},${f.protein || 0},${f.carbs || 0},${f.fat || 0}">
           </div>
@@ -7501,7 +7506,7 @@ function renderFoodLogList() {
             <div class="field"><div class="field-label">Calories</div><input type="text" inputmode="numeric" data-field="calories" value="${f.calories}"></div>
             <div class="field"><div class="field-label">Protein (g)</div><input type="text" inputmode="numeric" data-field="protein" value="${f.protein}"></div>
           </div>
-          <div class="row" style="margin-top:8px;">
+          <div class="row mt8">
             <div class="field"><div class="field-label">Carbs (g)</div><input type="text" inputmode="numeric" data-field="carbs" value="${f.carbs}"></div>
             <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" data-field="fat" value="${f.fat}"></div>
           </div>
@@ -7942,7 +7947,7 @@ async function openCamera() {
   ov.innerHTML = `
     <video id="cameraVideo" autoplay playsinline muted style="flex:1; min-height:0; width:100%; object-fit:contain; background:#000;"></video>
     <div style="display:flex; gap:12px; padding:16px; padding-bottom:max(16px, env(safe-area-inset-bottom)); background:#000;">
-      <button class="secondary" id="cameraCancelBtn" style="flex:1;">Cancel</button>
+      <button class="secondary fx1" id="cameraCancelBtn">Cancel</button>
       <button class="primary" id="cameraSnapBtn" style="flex:2;">Take photo</button>
     </div>`;
   document.body.appendChild(ov);
@@ -8015,7 +8020,7 @@ async function openBarcodeScanner() {
     <video id="barcodeVideo" autoplay playsinline muted style="flex:1; min-height:0; width:100%; object-fit:contain; background:#000;"></video>
     <div id="barcodeMsg" style="color:#fff; text-align:center; padding:8px 16px;">Point the camera at the barcode</div>
     <div style="display:flex; gap:8px; padding:0 16px 8px;"><input type="text" inputmode="numeric" id="barcodeTyped" placeholder="or type the number under the barcode" style="flex:1; border-radius:12px;"><button class="primary" id="barcodeGo">Look up</button></div>
-    <div style="padding:8px 16px 16px; padding-bottom:max(16px, env(safe-area-inset-bottom));"><button class="secondary" id="barcodeCancel" style="width:100%;">Cancel</button></div>`;
+    <div style="padding:8px 16px 16px; padding-bottom:max(16px, env(safe-area-inset-bottom));"><button class="secondary w100" id="barcodeCancel">Cancel</button></div>`;
   document.body.appendChild(ov);
   const finish = (code) => {
     if (done) return; done = true;
@@ -8066,6 +8071,7 @@ document.getElementById("saveScanBtn").addEventListener("click", async () => {
     carbs: parseInt(document.getElementById("scanCarbs").value, 10) || 0,
     fat: parseInt(document.getElementById("scanFat").value, 10) || 0,
     source: "photo",
+    est: scanKind !== "package", // plate/restaurant/drink guesses are estimates; a package label is not
   });
   ["scanName", "scanCalories", "scanProtein", "scanCarbs", "scanFat"].forEach(id => document.getElementById(id).value = "");
   document.getElementById("scanServings").value = "1";
@@ -8273,7 +8279,7 @@ function renderWaistTrend(measurementsAsc) {
     if (block) block.classList.toggle("hidden", !!state.dismissedWaistEmptyHint);
     chartEl.className = "empty";
     chartEl.innerHTML = `Log waist on a couple of days to see it here.
-      <div><button class="danger-link" data-dismiss-waist-hint="1" style="margin-top:6px;">Got it, don't show this again</button></div>`;
+      <div><button class="danger-link mt6" data-dismiss-waist-hint="1">Got it, don't show this again</button></div>`;
     return;
   }
   if (block) block.classList.remove("hidden");
@@ -8308,14 +8314,14 @@ function renderBloatPatterns() {
   let html = `<div class="name">Bloat days</div>
     <div class="meta">Waist up ${BLOAT_WAIST_DELTA_IN}in+ vs your recent average while the scale stayed flat — ${p.total} so far.</div>`;
   if (p.total < 3) {
-    html += `<div class="meta" style="margin-top:6px;">Need a few more before any pattern means much.</div>`;
+    html += `<div class="meta mt6">Need a few more before any pattern means much.</div>`;
   } else if (p.tags.length) {
     html += p.tags.map(t =>
-      `<div class="meta" style="margin-top:6px;">${escapeHtml(t.tag)} — on ${t.count} of ${p.total} bloat days</div>`).join("");
+      `<div class="meta mt6">${escapeHtml(t.tag)} — on ${t.count} of ${p.total} bloat days</div>`).join("");
     html += `<div class="meta" style="margin-top:6px; font-style:italic;">A pattern, not proof — a tag that shows up a lot can just be common in your week.</div>`;
   }
   if (p.foods.length) {
-    html += `<div class="meta" style="margin-top:8px;">Foods you noted:</div>` + p.foods.map(f =>
+    html += `<div class="meta mt8">Foods you noted:</div>` + p.foods.map(f =>
       `<div class="meta">${escapeHtml(f.date.slice(5))}: ${escapeHtml(f.text)}</div>`).join("");
   }
   el.innerHTML = html;
@@ -8612,9 +8618,9 @@ function renderProgressTop() {
   setSec("psWorkouts", consistencyCard + weeklyCard);
   const dn = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const dRows = weekDs.map((d, i) => { const k = perDay[i]; const over = k > wb.budget / 7; return `<div class="tf-prow"><span>${dn[i]}</span><span class="r" style="${over ? "color:var(--danger);" : ""}">${d > todayDs ? "—" : (k ? k.toLocaleString() + " cal" : "not logged")}</span></div>`; }).join("");
-  setSec("psCalories", `<div class="tf-pcard"><div class="h"><b>This week</b><span><em>${wb.eaten.toLocaleString()}</em> of ${wb.budget.toLocaleString()} cal</span></div><div style="margin-top:8px;">${dRows}</div></div>` + recapCard);
+  setSec("psCalories", `<div class="tf-pcard"><div class="h"><b>This week</b><span><em>${wb.eaten.toLocaleString()}</em> of ${wb.budget.toLocaleString()} cal</span></div><div class="mt8">${dRows}</div></div>` + recapCard);
   const pRows = protDays.slice().reverse().map(x => `<div class="tf-prow"><span>${new Date(x.d + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span><span class="r" style="${x.ok ? "color:var(--accent);" : ""}">${Math.round(x.g)} g ${x.ok ? "✓" : ""}</span></div>`).join("");
-  setSec("psProtein", `<div class="tf-pcard"><div class="h"><b>Protein</b><span>goal <em>${pTarget || "—"} g</em> · ${hit} of 7 days hit</span></div><div style="margin-top:8px;">${pRows}</div></div>`);
+  setSec("psProtein", `<div class="tf-pcard"><div class="h"><b>Protein</b><span>goal <em>${pTarget || "—"} g</em> · ${hit} of 7 days hit</span></div><div class="mt8">${pRows}</div></div>`);
   setSec("psMilestones", heroHtml + milestonesCard);
   const sumEl = document.getElementById("psWalkSum"); if (sumEl) sumEl.textContent = `${mi(wkMiles)} mi this week`;
 }
@@ -8768,7 +8774,7 @@ function renderWeightHistoryList() {
       <div class="list-item" style="flex-direction:column; align-items:stretch;">
         <div class="name">${m.date}</div>
         <div class="meta">${m.weight}lb${deltaStr}${bfStr}${measureStr ? " · " + measureStr : ""}</div>
-        <div class="row" style="margin-top:8px;">
+        <div class="row mt8">
           <button class="danger-link" style="color:var(--accent);" data-edit-measure="${m.date}">Edit</button>
           <button class="danger-link" style="margin-left:auto;" data-del-measure="${m.date}">Delete</button>
         </div>
@@ -8777,7 +8783,7 @@ function renderWeightHistoryList() {
             <div class="field"><div class="field-label">Weight (lb)</div><input type="text" inputmode="decimal" data-mfield="weight" value="${m.weight}"></div>
             <div class="field"><div class="field-label">Neck (in)</div><input type="text" inputmode="decimal" data-mfield="neck" value="${m.neck ?? ""}" placeholder="optional"></div>
           </div>
-          <div class="row" style="margin-top:8px;">
+          <div class="row mt8">
             <div class="field"><div class="field-label">Waist (in)</div><input type="text" inputmode="decimal" data-mfield="waist" value="${m.waist ?? ""}" placeholder="optional"></div>
           </div>
           <button class="primary" data-save-measure="${m.date}" style="margin-top:10px;">Save changes</button>
@@ -8918,8 +8924,8 @@ function renderRecoveryStatus() {
     <div class="meta" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
       <strong style="color:var(--text);">Likely explanation, from what you logged this window:</strong>
     </div>
-    ${r.reasons.map(x => `<div class="meta" style="margin-top:6px;">${x.reason} (${x.count})${x.suggestion ? ` — ${x.suggestion}` : ""}</div>`).join("")}
-  ` : (r.status === "caution" ? `<div class="meta" style="margin-top:10px;">No reason logged for the check-ins in this window — worth logging one next time a swing prompts the check-in card, so this can point to a likely cause instead of just the number.</div>` : "");
+    ${r.reasons.map(x => `<div class="meta mt6">${x.reason} (${x.count})${x.suggestion ? ` — ${x.suggestion}` : ""}</div>`).join("")}
+  ` : (r.status === "caution" ? `<div class="meta mt10">No reason logged for the check-ins in this window — worth logging one next time a swing prompts the check-in card, so this can point to a likely cause instead of just the number.</div>` : "");
   const excludedNote = r.excludedFlagged
     ? ` (excluding ${r.excludedFlagged} flagged day${r.excludedFlagged === 1 ? "" : "s"} from the trend line — still shown below)`
     : "";
@@ -8927,7 +8933,7 @@ function renderRecoveryStatus() {
     <div class="list-item"><div class="name">Current pace</div><div class="meta">${paceStr}</div></div>
     <div class="list-item"><div class="name">Target range</div><div class="meta">${rangeStr}</div></div>
     <div class="list-item"><div class="name">Margin to caution</div><div class="meta">${marginStr}</div></div>
-    <div class="meta" style="margin-top:8px;">Based on a trend line across your last ${r.days.toFixed(0)} days of weigh-ins${excludedNote}. This is about weight-loss speed, not training recovery (soreness/sleep) — if pace drops past ${r.targetMin}%/week, progression holds steady (no intensity increases) until it's back in range; that's what "pace caution" means. Losing much faster than this target range risks losing muscle along with fat, not just fat — slower and steadier holds onto more of the muscle you're building.</div>
+    <div class="meta mt8">Based on a trend line across your last ${r.days.toFixed(0)} days of weigh-ins${excludedNote}. This is about weight-loss speed, not training recovery (soreness/sleep) — if pace drops past ${r.targetMin}%/week, progression holds steady (no intensity increases) until it's back in range; that's what "pace caution" means. Losing much faster than this target range risks losing muscle along with fat, not just fat — slower and steadier holds onto more of the muscle you're building.</div>
     ${reasonsHtml}`;
 }
 function toggleRecoveryStatus() {
@@ -9250,7 +9256,7 @@ function renderSessionSummary(summary, opts = {}) {
       </div>
       <div class="tf-fin-note">${note}</div>
       <div style="flex:1"></div>
-      <button class="primary" id="sessionSummaryDoneBtn" style="width:100%;">Done</button>
+      <button class="primary w100" id="sessionSummaryDoneBtn">Done</button>
     </div>`;
   document.getElementById("sessionSummaryDoneBtn").addEventListener("click", () => {
     session = null; clearSessionSnapshot();
@@ -9408,8 +9414,8 @@ function renderMinimumDayCheckpoint() {
     <div class="card">
       <h2>Nice — that's today's minimum done</h2>
       <div class="meta">Feeling good? Your call either way.</div>
-      <button class="primary" id="continueFullBtn" style="margin-top:10px; width:100%;">Continue to full workout</button>
-      <button class="secondary" id="stopHereBtn" style="margin-top:8px; width:100%;">Stop here for today</button>
+      <button class="primary mt10 w100" id="continueFullBtn">Continue to full workout</button>
+      <button class="secondary mt8 w100" id="stopHereBtn">Stop here for today</button>
     </div>`;
   document.getElementById("continueFullBtn").addEventListener("click", () => {
     session.minimalMode = false;
@@ -9514,7 +9520,7 @@ function renderWarmupCooldownStep(phase) {
           </div>
         </div>`).join("")}
       <div class="sx-spacer"></div><button class="primary" id="warmCoolContinueBtn" style="margin-top:18px; width:100%;">${isWarmup ? "Start workout" : "Finish session"}</button>
-      <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
+      <button class="secondary mt8 w100" id="endSessionBtn">End session early</button>
     </div>`;
   wcStopTimer();
   panel.querySelectorAll("[data-wc-timer]").forEach(btn => {
@@ -9574,7 +9580,7 @@ function renderSession() {
   // actual guided session — the one moment it's most useful, mid-set with
   // no time to go look it up elsewhere.
   const stepCue = exercises.find(x => x.name === step.name)?.cue || "";
-  const stepCueHtml = stepCue ? `<div class="meta" style="margin-top:4px;">💡 ${stepCue}</div>` : "";
+  const stepCueHtml = stepCue ? `<div class="meta mt4">💡 ${stepCue}</div>` : "";
   const stepLevelLabel = levelLabelFor(step);
   // The legend for "level"/horizontal-vertical/straps only lives on the
   // pre-session exercise list, which is hidden once a session starts — so
@@ -9584,7 +9590,7 @@ function renderSession() {
   // this isn't about pushing to failure — and, if the session opens on a
   // superset, how to actually run one.
   const levelLegendHtml = (session.pos === 0 && !state.dismissedExerciseLegend)
-    ? `<div class="meta" style="margin-top:4px;">Level is a 1-5 difficulty tier (1 = easiest in the library, 5 = hardest); straps is your ring-strap setting (rings only). Stop a set any time your form breaks down or something hurts — this isn't about pushing to failure.${step.supersetLabel ? " For a superset: do one set of each paired exercise back-to-back, then rest." : ""}</div>`
+    ? `<div class="meta mt4">Level is a 1-5 difficulty tier (1 = easiest in the library, 5 = hardest); straps is your ring-strap setting (rings only). Stop a set any time your form breaks down or something hurts — this isn't about pushing to failure.${step.supersetLabel ? " For a superset: do one set of each paired exercise back-to-back, then rest." : ""}</div>`
     : "";
 
   if (session.resting) {
@@ -9602,7 +9608,7 @@ function renderSession() {
           ${stepCueHtml}
         </div>
         <div class="sx-spacer"></div>
-        <button class="secondary" id="skipRestBtn" style="width:100%;">Skip rest</button>
+        <button class="secondary w100" id="skipRestBtn">Skip rest</button>
         <button class="danger-link" style="color:var(--accent); margin-top:8px;" data-quick-note="${escapeHtml(step.name)}">Add a note or question</button>
       </div>`;
     document.getElementById("skipRestBtn").addEventListener("click", () => {
@@ -9641,14 +9647,14 @@ function renderSession() {
       panel.innerHTML = `
         <div class="card">
           ${sxTop("Hold · set " + step.setNum + " of " + step.totalSets + (holdEach ? " · side " + (session.holdSide || 1) + " of 2" : ""))}
-          ${step.supersetLabel ? `<div class="meta" style="margin-top:8px;">${step.supersetLabel}</div>` : ""}
+          ${step.supersetLabel ? `<div class="meta mt8">${step.supersetLabel}</div>` : ""}
           <h2>${step.name}</h2>
           <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · holding${ringStrapNoteFor(step)}</div>
           ${stepCueHtml}
           <div id="holdClock" style="font-size:36px; font-weight:600; text-align:center; margin:14px 0; font-family:var(--font-mono);">${formatTime(remaining)}</div>
           <div class="meta" style="text-align:center; margin-top:-6px; margin-bottom:10px;">It's completely normal not to hit the full target time yet — stop whenever you need to.</div>
           <div class="sx-spacer"></div>
-          <button class="secondary" id="stopHoldBtn" style="width:100%;">Stop / let go</button>
+          <button class="secondary w100" id="stopHoldBtn">Stop / let go</button>
         </div>`;
       document.getElementById("stopHoldBtn").addEventListener("click", () => {
         clearInterval(session.timerId);
@@ -9667,7 +9673,7 @@ function renderSession() {
           ${sxTop("Set " + step.setNum + " of " + step.totalSets)}
           <h2>${step.name}</h2>
           <div class="sx-hero" id="switchClock">${Math.max(0, Math.ceil((session.holdSwitchEnd - Date.now()) / 1000))}<small>switch hands</small></div>
-          <div class="meta" style="margin-top:12px;">Side 1 done (${session.holdSide1Held}s). Other side next, ${targetSeconds}s.</div>
+          <div class="meta mt12">Side 1 done (${session.holdSide1Held}s). Other side next, ${targetSeconds}s.</div>
           <div class="sx-spacer"></div>
           <button class="primary" id="switchGoBtn">Start other side now</button>
         </div>`;
@@ -9679,23 +9685,23 @@ function renderSession() {
     panel.innerHTML = `
       <div class="card">
         ${sxTop("Set " + step.setNum + " of " + step.totalSets)}
-        ${step.supersetLabel ? `<div class="meta" style="margin-top:8px;">${step.supersetLabel}</div>${supersetCueHtml(step)}` : ""}
+        ${step.supersetLabel ? `<div class="meta mt8">${step.supersetLabel}</div>${supersetCueHtml(step)}` : ""}
         <h2>${step.name}</h2>
         <div class="sx-hero">${targetSeconds}<small>seconds · hold</small></div>
-        <div class="meta" style="margin-top:12px;">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${targetSeconds}s hold · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
+        <div class="meta mt12">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${targetSeconds}s hold · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
         ${eachSideCueHtml(step, true)}
         ${levelLegendHtml}
         ${bellHintHtml(step.name, step.reps)}
         ${stepCueHtml}
         <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
         <button class="danger-link" style="color:var(--accent); margin-top:4px; margin-left:12px;" data-quick-note="${escapeHtml(step.name)}">Note</button>
-        <div class="hidden" id="sessionSwapPanel" style="margin-top:8px;">
+        <div class="hidden mt8" id="sessionSwapPanel">
           <div class="meta">Pick a swap — grouped by easier/harder:</div>
           ${swapAlternatesHtml(currentWorkout.exercises[step.exIndex], step.exIndex)}
         </div>
         <div class="sx-spacer"></div>
         <button class="primary" id="startHoldBtn" style="margin-top:14px;">Start hold</button>
-        <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
+        <button class="secondary mt8 w100" id="endSessionBtn">End session early</button>
       </div>`;
     document.getElementById("sessionSwapOpenBtn").addEventListener("click", () => {
       document.getElementById("sessionSwapPanel").classList.toggle("hidden");
@@ -9715,24 +9721,24 @@ function renderSession() {
   panel.innerHTML = `
     <div class="card">
       ${sxTop("Set " + step.setNum + " of " + step.totalSets)}
-      ${step.supersetLabel ? `<div class="meta" style="margin-top:8px;">${step.supersetLabel}</div>${supersetCueHtml(step)}` : ""}
+      ${step.supersetLabel ? `<div class="meta mt8">${step.supersetLabel}</div>${supersetCueHtml(step)}` : ""}
       <h2>${step.name}</h2>
       <div class="sx-hero">${step.reps}<small>reps${step.note ? " · " + escapeHtml(step.note) : ""}</small></div>
-      <div class="meta" style="margin-top:12px;">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${step.reps} reps${step.note ? " " + step.note : ""} · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
+      <div class="meta mt12">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${step.reps} reps${step.note ? " " + step.note : ""} · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
       ${eachSideCueHtml(step, false)}
       ${levelLegendHtml}
       ${bellHintHtml(step.name, step.reps)}
       ${stepCueHtml}
       <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
       <button class="danger-link" style="color:var(--accent); margin-top:4px; margin-left:12px;" data-quick-note="${escapeHtml(step.name)}">Note</button>
-      <div class="hidden" id="sessionSwapPanel" style="margin-top:8px;">
+      <div class="hidden mt8" id="sessionSwapPanel">
         <div class="meta">Pick a swap — grouped by easier/harder:</div>
         ${swapAlternatesHtml(currentWorkout.exercises[step.exIndex], step.exIndex)}
       </div>
       <div class="sx-spacer"></div>
       <input type="text" inputmode="numeric" id="actualRepsInput" placeholder="${/each (side|arm|leg)/i.test(step.note || "") ? "Reps completed on each side" : "Actual reps completed"}" style="margin-top:14px;">
-      <button class="primary" id="completeSetBtn" style="margin-top:12px;">Complete set</button>
-      <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
+      <button class="primary mt12" id="completeSetBtn">Complete set</button>
+      <button class="secondary mt8 w100" id="endSessionBtn">End session early</button>
     </div>`;
 
   document.getElementById("sessionSwapOpenBtn").addEventListener("click", () => {
@@ -9862,16 +9868,16 @@ function renderEmom(step, stepCueHtml) {
     panel.innerHTML = `
       <div class="card">
         ${sxTop("Timed block")}
-        <div class="meta" style="margin-top:8px;">Timed block · a new round every ${em.interval >= 60 && em.interval % 60 === 0 ? (em.interval / 60) + " minute" + (em.interval === 60 ? "" : "s") : em.interval + " seconds"}</div>
+        <div class="meta mt8">Timed block · a new round every ${em.interval >= 60 && em.interval % 60 === 0 ? (em.interval / 60) + " minute" + (em.interval === 60 ? "" : "s") : em.interval + " seconds"}</div>
         <h2>${step.name}</h2>
         <div class="meta">${em.rounds} rounds · each round: ${what}</div>
         ${stepCueHtml}
-        <div class="tf-hint" style="margin-top:12px;"><b>How it works</b> Each minute starts with a beep. Do the reps right away${emomHandLabel(step, 0) ? " (right hand first, then switch hands every round)" : ""}, then rest until the next beep. Do not start a second set inside the same minute. The clock shows the whole minute, and the rep count is done when you stop, not when time runs out.</div>
-        <div class="meta" style="margin-top:8px;">Pick up the bell, then tap Start for a 3-second countdown.</div>
+        <div class="tf-hint mt12"><b>How it works</b> Each minute starts with a beep. Do the reps right away${emomHandLabel(step, 0) ? " (right hand first, then switch hands every round)" : ""}, then rest until the next beep. Do not start a second set inside the same minute. The clock shows the whole minute, and the rep count is done when you stop, not when time runs out.</div>
+        <div class="meta mt8">Pick up the bell, then tap Start for a 3-second countdown.</div>
         <div class="sx-spacer"></div>
         <button class="primary" id="emomStartBtn" style="margin-top:14px; width:100%;">Start</button>
         <button class="danger-link" style="color:var(--accent); margin-top:8px;" data-quick-note="${escapeHtml(step.name)}">Note</button>
-        <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
+        <button class="secondary mt8 w100" id="endSessionBtn">End session early</button>
       </div>`;
     document.getElementById("emomStartBtn").addEventListener("click", emomStart);
   } else {
@@ -9880,7 +9886,7 @@ function renderEmom(step, stepCueHtml) {
     panel.innerHTML = `
       <div class="card">
         ${sxTop("Go")}
-        <div class="meta" id="emomRound" style="margin-top:8px;">Round ${em.done + 1} of ${em.rounds}</div>
+        <div class="meta mt8" id="emomRound">Round ${em.done + 1} of ${em.rounds}</div>
         <h2>${step.name}</h2>
         <div class="meta">Do now: ${what}. Then rest until the beep.</div>
         ${emomHandLabel(step, em.done) ? `<div id="emomHand" style="font-family:var(--font-display); font-size:30px; font-weight:600; color:var(--accent); text-align:center; margin-top:10px; text-transform:uppercase;">${emomHandLabel(step, em.done)}</div>` : ""}
@@ -9888,7 +9894,7 @@ function renderEmom(step, stepCueHtml) {
         ${stepCueHtml}
         <div class="sx-spacer"></div>
         <button class="secondary" id="emomStopBtn" style="margin-top:14px; width:100%;">Stop block</button>
-        <button class="secondary" id="endSessionBtn" style="margin-top:8px; width:100%;">End session early</button>
+        <button class="secondary mt8 w100" id="endSessionBtn">End session early</button>
       </div>`;
     document.getElementById("emomStopBtn").addEventListener("click", () => {
       if (!confirm("Stop here? Rounds you haven't done will be logged as missed.")) return;
@@ -10578,8 +10584,8 @@ const PLANE_GROUP_LABELS = { push_h: "Push (horizontal)", push_v: "Push (vertica
 function renderStartingLevelSettings() {
   const el = document.getElementById("startingLevelSettings");
   const rowHtml = (key, label) => `
-    <div style="margin-top:10px;">
-      <div class="meta" style="margin-bottom:4px;">${label}</div>
+    <div class="mt10">
+      <div class="meta mb4">${label}</div>
       <div class="row">
         ${["beginner", "intermediate", "advanced"].map(lvl => `
           <div class="chip ${state.settings.startingLevels[key] === lvl ? "active" : ""}" data-start-mg="${key}" data-start-lvl="${lvl}">${lvl.charAt(0).toUpperCase() + lvl.slice(1)}</div>
@@ -10659,7 +10665,7 @@ function renderNotes() {
     <div class="list-item" style="flex-direction:column; align-items:stretch; ${n.done ? "opacity:0.55;" : ""}">
       <div class="meta">${new Date(n.at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}${n.context ? " · " + escapeHtml(n.context) : ""}</div>
       <div style="margin-top:2px; white-space:pre-wrap;">${escapeHtml(n.text)}</div>
-      <div class="row" style="margin-top:6px;">
+      <div class="row mt6">
         <button class="secondary" data-note-done="${n.id}" style="padding:4px 10px; font-size:13px;">${n.done ? "Reopen" : "Mark answered"}</button>
         <button class="danger-link" data-note-del="${n.id}" style="margin-left:auto;">Delete</button>
       </div>

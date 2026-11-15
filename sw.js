@@ -2,7 +2,7 @@
 // and skipWaiting + clients.claim mean a refresh (not a hard-refresh) is
 // enough to pick up a new version — this fixes the old app's "must clear
 // cache after every push" problem.
-const CACHE_VERSION = "tf-v13";
+const CACHE_VERSION = "tf-v14";
 const SHELL_FILES = [
   "./", "./index.html", "./manifest.json",
   "./fonts/rubik-latin-500-normal.woff2", "./fonts/rubik-latin-600-normal.woff2", "./fonts/rubik-latin-700-normal.woff2",
