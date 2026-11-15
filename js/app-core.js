@@ -13,7 +13,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-15 17:50 CT";
+const APP_BUILD = "2026-11-15 18:00 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -136,13 +136,20 @@ async function loadState() {
   try {
     const remote = await apiFetch("/api/state", { method: "GET" });
     if (remote && Object.keys(remote).length) {
+      const base = getBase();
       if (cached && isDirty()) {
         // This phone has changes the server never confirmed. Don't overwrite them.
-        if ((remote._savedAt || 0) > (state._savedAt || 0)) state = mergeStates(state, remote);
+        if (base && (remote._savedAt || 0) !== (base._savedAt || 0)) {
+          // Another device saved too: combine both sets of changes against the last shared copy.
+          state = merge3(base, state, remote);
+        } else if (!base && (remote._savedAt || 0) > (state._savedAt || 0)) {
+          state = mergeStates(state, remote); // no shared copy recorded yet (first run after update)
+        }
         needPush = true;
         localStorage.setItem(LS_KEY, JSON.stringify(state));
       } else {
         state = remote;
+        setBase(remote);
         localStorage.setItem(LS_KEY, JSON.stringify(state));
       }
     }
@@ -257,15 +264,79 @@ function isDirty() { try { return !!localStorage.getItem(LS_DIRTY); } catch (e) 
 function clearDirtyIf(sentAt) {
   try { if (localStorage.getItem(LS_DIRTY) === String(sentAt)) localStorage.removeItem(LS_DIRTY); } catch (e) {}
 }
-async function putState() {
+// ---- multi-device safety ----
+// "Base" is the copy of the state this phone last agreed on with the server. Before every
+// save we check whether another device has saved since; if so, both sets of changes are
+// combined (three-way merge against the base) instead of the newer save wiping the other.
+const LS_BASE = "tf_base_v1";
+function setBase(obj) { try { localStorage.setItem(LS_BASE, typeof obj === "string" ? obj : JSON.stringify(obj)); } catch (e) {} }
+function getBase() { try { const t = localStorage.getItem(LS_BASE); return t ? JSON.parse(t) : null; } catch (e) { return null; } }
+function stable(v) {
+  if (v === undefined) return "u";
+  if (v === null || typeof v !== "object") return JSON.stringify(v);
+  if (Array.isArray(v)) return "[" + v.map(stable).join(",") + "]";
+  return "{" + Object.keys(v).sort().filter(k => v[k] !== undefined).map(k => JSON.stringify(k) + ":" + stable(v[k])).join(",") + "}";
+}
+const isObj = v => v && typeof v === "object" && !Array.isArray(v);
+function merge3(b, l, r) {
+  if (stable(l) === stable(r)) return l;
+  if (b !== undefined && stable(l) === stable(b)) return r; // only the other device changed it
+  if (b !== undefined && stable(r) === stable(b)) return l; // only this device changed it
+  if (Array.isArray(l) && Array.isArray(r)) {
+    // Treat as sets of records: keep the server's list, apply this device's removals and additions.
+    const bs = new Set((Array.isArray(b) ? b : []).map(stable));
+    const ls = new Set(l.map(stable)), rs = new Set(r.map(stable));
+    const out = r.filter(x => !(bs.has(stable(x)) && !ls.has(stable(x))));
+    for (const x of l) if (!bs.has(stable(x)) && !rs.has(stable(x))) out.push(x);
+    if (out.length && out.every(x => x && typeof x === "object" && typeof x.date === "string")) out.sort((a, c) => String(a.date).localeCompare(String(c.date)));
+    return out;
+  }
+  if (isObj(l) && isObj(r)) {
+    const out = {}, bb = isObj(b) ? b : {};
+    for (const k of new Set([...Object.keys(l), ...Object.keys(r)])) {
+      const m = merge3(bb[k], l[k], r[k]);
+      if (m !== undefined) out[k] = m;
+    }
+    return out;
+  }
+  return l; // both changed the same single value: this device's latest edit wins
+}
+let putChain = Promise.resolve();
+function putState() { const run = putChain.then(putStateNow); putChain = run.catch(() => {}); return run; }
+async function putStateNow() {
+  const base = getBase();
+  if (base) {
+    const remote = await apiFetch("/api/state", { method: "GET" });
+    if (remote && Object.keys(remote).length && (remote._savedAt || 0) !== (base._savedAt || 0)) {
+      state = merge3(base, state, remote);
+      saveStateLocal(); // re-stamps and stores the combined copy
+      try { if (typeof refreshViews === "function") refreshViews(); } catch (e) {}
+    }
+  }
   const sentAt = state._savedAt || 0;
+  const body = JSON.stringify(state);
   await apiFetch("/api/state", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(state),
+    body,
   });
+  setBase(body);
   clearDirtyIf(sentAt);
   setSync(true, "synced");
+}
+// Returning to the app with nothing unsynced: pick up whatever another device saved.
+async function pullRemoteIfChanged() {
+  if (!WORKER_URL || isDirty()) return;
+  try {
+    const remote = await apiFetch("/api/state", { method: "GET" });
+    const base = getBase();
+    if (!remote || !Object.keys(remote).length || isDirty()) return;
+    if (base && (remote._savedAt || 0) === (base._savedAt || 0)) return;
+    state = remote; setBase(remote);
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+    try { if (typeof refreshViews === "function") refreshViews(); } catch (e) {}
+    setSync(true, "synced");
+  } catch (e) {}
 }
 function offlineLabel() { return isDirty() ? "offline: saved on this phone, will sync" : "offline: will retry"; }
 // If another device saved a newer copy while this phone had unsynced changes, keep the
@@ -331,5 +402,5 @@ async function persistNow() {
 // Retry unsynced changes when the connection comes back, the app returns to the
 // foreground, and on a slow timer while anything is waiting.
 window.addEventListener("online", () => { if (isDirty()) saveStateRemote(); });
-document.addEventListener("visibilitychange", () => { if (!document.hidden && isDirty()) saveStateRemote(); });
+document.addEventListener("visibilitychange", () => { if (document.hidden) return; if (isDirty()) saveStateRemote(); else pullRemoteIfChanged(); });
 setInterval(() => { if (isDirty() && !document.hidden) saveStateRemote(); }, 60000);

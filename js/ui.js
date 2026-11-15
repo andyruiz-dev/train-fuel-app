@@ -681,6 +681,12 @@ async function init() {
   await loadExercises();
   await loadPrograms();
   await migrateKbProgramArms();
+  document.getElementById("foodLogDate").value = localDateStr();
+  refreshViews();
+  checkScanInterrupted();
+}
+// Re-draws everything that shows saved data. Used on first load and after another device's changes are merged in.
+function refreshViews() {
   renderExercises();
   renderPrograms();
   renderSkillPractice();
@@ -697,7 +703,6 @@ async function init() {
   renderMacroSummary();
   renderQuickProteinChips();
   renderQuickDrinkChips();
-  document.getElementById("foodLogDate").value = localDateStr();
   renderFoodLogList();
   if (state.settings?.startDate) document.getElementById("startDateInput").value = state.settings.startDate;
   document.getElementById("ringStrapPush").value = state.ringStrap?.push ?? "";
@@ -718,7 +723,6 @@ async function init() {
   syncWaistExplainerVisibility();
   document.getElementById("appBuildInfo").textContent = `Build: ${APP_BUILD}`;
   renderMacroSuggestionHistory();
-  checkScanInterrupted();
 }
 init();
 
