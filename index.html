@@ -372,7 +372,7 @@
   .tf-hist-row .p small{font-size:12px; color:var(--text-muted); font-weight:500;}
   /* Coach screen, "Steady" look */
   .tf-label{ color:var(--text-muted); padding:14px 4px 8px}
-  #morningChecklist{display:none !important;}
+  #morningChecklist{display:none}
   .tf-tiles{ gap:10px; align-items:stretch}
   .tf-tile{flex:1}
   .tf-tile-tag{ font-weight:600}
@@ -430,7 +430,7 @@
   #tab-coach .tf-screen-head{padding:8px 4px 4px; flex-direction:row-reverse; justify-content:space-between; align-items:baseline}
   #tab-coach .tf-screen-head h1{font-size:22px;}
   #tab-coach .tf-label{display:none;}
-  #coachNoteCard .tf-clamp-btn, #coachNoteCard a, #coachNoteCard button{padding-top:2px !important; padding-bottom:0 !important}
+  #coachNoteCard .tf-clamp-btn, #coachNoteCard a, #coachNoteCard button{padding-top:2px; padding-bottom:0}
   #tab-coach .tf-tile button.tf-linkbtn, #tab-coach .tf-tile .tf-clamp-btn, #tab-coach .tf-tile a{padding-top:4px; padding-bottom:0;}
   #tab-coach .tf-tile button.primary{margin-top:8px; height:36px;}
   #tab-coach .tf-tile .chip{margin-top:8px; padding:7px 0;}
@@ -571,7 +571,7 @@
   #profileBtn.active{color:var(--accent);}
   #profileBtn .status-dot{position:absolute; top:9px; right:9px; width:8px; height:8px; box-shadow:0 0 0 2px var(--bg)}
   #profileBtn .status-dot.ok{display:none;}
-  .tf-screen-head{display:none !important;}
+  .tf-screen-head{display:none}
   main{padding-top:4px;}
   nav.tabs{background:var(--surface-deep-2); border-top:1px solid var(--border)}
   nav.tabs button{padding:8px 4px 6px; font-family:Inter,sans-serif; font-size:11px; font-weight:500; display:flex; flex-direction:column; align-items:center; gap:3px}
@@ -587,7 +587,7 @@
     border:0 !important; border-radius:var(--r2) !important;}
   .tf-hero-food, .tf-hero{background:linear-gradient(160deg,var(--accent-bg),var(--surface)) !important; border:1px solid var(--accent-line) !important; border-radius:20px !important;}
   /* type: sentence case labels instead of mono caps */
-  .tf-kicker, .tf-label, .fh-k, .field-label, .tf-focus .tf-fk, .tf-hero .k{font-family:Inter,sans-serif !important; letter-spacing:.02em !important; text-transform:none !important; font-size:12px !important;}
+  .tf-kicker, .tf-label, .fh-k, .field-label, .tf-focus .tf-fk, .tf-hero .k{font-family:Inter,sans-serif; letter-spacing:.02em !important; text-transform:none !important; font-size:12px}
   .tf-focus .tf-fk{color:var(--accent); font-weight:600;}
   /* buttons: 48px, dark ink on accent, quiet secondary */
   button.primary{background:var(--accent); color:var(--ink); border-radius:14px; min-height:48px; font-family:Inter,sans-serif; font-size:16px; font-weight:600}
@@ -595,7 +595,7 @@
   button.secondary{color:var(--text); border:1px solid var(--border-2); border-radius:14px; min-height:44px; font-family:Inter,sans-serif; font-size:14px; font-weight:500; letter-spacing:0;}
   .chip{border-radius:12px; min-height:40px;}
   input[type=text], input[type=date], input[type=number], select, textarea{border-radius:12px; min-height:46px;}
-  .tf-linkbtn{color:var(--text-muted) !important}
+  .tf-linkbtn{color:var(--text-muted)}
   /* checkboxes in the theme color, not the browser blue */
   input[type=checkbox]{accent-color:var(--accent);}
 
@@ -616,7 +616,7 @@
   #tfMore{ border-radius:var(--r2)}
 
   /* Coach */
-  #tab-coach .tf-hero2{background:none !important; border:0 !important; border-radius:0; overflow:visible; margin:0 0 4px;}
+  #tab-coach .tf-hero2{background:none; border:0; border-radius:0; overflow:visible; margin:0 0 4px}
   #tab-coach .tf-hero2-k{color:var(--text-muted);}
   #tab-coach .tf-hero2 .d{ font-weight:500}
   #tab-coach .tf-cchips{ padding:0 4px}
@@ -627,10 +627,10 @@
   .tf-tiles{ background:var(--surface); border-radius:var(--r2); padding:16px}
   .tf-tiles .tf-tile + .tf-tile{margin-top:14px;}
   .tf-tiles .tf-tile-tag{ font-size:15px}
-  #logWeightBtn, #saveDailyCheckinBtn{display:none !important;}
+  #logWeightBtn, #saveDailyCheckinBtn{display:none}
   #weightInput{background:var(--bg)}
   #tab-coach details.tf-row, details.tf-row{background:var(--surface); padding:0 16px !important; margin:0 !important; border-radius:0 !important; border-top:1px solid var(--border) !important;}
-  details.tf-row > summary{min-height:56px; font-weight:500 !important}
+  details.tf-row > summary{min-height:56px; font-weight:500}
   details.tf-row[open]{padding-bottom:14px !important;}
   .tf-dotrow summary::before{content:""; width:20px !important; height:20px !important; border-radius:0 !important; margin-right:12px !important; background:var(--text-muted) !important; -webkit-mask:var(--ic) center/contain no-repeat; mask:var(--ic) center/contain no-repeat;}
   #chestBoosterDetails{--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");}
@@ -645,16 +645,16 @@
   #tab-food .fh-k{order:2}
   #tab-food .tf-add{ align-items:center; justify-content:center; gap:8px; background:var(--surface); padding:0 8px}
   #tab-food .tf-add.main{ background:var(--accent); color:var(--ink)}
-  .tf-recent .chip{border:0 !important; background:var(--surface); min-height:36px;}
+  .tf-recent .chip{border:0; background:var(--surface); min-height:36px}
   #foodLogList .tf-fl-row:only-of-type{border-radius:16px !important;}
   #dayStrip{ border:0 !important}
   /* Progress */
-  .tf-ptile{border:0 !important; background:var(--surface);}
-  .tf-pcard{ border-radius:var(--r2) !important}
+  .tf-ptile{border:0; background:var(--surface)}
+  .tf-pcard{ border-radius:var(--r2)}
   .tf-stat{border:0 !important;}
   /* Settings */
-  #tfSetTiles{display:none !important;}
-  .tf-sec{font-family:Inter,sans-serif !important; font-size:12px !important; font-weight:600; letter-spacing:.06em !important; margin:18px 4px 8px !important;}
+  #tfSetTiles{display:none}
+  .tf-sec{font-family:Inter,sans-serif; font-size:12px; font-weight:600; letter-spacing:.06em; margin:18px 4px 8px}
   .tf-setrow{width:100%; min-height:56px; display:flex; align-items:center; justify-content:space-between; background:var(--surface); border:0; border-radius:var(--r2); color:var(--text); font-family:Inter,sans-serif; font-size:15px; font-weight:500; padding:0 16px; margin-top:6px; text-shadow:inherit; cursor:pointer;}
   .tf-setrow b{font-size:22px; color:var(--text-muted); font-weight:400;}
   .tf-sv{margin-left:auto; margin-right:8px; font-size:13px; font-weight:400; color:var(--text-muted);}
@@ -672,17 +672,17 @@
   /* round 2 fixes */
   details.exercise-group > summary::after{margin-left:auto;}
   #foodHistoryDetails, #progressDetails, #programManage, #setTrainingDetails, #setDataDetails{border-radius:var(--r2) !important; border-top:0 !important; margin-bottom:8px !important;}
-  #photoOptionsToggle, #myFoodsOpen{color:var(--text-muted) !important;}
+  #photoOptionsToggle, #myFoodsOpen{color:var(--text-muted)}
   #tab-food .tf-add{white-space:nowrap}
   .tf-empty button, .tf-foodempty button{border-color:var(--border-2); color:var(--text);}
 
   /* round 3 polish */
   [data-chest-phase]{border:0 !important; border-radius:14px !important;}
-  .tf-weekcard{ padding:6px 4px !important}
-  .tf-hero2-k{font-family:Inter,sans-serif !important; letter-spacing:.02em !important; font-size:12px !important}
-  .tf-hero2-title{ font-size:40px !important}
+  .tf-weekcard{ padding:6px 4px}
+  .tf-hero2-k{font-family:Inter,sans-serif; letter-spacing:.02em; font-size:12px}
+  .tf-hero2-title{ font-size:40px}
   .tf-ph-main .tf-moves-head > span:last-child{ font-size:13px; font-weight:400}
-  #dismissTravelModeLegendBtn, #dismissWaistExplainerBtn{color:var(--text-muted) !important;}
+  #dismissTravelModeLegendBtn, #dismissWaistExplainerBtn{color:var(--text-muted)}
   #todayWorkout .meta[style*="var(--accent)"]{color:var(--text-muted) !important;}
   .tf-hero2-stats span{font-size:12px;}
 
@@ -692,25 +692,25 @@
   /* ===== Coach, one screen: Progress folded in ===== */
   nav.tabs .pill{width:72px;}
   #tab-coach .tf-hero2-in{padding:2px 4px 4px;}
-  #tab-coach .tf-hero2-k{font-size:11px !important}
-  #tab-coach .tf-hero2 .big{font-size:44px !important;}
+  #tab-coach .tf-hero2-k{font-size:11px}
+  #tab-coach .tf-hero2 .big{font-size:44px}
   #tab-coach .tf-hero2 .d{ font-size:14px}
   #tab-coach .tf-cchips{margin:4px 0 8px;}
   .tf-cchip b{font-size:19px;}
   #coachNoteCard{margin:0 4px 10px !important;}
-  #coachNoteCard .meta{display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:14px !important; line-height:1.4 !important;}
+  #coachNoteCard .meta{display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:14px; line-height:1.4}
   #coachNoteCard .tf-clamp-btn, #coachNoteCard button, #coachNoteCard a{display:none;}
   #coachNoteCard.open .meta{-webkit-line-clamp:unset; overflow:visible;}
   #coachNoteCard.open .tf-clamp-btn, #coachNoteCard.open button, #coachNoteCard.open a{display:inline-block;}
   /* log card: weight + energy on one row, one Save, options underneath */
-  #tab-coach .tf-tiles{display:grid !important; grid-template-columns:1.25fr 2fr; gap:8px; align-items:center; padding:12px; margin-bottom:10px;}
+  #tab-coach .tf-tiles{display:grid; grid-template-columns:1.25fr 2fr; gap:8px; align-items:center; padding:12px; margin-bottom:10px}
   #tab-coach .tf-tiles .tf-tile{display:contents;}
   #tab-coach .tf-tile-tag, #tab-coach .tf-tile-q, #tfLastWeight, #dailyCheckinSavedHint{display:none;}
   #tab-coach .tf-tile-big{ position:relative}
-  #tab-coach .tf-tile-big input{font-size:18px !important; min-height:44px; padding:6px 30px 6px 12px !important}
+  #tab-coach .tf-tile-big input{font-size:18px; min-height:44px; padding:6px 30px 6px 12px}
   #tab-coach .tf-tile-big span{position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:12px; pointer-events:none;}
   #checkinEnergyChips .chip{margin:0 !important; min-height:44px; display:grid; place-items:center; padding:0 !important; font-size:14px;}
-  #logTodayBtn{grid-column:1/-1; grid-row:2; margin:2px 0 0 !important; min-height:46px;}
+  #logTodayBtn{grid-column:1/-1; grid-row:2; margin:2px 0 0; min-height:46px}
   #tab-coach .tf-tiles .tf-more{grid-row:3; margin:0}
   #tab-coach .tf-tiles .tf-more summary{padding:4px 2px;}
   #weighInDetails > .tf-more{grid-column:1;}
@@ -727,7 +727,7 @@
   .tf-wk3 .bar i{display:block; height:5px; background:var(--accent);}
   /* 2x2 tile grid + full-width Details row */
   .tf-g2{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;}
-  .tf-g2 > details.tf-row > summary{min-height:52px; font-size:14px !important; white-space:nowrap;}
+  .tf-g2 > details.tf-row > summary{min-height:52px; font-size:14px; white-space:nowrap}
   .tf-g2 > details.tf-row > summary::after{display:none !important;}
   .tf-g2 > details.tf-row .tf-sv{font-size:12px; margin-right:0;}
   .tf-g2 > details.tf-row[open]{grid-column:1/-1}
@@ -768,7 +768,7 @@
   #tab-food .tf-recent .chip .rn{ overflow:hidden; text-overflow:ellipsis}
   #tab-food .tf-recent .chip .rp{font-family:Inter,sans-serif; color:var(--text-muted); flex:none}
   #tab-food .tf-recent .chip.tf-all{color:var(--text-muted); background:none; padding:0 8px;}
-  #tab-food .tf-label{font-size:13px !important}
+  #tab-food .tf-label{font-size:13px}
   #tab-food .tf-muted{ letter-spacing:0}
   #tab-food #myFoodsPanel{margin-top:8px;}
   .tf-my-hide{color:var(--text-muted) !important}
@@ -783,10 +783,10 @@
   #foodHistoryDetails[open]{margin-top:8px !important}
 
   /* ===== Food, match Coach/Today: Inter numerals, 48px buttons, same radii and rhythm ===== */
-  #tab-food .fh-v, #tab-food .fh-wn em, #foodLogList .tf-fl-pro, #tab-food .tf-add.main span{font-family:Inter,sans-serif !important; font-variant-numeric:tabular-nums}
+  #tab-food .fh-v, #tab-food .fh-wn em, #foodLogList .tf-fl-pro, #tab-food .tf-add.main span{font-family:Inter,sans-serif; font-variant-numeric:tabular-nums}
   #tab-food .fh-v em{ font-size:21px}
   #tab-food .fh-wn em{font-weight:600; font-size:17px;}
-  #tab-food .fh-ring text{font-family:Inter,sans-serif !important; font-weight:600; font-size:17px !important;}
+  #tab-food .fh-ring text{font-family:Inter,sans-serif; font-weight:600; font-size:17px}
   #tab-food .tf-add.main span{ font-weight:600}
   #tab-food .tf-add{height:48px; border-radius:14px; font-size:15px; font-weight:500;}
   #tab-food .tf-add.tf-more{flex-basis:48px;}
@@ -799,7 +799,7 @@
   #foodLogList .tf-fl-pro small{font-size:12px; font-weight:400;}
   #foodLogList .tf-fl-name .n{font-size:15px; font-weight:500;}
   #foodLogList .tf-fl-name .m{font-size:12px;}
-  #foodLogList .tf-fl-main{padding:10px 16px !important;}
+  #foodLogList .tf-fl-main{padding:10px 16px}
   #tab-food #dayStrip{background:var(--surface) !important; padding:14px 16px 10px !important;}
 </style>
 </head>
