@@ -1287,7 +1287,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-15 10:10 CT";
+const APP_BUILD = "2026-11-15 10:40 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -5415,25 +5415,29 @@ function chestBoosterHtml(opts) {
       ${action}
     </div></div>${extra}${rowsHtml}`;
 }
-function chestRecommended() {
-  if (chestSetsInWeek(weekDayList(0)) >= CHEST_WEEKLY_SETS) return "workout";
-  const y = new Date(); y.setDate(y.getDate() - 1);
-  const yd = localDateStr(y);
-  return (state.logs || []).some(l => localDateStr(new Date(l.date)) === yd) ? "chest" : "workout";
-}
+// Fixed weekly plan. The calendar alone decides what each day is. Nothing looks at yesterday or at weekly counts.
+// 0 = Sunday ... 6 = Saturday.
+const DAY_PLAN = { 0: "rest", 1: "chest", 2: "train", 3: "rest", 4: "train", 5: "chest", 6: "train" };
+function planKind(d = new Date()) { return DAY_PLAN[d.getDay()] || "rest"; }
+function chestRecommended() { return planKind() === "train" ? "workout" : "chest"; }
 function chestFocus() { const f = state.todayFocus; return f && f.day === localDateStr() ? f.v : chestRecommended(); }
 // Today is always one of: Train day (next session queued), Rest day (you trained yesterday, chest booster optional) or Done today.
 // "Rest today instead" and "Train anyway" flip today only (saved in state.todayFocus); the session order never moves until a session is logged.
 function focusSwitchHtml(label) {
   const cur = chestFocus(), lab = escapeHtml(String(label || "workout"));
   if (cur === "chest") {
-    const y = chestRecommended() === "chest";
-    return `<div class="tf-focus" data-label="${lab}"><div class="tf-fcard"><div class="tf-fk">Rest day</div><div class="tf-ft">Recovery day</div><div class="tf-fs">${y ? "You trained yesterday." : "Resting today."} Next up: ${lab}. The chest booster is optional.</div></div><button class="tf-fwide" data-focus="workout">Train anyway · ${lab}</button></div>`;
+    const kind = planKind();
+    const [k, ttl, sub] = kind === "chest"
+      ? ["Chest day", "Chest booster", "4 sets of rings. Next session: " + lab + "."]
+      : kind === "rest"
+        ? ["Rest day", "Recovery day", "Next session: " + lab + ". The chest booster is optional."]
+        : ["Rest day", "Taking today off", "Next session: " + lab + ". The chest booster is optional."];
+    return `<div class="tf-focus" data-label="${lab}"><div class="tf-fcard"><div class="tf-fk">${k}</div><div class="tf-ft">${ttl}</div><div class="tf-fs">${sub}</div></div><button class="tf-fwide" data-focus="workout">Train anyway · ${lab}</button></div>`;
   }
   return `<div class="tf-focus" data-label="${lab}"><div class="tf-fbar"><span class="tf-fk">Train day</span><button class="tf-flink" data-focus="chest">Rest today instead</button></div></div>`;
 }
 function doneBannerHtml() {
-  return `<div class="tf-focus"><div class="tf-fcard"><div class="tf-fk">Done today ✓</div><div class="tf-ft">Session logged</div><div class="tf-fs">Tomorrow is a rest day. The chest booster is optional.</div></div></div>`;
+  return `<div class="tf-focus"><div class="tf-fcard"><div class="tf-fk">Done today ✓</div><div class="tf-ft">Session logged</div><div class="tf-fs">Tomorrow: ${({ train: "next session", chest: "chest booster day", rest: "rest day" })[planKind(new Date(Date.now() + 864e5))]}.</div></div></div>`;
 }
 function applyTodayFocus(on) {
   const col = document.querySelector("#tab-today .tf-today-col");
