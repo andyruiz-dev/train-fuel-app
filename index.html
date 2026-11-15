@@ -492,10 +492,14 @@
   #todayWorkoutDetails > summary{display:none;}
   #tab-today > .card > details.exercise-group:not(#todayWorkoutDetails){order:1; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-top:10px;}
   .tf-today-col{display:flex; flex-direction:column;}
-  .tf-focus{order:-3; display:flex; gap:6px; margin:0 0 10px; padding:4px; background:var(--surface); border:1px solid var(--border); border-radius:14px;}
-  .tf-focus button{flex:1; min-width:0; border:0; background:none; color:var(--text-muted); font-size:14px; font-weight:600; padding:9px 6px 8px; border-radius:10px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;}
-  .tf-focus button small{font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--accent-soft); min-height:11px;}
-  .tf-focus button.on{background:var(--accent-bg-2); color:var(--text);}
+  .tf-focus{order:-3; margin:0 0 10px;}
+  .tf-focus .tf-fbar{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:2px 2px 0;}
+  .tf-focus .tf-fk{font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--accent);}
+  .tf-focus .tf-flink{border:1px solid var(--border-2); background:none; color:var(--text); font-size:13px; padding:7px 14px; border-radius:18px; cursor:pointer;}
+  .tf-focus .tf-fcard{background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px 16px; margin-bottom:10px;}
+  .tf-focus .tf-ft{font-family:var(--font-display); font-size:26px; font-weight:600; line-height:1.05; margin:4px 0;}
+  .tf-focus .tf-fs{color:var(--text-muted); font-size:13px; line-height:1.4;}
+  .tf-focus .tf-fwide{width:100%; height:44px; border-radius:22px; border:1px solid var(--border-2); background:none; color:var(--text); font-size:14px; cursor:pointer; margin-top:2px;}
   .tf-today-col.tf-has-focus:not(.tf-focus-chest) #chestBoosterToday{display:none;}
   .tf-today-col.tf-focus-chest > :not(#todayWorkout):not(.tf-focus):not(#tfMore):not(#tfQuickRow), .tf-today-col.tf-focus-chest #todayWorkout > :not(#chestBoosterToday):not(.tf-focus){display:none !important;}
   .tf-today-col.tf-focus-chest #todayWorkout{display:contents;}
@@ -1283,7 +1287,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-15 09:40 CT";
+const APP_BUILD = "2026-11-15 10:10 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -5418,10 +5422,18 @@ function chestRecommended() {
   return (state.logs || []).some(l => localDateStr(new Date(l.date)) === yd) ? "chest" : "workout";
 }
 function chestFocus() { const f = state.todayFocus; return f && f.day === localDateStr() ? f.v : chestRecommended(); }
+// Today is always one of: Train day (next session queued), Rest day (you trained yesterday, chest booster optional) or Done today.
+// "Rest today instead" and "Train anyway" flip today only (saved in state.todayFocus); the session order never moves until a session is logged.
 function focusSwitchHtml(label) {
-  const rec = chestRecommended(), cur = chestFocus();
-  const b = (v, t) => `<button data-focus="${v}" class="${cur === v ? "on" : ""}">${t}<small>${rec === v ? "Suggested today" : ""}</small></button>`;
-  return `<div class="tf-focus">${b("workout", escapeHtml(String(label || "Workout")))}${b("chest", "Chest booster")}</div>`;
+  const cur = chestFocus(), lab = escapeHtml(String(label || "workout"));
+  if (cur === "chest") {
+    const y = chestRecommended() === "chest";
+    return `<div class="tf-focus" data-label="${lab}"><div class="tf-fcard"><div class="tf-fk">Rest day</div><div class="tf-ft">Recovery day</div><div class="tf-fs">${y ? "You trained yesterday." : "Resting today."} Next up: ${lab}. The chest booster is optional.</div></div><button class="tf-fwide" data-focus="workout">Train anyway · ${lab}</button></div>`;
+  }
+  return `<div class="tf-focus" data-label="${lab}"><div class="tf-fbar"><span class="tf-fk">Train day</span><button class="tf-flink" data-focus="chest">Rest today instead</button></div></div>`;
+}
+function doneBannerHtml() {
+  return `<div class="tf-focus"><div class="tf-fcard"><div class="tf-fk">Done today ✓</div><div class="tf-ft">Session logged</div><div class="tf-fs">Tomorrow is a rest day. The chest booster is optional.</div></div></div>`;
 }
 function applyTodayFocus(on) {
   const col = document.querySelector("#tab-today .tf-today-col");
@@ -5433,7 +5445,8 @@ document.addEventListener("click", async (e) => {
   const b = e.target.closest("[data-focus]");
   if (!b) return;
   state.todayFocus = { day: localDateStr(), v: b.dataset.focus };
-  document.querySelectorAll(".tf-focus button").forEach(x => x.classList.toggle("on", x === b));
+  const bar = b.closest(".tf-focus");
+  if (bar) bar.outerHTML = focusSwitchHtml(bar.dataset.label);
   applyTodayFocus(true);
   try { await persistNow(); } catch (err) {}
 });
@@ -5672,7 +5685,7 @@ function renderTodayWorkout(workout) {
       <button class="primary" id="resumeSessionBtn" style="margin-top:8px; width:100%;">Resume where I left off</button>
     </div>` : "";
   const showFocus = !hasLoggedWorkoutToday();
-   const chestMount = showFocus ? focusSwitchHtml(String(workout.day || "").split(/[:·—-]/)[0].trim()) + `<div id="chestBoosterToday" style="margin-top:6px;"></div>` : "";
+   const chestMount = !showFocus ? doneBannerHtml() : focusSwitchHtml(String(workout.day || "").split(/[:·—-]/)[0].trim()) + `<div id="chestBoosterToday" style="margin-top:6px;"></div>`;
    box.innerHTML = resumeHtml + todayHeroHtml(workout) + warmupHtml + movesListHtml(workout) + workoutHtml + cooldownHtml + chestMount;
    renderChestBoosters();
    applyTodayFocus(showFocus);
