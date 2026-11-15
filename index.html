@@ -661,19 +661,177 @@
   .sx-hero{font-family:var(--font-display); font-weight:700; font-size:150px; line-height:.9; margin:6px 0 0;}
   .sx-hero small{display:block; font-family:var(--font-mono); font-weight:500; font-size:13px; letter-spacing:2px; text-transform:uppercase; margin-top:8px; opacity:.85;}
   .sx-spacer{flex:1; min-height:12px;}
+
+  /* ================= v2 skin: one system across all tabs =================
+     Tier 1 = hero card (accent line), tier 2 = quiet filled card, tier 3 = plain list rows.
+     Orange is for the primary action and progress only. */
+  :root{--font-mono:Inter,-apple-system,sans-serif; --r2:16px;}
+  /* frame */
+  body{padding-bottom:84px;}
+  header{padding:0 12px 0 16px; height:56px; align-items:center; border-bottom:0;}
+  header .hl{display:flex; align-items:baseline; min-width:0;}
+  header h1{font-size:28px; letter-spacing:.2px;}
+  #hDate{font-family:Inter,sans-serif; font-size:13px; color:var(--text-muted); margin-left:10px; white-space:nowrap;}
+  header .hr{display:flex; align-items:center; flex-shrink:0;}
+  #programsBtn{display:none;}
+  #profileBtn{position:relative; width:44px; height:44px; margin:0; border:0; border-radius:22px; display:grid; place-items:center; color:var(--text-muted); font-size:0;}
+  #profileBtn svg{width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; text-shadow:none;}
+  #profileBtn.active{color:var(--accent);}
+  #profileBtn .status-dot{position:absolute; top:9px; right:9px; width:8px; height:8px; margin:0; box-shadow:0 0 0 2px var(--bg);}
+  #profileBtn .status-dot.ok{display:none;}
+  .tf-screen-head{display:none !important;}
+  main{padding-top:4px;}
+  nav.tabs{background:var(--surface-deep-2); border-top:1px solid var(--border); padding-bottom:env(safe-area-inset-bottom,0);}
+  nav.tabs button{padding:8px 4px 6px; font-family:Inter,sans-serif; font-size:11px; font-weight:500; letter-spacing:0; display:flex; flex-direction:column; align-items:center; gap:3px; text-shadow:none;}
+  nav.tabs .pill{width:60px; height:30px; border-radius:15px; display:grid; place-items:center; transition:background .15s;}
+  nav.tabs .tab-icon{width:24px; height:24px; margin:0;}
+  nav.tabs button.active{color:var(--accent); font-weight:600;}
+  nav.tabs button.active .pill{background:var(--accent-bg);}
+  nav.tabs .tab-btn.has-dot::after{top:6px; left:calc(50% + 10px);}
+  /* tier 2 cards: quiet fill, no borders, no accent stripe */
+  .card, #tab-programs .card, #subtab-library .card, #tab-progress .card, #tab-coach .card, #tab-coach #bellCoachCard{
+    background:var(--surface); border:0; border-radius:var(--r2); padding:16px; margin-bottom:12px;}
+  .tf-tile, .tf-week, .tf-panel, details.tf-row, .tf-hero-food, .tf-pending, #foodLogList .tf-fl-head, #foodLogList .tf-fl-row, #foodLogList .list-item, .tf-focus .tf-fcard, #tab-today > .card > details.exercise-group:not(#todayWorkoutDetails), .tf-foodempty, .tf-partial.on{
+    border:0 !important; border-radius:var(--r2) !important;}
+  #foodLogList .list-item, #foodLogList .tf-fl-row{border-left:0 !important;}
+  .tf-tile.tf-pend{box-shadow:inset 0 0 0 1.5px var(--accent);}
+  .tf-hero-food, .tf-hero{background:linear-gradient(160deg,var(--accent-bg),var(--surface)) !important; border:1px solid var(--accent-line) !important; border-radius:20px !important;}
+  /* type: sentence case labels instead of mono caps */
+  .tf-kicker,.tf-label,.tf-kv,.fh-k,.field-label,.tf-focus .tf-fk,.tf-hero .k{font-family:Inter,sans-serif !important; letter-spacing:.02em !important; text-transform:none !important; font-size:12px !important;}
+  .tf-focus .tf-fk{color:var(--accent); font-weight:600;}
+  /* buttons: 48px, dark ink on accent, quiet secondary */
+  button.primary{background:var(--accent); color:var(--ink); border-radius:14px; min-height:48px; font-family:Inter,sans-serif; font-size:16px; font-weight:600; letter-spacing:0;}
+  .chip.active{color:var(--ink);}
+  button.secondary{color:var(--text); border:1px solid var(--border-2); border-radius:14px; min-height:44px; font-family:Inter,sans-serif; font-size:14px; font-weight:500; letter-spacing:0;}
+  .chip{border-radius:12px; min-height:40px;}
+  input[type=text], input[type=date], input[type=number], select, textarea{border-radius:12px; min-height:46px;}
+  .tf-more summary{text-decoration:none; color:var(--text-muted);}
+  .tf-linkbtn{color:var(--text-muted) !important; text-decoration:none !important;}
+  /* checkboxes in the theme color, not the browser blue */
+  input[type=checkbox]{accent-color:var(--accent);}
+
+  /* Today */
+  .tf-pending{background:none !important; padding:4px 4px 10px; margin:0; gap:8px; justify-content:flex-start; color:var(--text-muted);}
+  .tf-pending::before{content:""; width:7px; height:7px; border-radius:50%; background:var(--gold); flex:none;}
+  .tf-pending b{display:none;}
+  .tf-focus .tf-flink{border:0; padding:6px 2px; color:var(--text-muted); font-size:13px;}
+  .tf-week{background:none; padding:6px 4px 2px; margin-bottom:6px;}
+  .tf-week-n b{color:var(--text);}
+  #todayWorkout details.exercise-group, .tf-ph-main{background:var(--surface); border:0 !important; border-radius:0; margin:0 !important; border-top:1px solid var(--border) !important;}
+  #todayWorkout details.tf-ph-warm{border-radius:16px 16px 0 0; border-top:0 !important;}
+  #todayWorkout details.tf-ph-cool{border-radius:0 0 16px 16px; margin-bottom:12px !important;}
+  #todayWorkout details.tf-ph-warm summary::before, #todayWorkout details.tf-ph-cool summary::before{display:none;}
+  #todayWorkout details.exercise-group summary, .tf-ph-main .tf-moves-head{font-size:15px; font-weight:500;}
+  #todayWorkout .tf-dot{display:none;}
+  .tf-mv{border:0; border-left:0; background:var(--surface-2); border-radius:12px;}
+  #tfQuickRow .tf-qbtn{border:0; background:var(--surface); border-radius:14px; min-height:46px; font-weight:500;}
+  #tfMore{border:0; border-radius:var(--r2);}
+  .tf-focus .tf-fwide{border:1px solid var(--border-2);}
+
+  /* Coach */
+  #tab-coach .tf-hero2{background:none !important; border:0 !important; border-radius:0; overflow:visible; margin:0 0 4px;}
+  #tab-coach .tf-hero2-in{padding:8px 4px 10px;}
+  #tab-coach .tf-hero2-k{color:var(--text-muted);}
+  #tab-coach .tf-hero2 .big{font-size:56px !important;}
+  #tab-coach .tf-hero2 .d{font-size:15px; font-weight:500; color:var(--gold);}
+  #tab-coach .tf-cchips{border-top:0; padding:0 4px; margin:0 0 14px;}
+  .tf-cchip{border-right:0 !important; padding:0 8px 0 0;}
+  .tf-cchip b{font-size:22px;}
+  .tf-coachhero{background:none !important; border:0 !important; border-left:3px solid var(--accent) !important; border-radius:0 !important; padding:2px 0 2px 14px !important; margin:0 4px 16px !important;}
+  .tf-coachhero .tf-hero2-k{display:none;}
+  .tf-coachhero .tf-clamp-btn{color:var(--text-muted);}
+  .tf-tiles{display:block !important; background:var(--surface); border-radius:var(--r2); padding:16px; margin-bottom:12px;}
+  .tf-tiles .tf-tile{background:none; box-shadow:none !important; padding:0 !important;}
+  .tf-tiles .tf-tile + .tf-tile{margin-top:14px;}
+  .tf-tiles .tf-tile-tag{color:var(--text); font-size:15px;}
+  .tf-tiles .tf-tile.tf-pend .tf-tile-tag{color:var(--text);}
+  #logWeightBtn, #saveDailyCheckinBtn{display:none !important;}
+  #weightInput{background:var(--bg); border:1px solid var(--border) !important; border-radius:12px !important; padding:8px 12px !important; min-height:48px;}
+  #logTodayBtn{margin-top:14px;}
+  #tab-coach details.tf-row, details.tf-row{background:var(--surface); padding:0 16px !important; margin:0 !important; border-radius:0 !important; border-top:1px solid var(--border) !important;}
+  details.tf-row > summary{min-height:56px; display:flex; align-items:center; font-size:15px !important; font-weight:500 !important;}
+  details.tf-row[open]{padding-bottom:14px !important;}
+  #chestBoosterDetails{border-radius:16px 16px 0 0 !important; border-top:0 !important;}
+  #bodyCompDetails{border-radius:0 0 16px 16px !important; margin-bottom:12px !important;}
+  .tf-dotrow summary::before{content:""; width:20px !important; height:20px !important; border-radius:0 !important; margin-right:12px !important; background:var(--text-muted) !important; -webkit-mask:var(--ic) center/contain no-repeat; mask:var(--ic) center/contain no-repeat;}
+  #chestBoosterDetails{--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");}
+  #notesDetails{--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M5 4h14v16H5zM9 9h6M9 13h6'/%3E%3C/svg%3E");}
+  #weeklyReviewDetails{--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M4 19V9M10 19V5M16 19v-7'/%3E%3C/svg%3E");}
+  #bodyCompDetails{--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='12' cy='6' r='3'/%3E%3Cpath d='M6 21v-6a6 6 0 0 1 12 0v6'/%3E%3C/svg%3E");}
+  /* chevron instead of + on rows */
+  details.exercise-group > summary::after{content:"›" !important; font-size:22px; color:var(--text-muted); line-height:1; transition:transform .15s;}
+  details.exercise-group[open] > summary::after{content:"›" !important; transform:rotate(90deg);}
+  /* Food */
+  #tab-food .tf-hero-food{display:block; padding:16px;}
+  #tab-food .fh-row{justify-content:space-around; align-items:flex-start;}
+  #tab-food .fh-half{flex-direction:column; align-items:center; gap:8px; flex:1; text-align:center;}
+  #tab-food .fh-t{align-items:center;}
+  #tab-food .fh-k{order:2; font-size:12px; text-transform:none; letter-spacing:0;}
+  #tab-food .fh-v em{font-size:24px; color:var(--text);}
+  #tab-food .fh-week{border-top:0; padding-top:4px;}
+  #tab-food .tf-adds{gap:8px;}
+  #tab-food .tf-add{height:52px; flex-direction:row; align-items:center; justify-content:center; gap:8px; border:0; background:var(--surface); border-radius:14px; padding:0 8px; color:var(--text); font-weight:500;}
+  #tab-food .tf-add.main{flex:1.4; background:var(--accent); color:var(--ink);}
+  #tab-food .tf-add svg{color:currentColor;}
+  .tf-recent .chip{border:0 !important; background:var(--surface); min-height:36px;}
+  #foodLogList .tf-fl-head{background:none; padding:6px 4px; margin-bottom:6px;}
+  #foodLogList .tf-fl-row, #foodLogList .list-item{background:var(--surface); border-radius:0 !important; margin:0 !important; border-top:1px solid var(--border) !important;}
+  #foodLogList .tf-fl-row:first-of-type{border-radius:16px 16px 0 0 !important; border-top:0 !important;}
+  #foodLogList .tf-fl-row:last-of-type{border-radius:0 0 16px 16px !important;}
+  #foodLogList .tf-fl-row:only-of-type{border-radius:16px !important;}
+  #dayStrip{background:none !important; border:0 !important; padding:0 !important;}
+  /* Progress */
+  .tf-ptile{border:0 !important; background:var(--surface);}
+  .tf-pcard{border:0 !important; border-radius:var(--r2) !important;}
+  .tf-stat{border:0 !important;}
+  .tf-rt{border:0 !important;}
+  /* Settings */
+  #tfSetTiles{display:none !important;}
+  .tf-sec{font-family:Inter,sans-serif !important; font-size:12px !important; font-weight:600; letter-spacing:.06em !important; margin:18px 4px 8px !important;}
+  .tf-setrow{width:100%; min-height:56px; display:flex; align-items:center; justify-content:space-between; background:var(--surface); border:0; border-radius:var(--r2); color:var(--text); font-family:Inter,sans-serif; font-size:15px; font-weight:500; padding:0 16px; margin-top:6px; text-shadow:inherit; cursor:pointer;}
+  .tf-setrow b{font-size:22px; color:var(--text-muted); font-weight:400;}
+  .tf-sv{margin-left:auto; margin-right:8px; font-size:13px; font-weight:400; color:var(--text-muted);}
+  #tab-settings details.tf-row{border-radius:var(--r2) !important; border-top:0 !important; margin-bottom:8px !important;}
+  #tab-settings details.tf-row > summary{justify-content:flex-start;}
+  .tf-switch{display:flex; align-items:center; justify-content:space-between; margin-top:14px; font-size:15px; cursor:pointer;}
+  .tf-switch input{position:absolute; opacity:0; width:1px; height:1px;}
+  .tf-switch i{width:46px; height:28px; border-radius:14px; background:var(--surface-3); position:relative; flex:none; transition:background .15s;}
+  .tf-switch i::after{content:""; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:11px; background:var(--text-muted); transition:transform .15s, background .15s;}
+  .tf-switch input:checked + i{background:var(--accent);}
+  .tf-switch input:checked + i::after{transform:translateX(18px); background:var(--ink);}
+  .tf-build{text-align:center; margin:18px 0 0; font-family:Inter,sans-serif; font-size:12px; color:var(--text-faint);}
+  .tf-build:empty{display:none;}
+
+  /* round 2 fixes */
+  details.exercise-group > summary::after{margin-left:auto;}
+  #foodHistoryDetails, #progressDetails, #programManage, #setTrainingDetails, #setDataDetails{border-radius:var(--r2) !important; border-top:0 !important; margin-bottom:8px !important;}
+  #tab-settings .card{border:0; background:var(--surface);}
+  #photoOptionsToggle, #myFoodsOpen{color:var(--text-muted) !important;}
+  #tab-food .tf-add{white-space:nowrap; font-size:14px;}
+  #tab-food .tf-add span{white-space:nowrap;}
+  .tf-empty button, .tf-foodempty button{border-color:var(--border-2); color:var(--text);}
+  .tf-focus .tf-fk{font-size:12px;}
+
+  /* round 3 polish */
+  [data-chest-phase]{border:0 !important; border-radius:14px !important;}
+  .tf-weekcard{background:none !important; border:0 !important; padding:6px 4px !important;}
+  .tf-hero2-k{font-family:Inter,sans-serif !important; text-transform:none !important; letter-spacing:.02em !important; font-size:12px !important;}
+  .tf-hero2-title{text-transform:none !important; font-size:40px !important;}
+  .tf-ph-main .tf-moves-head > span:last-child{font-family:Inter,sans-serif; text-transform:none; letter-spacing:0; font-size:13px; color:var(--text-muted); font-weight:400;}
+  #dismissTravelModeLegendBtn, #dismissWaistExplainerBtn{color:var(--text-muted) !important;}
+  #todayWorkout .meta[style*="var(--accent)"]{color:var(--text-muted) !important;}
+  .tf-hero2-stats span{font-size:12px;}
 </style>
 </head>
 <body>
 
 <header>
-  <div>
-    <h1>Train &amp; Fuel</h1>
-    <div class="sub"><span id="headerProgramName">No active program</span> · <span id="syncDot" class="status-dot"></span><span id="syncLabel">connecting…</span></div>
+  <div class="hl"><h1 id="hTitle">Coach</h1><span id="hDate"></span></div>
+  <div class="hr">
+    <button id="programsBtn" class="tab-btn" data-tab="programs" aria-label="Programs" tabindex="-1">📋</button>
+    <button id="profileBtn" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span id="syncDot" class="status-dot"></span></button>
   </div>
-  <div style="display:flex; flex-shrink:0;">
-    <button id="programsBtn" class="tab-btn" data-tab="programs" aria-label="Programs">📋</button>
-    <button id="profileBtn" aria-label="Settings">⚙</button>
-  </div>
+  <span id="headerProgramName" hidden></span><span id="syncLabel" hidden>connecting…</span>
 </header>
 
 <main>
@@ -779,7 +937,7 @@
       </div>
       <div class="tf-add" id="tfExactTile" role="button" tabindex="0">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 6h14M5 12h14M5 18h8"/></svg>
-        <span>Exact numbers</span>
+        <span>Exact</span>
       </div>
     </div>
     <div id="photoOptions" class="hidden">
@@ -1020,6 +1178,7 @@
         </details>
         <div class="tf-tile-sub" id="dailyCheckinSavedHint" style="margin-top:8px;"></div>
       </div>
+      <button class="primary" id="logTodayBtn" type="button">Save</button>
     </div>
 
     <div id="weightCheckInPanel" class="hidden tf-panel">
@@ -1146,10 +1305,11 @@
   <section id="tab-settings" class="tab-panel hidden">
     <div class="tf-screen-head"><div class="tf-kicker" id="tfSetKicker">YOUR TARGETS AND TOOLS</div><h1>Settings</h1></div>
     <div class="tf-tiles" id="tfSetTiles" style="margin-bottom:6px;"></div>
-    <div class="meta" id="appBuildInfo" style="text-align:center; margin:10px 0 0; font-family:var(--font-mono); font-size:11px;"></div>
+    <button type="button" class="tf-setrow" id="setProgramsRow"><span>Programs</span><b aria-hidden="true">›</b></button>
     <div class="tf-sec">Targets</div>
-    <div class="card">
-      <h2>Daily macro targets</h2>
+    <details class="exercise-group tf-row" id="setTargetsDetails">
+      <summary>Daily targets<span class="tf-sv" id="setTargetsVal"></span></summary>
+      <div style="margin-top:12px;">
       <details class="tf-more"><summary>How to pick targets</summary><p style="font-size:13px; color:var(--text-muted); margin-top:0;">
         New to tracking macros? A simple starting point: protein around 0.7-1g per lb of your
         bodyweight, calories around what keeps your weight roughly steady right now (lower it
@@ -1168,13 +1328,15 @@
       <div class="row" style="margin-top:8px;">
         <div class="field"><div class="field-label">Workouts per week (goal line on Progress)</div><input type="text" inputmode="numeric" id="weeklyGoalInput" placeholder="3"></div>
       </div>
-      <label style="display:flex; align-items:center; gap:10px; margin-top:12px; font-size:14px;"><input type="checkbox" id="feedbackToggle" style="width:20px; height:20px;"> Buzz and gentle motion</label>
+      <label class="tf-switch"><span>Buzz and gentle motion</span><input type="checkbox" id="feedbackToggle"><i aria-hidden="true"></i></label>
       <button class="secondary" id="saveTargetsBtn" style="margin-top:10px;">Save targets</button>
       <div id="macroSuggestionHistory" style="margin-top:10px;"></div>
-    </div>
+      </div>
+    </details>
     <div class="tf-sec">Body</div>
-    <div class="card">
-      <h2>Body composition</h2>
+    <details class="exercise-group tf-row" id="setBodyDetails">
+      <summary>Body composition<span class="tf-sv" id="setBodyVal"></span></summary>
+      <div style="margin-top:12px;">
       <details class="tf-more"><summary>Why height?</summary><p class="meta" style="margin-bottom:10px;">Height is only needed if you log a waist measurement for a Relative Fat Mass body-fat % estimate. Goals (optional) power the start → goal forecast shown on the Body composition card.</p></details>
       <div class="field"><div class="field-label">Height (in)</div><input type="text" inputmode="decimal" id="heightInches" placeholder="70"></div>
       <div class="row" style="margin-top:8px;">
@@ -1182,7 +1344,8 @@
         <div class="field"><div class="field-label">Goal body fat (%)</div><input type="text" inputmode="decimal" id="goalBodyFatInput" placeholder="optional"></div>
       </div>
       <button class="secondary" id="saveHeightBtn" style="margin-top:10px;">Save</button>
-    </div>
+      </div>
+    </details>
     <div class="tf-sec">Training</div>
     <details class="exercise-group tf-row" id="setTrainingDetails">
       <summary>Starting levels and ring straps</summary>
@@ -1226,7 +1389,7 @@
     <div class="tf-sec">Look</div>
     <div class="card">
       <h2>Theme</h2>
-      <p class="meta" style="margin:0 0 10px;">Seasonal looks. The app will offer a new one when the season changes. You pick whether to switch.</p>
+      <p class="meta" style="margin:0 0 10px;">The app offers a new look each season. You choose whether to switch.</p>
       <div id="themePicker" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
     </div>
     <div class="tf-sec">Data</div>
@@ -1261,15 +1424,16 @@
     </div>
       </div>
     </details>
+  <div class="tf-build" id="appBuildInfo"></div>
   </section>
 
 </main>
 
 <nav class="tabs">
-  <button class="tab-btn active" data-tab="coach"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H8l-4 4V4z"/></svg>Coach</button>
-  <button class="tab-btn" data-tab="food"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>Food</button>
-  <button class="tab-btn" data-tab="today"><svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>Today</button>
-  <button class="tab-btn" data-tab="progress"><svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,4 21,20 3,20"/></svg>Progress</button>
+  <button class="tab-btn active" data-tab="coach"><span class="pill"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg></span>Coach</button>
+  <button class="tab-btn" data-tab="food"><span class="pill"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v8a2 2 0 0 0 2 2v8M11 3v8a2 2 0 0 1-2 2M17 3c-2 2-2 6 0 8v10"/></svg></span>Food</button>
+  <button class="tab-btn" data-tab="today"><span class="pill"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span>Today</button>
+  <button class="tab-btn" data-tab="progress"><span class="pill"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span>Progress</button>
 </nav>
 
 <script>
@@ -1287,7 +1451,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-15 10:40 CT";
+const APP_BUILD = "2026-11-15 12:35 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -2404,6 +2568,10 @@ function renderSettingsTiles() {
   const goal = state.settings?.weeklyWorkoutGoal || 3;
   const cell = (v, u, l) => `<div class="tf-rt"><div class="rv">${v || "·"}<small>${v ? " " + u : ""}</small></div><div class="rl">${l}</div></div>`;
   el.innerHTML = cell(t.calories, "cal", "calories") + cell(t.protein, "g", "protein") + cell(goal, "/ wk", "workout goal");
+  const tv = document.getElementById("setTargetsVal");
+  if (tv) tv.textContent = [t.calories ? Number(t.calories).toLocaleString() + " cal" : "", t.protein ? t.protein + " g protein" : ""].filter(Boolean).join(" · ");
+  const bv = document.getElementById("setBodyVal");
+  if (bv) bv.textContent = state.settings?.heightInches ? state.settings.heightInches + " in" : "";
 }
 function renderProgramView() {
   const el = document.getElementById("tfProgramView");
@@ -3306,6 +3474,19 @@ document.getElementById("checkinTagChips").addEventListener("click", (e) => {
   const tag = chip.dataset.tag;
   if (activeDailyCheckinTags.has(tag)) activeDailyCheckinTags.delete(tag);
   else activeDailyCheckinTags.add(tag);
+});
+
+// One Save for the combined "Log today" card: runs whichever of the two original
+// handlers has something to save (weight typed, energy/tags picked, or an
+// existing check-in that is being cleared). The originals stay in the page, hidden.
+document.getElementById("logTodayBtn").addEventListener("click", () => {
+  const hasWeight = document.getElementById("weightInput").value.trim() !== "";
+  const today = localDateStr();
+  const hasExisting = (state.dailyCheckins || []).some(c => c.date === today);
+  const wantsCheckin = !!activeDailyCheckinEnergy || activeDailyCheckinTags.size > 0 || hasExisting;
+  if (!hasWeight && !wantsCheckin) { document.getElementById("weightInput").focus(); return; }
+  if (hasWeight) document.getElementById("logWeightBtn").click();
+  if (wantsCheckin) document.getElementById("saveDailyCheckinBtn").click();
 });
 
 document.getElementById("saveDailyCheckinBtn").addEventListener("click", async () => {
@@ -5121,7 +5302,7 @@ function renderCoachHero() {
     const wk = ms.filter(m => new Date(m.date + "T12:00:00").getTime() >= Date.now() - 7 * msDay);
     const avg = (wk.length ? wk : ms.slice(-1)).reduce((a, m) => a + m.weight, 0) / (wk.length || 1);
     const delta = ms[ms.length - 1].weight - ms[0].weight, down = delta <= 0;
-    left = `<div class="big">${avg.toFixed(1)}<small> lb</small></div><div class="d" style="color:${down ? "var(--gold)" : "var(--danger-soft)"};">${down ? "−" : "+"}${Math.abs(delta).toFixed(1)} lb since ${formatDateOnly(ms[0].date)}</div>`;
+    left = `<div class="big">${avg.toFixed(1)}<small> lb</small></div><div class="d" style="color:${down ? "var(--gold)" : "var(--gold)"};">${down ? "−" : "+"}${Math.abs(delta).toFixed(1)} lb since ${formatDateOnly(ms[0].date)}</div>`;
     const vals = pts.map(m => m.weight), lo = Math.min(...vals) - 0.6, hi = Math.max(...vals) + 0.6, W = 130, H = 52;
     const t0 = new Date(pts[0].date + "T12:00:00").getTime(), t1 = new Date(pts[pts.length - 1].date + "T12:00:00").getTime();
     const X = m => t1 === t0 ? W / 2 : ((new Date(m.date + "T12:00:00").getTime() - t0) / (t1 - t0)) * (W - 8) + 4;
@@ -8309,7 +8490,7 @@ function renderProgressTop() {
     const r7 = ms.filter(m => new Date(m.date + "T12:00:00").getTime() >= Date.now() - 7 * 86400000);
     wBig = (r7.length ? r7.reduce((a, m) => a + m.weight, 0) / r7.length : ms[ms.length - 1].weight).toFixed(1);
     wSub = `${down ? "−" : "+"}${Math.abs(delta).toFixed(1)} lb since ${formatDateOnly(ms[0].date)}`;
-    wSubCol = down ? "var(--accent)" : "var(--danger)";
+    wSubCol = down ? "var(--accent)" : "var(--gold)";
     const pts = ms.filter(m => new Date(m.date + "T12:00:00").getTime() >= Date.now() - 35 * 86400000);
     const u = pts.length >= 2 ? pts : ms.slice(-2), vv = u.map(m => m.weight), lo = Math.min(...vv), hi = Math.max(...vv), span = Math.max(0.5, hi - lo);
     const xy = u.map((m, i) => `${((i / (u.length - 1)) * 140).toFixed(1)} ${(40 - ((m.weight - lo) / span) * 34).toFixed(1)}`);
@@ -9835,6 +10016,20 @@ document.getElementById("profileBtn").addEventListener("click", () => {
   profileBtn.classList.add("active");
   document.getElementById("tab-settings").classList.remove("hidden");
 });
+
+// ---- header title follows the visible screen ----
+function syncHeaderTitle() {
+  const names = { coach: "Coach", food: "Food", today: "Today", progress: "Progress", programs: "Programs", settings: "Settings" };
+  const open = document.querySelector(".tab-panel:not(.hidden)");
+  const id = open ? open.id.replace("tab-", "") : "coach";
+  const t = document.getElementById("hTitle"); if (t) t.textContent = names[id] || "Train & Fuel";
+  const d = document.getElementById("hDate");
+  if (d) d.textContent = id === "settings" ? "" : new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+}
+document.querySelectorAll(".tab-btn").forEach(b => b.addEventListener("click", syncHeaderTitle));
+document.getElementById("profileBtn").addEventListener("click", syncHeaderTitle);
+syncHeaderTitle();
+document.getElementById("setProgramsRow").addEventListener("click", () => document.getElementById("programsBtn").click());
 
 // ---- duration chips ----
 let selectedMonths = 6;
