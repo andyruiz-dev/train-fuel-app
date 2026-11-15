@@ -8,11 +8,18 @@
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="theme-color" content="#120F0D">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700&family=Roboto+Mono:wght@500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/rubik-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <script>try{var __tv=localStorage.getItem("tf_theme_vars");if(__tv){var __o=JSON.parse(__tv),__r=document.documentElement;for(var __k in __o.vars)__r.style.setProperty(__k,__o.vars[__k]);}}catch(e){}</script>
 <style>
+/* Self-hosted fonts (latin subset): no network needed, works offline from first launch. */
+@font-face{font-family:'Rubik';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/rubik-latin-500-normal.woff2) format('woff2');}
+@font-face{font-family:'Rubik';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/rubik-latin-600-normal.woff2) format('woff2');}
+@font-face{font-family:'Rubik';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/rubik-latin-700-normal.woff2) format('woff2');}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/inter-latin-400-normal.woff2) format('woff2');}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/inter-latin-500-normal.woff2) format('woff2');}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/inter-latin-600-normal.woff2) format('woff2');}
+@font-face{font-family:'Roboto Mono';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/roboto-mono-latin-500-normal.woff2) format('woff2');}
   /* ---------------------------------------------------------------------
      STYLE MAP (read before editing)
      Order matters: later rules override earlier ones, so do not reorder blocks.
@@ -848,7 +855,6 @@
   #wkRibbon .rest .wr-c{border:1.5px dashed var(--border-2);}
   #wkRibbon .done .wr-c{background:var(--accent); border-color:var(--accent); color:var(--ink);}
   #wkRibbon .done.chest .wr-c{background:var(--gold); border-color:var(--gold);}
-  #wkRibbon .missed .wr-c{opacity:.4;}
   #wkRibbon .today .wr-c{box-shadow:0 0 0 3px var(--accent-bg);}
   #wkRibbon .today{color:var(--text); font-weight:600;}
 </style>
@@ -1480,7 +1486,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-15 18:00 CT";
+const APP_BUILD = "2026-11-15 19:00 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -10084,9 +10090,8 @@ function renderWeekRibbon() {
     const isToday = d === todayS;
     if (isToday) { const f = chestFocus(); kind = f === "chest" ? (kind === "chest" ? "chest" : "rest") : "train"; }
     const isDone = done.has(d) || (kind === "chest" && chest.has(d));
-    const missed = !isDone && d < todayS && kind !== "rest";
-    const label = names[i] + ", " + (kind === "train" ? "training" : kind === "chest" ? "chest day" : "rest") + (isDone ? ", done" : "") + (isToday ? ", today" : "");
-    return `<div class="wr-d ${kind}${isDone ? " done" : ""}${isToday ? " today" : ""}${missed ? " missed" : ""}" role="img" aria-label="${label}"><div class="wr-c">${isDone ? check : ""}</div><span>${letters[i]}</span></div>`;
+      const label = names[i] + ", " + (kind === "train" ? "training" : kind === "chest" ? "chest day" : "rest") + (isDone ? ", done" : "") + (isToday ? ", today" : "");
+    return `<div class="wr-d ${kind}${isDone ? " done" : ""}${isToday ? " today" : ""}" role="img" aria-label="${label}"><div class="wr-c">${isDone ? check : ""}</div><span>${letters[i]}</span></div>`;
   }).join("") + "</div>";
 }
 
@@ -10538,11 +10543,19 @@ document.getElementById("exportBtn").addEventListener("click", () => {
 document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importInput").click());
 document.getElementById("importInput").addEventListener("change", (e) => {
   const file = e.target.files[0];
+  e.target.value = "";
   if (!file) return;
   const reader = new FileReader();
   reader.onload = async () => {
-    const parsed = JSON.parse(reader.result);
-    state = parsed.state || state;
+    let parsed;
+    try { parsed = JSON.parse(reader.result); } catch (err) { alert("That file isn't a valid backup. Nothing was changed."); return; }
+    const inc = parsed && parsed.state;
+    if (!inc || typeof inc !== "object" || !Array.isArray(inc.logs) || !inc.settings) {
+      alert("That file doesn't look like a Train & Fuel backup. Nothing was changed."); return;
+    }
+    const n = o => `${(o.logs || []).length} workouts, ${(o.foodLogs || []).length} food entries`;
+    if (!confirm(`Replace what's on this phone and the server?\n\nBackup: ${n(inc)}\nCurrent: ${n(state)}\n\nThis can't be undone. Export a backup first if unsure.`)) return;
+    state = inc;
     await persistNow();
     alert("Backup restored and synced.");
   };
