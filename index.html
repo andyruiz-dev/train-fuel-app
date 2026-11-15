@@ -82,14 +82,7 @@
     width:36px; height:36px; font-size:16px; color:var(--text-muted);
     cursor:pointer; flex-shrink:0; margin-left:8px;
   }
-  #profileBtn.active, #programsBtn.active{border-color:var(--accent); color:var(--accent);}
   main{padding:0 16px 24px; max-width:640px; margin:0 auto;}
-  .card{
-    background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent);
-    border-radius:var(--radius); padding:16px; margin-bottom:14px;
-  }
-  #tab-programs .card{border-left-color:var(--gold);}
-  #subtab-library .card{border-left-color:var(--slate);}
   .card h2{
     font-family:var(--font-display); font-size:16px; font-weight:600; margin:0 0 10px;
     letter-spacing:0.2px;
@@ -144,8 +137,6 @@
     flex:1; background:none; border:none; padding:10px 4px 8px; font-size:11px;
     color:var(--text-muted); cursor:pointer; font-family:var(--font-display); letter-spacing:0.3px;
   }
-  nav.tabs button.active{color:var(--accent); font-weight:600;}
-  .tab-icon{display:block; margin:0 auto 2px; width:20px; height:20px;}
   .hidden{display:none !important;}
   .status-dot{
     display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px;
@@ -169,7 +160,6 @@
     content:"+"; color:var(--slate); font-size:18px; font-family:var(--font-mono);
   }
   details.exercise-group[open] > summary::after{content:"−";}
-  details.exercise-group .list-item:first-child{padding-top:10px;}
   /* ---- Today hero ---- */
   /* Exercise detail sheet */
   #tfExSheet{position:fixed; inset:0; z-index:90; display:flex; align-items:flex-end; background:rgba(0,0,0,.55); opacity:0; pointer-events:none; transition:opacity .18s;}
@@ -190,7 +180,6 @@
   .tf-mv-name[data-exinfo]{cursor:pointer;}
   #sessionPanel .card > h2{cursor:pointer;}
   #sessionPanel .card > h2::after{content:"ⓘ"; font-size:.6em; margin-left:8px; color:inherit; opacity:.55; vertical-align:middle;}
-  .tf-recap{background:linear-gradient(135deg,var(--surface),var(--surface-warm)); border:1px solid var(--accent-line);}
   .tf-recap .cell{flex:1; min-width:0;}
   .tf-recap .cell .v{font-family:var(--font-display); font-size:26px; font-weight:600; line-height:1.1;}
   .tf-recap .cell .v small{font-size:12px; color:var(--text-muted); font-weight:500;}
@@ -199,7 +188,6 @@
   /* Rings, bars and tiles for text-heavy screens */
   .tf-sec{font-family:var(--font-mono); font-size:11px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); margin:18px 2px 8px;}
   .tf-sec:first-child{margin-top:2px;}
-  .tf-tiles{display:flex; gap:10px;}
   .tf-rt{flex:1; min-width:0; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px;}
   .tf-rt .rl{font-size:11px; color:var(--text-muted); line-height:1.3;}
   .tf-rt .rv{font-family:var(--font-display); font-size:20px; font-weight:600; line-height:1;}
@@ -228,12 +216,9 @@
   .tf-ins i{flex:none; width:8px; height:8px; border-radius:50%; background:var(--accent); margin-top:7px;}
   .tf-insmore summary{list-style:none; cursor:pointer; color:var(--accent); font-size:13px; margin-bottom:10px;}
   .tf-insmore summary::-webkit-details-marker{display:none;}
-  #tab-settings .card{border:1px solid var(--border); border-left:1px solid var(--border); border-radius:16px; padding:16px; margin-bottom:12px;}
   #tab-settings .card h2{font-size:18px; margin:0 0 10px;}
   #tab-settings .card .tf-more{margin:0 0 12px;}
   #tab-settings .card .tf-more p{margin:8px 0 0; line-height:1.5;}
-  #tab-settings input[type=text], #tab-settings input[type=number], #tab-settings input[type=date]{border-radius:12px;}
-  #tab-settings details.tf-row .card{background:var(--surface);}
   #startingLevelSettings .row{flex-wrap:nowrap; gap:6px;}
   #startingLevelSettings .chip{flex:1; text-align:center; padding:9px 4px; font-size:13px;}
   .tf-more summary::after{content:none !important;}
@@ -291,7 +276,6 @@
   .tf-ptile .viz i{flex:1; border-radius:3px; display:block;}
   #tfProgress{margin-bottom:12px;}
   #tfPSheet{position:fixed; inset:0; z-index:60;}
-  #tfPSheet.hidden{display:none;}
   .tf-pscrim{position:absolute; inset:0; background:rgba(0,0,0,.6);}
   .tf-ppanel{position:absolute; left:0; right:0; bottom:0; top:72px; background:var(--surface-deep-2); border:1px solid var(--border); border-radius:22px 22px 0 0; padding:8px 16px 90px; overflow-y:auto; -webkit-overflow-scrolling:touch;}
   .tf-pgrab{display:flex; justify-content:center; padding:4px 0 8px;}
@@ -329,7 +313,6 @@
   .tf-badges{display:flex; gap:10px; margin-top:14px;}
   .tf-badge{flex:1; text-align:center; min-width:0;}
   .tf-badge .c{width:54px; height:54px; border-radius:50%; margin:0 auto; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:20px; font-weight:700; color:var(--ink); background:var(--accent);}
-  .tf-badge .c.gold{background:var(--gold);}
   .tf-badge .c.lock{background:none; border:2px dashed var(--border); color:var(--border-3);}
   .tf-badge .t{font-size:11px; margin-top:6px; font-weight:600;}
   .tf-badge .t.lock{color:var(--text-muted); font-weight:400;}
@@ -339,12 +322,10 @@
   .fh-row{display:flex; gap:10px; align-items:center;}
   .fh-half{display:flex; align-items:center; gap:8px; flex:1; min-width:0;}
   .fh-t{display:flex; flex-direction:column; gap:2px; min-width:0;}
-  .fh-k{font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-muted);}
   .fh-v{display:block; font-family:var(--font-display); font-weight:600; line-height:1; white-space:nowrap;}
   .fh-v em{font-style:normal; font-size:28px; color:var(--accent);}
   .fh-v i{font-style:normal; font-size:14px; color:var(--text-muted); margin-left:4px; font-weight:500;}
   .fh-week{margin-top:12px; padding-top:10px; border-top:1px solid var(--border); cursor:pointer;}
-  .fh-wn{font-size:12px; color:var(--text-muted);}
   .fh-wn em{font-style:normal; font-family:var(--font-display); font-size:20px; font-weight:600; color:var(--gold);}
   .fh-wn em.over{color:var(--danger);}
   .fh-bar{height:9px; border-radius:5px; background:var(--surface-3); overflow:hidden;}
@@ -361,15 +342,7 @@
   /* Food tab: compact so the whole screen fits without scrolling */
   #tab-food .tf-screen-head{padding:8px 4px 4px; display:flex; flex-direction:row-reverse; justify-content:space-between; align-items:baseline;}
   #tab-food .tf-screen-head h1{font-size:22px;}
-  #tab-food .tf-label{padding:8px 4px 4px;}
-  #tab-food .tf-hero-food{margin-bottom:6px;}
-  #tab-food .tf-add{height:58px; padding:9px 12px; border-radius:12px;}
   #tab-food .tf-add svg{width:20px; height:20px;}
-  #tab-food .tf-add.main span{font-size:15px;}
-  #tab-food .tf-recent .chip{min-width:130px; padding:7px 12px; font-size:13px;}
-  #tab-food .tf-recent .chip .rn{-webkit-line-clamp:1;}
-  #tab-food #foodLogList .tf-fl-main{padding:6px 12px;}
-  #tab-food #foodLogList .tf-fl-row{margin-bottom:4px;}
   #tab-food .tf-now:empty{display:none;}
   .tf-now{font-size:12px; color:var(--text-muted); padding:0 4px;}
   .tf-now .meta{font-family:Inter,sans-serif; font-size:12px;}
@@ -377,10 +350,7 @@
   .tf-now .danger-link{font-size:12px; margin-top:8px !important;}
   .tf-adds{display:flex; gap:10px;}
   .tf-add{flex:1; min-width:0; height:92px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; color:var(--accent); font-size:14px; font-weight:600; cursor:pointer; box-sizing:border-box;}
-  .tf-add span{color:var(--text);}
-  .tf-add.main{flex:1.3; background:var(--accent); border-color:var(--accent); color:var(--ink);}
   .tf-add.main span{color:var(--ink); font-family:var(--font-display); font-size:17px; letter-spacing:.5px;}
-  .tf-add.open{border-color:var(--accent);}
   .tf-photo-extra{display:flex; flex-direction:column; align-items:flex-start; gap:2px; margin-top:8px;}
   .tf-recent{display:flex; flex-direction:row; gap:8px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch;}
   .tf-recent .chip{flex:0 0 auto; min-width:150px; max-width:240px;}
@@ -421,9 +391,7 @@
   #morningChecklist{display:none !important;}
   .tf-tiles{display:flex; gap:10px; align-items:stretch;}
   .tf-tile{flex:1; min-width:0; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px;}
-  .tf-tile.tf-pend{border:1.5px solid var(--accent);}
   .tf-tile-tag{font-size:12px; color:var(--text-muted); font-weight:600;}
-  .tf-tile.tf-pend .tf-tile-tag{color:var(--accent);}
   .tf-tile-big{display:flex; align-items:baseline; gap:6px; margin-top:6px;}
   .tf-tile-big input{width:100%; min-width:0; background:none; border:0; border-bottom:1px solid var(--border); border-radius:0; padding:2px 0; font-family:var(--font-display); font-size:30px; font-weight:600; color:var(--text);}
   .tf-tile-big span{font-size:14px; color:var(--text-muted);}
@@ -436,8 +404,6 @@
   .tf-more{margin-top:10px; font-size:12px; color:var(--text-muted);}
   .tf-more summary{cursor:pointer; list-style:none; text-decoration:underline;}
   .tf-panel{margin-top:10px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px;}
-  #tab-coach .card{background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:10px; padding:14px; margin:0 0 10px;}
-  #tab-coach #bellCoachCard{border-left-color:var(--gold);}
   #tab-coach .card h2{font-family:Inter,sans-serif; font-size:12px; font-weight:500; color:var(--text-muted); letter-spacing:0; margin:0 0 6px;}
   #coachNote, #bellCoach{font-family:Inter,sans-serif; font-size:15px; line-height:1.45; color:var(--text);}
   .tf-week{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
@@ -445,7 +411,6 @@
   .tf-dots i{width:26px; height:26px; border-radius:50%; border:2px solid var(--border); display:block;}
   .tf-dots i.on{background:var(--accent); border-color:var(--accent);}
   .tf-dots i.today{border-color:var(--accent);}
-  details.tf-row{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px; margin:0 0 10px;}
   details.tf-row summary{text-transform:none; font-family:Inter,sans-serif; font-size:15px; font-weight:600;}
   #tab-coach #startHereBanner .card, #tab-coach #flagsBanner .card{margin-top:4px;}
   /* Today screen, "Steady" look */
@@ -464,7 +429,6 @@
   .tf-today-col{display:flex; flex-direction:column;}
   .tf-focus{order:-3; margin:0 0 10px;}
   .tf-focus .tf-fbar{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:2px 2px 0;}
-  .tf-focus .tf-fk{font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--accent);}
   .tf-focus .tf-flink{border:1px solid var(--border-2); background:none; color:var(--text); font-size:13px; padding:7px 14px; border-radius:18px; cursor:pointer;}
   .tf-focus .tf-fcard{background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px 16px; margin-bottom:10px;}
   .tf-focus .tf-ft{font-family:var(--font-display); font-size:26px; font-weight:600; line-height:1.05; margin:4px 0;}
@@ -472,7 +436,6 @@
   .tf-focus .tf-fwide{width:100%; height:44px; border-radius:22px; border:1px solid var(--border-2); background:none; color:var(--text); font-size:14px; cursor:pointer; margin-top:2px;}
   .tf-today-col.tf-has-focus:not(.tf-focus-chest) #chestBoosterToday{display:none;}
   .tf-today-col.tf-focus-chest > :not(#todayWorkout):not(.tf-focus):not(#tfMore):not(#tfQuickRow), .tf-today-col.tf-focus-chest #todayWorkout > :not(#chestBoosterToday):not(.tf-focus){display:none !important;}
-  .tf-today-col.tf-focus-chest #todayWorkout{display:contents;}
   .tf-today-col > .card{order:-2;}
   .tf-today-col.tf-off #startSessionBtn, .tf-today-col.tf-off #minimumDayBtn{display:none;}
   #todayWorkout > .card{border-left:1px solid var(--border); border-radius:14px; padding:18px;}
@@ -485,46 +448,24 @@
   #tab-coach .tf-label{display:none;}
   #coachNoteCard .tf-clamp-btn, #coachNoteCard a, #coachNoteCard button{padding-top:2px !important; padding-bottom:0 !important; margin-top:2px;}
   #tab-coach .tf-tile button.tf-linkbtn, #tab-coach .tf-tile .tf-clamp-btn, #tab-coach .tf-tile a{padding-top:4px; padding-bottom:0;}
-  #tab-coach details.tf-row{margin-bottom:5px !important; padding:9px 14px !important;}
-  #tab-coach .tf-hero2 .big{font-size:34px;}
-  #tab-coach .tf-tile{padding:10px 12px;}
-  #tab-coach .tf-tile-big{margin-top:2px;}
-  #tab-coach .tf-tile-big input{font-size:26px;}
   #tab-coach .tf-tile button.primary{margin-top:8px; height:36px;}
   #tab-coach .tf-tile .chip{margin-top:8px; padding:7px 0;}
   #tab-coach .tf-tile-q{margin-top:4px;}
-  #tab-coach #tfWeekCard{display:none;}
-  #tab-coach details.tf-row{padding:11px 14px; margin:0 0 7px;}
-  #coachNoteCard{padding:11px 14px 8px; margin-bottom:8px;}
-  #coachNoteCard .meta, #coachNoteCard p, #coachNoteCard li{font-size:14px; line-height:1.35;}
-  #coachNoteCard .tf-hero2-k{margin-bottom:4px;}
   #tab-coach .tf-hero2{order:0; margin:0 0 10px;}
   #tab-coach .tf-hero2 .big{font-family:var(--font-display); font-size:38px; font-weight:600; line-height:1; color:var(--text);}
   #tab-coach .tf-hero2 .big small{font-size:12px; font-family:Inter,sans-serif; color:var(--text-muted); font-weight:500;}
-  #tab-coach .tf-hero2 .d{font-size:13px; font-weight:600; margin-top:6px;}
   .tf-cchips{display:flex; border-top:1px solid rgba(255,255,255,.08);}
   .tf-cchip{flex:1; padding:10px 12px; border-right:1px solid rgba(255,255,255,.08);}
-  .tf-cchip:last-child{border-right:0;}
   .tf-cchip b{display:block; font-family:var(--font-display); font-size:19px; font-weight:600; line-height:1.1;}
   .tf-cchip b small{font-size:11px; color:var(--text-muted); font-family:Inter,sans-serif; font-weight:500;}
   .tf-cchip span{font-size:11px; color:var(--text-muted);}
-  .tf-coachhero{border:1px solid var(--accent-deep); border-radius:16px; background:linear-gradient(160deg,var(--accent-bg-2) 0%,var(--surface) 65%); padding:14px 16px 10px; margin:0 0 10px; color:var(--text);}
-  .tf-coachhero .meta, .tf-coachhero li, .tf-coachhero p{color:var(--text); font-size:15px; line-height:1.4;}
   .tf-coachhero .tf-clamp-btn{color:var(--accent-soft); font-size:12px; padding:6px 0 2px;}
-  #tab-coach #bellCoachCard{margin-bottom:10px;}
-  #tab-coach .tf-tiles{margin-bottom:10px;}
-  .tf-coachhero .tf-hero2-k{margin-bottom:6px;}
   #tab-coach .tf-weekcard{order:0; margin:0 0 8px;}
-  #tab-coach .tf-tile{padding:12px;}
-  #tab-coach .tf-tile-big input{font-size:26px;}
-  #tab-coach .tf-tile button.primary{margin-top:8px;}
-  #tab-coach .tf-tile .chip{margin-top:8px;}
   .tf-dotrow summary{justify-content:flex-start !important; text-transform:none; font-family:Inter,sans-serif !important; font-size:15px !important; font-weight:600 !important;}
   .tf-dotrow summary::before{content:""; display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:10px; background:var(--dc,var(--accent));}
   .tf-dotrow summary::after{margin-left:auto;}
   /* Today: session card + week strip + coloured phases */
   #todayWorkout:has(.tf-hero2){display:contents; color:var(--text); text-align:left;}
-  .tf-hero2{color:var(--text);}
   .tf-hero2{order:-2; border:1px solid var(--accent-deep); border-radius:16px; overflow:hidden; background:linear-gradient(160deg,var(--accent-bg-2) 0%,var(--surface) 65%); margin:0 0 10px;}
   .tf-hero2-in{padding:14px 16px 12px;}
   .tf-hero2-k{font-family:var(--font-mono); font-size:10px; letter-spacing:1.2px; text-transform:uppercase; color:var(--accent-soft);}
@@ -547,7 +488,6 @@
   .tf-dot{display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:10px;}
   .tf-ph-main{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:11px 14px; margin:0 0 8px;}
   .tf-ph-main .tf-moves-head{font-family:var(--font-body,Inter,sans-serif); font-size:15px; font-weight:600; letter-spacing:0; text-transform:none; color:var(--text); padding:0; cursor:pointer; align-items:center;}
-  .tf-ph-main .tf-moves-head > span:last-child{font-family:var(--font-mono); font-size:11px; letter-spacing:1px; text-transform:uppercase; font-weight:400;}
   .tf-moves-names{font-size:12px; color:var(--text-muted); margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .tf-ph-main .tf-mv{margin-top:8px;}
   #todayWorkout details.tf-ph-warm summary::before, #todayWorkout details.tf-ph-cool summary::before{content:""; display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:10px; background:var(--accent);}
@@ -662,8 +602,6 @@
     background:var(--surface); border:0; border-radius:var(--r2); padding:16px; margin-bottom:12px;}
   .tf-tile, .tf-week, .tf-panel, details.tf-row, .tf-hero-food, .tf-pending, #foodLogList .tf-fl-row, #foodLogList .list-item, .tf-focus .tf-fcard, #tab-today > .card > details.exercise-group:not(#todayWorkoutDetails), .tf-foodempty{
     border:0 !important; border-radius:var(--r2) !important;}
-  #foodLogList .list-item, #foodLogList .tf-fl-row{border-left:0 !important;}
-  .tf-tile.tf-pend{box-shadow:inset 0 0 0 1.5px var(--accent);}
   .tf-hero-food, .tf-hero{background:linear-gradient(160deg,var(--accent-bg),var(--surface)) !important; border:1px solid var(--accent-line) !important; border-radius:20px !important;}
   /* type: sentence case labels instead of mono caps */
   .tf-kicker, .tf-label, .fh-k, .field-label, .tf-focus .tf-fk, .tf-hero .k{font-family:Inter,sans-serif !important; letter-spacing:.02em !important; text-transform:none !important; font-size:12px !important;}
@@ -694,17 +632,13 @@
   .tf-mv{border:0; border-left:0; background:var(--surface-2); border-radius:12px;}
   #tfQuickRow .tf-qbtn{border:0; background:var(--surface); border-radius:14px; min-height:46px; font-weight:500;}
   #tfMore{border:0; border-radius:var(--r2);}
-  .tf-focus .tf-fwide{border:1px solid var(--border-2);}
 
   /* Coach */
   #tab-coach .tf-hero2{background:none !important; border:0 !important; border-radius:0; overflow:visible; margin:0 0 4px;}
-  #tab-coach .tf-hero2-in{padding:8px 4px 10px;}
   #tab-coach .tf-hero2-k{color:var(--text-muted);}
-  #tab-coach .tf-hero2 .big{font-size:56px !important;}
   #tab-coach .tf-hero2 .d{font-size:15px; font-weight:500; color:var(--gold);}
   #tab-coach .tf-cchips{border-top:0; padding:0 4px; margin:0 0 14px;}
   .tf-cchip{border-right:0 !important; padding:0 8px 0 0;}
-  .tf-cchip b{font-size:22px;}
   .tf-coachhero{background:none !important; border:0 !important; border-left:3px solid var(--accent) !important; border-radius:0 !important; padding:2px 0 2px 14px !important; margin:0 4px 16px !important;}
   .tf-coachhero .tf-hero2-k{display:none;}
   .tf-coachhero .tf-clamp-btn{color:var(--text-muted);}
@@ -715,12 +649,9 @@
   .tf-tiles .tf-tile.tf-pend .tf-tile-tag{color:var(--text);}
   #logWeightBtn, #saveDailyCheckinBtn{display:none !important;}
   #weightInput{background:var(--bg); border:1px solid var(--border) !important; border-radius:12px !important; padding:8px 12px !important; min-height:48px;}
-  #logTodayBtn{margin-top:14px;}
   #tab-coach details.tf-row, details.tf-row{background:var(--surface); padding:0 16px !important; margin:0 !important; border-radius:0 !important; border-top:1px solid var(--border) !important;}
   details.tf-row > summary{min-height:56px; display:flex; align-items:center; font-size:15px !important; font-weight:500 !important;}
   details.tf-row[open]{padding-bottom:14px !important;}
-  #chestBoosterDetails{border-radius:16px 16px 0 0 !important; border-top:0 !important;}
-  #bodyCompDetails{border-radius:0 0 16px 16px !important; margin-bottom:12px !important;}
   .tf-dotrow summary::before{content:""; width:20px !important; height:20px !important; border-radius:0 !important; margin-right:12px !important; background:var(--text-muted) !important; -webkit-mask:var(--ic) center/contain no-repeat; mask:var(--ic) center/contain no-repeat;}
   #chestBoosterDetails{--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");}
   #notesDetails{--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M5 4h14v16H5zM9 9h6M9 13h6'/%3E%3C/svg%3E");}
@@ -731,20 +662,11 @@
   details.exercise-group[open] > summary::after{content:"›" !important; transform:rotate(90deg);}
   /* Food */
   #tab-food .tf-hero-food{display:block; padding:16px;}
-  #tab-food .fh-row{justify-content:space-around; align-items:flex-start;}
-  #tab-food .fh-half{flex-direction:column; align-items:center; gap:8px; flex:1; text-align:center;}
-  #tab-food .fh-t{align-items:center;}
   #tab-food .fh-k{order:2; font-size:12px; text-transform:none; letter-spacing:0;}
   #tab-food .fh-v em{font-size:24px; color:var(--text);}
-  #tab-food .fh-week{border-top:0; padding-top:4px;}
-  #tab-food .tf-adds{gap:8px;}
   #tab-food .tf-add{height:52px; flex-direction:row; align-items:center; justify-content:center; gap:8px; border:0; background:var(--surface); border-radius:14px; padding:0 8px; color:var(--text); font-weight:500;}
   #tab-food .tf-add.main{flex:1.4; background:var(--accent); color:var(--ink);}
-  #tab-food .tf-add svg{color:currentColor;}
   .tf-recent .chip{border:0 !important; background:var(--surface); min-height:36px;}
-  #foodLogList .tf-fl-row, #foodLogList .list-item{background:var(--surface); border-radius:0 !important; margin:0 !important; border-top:1px solid var(--border) !important;}
-  #foodLogList .tf-fl-row:first-of-type{border-radius:16px 16px 0 0 !important; border-top:0 !important;}
-  #foodLogList .tf-fl-row:last-of-type{border-radius:0 0 16px 16px !important;}
   #foodLogList .tf-fl-row:only-of-type{border-radius:16px !important;}
   #dayStrip{background:none !important; border:0 !important; padding:0 !important;}
   /* Progress */
@@ -775,9 +697,7 @@
   #tab-settings .card{border:0; background:var(--surface);}
   #photoOptionsToggle, #myFoodsOpen{color:var(--text-muted) !important;}
   #tab-food .tf-add{white-space:nowrap; font-size:14px;}
-  #tab-food .tf-add span{white-space:nowrap;}
   .tf-empty button, .tf-foodempty button{border-color:var(--border-2); color:var(--text);}
-  .tf-focus .tf-fk{font-size:12px;}
 
   /* round 3 polish */
   [data-chest-phase]{border:0 !important; border-radius:14px !important;}
@@ -794,7 +714,6 @@
 
   /* ===== Coach, one screen: Progress folded in ===== */
   nav.tabs .pill{width:72px;}
-  #coachHero{padding:0;}
   #tab-coach .tf-hero2-in{padding:2px 4px 4px;}
   #tab-coach .tf-hero2-k{font-size:11px !important; margin-bottom:0;}
   #tab-coach .tf-hero2 .big{font-size:44px !important;}
@@ -813,7 +732,6 @@
   #tab-coach .tf-tile-big{margin:0; position:relative;}
   #tab-coach .tf-tile-big input{font-size:18px !important; min-height:44px; padding:6px 30px 6px 12px !important; width:100%;}
   #tab-coach .tf-tile-big span{position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:12px; pointer-events:none;}
-  #checkinEnergyChips{margin:0 !important; gap:6px !important;}
   #checkinEnergyChips .chip{margin:0 !important; min-height:44px; display:grid; place-items:center; padding:0 !important; font-size:14px;}
   #logTodayBtn{grid-column:1/-1; grid-row:2; margin:2px 0 0 !important; min-height:46px;}
   #tab-coach .tf-tiles .tf-more{grid-row:3; margin:0; font-size:12px;}
@@ -832,7 +750,6 @@
   .tf-wk3 .bar i{display:block; height:5px; background:var(--accent);}
   /* 2x2 tile grid + full-width Details row */
   .tf-g2{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;}
-  .tf-g2 > details.tf-row{margin:0 !important; padding:0 14px !important; border:0 !important; border-radius:14px !important; background:var(--surface);}
   .tf-g2 > details.tf-row > summary{min-height:52px; font-size:14px !important; white-space:nowrap;}
   .tf-g2 > details.tf-row > summary::after{display:none !important;}
   .tf-g2 > details.tf-row .tf-sv{font-size:12px; margin-right:0;}
@@ -852,26 +769,22 @@
   #tab-coach .tf-g2 > details.tf-row{border-top:0 !important; border-radius:14px !important; margin:0 !important;}
 
   /* ===== Food, calmer ===== */
-  #tab-food .tf-hero-food{padding:14px 16px 12px; border-radius:20px;}
+  
   #tab-food .fh-row{justify-content:space-between; align-items:center; gap:12px;}
   #tab-food .fh-half{flex-direction:row; align-items:center; gap:10px; text-align:left; justify-content:flex-start;}
   #tab-food .fh-t{align-items:flex-start;}
   #tab-food .fh-ring{width:54px; height:54px;}
   #tab-food .fh-ring text:nth-of-type(2){display:none;}
-  #tab-food .fh-ring text{font-size:20px !important;}
-  #tab-food .fh-v em{font-size:20px;}
   #tab-food .fh-v i{font-size:12px; margin-left:3px;}
   #tab-food .fh-k{font-size:12px; color:var(--text-muted);}
   #tab-food .fh-week{display:flex; align-items:center; gap:10px; margin-top:12px; padding-top:0; border-top:0;}
   #tab-food .fh-week .fh-k{order:0; font-size:13px;}
   #tab-food .fh-week .fh-bar{flex:1; height:7px;}
   #tab-food .fh-wn{white-space:nowrap; font-size:13px; color:var(--text-muted);}
-  #tab-food .fh-wn em{font-size:18px;}
   #tab-food .tf-adds{margin-top:10px; gap:8px;}
   #tab-food .tf-add.tf-more{flex:0 0 52px; padding:0; margin:0; color:var(--text-muted); border:0; font:inherit;}
   #tab-food .tf-add.tf-more.open{color:var(--accent); background:var(--accent-bg);}
   #tab-food .tf-add.tf-more svg{width:22px; height:22px;}
-  #tab-food #recentWrap{margin-top:10px;}
   #tab-food .tf-recent{gap:8px; padding-bottom:2px; scrollbar-width:none;}
   #tab-food .tf-recent::-webkit-scrollbar{display:none;}
   #tab-food .tf-recent .chip{min-width:0; max-width:220px; height:36px; min-height:36px; padding:0 14px; border-radius:18px; font-size:14px; gap:8px; justify-content:flex-start; white-space:nowrap;}
@@ -904,14 +817,12 @@
   #tab-food .tf-adds{margin-top:12px;}
   #tab-food #recentWrap{margin-top:12px;}
   #tab-food .tf-recent .chip{border-radius:14px; height:38px; min-height:38px;}
-  #tab-food .tf-recent .chip .rp{font-family:Inter,sans-serif;}
   #tab-food .tf-label{padding:18px 4px 8px;}
   #foodLogList .tf-fl-pro{font-size:16px; font-weight:600;}
   #foodLogList .tf-fl-pro small{font-size:12px; font-weight:400;}
   #foodLogList .tf-fl-name .n{font-size:15px; font-weight:500;}
   #foodLogList .tf-fl-name .m{font-size:12px;}
   #foodLogList .tf-fl-main{padding:10px 16px !important;}
-  #foodLogList .tf-fl-group, #tab-food #dayStrip{border-radius:var(--r2);}
   #tab-food #dayStrip{background:var(--surface) !important; padding:14px 16px 10px !important;}
   #tab-food #todayCard{margin-bottom:0;}
 </style>
