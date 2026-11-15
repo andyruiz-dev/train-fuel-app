@@ -1,0 +1,850 @@
+/* Self-hosted fonts (latin subset): no network needed, works offline from first launch. */
+@font-face{font-family:'Rubik';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/rubik-latin-500-normal.woff2) format('woff2');}
+@font-face{font-family:'Rubik';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/rubik-latin-600-normal.woff2) format('woff2');}
+@font-face{font-family:'Rubik';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/rubik-latin-700-normal.woff2) format('woff2');}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/inter-latin-400-normal.woff2) format('woff2');}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/inter-latin-500-normal.woff2) format('woff2');}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/inter-latin-600-normal.woff2) format('woff2');}
+@font-face{font-family:'Roboto Mono';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/roboto-mono-latin-500-normal.woff2) format('woff2');}
+  /* ---------------------------------------------------------------------
+     STYLE MAP (read before editing)
+     Order matters: later rules override earlier ones, so do not reorder blocks.
+     1. Tokens and base: :root variables, themes, body, header, tab bar.
+     2. Legacy per-screen blocks ("Steady" look): Program, Progress, Food, Coach, Today.
+        Layout and structure live here.
+     3. v2 skin ("one system across all tabs"): the 3 card tiers, 48px buttons, sentence-case
+        labels, chevron rows. Deliberately overrides block 2.
+     4. Later rounds, newest last: Coach one-screen, Food calmer, Food match.
+        To change a screen, edit the LAST block that mentions its selector.
+     Rules: colours come from the :root variables, never hex. No new !important
+     unless an inline style must be beaten. Check every change with the
+     screenshot and computed-style comparison before pushing.
+     --------------------------------------------------------------------- */
+
+  :root{
+    --accent:#FF7A3D;
+    --accent-dark:#D9541C;
+    --gold:#F2B84B;
+    --slate:#C98A5E;
+    --bg:#15110D;
+    --surface:#1D1712;
+    --surface-2:#241D17;
+    --border:#33291F;
+    --text:#F2E8D6;
+    --text-muted:#A99A84;
+    --danger:#E5534B;
+    --accent-soft:#FFC49A;
+    --accent-pale:#FFE4D0;
+    --accent-bg:#3A2314;
+    --accent-bg-2:#4A2412;
+    --accent-deep:#7A3A1C;
+    --accent-hot:#D9603B;
+    --accent-line:#5A3A28;
+    --gold-bg:#3A2F18;
+    --gold-deep:#5B4A2A;
+    --warn:#E8B04A;
+    --danger-soft:#F0907D;
+    --ink:#120F0D;
+    --surface-deep:#0E0B09;
+    --surface-deep-2:#1A1612;
+    --surface-warm:#2A1C14;
+    --surface-3:#2C241C;
+    --border-2:#473A2C;
+    --border-3:#5E544B;
+    --track:#4A3A2E;
+    --text-dim:#7A6A5A;
+    --text-faint:#6B6A63;
+    --text-faint-2:#9A9D8E;
+    --text-faint-3:#7C857F;
+    --border-4:#3A3E34;
+    --surface-neutral:#2A2A2A;
+    --sand:#D9B88A;
+    --sand-pale:#E3C9A0;
+    --fat:#8E7CC3;
+    --accent-rgb:255,122,61;
+    --gold-rgb:242,184,75;
+    --ink-rgb:18,15,13;
+    --radius:4px;
+    --font-display:'Rubik', -apple-system, sans-serif;
+    --font-mono:'Roboto Mono', ui-monospace, monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text); padding-bottom:72px;
+    text-shadow:0 1px 2px rgba(0,0,0,.75), 0 0 1px rgba(0,0,0,.6);
+  }
+  header{ position:sticky; top:0; background:var(--bg); z-index:5;
+    display:flex; justify-content:space-between}
+  header h1{
+    font-family:var(--font-display); font-weight:600; margin:0}
+  header .sub{font-family:var(--font-mono); font-size:11px; color:var(--text-muted); margin-top:4px; display:flex; align-items:center; white-space:nowrap; overflow:hidden;}
+  #headerProgramName{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:70%;}
+  #profileBtn, #programsBtn{
+    background:none; border:1px solid var(--border); border-radius:50%;
+    width:36px; height:36px; font-size:16px; color:var(--text-muted);
+    cursor:pointer; flex-shrink:0; margin-left:8px;
+  }
+  main{padding:0 16px 24px; max-width:640px; margin:0 auto;}
+  .card h2{
+    font-family:var(--font-display); font-size:16px; font-weight:600; margin:0 0 10px;
+    letter-spacing:0.2px;
+  }
+  .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .chip{
+    border:1px solid var(--border); background:var(--surface); color:var(--text);
+    padding:8px 14px; border-radius:2px; font-size:14px; cursor:pointer; user-select:none;
+  }
+  .chip.active{background:var(--accent); border-color:var(--accent)}
+  .result-chip{font-size:12px; padding:6px 10px; font-family:var(--font-mono);}
+  .result-chip.active[data-result="max"]{background:var(--accent); border-color:var(--accent);}
+  .result-chip.active[data-result="hold"]{background:var(--surface-2); border-color:var(--text-muted); color:var(--text);}
+  .result-chip.active[data-result="missed"]{background:var(--danger); border-color:var(--danger);}
+  .swap-regression{border-color:var(--slate); color:var(--slate);}
+  .swap-same{border-color:var(--text-muted);}
+  .swap-progression{border-color:var(--gold); color:var(--gold);}
+  button.primary, .tf-add.main, .chip.active{text-shadow:none;}
+  button.primary{ border:none;
+    padding:12px 16px; cursor:pointer; width:100%}
+  button.primary:disabled{opacity:.5; cursor:default;}
+  button.secondary{
+    background:transparent; color:var(--accent); border:1px solid var(--accent);
+    border-radius:var(--radius); padding:10px 14px; font-size:14px; cursor:pointer;
+    font-family:var(--font-display); letter-spacing:0.3px;
+  }
+  button.danger-link{
+    background:none; border:none; color:var(--danger); font-size:13px; cursor:pointer; padding:4px 0;
+  }
+  input[type=text], input[type=date]{
+    width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:2px;
+    font-size:14px; background:var(--surface); color:var(--text);
+  }
+  .field{flex:1;}
+  .field-label{ color:var(--text-muted); margin-bottom:4px}
+  .list-item{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 0; border-bottom:1px solid var(--border);
+  }
+  .list-item:last-child{border-bottom:none;}
+  .list-item .name{font-size:14px; font-weight:500;}
+  .list-item .meta{font-size:12px; color:var(--text-muted); font-family:var(--font-mono);}
+  .empty{color:var(--text-muted); font-size:14px; padding:8px 0;}
+  nav.tabs{
+    position:fixed; bottom:0; left:0; right:0; display:flex; z-index:10}
+  nav.tabs button{
+    flex:1; background:none; border:none;
+    color:var(--text-muted); cursor:pointer}
+  .hidden{display:none !important;}
+  .status-dot{ border-radius:50%}
+  .status-dot.ok{background:var(--accent);}
+  .file-drop{
+    border:1px dashed var(--border); border-radius:var(--radius); padding:20px;
+    text-align:center; color:var(--text-muted); font-size:13px; cursor:pointer;
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary{cursor:pointer;}
+  details.exercise-group{border-bottom:1px solid var(--border); padding:10px 0;}
+  details.exercise-group:last-child{border-bottom:none;}
+  details.exercise-group summary{
+    font-family:var(--font-display); font-size:15px; font-weight:500;
+    letter-spacing:0.2px; list-style:none; display:flex; justify-content:space-between;
+    align-items:center}
+  details.exercise-group summary::after{
+    content:"+"; color:var(--slate); font-size:18px; font-family:var(--font-mono);
+  }
+  details.exercise-group[open] > summary::after{content:"−";}
+  /* ---- Today hero ---- */
+  /* Exercise detail sheet */
+  #tfExSheet{position:fixed; inset:0; z-index:90; display:flex; align-items:flex-end; background:rgba(0,0,0,.55); opacity:0; pointer-events:none; transition:opacity .18s;}
+  #tfExSheet.open{opacity:1; pointer-events:auto;}
+  #tfExSheet .sheet{width:100%; max-height:82vh; overflow-y:auto; background:var(--surface); border:1px solid var(--border); border-radius:22px 22px 0 0; padding:10px 20px 28px; transform:translateY(24px); transition:transform .2s;}
+  #tfExSheet.open .sheet{transform:none;}
+  @media (prefers-reduced-motion: reduce){#tfExSheet,#tfExSheet .sheet{transition:none;}}
+  #tfExSheet .grab{width:40px; height:4px; border-radius:2px; background:var(--border); margin:0 auto 14px;}
+  #tfExSheet h3{font-family:var(--font-display); font-size:26px; font-weight:600; margin:0; line-height:1.1;}
+  #tfExSheet .tags{display:flex; gap:8px; margin-top:10px;}
+  #tfExSheet .tags span{font-family:var(--font-mono); font-size:11px; text-transform:uppercase; border:1px solid var(--border); border-radius:99px; padding:4px 10px; color:var(--text-muted);}
+  #tfExSheet .lab{font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--gold); margin:18px 0 6px; text-transform:uppercase;}
+  #tfExSheet p,#tfExSheet li{font-size:14px; line-height:1.55; margin:0}
+  #tfExSheet ul{margin:0; padding-left:18px;}
+  #tfExSheet .demo{display:block; margin-top:20px; text-align:center; text-decoration:none; background:var(--accent); color:var(--ink); font-weight:600; border-radius:12px; padding:14px;}
+  #tfExSheet .demo2{display:block; width:100%; margin-top:10px; background:none; border:1px solid var(--border); color:var(--text); border-radius:12px; padding:12px; font-size:14px; cursor:pointer;}
+  #tfExSheet .close{display:block; width:100%; margin-top:10px; background:none; border:0; color:var(--text-muted); font-size:14px; padding:10px; cursor:pointer;}
+  .tf-mv-name[data-exinfo]{cursor:pointer;}
+  #sessionPanel .card > h2{cursor:pointer;}
+  #sessionPanel .card > h2::after{content:"ⓘ"; font-size:.6em; margin-left:8px; color:inherit; opacity:.55; vertical-align:middle;}
+  .tf-recap .cell{flex:1}
+  .tf-recap .cell .v{font-family:var(--font-display); font-size:26px; font-weight:600; line-height:1.1;}
+  .tf-recap .cell .v small{font-size:12px; color:var(--text-muted); font-weight:500;}
+  .tf-recap .cell .l{font-size:11px; color:var(--text-muted); margin-top:2px;}
+  .tf-recap .line{margin-top:14px; font-size:13px; color:var(--text); line-height:1.5;}
+  /* Rings, bars and tiles for text-heavy screens */
+  .tf-sec{ text-transform:uppercase; color:var(--text-muted)}
+  .tf-sec:first-child{margin-top:2px;}
+  .tf-rt{flex:1; min-width:0; background:var(--surface); border-radius:16px; padding:12px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px}
+  .tf-rt .rl{font-size:11px; color:var(--text-muted); line-height:1.3;}
+  .tf-rt .rv{font-family:var(--font-display); font-size:20px; font-weight:600; line-height:1;}
+  .tf-rt .rv small{font-size:11px; color:var(--text-muted); font-weight:500;}
+  .tf-pill2{display:inline-block; font-size:12px; font-weight:600; padding:5px 11px; border-radius:99px; background:var(--accent-bg); color:var(--accent);}
+  .tf-pill2.gold{background:var(--gold-bg); color:var(--gold);}
+  .tf-pill2.gray{background:var(--surface-2); color:var(--text-muted);}
+  .tf-bars{display:flex; flex-direction:column; gap:8px; margin-top:6px;}
+  .tf-bar{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:0;}
+  .tf-bar summary{list-style:none; cursor:pointer; padding:10px 12px; display:block;}
+  .tf-bar summary::-webkit-details-marker{display:none;}
+  .tf-bar summary::after{content:none !important;}
+  .tf-bar .bt{display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px;}
+  .tf-bar .bt b{font-family:var(--font-mono); font-size:12px; color:var(--text-muted); font-weight:500;}
+  .tf-bar .tr{height:6px; border-radius:3px; background:var(--surface-2);}
+  .tf-bar .tr i{display:block; height:6px; border-radius:3px; background:var(--gold);}
+  .tf-bar.dn .tr i{background:var(--accent);}
+  .tf-bar .bd{padding:0 12px 12px; font-size:13px; line-height:1.5; color:var(--text-muted);}
+  .tf-dots7{display:flex; gap:5px; justify-content:center;}
+  .tf-dots7 i{width:9px; height:9px; border-radius:50%; background:var(--surface-2)}
+  .tf-dots7 i.on{background:var(--accent);}
+  .tf-hl{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 14px; margin-top:10px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .tf-hl .t{font-size:14px; font-weight:600;}
+  .tf-hl button{background:none; border:0; color:var(--accent); font-size:13px; cursor:pointer; padding:4px 0;}
+  .tf-ins{display:flex; gap:10px; align-items:flex-start; font-size:14px; line-height:1.45; color:var(--text); margin-bottom:10px;}
+  .tf-ins i{flex:none; width:8px; height:8px; border-radius:50%; background:var(--accent); margin-top:7px;}
+  .tf-insmore summary{list-style:none; cursor:pointer; color:var(--accent); font-size:13px; margin-bottom:10px;}
+  .tf-insmore summary::-webkit-details-marker{display:none;}
+  #tab-settings .card h2{font-size:18px}
+  #tab-settings .card .tf-more{margin:0 0 12px;}
+  #tab-settings .card .tf-more p{margin:8px 0 0; line-height:1.5;}
+  #startingLevelSettings .row{flex-wrap:nowrap; gap:6px;}
+  #startingLevelSettings .chip{flex:1; text-align:center; padding:9px 4px; font-size:13px;}
+  .tf-more summary::after{content:none !important;}
+  #tab-settings input[type=number]{background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:10px 12px; width:100%}
+  .tf-clamp{display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
+  .tf-clamp-btn{background:none; border:0; cursor:pointer}
+  /* Program screen, "Steady" look */
+  .tf-prog-head{margin:-4px -16px 0; padding:18px 20px 16px; background:linear-gradient(180deg,var(--accent-bg),var(--ink));}
+  .tf-prog-head .chg{font-size:13px; color:var(--accent); font-weight:600; background:none; border:0; padding:0; cursor:pointer;}
+  .tf-prog-head .pills{display:flex; gap:8px; margin-top:26px; flex-wrap:wrap;}
+  .tf-prog-head .pills span{font-family:var(--font-mono); font-size:11px; background:var(--ink); border:1px solid var(--border); color:var(--text-muted); border-radius:99px; padding:5px 10px; text-transform:uppercase;}
+  .tf-prog-head .pills span.on{border-color:var(--accent); color:var(--accent);}
+  .tf-prog-head h2{font-family:var(--font-display); font-size:32px; font-weight:600; line-height:1.05; margin:10px 0 0;}
+  .tf-wktabs{display:flex; gap:8px; overflow-x:auto; padding:4px 0 2px; margin:0 -16px; padding-left:16px; padding-right:16px; scrollbar-width:none;}
+  .tf-wktabs::-webkit-scrollbar{display:none;}
+  .tf-wktabs button{flex:0 0 auto; font-size:13px; padding:9px 14px; border-radius:10px; background:var(--surface); color:var(--text-muted); border:0; cursor:pointer; font-family:inherit;}
+  .tf-wktabs button.on{background:var(--accent); color:var(--ink); font-weight:600;}
+  .tf-pbar{display:flex; align-items:center; gap:12px; padding:18px 4px 6px;}
+  .tf-pbar b{font-family:var(--font-display); font-size:20px; font-weight:600;}
+  .tf-pbar .bar{flex:1; height:8px; border-radius:4px; background:var(--surface-2);}
+  .tf-pbar .bar i{display:block; height:8px; border-radius:4px; background:var(--accent);}
+  .tf-pbar span{font-family:var(--font-mono); font-size:11px; color:var(--text-muted);}
+  .tf-pnote{padding:0 4px; font-size:12px; color:var(--text-muted);}
+  .tf-days-list{display:flex; flex-direction:column; gap:10px; padding-top:16px;}
+  .tf-dcard{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; cursor:pointer;}
+  .tf-dcard.next{border:1.5px solid var(--accent);}
+  .tf-dcard.pre{background:var(--surface); border-color:var(--surface-2);}
+  .tf-dcard .r{display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .tf-dcard .k{font-size:12px; color:var(--text-muted);}
+  .tf-dcard.next .k{color:var(--accent); font-weight:600;}
+  .tf-dcard .t{font-family:var(--font-display); font-size:19px; font-weight:600; margin-top:2px; text-transform:uppercase;}
+  .tf-dcard.done .t{color:var(--text-muted);}
+  .tf-hint{margin-top:12px; padding:10px 12px; border:1px solid var(--accent); border-radius:12px; font-size:13px; line-height:1.45; color:var(--text);}
+  .tf-hint b{font-family:var(--font-mono); font-size:11px; letter-spacing:.6px; text-transform:uppercase; color:var(--accent); margin-right:6px;}
+  .tf-hint .t{margin-top:6px; color:var(--text-muted);}
+  .tf-dcard .tf-exlink{display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; background:none; border:0; border-bottom:1px solid var(--surface-2); color:var(--text); font:inherit; font-size:14px; text-align:left; padding:9px 0; cursor:pointer;}
+  .tf-dcard .tf-exlink:last-child{border-bottom:0;}
+  .tf-dcard .tf-exlink b{font-family:var(--font-mono); font-size:11px; font-weight:500; letter-spacing:.5px; color:var(--accent); text-transform:uppercase; white-space:nowrap;}
+  .tf-dcard .ex{margin-top:10px; padding-top:10px; border-top:1px solid var(--surface-2); font-size:13px; color:var(--text-muted); line-height:1.6;}
+  /* Progress screen, "Steady" look */
+  .tf-pg-hero{background:linear-gradient(135deg,var(--accent) 0%,var(--accent-dark) 100%); color:var(--ink); border-radius:22px; padding:20px; display:flex; gap:18px; align-items:center; margin-bottom:14px;}
+  .tf-pg-hero .k{font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase;}
+  .tf-pg-hero .n{font-family:var(--font-display); font-size:34px; font-weight:700; line-height:1; margin-top:4px;}
+  .tf-pg-hero .n small{font-size:18px; font-weight:600;}
+  .tf-pg-hero .s{font-size:13px; font-weight:500; margin-top:4px;}
+  .tf-pg-hero .pill{margin-top:12px; display:inline-block; background:var(--ink); color:var(--text); border-radius:99px; padding:6px 12px; font-size:12px; font-weight:600;}
+  .tf-ptiles{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .tf-ptile{text-align:left; border-radius:16px; padding:12px 14px; height:150px; display:flex; flex-direction:column; color:var(--text); cursor:pointer; font-family:Inter,sans-serif}
+  .tf-ptile .n{font-size:12px; color:var(--text-muted); font-weight:600; display:flex; justify-content:space-between; width:100%;}
+  .tf-ptile .n b{font-weight:400;}
+  .tf-ptile .big{font-family:var(--font-display); font-size:30px; font-weight:600; line-height:1.05; margin-top:6px;}
+  .tf-ptile .big small{font-family:Inter,sans-serif; font-size:12px; font-weight:500; color:var(--text-muted); margin-left:3px;}
+  .tf-ptile .sub{font-size:12px; margin-top:2px; color:var(--text-muted);}
+  .tf-ptile .viz{margin-top:auto; height:44px; width:100%; display:flex; align-items:flex-end; gap:5px;}
+  .tf-ptile .viz i{flex:1; border-radius:3px}
+  #tfProgress{margin-bottom:12px;}
+  #tfPSheet{position:fixed; inset:0; z-index:60;}
+  .tf-pscrim{position:absolute; inset:0; background:rgba(0,0,0,.6);}
+  .tf-ppanel{position:absolute; left:0; right:0; bottom:0; top:72px; background:var(--surface-deep-2); border:1px solid var(--border); border-radius:22px 22px 0 0; padding:8px 16px 90px; overflow-y:auto}
+  .tf-pgrab{display:flex; justify-content:center; padding:4px 0 8px;}
+  .tf-pgrab span{width:40px; height:4px; border-radius:2px; background:var(--border-2)}
+  .tf-pclose{position:absolute; top:8px; right:14px; background:none; border:0; color:var(--accent); font-size:14px; font-weight:600; padding:6px 4px; cursor:pointer;}
+  .tf-ppanel .tf-pcard{margin-top:6px;}
+  .tf-prow{display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--surface-3); font-size:14px;}
+  .tf-prow:last-child{border:0;}
+  .tf-prow .r{margin-left:auto; color:var(--text-muted); font-size:13px;}
+  .tf-stat{flex:1; min-width:0; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px;}
+  .tf-stat .l{font-size:11px; color:var(--text-muted);}
+  .tf-stat .v{font-family:var(--font-display); font-size:30px; font-weight:600; line-height:1.1; margin-top:4px;}
+  .tf-stat .v small{font-size:13px; color:var(--text-muted); font-weight:500;}
+  .tf-stat .p{margin-top:8px; font-size:11px; border-radius:99px; padding:3px 8px; font-weight:600; display:inline-block; background:var(--accent-bg); color:var(--accent);}
+  .tf-stat .p.gold{background:var(--gold-bg); color:var(--gold);}
+  .tf-pcard{background:var(--surface); padding:18px 16px; margin-bottom:14px}
+  .tf-pcard .h{display:flex; justify-content:space-between; align-items:baseline; padding:0 2px;}
+  .tf-pcard .h b{font-family:var(--font-display); font-size:18px; font-weight:600;}
+  .tf-pcard .h span{font-size:12px; color:var(--text-muted);}
+  .tf-pcard .h span em{color:var(--text); font-style:normal; font-weight:600;}
+  .tf-axis{display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); margin-top:2px; padding:0 2px;}
+  .tf-empty{font-size:13px; color:var(--text-muted); line-height:1.5}
+  .tf-empty button{margin-top:10px; height:36px; padding:0 14px; border-radius:10px; border:1px solid var(--accent); background:none; color:var(--accent); font-weight:600; font-size:13px; cursor:pointer;}
+  .tf-weeks{display:flex; flex-direction:column; gap:10px; margin-top:14px;}
+  .tf-wk{ align-items:center}
+  .tf-wk .lab{width:46px; font-family:var(--font-mono); font-size:10px; color:var(--text-muted);}
+  .tf-wk .dots{display:flex; gap:9px; flex:1;}
+  .tf-wk .dots i{width:22px; height:22px; border-radius:50%; background:var(--surface-3)}
+  .tf-wk .dots i.on{background:var(--accent);}
+  .tf-wk .dots i.today{box-shadow:inset 0 0 0 2px var(--accent); background:none;}
+  .tf-wk .dots i.fut{background:none; box-shadow:inset 0 0 0 1px var(--surface-2);}
+  .tf-wk .cnt{font-size:12px; color:var(--text-muted); width:18px; text-align:right;}
+  .tf-days{display:flex; gap:9px; margin-left:56px; margin-top:8px; font-family:var(--font-mono); font-size:10px; color:var(--text-muted);}
+  .tf-days span{width:22px; text-align:center;}
+  .tf-badges{display:flex; gap:10px; margin-top:14px;}
+  .tf-badge{flex:1; text-align:center}
+  .tf-badge .c{width:54px; height:54px; border-radius:50%; margin:0 auto; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:20px; font-weight:700; color:var(--ink); background:var(--accent);}
+  .tf-badge .c.lock{background:none; border:2px dashed var(--border); color:var(--border-3);}
+  .tf-badge .t{font-size:11px; margin-top:6px; font-weight:600;}
+  .tf-badge .t.lock{color:var(--text-muted); font-weight:400;}
+  /* Food screen, "Steady" look */
+  .tf-hero-food{ gap:16px; align-items:center}
+  .tf-hero-food svg{flex:0 0 auto;}
+  .fh-row{display:flex}
+  .fh-half{display:flex; align-items:center; gap:8px; flex:1; min-width:0;}
+  .fh-t{display:flex; flex-direction:column; gap:2px; min-width:0;}
+  .fh-v{ font-weight:600; line-height:1; white-space:nowrap}
+  .fh-v em{font-style:normal}
+  .fh-v i{font-style:normal; color:var(--text-muted); font-weight:500}
+  .fh-week{ cursor:pointer}
+  .fh-wn em{font-style:normal; color:var(--gold)}
+  .fh-wn em.over{color:var(--danger);}
+  .fh-bar{ border-radius:5px; background:var(--surface-3); overflow:hidden}
+  .fh-bar i{display:block; height:100%; border-radius:5px; background:linear-gradient(90deg,var(--accent),var(--gold));}
+  .tf-themecard{display:flex; align-items:center; gap:12px; background:linear-gradient(180deg,var(--accent-bg),var(--surface)); border:1px solid var(--accent-line); border-radius:14px; padding:10px 14px; margin:0 0 10px;}
+  .tf-themecard .tx{flex:1; font-size:13px; line-height:1.35;}
+  .tf-themecard .tx b{display:block; font-family:var(--font-display); font-size:17px; font-weight:600;}
+  .tf-themecard button{height:36px; padding:0 14px; border-radius:18px; border:1px solid var(--border-2); background:none; color:var(--text); font-size:13px;}
+  .tf-themecard button.go{background:var(--accent); border-color:var(--accent); color:var(--ink); font-weight:600; text-shadow:none;}
+  .tf-themechip{height:38px; padding:0 14px; border-radius:19px; border:1px solid var(--border-2); background:var(--surface); color:var(--text); font-size:14px; display:flex; align-items:center; gap:8px;}
+  .tf-themechip i{width:12px; height:12px; border-radius:50%}
+  .tf-themechip.on{border-color:var(--accent); color:var(--accent);}
+
+  /* Food tab: compact so the whole screen fits without scrolling */
+  #tab-food .tf-screen-head{padding:8px 4px 4px; flex-direction:row-reverse; justify-content:space-between; align-items:baseline}
+  #tab-food .tf-screen-head h1{font-size:22px;}
+  #tab-food .tf-add svg{width:20px; height:20px;}
+  #tab-food .tf-now:empty{display:none;}
+  .tf-now{font-size:12px; color:var(--text-muted); padding:0 4px;}
+  .tf-now .meta{font-family:Inter,sans-serif; font-size:12px;}
+  .tf-now button.secondary{width:100% !important; padding:9px 12px; font-size:12px !important; font-family:Inter,sans-serif; border-radius:10px; line-height:1.35; margin-top:6px !important;}
+  .tf-now .danger-link{font-size:12px; margin-top:8px !important;}
+  .tf-adds{display:flex}
+  .tf-add{flex:1; min-width:0; display:flex; cursor:pointer}
+  .tf-photo-extra{display:flex; flex-direction:column; align-items:flex-start; gap:2px; margin-top:8px;}
+  .tf-recent{display:flex; overflow-x:auto}
+  .tf-recent .chip{flex:0 0 auto; min-width:150px; max-width:240px;}
+  .tf-recent .chip{border-radius:12px; font-size:14px; padding:11px 14px; display:flex; justify-content:space-between; align-items:center; gap:12px; text-align:left;}
+  .tf-recent .chip .rn{min-width:0; line-height:1.3; -webkit-box-orient:vertical}
+  .tf-recent .chip .rx{flex:none; width:32px; height:32px; margin:-6px -6px -6px 0; border:0; background:none; color:var(--text-muted); font-size:20px; line-height:1; cursor:pointer; border-radius:50%;}
+  .tf-recent .chip .rp{ text-align:right; line-height:1.35}
+  .tf-recent .chip .rp b{color:var(--accent); font-weight:600;}
+  .tf-foodempty{background:var(--surface); border:1px dashed var(--border); border-radius:14px; padding:18px 16px; font-size:14px; color:var(--text-muted); display:flex; flex-direction:column; gap:12px; align-items:flex-start;}
+  .tf-foodempty button{height:36px; padding:0 16px; border-radius:10px; border:1px solid var(--accent); background:none; color:var(--accent); font-weight:600; cursor:pointer;}
+  .tab-panel:not(.hidden){animation:tfFade .18s ease-out;}
+  @keyframes tfFade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+  .tf-calm .tab-panel:not(.hidden), .tf-calm #tfExSheet, .tf-calm #tfExSheet .sheet{animation:none !important; transition:none !important;}
+  @media (prefers-reduced-motion: reduce){.tab-panel:not(.hidden){animation:none;}}
+  button:active:not(:disabled){transform:scale(.98);}
+  .tf-calm button:active:not(:disabled){transform:none;}
+  #foodLogList .list-item{background:var(--surface); border:1px solid var(--border) !important; border-left:4px solid var(--accent) !important; border-radius:10px; padding:12px 14px; margin-bottom:8px;}
+  #foodLogList .tf-fl-row{background:var(--surface); overflow:hidden}
+  #foodLogList .tf-fl-main{display:flex; justify-content:space-between; align-items:center; gap:10px; cursor:pointer}
+  #foodLogList .tf-fl-name{min-width:0; flex:1;}
+  #foodLogList .tf-fl-name .n{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  #foodLogList .tf-fl-name .m{font-family:Inter,sans-serif; color:var(--text-muted)}
+  #foodLogList .tf-fl-pro{ text-align:right; white-space:nowrap}
+  #foodLogList .tf-fl-pro small{ color:var(--text-muted)}
+  #foodLogList .tf-fl-actions{display:flex; gap:14px; padding:0 12px 10px;}
+  #foodLogList{color:var(--text);}
+  #foodLogList > .empty{color:var(--text-muted);}
+  #foodLogList .name{font-size:15px; font-weight:600;}
+  #foodLogList .meta{font-family:Inter,sans-serif; font-size:12px;}
+  .tf-hist-row{display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); cursor:pointer;}
+  .tf-hist-row:last-child{border-bottom:0;}
+  .tf-hist-row .d{font-size:14px; font-weight:600;}
+  .tf-hist-row .s{font-size:12px; color:var(--text-muted); margin-top:2px;}
+  .tf-hist-row .p{font-family:var(--font-display); font-size:20px; font-weight:600;}
+  .tf-hist-row .p small{font-size:12px; color:var(--text-muted); font-weight:500;}
+  /* Coach screen, "Steady" look */
+  .tf-label{ color:var(--text-muted); padding:14px 4px 8px}
+  #morningChecklist{display:none}
+  .tf-tiles{ gap:10px; align-items:stretch}
+  .tf-tile{flex:1}
+  .tf-tile-tag{ font-weight:600}
+  .tf-tile-big{display:flex; align-items:baseline; gap:6px}
+  .tf-tile-big input{width:100%; min-width:0; font-family:var(--font-display); font-weight:600}
+  .tf-tile-big span{font-size:14px; color:var(--text-muted);}
+  .tf-tile-q{font-size:14px; font-weight:600; line-height:1.2}
+  .tf-tile-sub{font-size:12px; color:var(--text-muted); margin-top:4px;}
+  .tf-tile button.primary{ padding:0; border-radius:10px; font-size:14px}
+  .tf-tile .chip{flex:1; text-align:center; font-size:12px; border-radius:10px}
+  .tf-tile .chip.active{background:var(--accent); border-color:var(--accent); color:var(--ink); font-weight:600;}
+  #checkinTagChips .chip{flex:0 0 auto}
+  .tf-more{margin-top:10px; font-size:12px; color:var(--text-muted);}
+  .tf-more summary{ list-style:none}
+  .tf-panel{margin-top:10px; background:var(--surface); padding:14px}
+  #tab-coach .card h2{font-family:Inter,sans-serif; font-size:12px; font-weight:500; color:var(--text-muted); letter-spacing:0; margin:0 0 6px;}
+  #coachNote, #bellCoach{font-family:Inter,sans-serif; font-size:15px; line-height:1.45}
+  .tf-week{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .tf-dots{display:flex; gap:8px;}
+  .tf-dots i{width:26px; height:26px; border-radius:50%; border:2px solid var(--border); display:block;}
+  .tf-dots i.on{background:var(--accent); border-color:var(--accent);}
+  .tf-dots i.today{border-color:var(--accent);}
+  details.tf-row summary{ font-family:Inter,sans-serif; font-weight:600}
+  #tab-coach #startHereBanner .card, #tab-coach #flagsBanner .card{margin-top:4px;}
+  /* Today screen, "Steady" look */
+  .tf-screen-head{padding:18px 4px 12px;}
+  .tf-kicker{ color:var(--text-muted)}
+  .tf-screen-head h1{font-family:var(--font-display); font-size:30px; font-weight:600; margin:2px 0 0; line-height:1.1;}
+  .tf-pending{display:flex; align-items:center; font-size:13px; cursor:pointer}
+  .tf-pending b{color:var(--accent); font-size:18px;}
+  .tf-pending span::first-letter{text-transform:uppercase;}
+  nav.tabs .tab-btn{position:relative;}
+  nav.tabs .tab-btn.has-dot::after{content:""; position:absolute; top:8px; left:calc(50% + 8px); width:8px; height:8px; border-radius:50%; background:var(--gold);}
+  #tab-today > .card{background:none; border:0; padding:0; margin:0; display:flex; flex-direction:column;}
+  #todayWorkoutDetails{order:-1; margin-top:0 !important;}
+  #todayWorkoutDetails > summary{display:none;}
+  #tab-today > .card > details.exercise-group:not(#todayWorkoutDetails){order:1; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-top:10px;}
+  .tf-today-col{display:flex; flex-direction:column;}
+  .tf-focus{order:-3; margin:0 0 10px;}
+  .tf-focus .tf-fbar{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:2px 2px 0;}
+  .tf-focus .tf-flink{ background:none; border-radius:18px; cursor:pointer}
+  .tf-focus .tf-fcard{background:var(--surface); padding:14px 16px; margin-bottom:10px}
+  .tf-focus .tf-ft{font-family:var(--font-display); font-size:26px; font-weight:600; line-height:1.05; margin:4px 0;}
+  .tf-focus .tf-fs{color:var(--text-muted); font-size:13px; line-height:1.4;}
+  .tf-focus .tf-fwide{width:100%; height:44px; border-radius:22px; border:1px solid var(--border-2); background:none; color:var(--text); font-size:14px; cursor:pointer; margin-top:2px;}
+  .tf-today-col.tf-has-focus:not(.tf-focus-chest) #chestBoosterToday{display:none;}
+  .tf-today-col.tf-focus-chest > :not(#todayWorkout):not(.tf-focus):not(#tfMore):not(#tfQuickRow), .tf-today-col.tf-focus-chest #todayWorkout > :not(#chestBoosterToday):not(.tf-focus){display:none !important;}
+  .tf-today-col > .card{order:-2;}
+  .tf-today-col.tf-off #startSessionBtn, .tf-today-col.tf-off #minimumDayBtn{display:none;}
+  #todayWorkout > .card{border-left:1px solid var(--border); border-radius:14px; padding:18px;}
+  #todayWorkout:has(.tf-hero){display:contents; color:var(--text);}
+  #todayWorkout > .empty{padding:16px 4px;}
+  .tf-hero{order:-1; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; margin:0 0 14px; display:flex; gap:16px; align-items:center;}
+  /* Coach: match Today/Food */
+  #tab-coach .tf-screen-head{padding:8px 4px 4px; flex-direction:row-reverse; justify-content:space-between; align-items:baseline}
+  #tab-coach .tf-screen-head h1{font-size:22px;}
+  #tab-coach .tf-label{display:none;}
+  #coachNoteCard .tf-clamp-btn, #coachNoteCard a, #coachNoteCard button{padding-top:2px; padding-bottom:0}
+  #tab-coach .tf-tile button.tf-linkbtn, #tab-coach .tf-tile .tf-clamp-btn, #tab-coach .tf-tile a{padding-top:4px; padding-bottom:0;}
+  #tab-coach .tf-tile button.primary{margin-top:8px; height:36px;}
+  #tab-coach .tf-tile .chip{margin-top:8px; padding:7px 0;}
+  #tab-coach .tf-tile-q{margin-top:4px;}
+  #tab-coach .tf-hero2{order:0}
+  #tab-coach .tf-hero2 .big{font-family:var(--font-display); font-weight:600; line-height:1}
+  #tab-coach .tf-hero2 .big small{font-size:12px; font-family:Inter,sans-serif; color:var(--text-muted); font-weight:500;}
+  .tf-cchips{display:flex}
+  .tf-cchip{flex:1}
+  .tf-cchip b{display:block; font-family:var(--font-display); font-weight:600; line-height:1.1}
+  .tf-cchip b small{font-size:11px; color:var(--text-muted); font-family:Inter,sans-serif; font-weight:500;}
+  .tf-cchip span{font-size:11px; color:var(--text-muted);}
+  .tf-coachhero .tf-clamp-btn{ font-size:12px; padding:6px 0 2px}
+  #tab-coach .tf-weekcard{order:0; margin:0 0 8px;}
+  .tf-dotrow summary{justify-content:flex-start !important}
+  .tf-dotrow summary::before{content:""; display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:10px; background:var(--dc,var(--accent));}
+  .tf-dotrow summary::after{margin-left:auto;}
+  /* Today: session card + week strip + coloured phases */
+  #todayWorkout:has(.tf-hero2){display:contents; color:var(--text); text-align:left;}
+  .tf-hero2{order:-2; border:1px solid var(--accent-deep); border-radius:16px; overflow:hidden; background:linear-gradient(160deg,var(--accent-bg-2) 0%,var(--surface) 65%); margin:0 0 10px;}
+  .tf-hero2-in{padding:14px 16px 12px;}
+  .tf-hero2-k{ color:var(--accent-soft)}
+  .tf-hero2-title{font-family:var(--font-display); font-weight:600; line-height:1.05; margin-top:4px}
+  .tf-hero2-sub{ color:var(--accent-pale); margin-top:2px}
+  .tf-hero2-stats{display:flex; gap:22px; margin-top:12px;}
+  .tf-hero2-stats b{font-family:var(--font-display); font-size:22px; display:block; line-height:1; font-weight:600;}
+  .tf-hero2-stats span{ color:var(--text-muted)}
+  .tf-hero2-bar{display:flex; height:6px;}
+  .tf-weekcard{order:-1; border-radius:14px; margin:0 0 10px}
+  .tf-wk-top{display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted);}
+  .tf-wk-top b{color:var(--accent); font-weight:500;}
+  .tf-wk{display:flex; gap:8px; margin-top:8px;}
+  .tf-wd{flex:1; text-align:center; font-size:10px; color:var(--text-muted);}
+  .tf-wd i{display:flex; align-items:center; justify-content:center; width:100%; aspect-ratio:1; max-width:26px; margin:0 auto 3px; border-radius:50%; border:2px solid var(--border); font-style:normal; font-size:13px; color:var(--ink);}
+  .tf-wd.done i{background:var(--accent); border-color:var(--accent);}
+  .tf-wd.today i{border-color:var(--accent); box-shadow:0 0 0 3px rgba(var(--accent-rgb),.25);}
+  #todayWorkout details.tf-ph-warm summary, #todayWorkout details.tf-ph-cool summary{justify-content:flex-start;}
+  #todayWorkout details.tf-ph-warm summary::after, #todayWorkout details.tf-ph-cool summary::after{margin-left:auto;}
+  .tf-dot{ width:9px; height:9px; border-radius:50%; margin-right:10px}
+  .tf-ph-main{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:11px 14px; margin:0 0 8px;}
+  .tf-ph-main .tf-moves-head{font-family:var(--font-body,Inter,sans-serif); font-size:15px; font-weight:600; letter-spacing:0; text-transform:none; color:var(--text); padding:0; cursor:pointer; align-items:center;}
+  .tf-moves-names{font-size:12px; color:var(--text-muted); margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .tf-ph-main .tf-mv{margin-top:8px;}
+  #todayWorkout details.tf-ph-warm summary::before, #todayWorkout details.tf-ph-cool summary::before{content:""; display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:10px; background:var(--accent);}
+  #todayWorkout details.tf-ph-cool summary::before{background:var(--sand);}
+  .tf-hero svg{flex:0 0 auto;}
+  #tab-today .tf-hero{padding:12px 14px; margin-bottom:8px; gap:12px;}
+  #tab-today .tf-hero svg{width:56px; height:56px;}
+  #tab-today .tf-hero-title{font-size:19px;}
+  #tab-today .tf-hero-sub{margin-top:3px;}
+  #tab-today .tf-screen-head{padding:8px 4px 4px; flex-direction:row-reverse; justify-content:space-between; align-items:baseline}
+  #tab-today .tf-screen-head h1{font-size:22px;}
+  .tf-hero-title{font-family:var(--font-display); font-weight:600; font-size:22px; line-height:1.15;}
+  .tf-hero-sub{font-size:13px; color:var(--text-muted); margin-top:6px;}
+  .tf-moves{display:flex; flex-direction:column; gap:6px}
+  .tf-moves-head{display:flex; justify-content:space-between}
+  .tf-mv{background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:10px; padding:7px 12px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .tf-mv.ss{border-left-color:var(--gold); display:block;}
+  .tf-mv.fin{background:linear-gradient(90deg,var(--accent-bg),var(--surface)); border-color:var(--accent);}
+  .tf-mv-name{font-size:15px; font-weight:600;}
+  .tf-mv-det{font-size:12px; color:var(--text-muted); font-weight:400;}
+  .tf-mv-tag{font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--gold); margin-bottom:5px;}
+  .tf-mv.fin .tf-mv-tag{color:var(--accent); margin-bottom:2px;}
+  .tf-mv hr{border:0; height:1px; background:var(--border); margin:7px 0;}
+  .tf-mv-line{display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:5px 0;}
+  .tf-mv-line .tf-mv-name{flex:1 1 0; min-width:0;}
+  .tf-mv-line .tf-mv-det,.tf-mv > .tf-mv-det{flex:0 0 auto; text-align:right; max-width:46%;}
+  .tf-mv-tag{margin-bottom:2px;}
+  .tf-pill{font-family:var(--font-mono); font-size:10px; color:var(--ink); background:var(--accent); border-radius:99px; padding:4px 8px; flex:0 0 auto;}
+  #todayWorkout details.exercise-group{ padding:10px 14px}
+  #startSessionBtn{order:1; position:sticky; bottom:66px; z-index:4; height:56px; font-size:20px; letter-spacing:1px; text-transform:uppercase; box-shadow:0 -14px 14px -4px var(--bg)}
+  #minimumDayBtn{order:2; background:none; border:0; color:var(--text-muted); font-family:Inter,sans-serif; font-size:13px; padding:12px 0 4px;}
+  #travelModeToggle{order:3; padding:6px 0 !important}
+  #findBarLink, #travelModeExplainer{order:3;}
+  #travelModeExplainer{border-bottom:0 !important; margin-bottom:0 !important; padding-bottom:0 !important;}
+  #travelModeExplainer p{font-size:12px; line-height:1.5; color:var(--text-muted); text-align:center}
+  #travelModeExplainer button{display:block; margin:0 auto; font-size:12px;}
+  #tfWorkoutLinks{order:3; display:flex; justify-content:center; align-items:center; gap:18px; padding:2px 0;}
+  #tfWorkoutLinks .tf-linkbtn{width:auto; padding:8px 0;}
+  #tfWorkoutLinks #genWorkoutBtn{padding:8px 0 !important;}
+  #tfQuickRow{order:4; margin-top:12px;}
+  #tfQuickRow .tf-qr{display:flex; gap:8px;}
+  #tfQuickRow .tf-qbtn{flex:1; min-width:0; color:var(--text); padding:11px 6px; font-size:13px; cursor:pointer; font-family:Inter,sans-serif; display:flex; align-items:center; justify-content:center; gap:5px; white-space:nowrap}
+  #tfQuickRow #findBarLink{margin-top:10px;}
+  #tfQuickRow #travelModeState{font-family:var(--font-mono); font-size:11px}
+  #tfMore{order:5; background:var(--surface); padding:12px 14px; margin-top:14px}
+  #tfMore #travelModeToggle{order:0;}
+  #genWorkoutBtn{font-size:13px !important}
+  .tf-linkbtn{background:none; border:none; font-size:13px; cursor:pointer; display:block}
+  .tf-today-col.tf-off #completeWorkoutBtn, .tf-today-col.tf-off #genWorkoutBtn{display:none;}
+    /* ---- Guided session: full-screen "Block" look. Colour = state (orange = work, dark = rest/warm-up). ---- */
+  #sessionPanel[data-sx]{position:fixed; inset:0; z-index:40; overflow-y:auto; padding:18px 22px 28px; display:flex; flex-direction:column}
+  #sessionPanel[data-sx="work"], #sessionPanel[data-sx="emom"], #sessionPanel[data-sx="hold"], #sessionPanel[data-sx="done"]{background:var(--accent); color:var(--ink);}
+  #sessionPanel[data-sx="rest"], #sessionPanel[data-sx="warm"]{background:var(--surface-deep)}
+  #sessionPanel[data-sx] .card{background:none; padding:0; margin:0; flex:1; display:flex; flex-direction:column}
+  #sessionPanel[data-sx] h2{ font-weight:700; font-size:38px; line-height:1.02; text-transform:uppercase; margin:18px 0 8px}
+  #sessionPanel[data-sx] .meta, #sessionPanel[data-sx] .list-item .meta{color:inherit; opacity:.82; font-size:13px; line-height:1.45;}
+  #sessionPanel[data-sx] .name{font-size:16px}
+  #sessionPanel[data-sx] .list-item{border-bottom-color:rgba(255,255,255,.12);}
+  #sessionPanel[data-sx="work"] .list-item, #sessionPanel[data-sx="emom"] .list-item{border-bottom-color:rgba(var(--ink-rgb),.2);}
+  #sessionPanel[data-sx] button.danger-link{color:inherit !important; opacity:.85; text-decoration:underline; font-size:14px; padding:8px 0;}
+  #sessionPanel[data-sx] button.primary{height:60px; border-radius:30px; font-size:20px; letter-spacing:1px; text-transform:uppercase;}
+  #sessionPanel[data-sx="work"] button.primary, #sessionPanel[data-sx="emom"] button.primary, #sessionPanel[data-sx="hold"] button.primary, #sessionPanel[data-sx="done"] button.primary{background:var(--ink); color:var(--text);}
+  #sessionPanel[data-sx] button.secondary{height:48px; border-radius:24px; border-color:currentColor; opacity:.9}
+  .tf-fin-kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:2px; margin-top:26px;}
+  .tf-fin-big{font-family:var(--font-display); font-weight:700; font-size:118px; white-space:nowrap; line-height:.95; text-transform:uppercase; margin-top:8px;}
+  .tf-fin-day{font-size:16px; font-weight:500; margin-top:6px;}
+  .tf-fin-tiles{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:28px;}
+  .tf-fin-tile{background:var(--ink); color:var(--text); border-radius:16px; padding:14px 16px;}
+  .tf-fin-tile b{display:block; font-family:var(--font-display); font-size:34px; font-weight:600; line-height:1;}
+  .tf-fin-tile span{font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-muted); text-transform:uppercase;}
+  .tf-fin-note{margin-top:22px; font-size:15px; font-weight:500; line-height:1.45;}
+  #sessionPanel[data-sx="work"] #actualRepsInput{background:var(--ink); color:var(--text); border:none; border-radius:16px; font-size:30px; text-align:center; font-family:var(--font-display); padding:14px;}
+  #sessionPanel[data-sx="work"] #actualRepsInput::placeholder{color:var(--text-faint-3); font-size:16px;}
+  #sessionPanel[data-sx] #sessionSwapPanel{background:var(--surface-deep); color:var(--text); padding:12px; border-radius:14px; margin-top:10px;}
+  #sessionPanel[data-sx] #restClock, #sessionPanel[data-sx] #holdClock, #sessionPanel[data-sx] #emomClock{font-family:var(--font-display) !important; font-weight:700 !important; font-size:150px !important; line-height:.9; margin:10px 0 !important; letter-spacing:-2px;}
+  .sx-top{display:flex; justify-content:space-between; align-items:center; font-family:var(--font-mono); font-size:11px; letter-spacing:1px; text-transform:uppercase; opacity:.85;}
+  .sx-bar{height:6px; border-radius:3px; background:rgba(128,128,128,.28); margin:10px 0 0; overflow:hidden;}
+  .sx-bar i{display:block; height:100%; background:currentColor; border-radius:3px;}
+  .sx-hero{font-family:var(--font-display); font-weight:700; font-size:150px; line-height:.9; margin:6px 0 0;}
+  .sx-hero small{display:block; font-family:var(--font-mono); font-weight:500; font-size:13px; letter-spacing:2px; text-transform:uppercase; margin-top:8px; opacity:.85;}
+  .sx-spacer{flex:1; min-height:12px;}
+
+  /* ================= v2 skin: one system across all tabs =================
+     Tier 1 = hero card (accent line), tier 2 = quiet filled card, tier 3 = plain list rows.
+     Orange is for the primary action and progress only. */
+  :root{--font-mono:Inter,-apple-system,sans-serif; --r2:16px;}
+  /* frame */
+  body{padding-bottom:84px;}
+  header{padding:0 12px 0 16px; height:56px; align-items:center}
+  header .hl{display:flex; align-items:baseline; min-width:0;}
+  header h1{font-size:28px; letter-spacing:.2px;}
+  #hDate{font-family:Inter,sans-serif; font-size:13px; color:var(--text-muted); margin-left:10px; white-space:nowrap;}
+  header .hr{display:flex; align-items:center; flex-shrink:0;}
+  #programsBtn{display:none;}
+  #profileBtn{position:relative; width:44px; height:44px; margin:0; border:0; border-radius:22px; display:grid; place-items:center; font-size:0}
+  #profileBtn svg{ height:24px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
+  #profileBtn.active{color:var(--accent);}
+  #profileBtn .status-dot{position:absolute; top:9px; right:9px; width:8px; height:8px; box-shadow:0 0 0 2px var(--bg)}
+  #profileBtn .status-dot.ok{display:none;}
+  .tf-screen-head{display:none}
+  main{padding-top:4px;}
+  nav.tabs{background:var(--surface-deep-2); border-top:1px solid var(--border)}
+  nav.tabs button{padding:8px 4px 6px; font-family:Inter,sans-serif; font-size:11px; font-weight:500; display:flex; flex-direction:column; align-items:center; gap:3px}
+  nav.tabs .pill{ height:30px; border-radius:15px; display:grid; place-items:center}
+  nav.tabs .tab-icon{ height:24px}
+  nav.tabs button.active{color:var(--accent); font-weight:600;}
+  nav.tabs button.active .pill{background:var(--accent-bg);}
+  nav.tabs .tab-btn.has-dot::after{top:6px; left:calc(50% + 10px);}
+  /* tier 2 cards: quiet fill, no borders, no accent stripe */
+  .card, #tab-programs .card, #subtab-library .card, #tab-coach .card, #tab-coach #bellCoachCard{
+    background:var(--surface); border-radius:var(--r2); padding:16px; margin-bottom:12px}
+  .tf-tile, .tf-week, .tf-panel, details.tf-row, .tf-hero-food, .tf-pending, #foodLogList .tf-fl-row, #foodLogList .list-item, .tf-focus .tf-fcard, #tab-today > .card > details.exercise-group:not(#todayWorkoutDetails), .tf-foodempty{
+    border:0 !important; border-radius:var(--r2) !important;}
+  .tf-hero-food, .tf-hero{background:linear-gradient(160deg,var(--accent-bg),var(--surface)) !important; border:1px solid var(--accent-line) !important; border-radius:20px !important;}
+  /* type: sentence case labels instead of mono caps */
+  .tf-kicker, .tf-label, .fh-k, .field-label, .tf-focus .tf-fk, .tf-hero .k{font-family:Inter,sans-serif; letter-spacing:.02em !important; text-transform:none !important; font-size:12px}
+  .tf-focus .tf-fk{color:var(--accent); font-weight:600;}
+  /* buttons: 48px, dark ink on accent, quiet secondary */
+  button.primary{background:var(--accent); color:var(--ink); border-radius:14px; min-height:48px; font-family:Inter,sans-serif; font-size:16px; font-weight:600}
+  .chip.active{color:var(--ink);}
+  button.secondary{color:var(--text); border:1px solid var(--border-2); border-radius:14px; min-height:44px; font-family:Inter,sans-serif; font-size:14px; font-weight:500; letter-spacing:0;}
+  .chip{border-radius:12px; min-height:40px;}
+  input[type=text], input[type=date], input[type=number], select, textarea{border-radius:12px; min-height:46px;}
+  .tf-linkbtn{color:var(--text-muted)}
+  /* checkboxes in the theme color, not the browser blue */
+  input[type=checkbox]{accent-color:var(--accent);}
+
+  /* Today */
+  .tf-pending{ padding:4px 4px 10px; gap:8px; justify-content:flex-start; color:var(--text-muted)}
+  .tf-pending::before{content:""; width:7px; height:7px; border-radius:50%; background:var(--gold); flex:none;}
+  .tf-pending b{display:none;}
+  .tf-focus .tf-flink{border:0; padding:6px 2px; color:var(--text-muted); font-size:13px;}
+  .tf-week{background:none; padding:6px 4px 2px; margin-bottom:6px;}
+  #todayWorkout details.exercise-group, .tf-ph-main{background:var(--surface); border:0 !important; border-radius:0; margin:0 !important; border-top:1px solid var(--border) !important;}
+  #todayWorkout details.tf-ph-warm{border-radius:16px 16px 0 0; border-top:0 !important;}
+  #todayWorkout details.tf-ph-cool{border-radius:0 0 16px 16px; margin-bottom:12px !important;}
+  #todayWorkout details.tf-ph-warm summary::before, #todayWorkout details.tf-ph-cool summary::before{display:none;}
+  #todayWorkout details.exercise-group summary, .tf-ph-main .tf-moves-head{font-size:15px; font-weight:500;}
+  #todayWorkout .tf-dot{display:none;}
+  .tf-mv{border:0; border-left:0; background:var(--surface-2); border-radius:12px;}
+  #tfQuickRow .tf-qbtn{border:0; background:var(--surface); border-radius:14px; min-height:46px; font-weight:500;}
+  #tfMore{ border-radius:var(--r2)}
+
+  /* Coach */
+  #tab-coach .tf-hero2{background:none; border:0; border-radius:0; overflow:visible; margin:0 0 4px}
+  #tab-coach .tf-hero2-k{color:var(--text-muted);}
+  #tab-coach .tf-hero2 .d{ font-weight:500}
+  #tab-coach .tf-cchips{ padding:0 4px}
+  .tf-cchip{ padding:0 8px 0 0}
+  .tf-coachhero{ border:0; border-left:3px solid var(--accent); padding:2px 0 2px 14px}
+  .tf-coachhero .tf-hero2-k{display:none;}
+  .tf-coachhero .tf-clamp-btn{color:var(--text-muted);}
+  .tf-tiles{ background:var(--surface); border-radius:var(--r2); padding:16px}
+  .tf-tiles .tf-tile + .tf-tile{margin-top:14px;}
+  .tf-tiles .tf-tile-tag{ font-size:15px}
+  #logWeightBtn, #saveDailyCheckinBtn{display:none}
+  #weightInput{background:var(--bg)}
+  #tab-coach details.tf-row, details.tf-row{background:var(--surface); padding:0 16px !important; margin:0 !important; border-radius:0 !important; border-top:1px solid var(--border) !important;}
+  details.tf-row > summary{min-height:56px; font-weight:500}
+  details.tf-row[open]{padding-bottom:14px !important;}
+  .tf-dotrow summary::before{content:""; width:20px !important; height:20px !important; border-radius:0 !important; margin-right:12px !important; background:var(--text-muted) !important; -webkit-mask:var(--ic) center/contain no-repeat; mask:var(--ic) center/contain no-repeat;}
+  #chestBoosterDetails{--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");}
+  #notesDetails{--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M5 4h14v16H5zM9 9h6M9 13h6'/%3E%3C/svg%3E");}
+  #weeklyReviewDetails{--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M4 19V9M10 19V5M16 19v-7'/%3E%3C/svg%3E");}
+  #bodyCompDetails{--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='12' cy='6' r='3'/%3E%3Cpath d='M6 21v-6a6 6 0 0 1 12 0v6'/%3E%3C/svg%3E");}
+  /* chevron instead of + on rows */
+  details.exercise-group > summary::after{content:"›" !important; font-size:22px; color:var(--text-muted); line-height:1; transition:transform .15s;}
+  details.exercise-group[open] > summary::after{content:"›" !important; transform:rotate(90deg);}
+  /* Food */
+  
+  #tab-food .fh-k{order:2}
+  #tab-food .tf-add{ align-items:center; justify-content:center; gap:8px; background:var(--surface); padding:0 8px}
+  #tab-food .tf-add.main{ background:var(--accent); color:var(--ink)}
+  .tf-recent .chip{border:0; background:var(--surface); min-height:36px}
+  #foodLogList .tf-fl-row:only-of-type{border-radius:16px !important;}
+  #dayStrip{ border:0}
+  /* Progress */
+  .tf-ptile{border:0; background:var(--surface)}
+  .tf-pcard{ border-radius:var(--r2)}
+  .tf-stat{border:0 !important;}
+  /* Settings */
+  #tfSetTiles{display:none}
+  .tf-sec{font-family:Inter,sans-serif; font-size:12px; font-weight:600; letter-spacing:.06em; margin:18px 4px 8px}
+  .tf-setrow{width:100%; min-height:56px; display:flex; align-items:center; justify-content:space-between; background:var(--surface); border:0; border-radius:var(--r2); color:var(--text); font-family:Inter,sans-serif; font-size:15px; font-weight:500; padding:0 16px; margin-top:6px; text-shadow:inherit; cursor:pointer;}
+  .tf-setrow b{font-size:22px; color:var(--text-muted); font-weight:400;}
+  .tf-sv{margin-left:auto; margin-right:8px; font-size:13px; font-weight:400; color:var(--text-muted);}
+  #tab-settings details.tf-row{border-radius:var(--r2) !important; border-top:0 !important; margin-bottom:8px !important;}
+  #tab-settings details.tf-row > summary{justify-content:flex-start;}
+  .tf-switch{display:flex; align-items:center; justify-content:space-between; margin-top:14px; font-size:15px; cursor:pointer;}
+  .tf-switch input{position:absolute; opacity:0; width:1px; height:1px;}
+  .tf-switch i{width:46px; height:28px; border-radius:14px; position:relative; flex:none}
+  .tf-switch i::after{content:""; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:11px; background:var(--text-muted); transition:transform .15s, background .15s;}
+  .tf-switch input:checked + i{background:var(--accent);}
+  .tf-switch input:checked + i::after{transform:translateX(18px); background:var(--ink);}
+  .tf-build{text-align:center; margin:18px 0 0; font-family:Inter,sans-serif; font-size:12px; color:var(--text-faint);}
+  .tf-build:empty{display:none;}
+
+  /* round 2 fixes */
+  details.exercise-group > summary::after{margin-left:auto;}
+  #foodHistoryDetails, #progressDetails, #programManage, #setTrainingDetails, #setDataDetails{border-radius:var(--r2) !important; border-top:0 !important; margin-bottom:8px !important;}
+  #photoOptionsToggle, #myFoodsOpen{color:var(--text-muted)}
+  #tab-food .tf-add{white-space:nowrap}
+  .tf-empty button, .tf-foodempty button{border-color:var(--border-2); color:var(--text);}
+
+  /* round 3 polish */
+  [data-chest-phase]{border:0 !important; border-radius:14px !important;}
+  .tf-weekcard{ padding:6px 4px}
+  .tf-hero2-k{font-family:Inter,sans-serif; letter-spacing:.02em; font-size:12px}
+  .tf-hero2-title{ font-size:40px}
+  .tf-ph-main .tf-moves-head > span:last-child{ font-size:13px; font-weight:400}
+  #dismissTravelModeLegendBtn, #dismissWaistExplainerBtn{color:var(--text-muted)}
+  #todayWorkout .meta[style*="var(--accent)"]{color:var(--text-muted) !important;}
+  .tf-hero2-stats span{font-size:12px;}
+
+  #tfQuickRow{padding-bottom:28px;}
+  #saveCardioBtn{background:var(--accent); color:var(--ink); border:0; font-weight:600; min-height:48px;}
+
+  /* ===== Coach, one screen: Progress folded in ===== */
+  nav.tabs .pill{width:72px;}
+  #tab-coach .tf-hero2-in{padding:2px 4px 4px;}
+  #tab-coach .tf-hero2-k{font-size:11px}
+  #tab-coach .tf-hero2 .big{font-size:44px}
+  #tab-coach .tf-hero2 .d{ font-size:14px}
+  #tab-coach .tf-cchips{margin:4px 0 8px;}
+  .tf-cchip b{font-size:19px;}
+  #coachNoteCard{margin:0 4px 10px}
+  #coachNoteCard .meta{display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:14px; line-height:1.4}
+  #coachNoteCard .tf-clamp-btn, #coachNoteCard button, #coachNoteCard a{display:none;}
+  #coachNoteCard.open .meta{-webkit-line-clamp:unset; overflow:visible;}
+  #coachNoteCard.open .tf-clamp-btn, #coachNoteCard.open button, #coachNoteCard.open a{display:inline-block;}
+  /* log card: weight + energy on one row, one Save, options underneath */
+  #tab-coach .tf-tiles{display:grid; grid-template-columns:1.25fr 2fr; gap:8px; align-items:center; padding:12px; margin-bottom:10px}
+  #tab-coach .tf-tiles .tf-tile{display:contents;}
+  #tab-coach .tf-tile-tag, #tab-coach .tf-tile-q, #tfLastWeight, #dailyCheckinSavedHint{display:none;}
+  #tab-coach .tf-tile-big{ position:relative}
+  #tab-coach .tf-tile-big input{font-size:18px; min-height:44px; padding:6px 30px 6px 12px}
+  #tab-coach .tf-tile-big span{position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:12px; pointer-events:none;}
+  #checkinEnergyChips .chip{margin:0 !important; min-height:44px; display:grid; place-items:center; padding:0 !important; font-size:14px;}
+  #logTodayBtn{grid-column:1/-1; grid-row:2; margin:2px 0 0; min-height:46px}
+  #tab-coach .tf-tiles .tf-more{grid-row:3; margin:0}
+  #tab-coach .tf-tiles .tf-more summary{padding:4px 2px;}
+  #weighInDetails > .tf-more{grid-column:1;}
+  #dailyCheckinDetails > .tf-more{grid-column:2;}
+  #tab-coach .tf-tiles .tf-more[open]{grid-column:1/-1;}
+  /* this-week card */
+  .tf-wk3{display:flex; gap:8px; background:var(--surface); border-radius:var(--r2); padding:12px 14px; margin-bottom:10px;}
+  .tf-wk3 button{flex:1; min-width:0; background:none; border:0; padding:0; text-align:left; color:var(--text-muted); font-family:Inter,sans-serif; font-size:12px; cursor:pointer; text-shadow:inherit;}
+  .tf-wk3 b{ font-family:var(--font-display); font-size:22px; font-weight:600; color:var(--text); line-height:1.1}
+  .tf-wk3 .dots3{display:flex; gap:4px; margin-top:6px;}
+  .tf-wk3 .dots3 i{width:10px; height:10px; border-radius:50%; background:var(--surface-3);}
+  .tf-wk3 .dots3 i.o{background:var(--accent);}
+  .tf-wk3 .bar{ height:5px; border-radius:3px; background:var(--surface-3); margin-top:8px; overflow:hidden}
+  .tf-wk3 .bar i{display:block; height:5px; background:var(--accent);}
+  /* 2x2 tile grid + full-width Details row */
+  .tf-g2{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;}
+  .tf-g2 > details.tf-row > summary{min-height:52px; font-size:14px; white-space:nowrap}
+  .tf-g2 > details.tf-row > summary::after{display:none !important;}
+  .tf-g2 > details.tf-row .tf-sv{font-size:12px; margin-right:0;}
+  .tf-g2 > details.tf-row[open]{grid-column:1/-1}
+  .tf-g2 > details.tf-wide{grid-column:1/-1;}
+  .tf-g2 > details.tf-wide > summary::after{display:block !important; content:"›" !important;}
+  #tfWeekCard{display:none;}
+
+  .tf-g2{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+  .tf-g2 > details.tf-row{min-width:0;}
+  .tf-g2 > details.tf-row > summary{overflow:hidden; text-overflow:ellipsis;}
+  .tf-g2 .tf-dotrow summary::before{margin-right:10px !important; flex:none;}
+  #progressDetails{--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E");}
+  .tf-wk3 button{display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-start;}
+  #tab-coach{overflow-x:hidden;}
+
+  #tab-coach .tf-g2 > details.tf-row{border-top:0 !important; border-radius:14px !important}
+
+  /* ===== Food, calmer ===== */
+  
+  #tab-food .fh-row{justify-content:space-between; align-items:center; gap:12px;}
+  #tab-food .fh-half{ align-items:center; gap:10px; text-align:left; justify-content:flex-start}
+  #tab-food .fh-t{align-items:flex-start;}
+  #tab-food .fh-ring{width:54px; height:54px;}
+  #tab-food .fh-ring text:nth-of-type(2){display:none;}
+  #tab-food .fh-v i{font-size:12px; margin-left:3px;}
+  #tab-food .fh-k{ color:var(--text-muted)}
+  #tab-food .fh-week{display:flex; align-items:center; gap:10px; margin-top:12px}
+  #tab-food .fh-week .fh-k{order:0}
+  #tab-food .fh-week .fh-bar{flex:1; height:7px;}
+  #tab-food .fh-wn{white-space:nowrap; font-size:13px; color:var(--text-muted);}
+  #tab-food .tf-adds{ gap:8px}
+  #tab-food .tf-add.tf-more{flex:0 0 52px; padding:0; margin:0; border:0; font:inherit}
+  #tab-food .tf-add.tf-more.open{ background:var(--accent-bg)}
+  #tab-food .tf-add.tf-more svg{width:22px; height:22px;}
+  #tab-food .tf-recent{gap:8px; padding-bottom:2px; scrollbar-width:none;}
+  #tab-food .tf-recent::-webkit-scrollbar{display:none;}
+  #tab-food .tf-recent .chip{min-width:0; max-width:220px; padding:0 14px; gap:8px; justify-content:flex-start; white-space:nowrap}
+  #tab-food .tf-recent .chip .rn{ overflow:hidden; text-overflow:ellipsis}
+  #tab-food .tf-recent .chip .rp{font-family:Inter,sans-serif; color:var(--text-muted); flex:none}
+  #tab-food .tf-recent .chip.tf-all{color:var(--text-muted); background:none; padding:0 8px;}
+  #tab-food .tf-label{font-size:13px}
+  #tab-food .tf-muted{ letter-spacing:0}
+  #tab-food #myFoodsPanel{margin-top:8px;}
+  .tf-my-hide{color:var(--text-muted) !important}
+  #foodLogList .tf-fl-group{border-radius:16px; overflow:hidden; background:var(--surface);}
+  #foodLogList .tf-fl-group .tf-fl-row{border-radius:0 !important; border-top:1px solid var(--border) !important}
+  #foodLogList .tf-fl-group .tf-fl-row:first-child{border-top:0 !important;}
+  #foodLogList .tf-fl-more{padding:10px 4px 0; font-size:13px; color:var(--text-muted); cursor:pointer;}
+  #tab-food #foodHistoryOpen{ letter-spacing:0}
+  #tab-food #dayStrip{margin-bottom:0 !important;}
+  #foodHistoryDetails > summary{display:none;}
+  #foodHistoryDetails:not([open]){display:none;}
+  #foodHistoryDetails[open]{margin-top:8px !important}
+
+  /* ===== Food, match Coach/Today: Inter numerals, 48px buttons, same radii and rhythm ===== */
+  #tab-food .fh-v, #tab-food .fh-wn em, #foodLogList .tf-fl-pro, #tab-food .tf-add.main span{font-family:var(--font-display); font-variant-numeric:tabular-nums}
+  #tab-food .fh-v em{ font-size:21px}
+  #tab-food .fh-wn em{font-weight:600; font-size:17px;}
+  #tab-food .fh-ring text{font-family:var(--font-display); font-weight:600; font-size:17px}
+  #tab-food .tf-add.main span{ font-weight:600}
+  #tab-food .tf-add{height:48px; border-radius:14px; font-size:15px; font-weight:500;}
+  #tab-food .tf-add.tf-more{flex-basis:48px;}
+  #tab-food .tf-add.main{flex:1.3;}
+  #tab-food .tf-adds{margin-top:12px;}
+  #tab-food #recentWrap{margin-top:12px;}
+  #tab-food .tf-recent .chip{border-radius:14px; height:38px; min-height:38px;}
+  #tab-food .tf-label{padding:18px 4px 8px;}
+  #foodLogList .tf-fl-pro{font-size:16px; font-weight:600;}
+  #foodLogList .tf-fl-pro small{font-size:12px; font-weight:400;}
+  #foodLogList .tf-fl-name .n{font-size:15px; font-weight:500;}
+  #foodLogList .tf-fl-name .m{font-size:12px;}
+  #foodLogList .tf-fl-main{padding:10px 16px}
+  #tab-food #dayStrip{background:var(--surface); padding:14px 16px 10px !important}
+
+  /* Notes now lives inside History (no tile): match the other History cards */
+  #notesDetails > p.meta{font-size:13px; color:var(--text-muted);}
+  #notesDetails textarea{background:var(--surface-2); border:1px solid var(--border-2); border-radius:12px; color:var(--text); padding:12px; font-family:Inter,sans-serif; font-size:15px; resize:vertical;}
+  #notesDetails textarea::placeholder{color:var(--text-muted);}
+  #notesDetails h2 .tf-sv{margin-left:8px;}
+
+  /* ===== Editorial: Rubik display face, hairline cards, small-caps labels, week ribbon =====
+     Final override layer. !important is used here on purpose: the older per-screen blocks use ID selectors. */
+  #hTitle{font-family:var(--font-display); font-weight:600; font-size:34px; letter-spacing:-.01em}
+  #hDate{font-size:14px; color:var(--text-muted)}
+  header{border-bottom:1px solid var(--border-2); padding-bottom:10px}
+  .tf-hero2 .big, #tab-coach .tf-hero2 .big, .tf-hero2-title, .tf-tile-big input, .tf-stat b, .tf-cchip b, .tf-hero2-stats b, #foodLogList .tf-fl-name .n, #todayWorkout .tf-fk{font-family:var(--font-display) !important; font-weight:600; letter-spacing:-.01em}
+  button.primary{font-family:var(--font-display) !important; font-weight:600; letter-spacing:.01em;}
+  .tf-label, .tf-kicker, .tf-hero2-k, .fh-k, .tf-tile-tag{text-transform:uppercase !important; letter-spacing:.14em !important; font-size:10.5px !important; color:var(--text-muted);}
+  .tf-hero-food, .tf-hero, .tf-focus .tf-fcard, #coachNoteCard{background:var(--surface) !important; border:1px solid var(--border-2) !important; border-radius:12px !important;}
+  .tf-tile, .tf-tiles, .tf-wk3, #coachWeekCard, .tf-g2 > details.tf-row, details.tf-row, #foodLogList .tf-fl-group, #tab-food #dayStrip, .tf-qbtn, .tf-add, #tab-food .tf-recent .chip{border-radius:10px !important; background:var(--surface) !important; border:1px solid var(--border) !important;}
+  #tab-food .tf-add.main, button.primary, #logTodayBtn, #startSessionBtn{background:var(--accent) !important; border-radius:10px !important; border:0 !important;}
+  nav.tabs .pill{border-radius:10px}
+  #foodLogList .tf-fl-row{border-color:var(--border) !important;}
+  .tf-weekcard{display:none !important}
+
+  #wkRibbon{padding:8px 18px 6px; border-bottom:1px solid var(--border); margin-bottom:6px;}
+  #wkRibbon[hidden]{display:none;}
+  #wkRibbon .wr-row{display:flex; justify-content:space-between;}
+  #wkRibbon .wr-d{flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-muted);}
+  #wkRibbon .wr-c{width:20px; height:20px; border-radius:50%; box-sizing:border-box; display:grid; place-items:center;}
+  #wkRibbon .train .wr-c{border:2px solid var(--accent);}
+  #wkRibbon .chest .wr-c{border:2px solid var(--gold);}
+  #wkRibbon .rest .wr-c{border:1.5px dashed var(--border-2);}
+  #wkRibbon .done .wr-c{background:var(--accent); border-color:var(--accent); color:var(--ink);}
+  #wkRibbon .done.chest .wr-c{background:var(--gold); border-color:var(--gold);}
+  #wkRibbon .today .wr-c{box-shadow:0 0 0 3px var(--accent-bg);}
+  #wkRibbon .today{color:var(--text); font-weight:600;}
+
+  /* Spacing utilities (replace repeated inline style="margin-top:..") */
+  .mt0{margin-top:0}.mt4{margin-top:4px}.mt6{margin-top:6px}.mt8{margin-top:8px}.mt10{margin-top:10px}.mt12{margin-top:12px}
+  .mb4{margin-bottom:4px}.mb6{margin-bottom:6px}.mb8{margin-bottom:8px}.mb10{margin-bottom:10px}
+  .fx1{flex:1}.w100{width:100%}.mlauto{margin-left:auto}
