@@ -35,3 +35,21 @@ CREATE TABLE IF NOT EXISTS programs (
   locked INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL
 );
+
+-- Safety net: rolling snapshots of app_state. A trigger copies the PREVIOUS
+-- blob into app_state_history before a write, at most once per hour, keeping
+-- the latest 30. Needs no Worker change. Already applied to the live DB.
+-- Restore (example): UPDATE app_state SET data=(SELECT data FROM app_state_history WHERE id=N) WHERE id=1;
+CREATE TABLE IF NOT EXISTS app_state_history (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  data TEXT NOT NULL,
+  saved_at TEXT NOT NULL,
+  snapped_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+CREATE TRIGGER IF NOT EXISTS app_state_snapshot BEFORE UPDATE OF data ON app_state
+WHEN length(OLD.data) > 1000
+ AND COALESCE((SELECT MAX(snapped_at) FROM app_state_history), '') < strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 hour')
+BEGIN
+  INSERT INTO app_state_history (data, saved_at) VALUES (OLD.data, OLD.updated_at);
+  DELETE FROM app_state_history WHERE id NOT IN (SELECT id FROM app_state_history ORDER BY id DESC LIMIT 30);
+END;
