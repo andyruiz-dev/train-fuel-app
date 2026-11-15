@@ -13,6 +13,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Roboto+Mono:wght@500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script>try{var __tv=localStorage.getItem("tf_theme_vars");if(__tv){var __o=JSON.parse(__tv),__r=document.documentElement;for(var __k in __o.vars)__r.style.setProperty(__k,__o.vars[__k]);}}catch(e){}</script>
 <style>
+  /* ---------------------------------------------------------------------
+     STYLE MAP (read before editing)
+     Order matters: later rules override earlier ones, so do not reorder blocks.
+     1. Tokens and base: :root variables, themes, body, header, tab bar.
+     2. Legacy per-screen blocks ("Steady" look): Program, Progress, Food, Coach, Today.
+        Layout and structure live here.
+     3. v2 skin ("one system across all tabs"): the 3 card tiers, 48px buttons, sentence-case
+        labels, chevron rows. Deliberately overrides block 2.
+     4. Later rounds, newest last: Coach one-screen, Food calmer, Food match.
+        To change a screen, edit the LAST block that mentions its selector.
+     Rules: colours come from the :root variables, never hex. No new !important
+     unless an inline style must be beaten. Check every change with the
+     screenshot and computed-style comparison before pushing.
+     --------------------------------------------------------------------- */
+
   :root{
     --accent:#FF7A3D;
     --accent-dark:#D9541C;
