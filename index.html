@@ -1283,7 +1283,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-14 19:10 CT";
+const APP_BUILD = "2026-11-14 17:25 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -5411,15 +5411,8 @@ function chestBoosterHtml(opts) {
       ${action}
     </div></div>${extra}${rowsHtml}`;
 }
-function workoutDaysThisWeek() {
-  const days = weekDayList(0), done = new Set((state.logs || []).map(l => dayKeyOf(l.date)));
-  return days.filter(d => done.has(d)).length;
-}
-function weekGoalMet() { return workoutDaysThisWeek() >= (state.settings?.weeklyWorkoutGoal || 3); }
 function chestRecommended() {
   if (chestSetsInWeek(weekDayList(0)) >= CHEST_WEEKLY_SETS) return "workout";
-  // Weekly workout goal already met: the rest of the week is rest, with the chest booster as the optional extra.
-  if (weekGoalMet()) return "chest";
   const y = new Date(); y.setDate(y.getDate() - 1);
   const yd = localDateStr(y);
   return (state.logs || []).some(l => localDateStr(new Date(l.date)) === yd) ? "chest" : "workout";
@@ -5533,9 +5526,7 @@ function renderTodayWorkout(workout) {
   // aren't the same thing once you've already trained today.
   const previewNote = hasLoggedWorkoutToday()
     ? `<div class="meta" style="color:var(--accent); margin-bottom:8px;">Already logged a session today — this is a preview of what's queued up next.</div>`
-    : weekGoalMet()
-      ? `<div class="meta" style="color:var(--accent); margin-bottom:8px;">Weekly goal met (${workoutDaysThisWeek()} of ${state.settings?.weeklyWorkoutGoal || 3}). Today is rest. This session is optional.</div>`
-      : "";
+    : "";
 
   // A day in the rotation can legitimately have zero slots (the rest day
   // balanceProgramStructure guarantees every phase has) — that generates a
