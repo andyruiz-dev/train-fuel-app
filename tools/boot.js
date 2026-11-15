@@ -1,0 +1,12 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];
+const ctx=await b.newContext({viewport:{width:390,height:844}});
+await ctx.addInitScript(()=>{try{localStorage.setItem('trainFuelLastTab','today')}catch(e){}});
+const p=await ctx.newPage();p.on('pageerror',e=>errs.push(e.message));
+await p.route('**/api/**',r=>{const m=r.request().method();r.fulfill({status:200,contentType:'application/json',body:m==='PUT'?'{}':(r.request().url().includes('/api/state')?'{}':'[]')})});
+const vis=()=>p.evaluate(()=>({panel:[...document.querySelectorAll('.tab-panel:not(.hidden)')].map(e=>e.id),btn:document.querySelector('.tab-btn.active')?.dataset.tab,title:document.getElementById('hTitle').textContent}));
+await p.goto('file://'+require('path').join(__dirname,'..','index.html'));await p.waitForTimeout(2500);console.log('fresh open w/ saved today:',JSON.stringify(await vis()));
+await p.click('nav.tabs .tab-btn[data-tab="today"]');await p.waitForTimeout(300);console.log('after tap Today:',JSON.stringify(await vis()));
+await p.reload();await p.waitForTimeout(2500);console.log('after reload:',JSON.stringify(await vis()));
+await p.click('nav.tabs .tab-btn[data-tab="food"]');await p.click('#profileBtn');await p.click('#profileBtn');await p.waitForTimeout(300);console.log('settings round-trip from Food:',JSON.stringify(await vis()));
+console.log('errors',errs.filter(e=>!/ServiceWorker/.test(e)));await b.close()})();

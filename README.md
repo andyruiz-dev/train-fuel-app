@@ -74,3 +74,8 @@ day's workout) but still need:
 
 None of these require changing how data is stored, so adding them won't risk
 breaking what's already saved — that was the core ask.
+
+## Layout and checks
+- `index.html` (markup), `styles.css` (all styling; see the STYLE MAP comment at the top), `js/*.js` (classic scripts, loaded in order: app-core → exercises → engine → program-builtin → tracking → progress → session → ui).
+- `tools/` has headless test scripts using synthetic data. Run `bash tools/check.sh` before pushing (see `tools/README.md`).
+- Saves are three-way merged against the last-synced copy, so two devices don't overwrite each other. The D1 database also keeps rolling snapshots (see `worker/schema.sql`).
