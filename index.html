@@ -883,6 +883,48 @@
   #tab-coach{overflow-x:hidden;}
 
   #tab-coach .tf-g2 > details.tf-row{border-top:0 !important; border-radius:14px !important; margin:0 !important;}
+
+  /* ===== Food, calmer ===== */
+  #tab-food .tf-hero-food{padding:14px 16px 12px; border-radius:20px;}
+  #tab-food .fh-row{justify-content:space-between; align-items:center; gap:12px;}
+  #tab-food .fh-half{flex-direction:row; align-items:center; gap:10px; text-align:left; justify-content:flex-start;}
+  #tab-food .fh-t{align-items:flex-start;}
+  #tab-food .fh-ring{width:54px; height:54px;}
+  #tab-food .fh-ring text:nth-of-type(2){display:none;}
+  #tab-food .fh-ring text{font-size:20px !important;}
+  #tab-food .fh-v em{font-size:20px;}
+  #tab-food .fh-v i{font-size:12px; margin-left:3px;}
+  #tab-food .fh-k{font-size:12px; color:var(--text-muted);}
+  #tab-food .fh-week{display:flex; align-items:center; gap:10px; margin-top:12px; padding-top:0; border-top:0;}
+  #tab-food .fh-week .fh-k{order:0; font-size:13px;}
+  #tab-food .fh-week .fh-bar{flex:1; height:7px;}
+  #tab-food .fh-wn{white-space:nowrap; font-size:13px; color:var(--text-muted);}
+  #tab-food .fh-wn em{font-size:18px;}
+  #tab-food .tf-adds{margin-top:10px; gap:8px;}
+  #tab-food .tf-add.tf-more{flex:0 0 52px; padding:0; margin:0; color:var(--text-muted); border:0; font:inherit;}
+  #tab-food .tf-add.tf-more.open{color:var(--accent); background:var(--accent-bg);}
+  #tab-food .tf-add.tf-more svg{width:22px; height:22px;}
+  #tab-food #recentWrap{margin-top:10px;}
+  #tab-food .tf-recent{gap:8px; padding-bottom:2px; scrollbar-width:none;}
+  #tab-food .tf-recent::-webkit-scrollbar{display:none;}
+  #tab-food .tf-recent .chip{min-width:0; max-width:220px; height:36px; min-height:36px; padding:0 14px; border-radius:18px; font-size:14px; gap:8px; justify-content:flex-start; white-space:nowrap;}
+  #tab-food .tf-recent .chip .rn{display:block; -webkit-line-clamp:unset; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:0 1 auto;}
+  #tab-food .tf-recent .chip .rp{font-family:Inter,sans-serif; font-size:14px; color:var(--text-muted); flex:none;}
+  #tab-food .tf-recent .chip.tf-all{color:var(--text-muted); background:none; padding:0 8px;}
+  #tab-food .tf-label{font-size:13px !important; padding:14px 4px 6px; color:var(--text-muted);}
+  #tab-food .tf-muted{font-family:Inter,sans-serif; font-size:13px; color:var(--text-muted); letter-spacing:0; text-transform:none;}
+  #tab-food #myFoodsPanel{margin-top:8px;}
+  .tf-my-hide{color:var(--text-muted) !important; font-size:12px;}
+  #foodLogList .tf-fl-head{display:none;}
+  #foodLogList .tf-fl-group{border-radius:16px; overflow:hidden; background:var(--surface);}
+  #foodLogList .tf-fl-group .tf-fl-row{border-radius:0 !important; border-top:1px solid var(--border) !important; margin:0 !important;}
+  #foodLogList .tf-fl-group .tf-fl-row:first-child{border-top:0 !important;}
+  #foodLogList .tf-fl-more{padding:10px 4px 0; font-size:13px; color:var(--text-muted); cursor:pointer;}
+  #tab-food #foodHistoryOpen{font-family:Inter,sans-serif; letter-spacing:0; text-transform:none; color:var(--text-muted);}
+  #tab-food #dayStrip{margin-bottom:0 !important;}
+  #foodHistoryDetails > summary{display:none;}
+  #foodHistoryDetails:not([open]){display:none;}
+  #foodHistoryDetails[open]{margin-top:8px !important; padding-top:12px;}
 </style>
 </head>
 <body>
@@ -986,7 +1028,7 @@
     <div id="macroSummary" class="hidden"></div>
     <div id="foodNow" class="tf-now"></div>
 
-    <div class="tf-label" style="display:flex; justify-content:space-between; align-items:center;"><span>Add food</span><button type="button" class="danger-link" id="photoOptionsToggle" style="color:var(--accent); font-family:Inter,sans-serif; font-size:12px; letter-spacing:0; text-transform:none; padding:0;">Photo options ▾</button></div>
+    
     <div id="pastDayBanner" class="hidden" style="margin:0 0 10px; padding:10px 12px; border:1px solid var(--accent); border-radius:12px; color:var(--accent); font-size:14px; display:flex; justify-content:space-between; gap:8px; align-items:center;"><span id="pastDayBannerText"></span><span id="pastDayBack" role="button" tabindex="0" style="text-decoration:underline; cursor:pointer; white-space:nowrap;">Back to today</span></div>
     <div class="tf-adds">
       <div class="tf-add main" id="foodPhotoDrop" role="button" tabindex="0">
@@ -1001,6 +1043,7 @@
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 6h14M5 12h14M5 18h8"/></svg>
         <span>Exact</span>
       </div>
+      <button type="button" class="tf-add tf-more" id="photoOptionsToggle" aria-label="Photo options" aria-expanded="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
     </div>
     <div id="photoOptions" class="hidden">
     <div class="tf-label" style="margin-top:6px;">What is it? (optional, helps the estimate)</div>
@@ -1058,7 +1101,7 @@
     </div>
 
     <div id="recentWrap" class="hidden">
-      <div class="tf-label" style="display:flex; justify-content:space-between;"><span>Recent foods</span><span id="myFoodsOpen" role="button" tabindex="0" style="color:var(--accent); cursor:pointer;">All my foods</span></div>
+      <span id="myFoodsOpen" hidden></span>
       <div class="tf-recent" id="recentFoods"></div>
     </div>
     <div id="myFoodsPanel" class="hidden tf-panel">
@@ -1066,10 +1109,10 @@
       <div id="myFoodsList"></div>
     </div>
 
-    <div class="tf-label" style="display:flex; justify-content:space-between; align-items:center; padding-top:4px; padding-bottom:2px;"><span id="tfLogLabel">Today's log</span><span style="display:flex; gap:14px; align-items:center;"><span id="tfBackToday" class="hidden" role="button" tabindex="0" style="color:var(--accent); cursor:pointer;">Back to today</span><span id="foodLogPartialRow" style="position:relative;"></span></span></div>
+    <div class="tf-label" style="display:flex; justify-content:space-between; align-items:center; padding-top:4px; padding-bottom:2px;"><span id="tfLogLabel">Today</span><span style="display:flex; gap:14px; align-items:center;"><span id="tfLogCount" class="tf-muted"></span><span id="tfBackToday" class="hidden" role="button" tabindex="0" style="color:var(--accent); cursor:pointer;">Back to today</span><span id="foodLogPartialRow" style="position:relative;"></span></span></div>
     <div id="foodLogList" class="empty">Nothing logged for this day.</div>
 
-    <div class="tf-label" style="display:flex; justify-content:space-between; margin-top:0;"><span>Last 7 days</span><span style="text-transform:none; letter-spacing:0; font-family:Inter,sans-serif;">tap a day to open it</span></div>
+    <div class="tf-label" style="display:flex; justify-content:space-between; margin-top:0;"><span>Last 7 days</span><span id="foodHistoryOpen" role="button" tabindex="0" style="cursor:pointer;">History ›</span></div>
     <div id="dayStrip" class="tf-hero-food" style="display:block; padding:8px 14px 6px; margin-bottom:6px;"></div>
     <details class="exercise-group tf-row" id="foodHistoryDetails" style="margin-top:0;">
       <summary>Older days and date jump</summary>
@@ -1512,7 +1555,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-15 14:10 CT";
+const APP_BUILD = "2026-11-15 15:00 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -7201,7 +7244,7 @@ function weekBudgetNumbers() {
 }
 function foodRing(frac, centerTop, centerSub, color) {
   const C = 2 * Math.PI * 34;
-  return `<svg width="80" height="80" viewBox="0 0 84 84" role="img"><circle cx="42" cy="42" r="34" fill="none" stroke="var(--track)" stroke-width="9"/><circle cx="42" cy="42" r="34" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - Math.max(0, Math.min(1, frac)))).toFixed(1)}" transform="rotate(-90 42 42)"/>${centerTop === "✓" ? `<path d="M30 43l9 9 16-18" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>` : `<text x="42" y="44" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="${String(centerTop).length > 5 ? 17 : 21}" font-weight="600" fill="var(--text)">${centerTop}</text>`}<text x="42" y="58" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="8" fill="var(--text-muted)" letter-spacing="1">${centerSub}</text></svg>`;
+  return `<svg class="fh-ring" width="80" height="80" viewBox="0 0 84 84" role="img"><circle cx="42" cy="42" r="34" fill="none" stroke="var(--track)" stroke-width="9"/><circle cx="42" cy="42" r="34" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - Math.max(0, Math.min(1, frac)))).toFixed(1)}" transform="rotate(-90 42 42)"/>${centerTop === "✓" ? `<path d="M30 43l9 9 16-18" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>` : `<text x="42" y="44" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="${String(centerTop).length > 5 ? 17 : 21}" font-weight="600" fill="var(--text)">${centerTop}</text>`}<text x="42" y="58" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="8" fill="var(--text-muted)" letter-spacing="1">${centerSub}</text></svg>`;
 }
 function renderFoodHero(totals, t, entryCount) {
   const kick = document.getElementById("tfFoodKicker");
@@ -7219,12 +7262,12 @@ function renderFoodHero(totals, t, entryCount) {
   const wk = weekBudgetNumbers();
   const wkPct = wk.budget ? Math.min(100, Math.round(wk.eaten / wk.budget * 100)) : 0;
   const side = (k, cur, goal, unit) => `<div class="fh-t"><span class="fh-k">${k}</span><b class="fh-v"><em>${cur}</em>${goal ? `<i>/ ${goal}${unit}</i>` : `<i>${unit}</i>`}</b></div>`;
-  const wkTxt = wk.left >= 0 ? `<em>${wk.left.toLocaleString()}</em> left of ${wk.budget.toLocaleString()}` : `<em class="over">${Math.abs(wk.left).toLocaleString()}</em> over ${wk.budget.toLocaleString()}`;
+  const wkTxt = wk.left >= 0 ? `<em>${wk.left.toLocaleString()}</em> left` : `<em class="over">${Math.abs(wk.left).toLocaleString()}</em> over`;
   el.innerHTML = `<div class="fh-row">
       <div class="fh-half">${pRing}${side("Protein", totals.protein, pT, " g")}</div>
       <div class="fh-half">${cRing}${side("Calories", totals.calories.toLocaleString(), cT ? cT.toLocaleString() : 0, "")}</div>
     </div>
-    <div class="fh-week" data-today-toggle role="button" tabindex="0"><div class="fh-wr"><span class="fh-k">This week</span><span class="fh-wn">${wkTxt} <span class="tf-chev">${todayOpen ? "▴" : "▾"}</span></span></div><div class="fh-bar"><i style="width:${wkPct}%; ${wk.left < 0 ? "background:var(--warn);" : ""}"></i></div></div>`;
+    <div class="fh-week" data-today-toggle role="button" tabindex="0" aria-label="This week of ${wk.budget.toLocaleString()} calories"><span class="fh-k">Week</span><div class="fh-bar"><i style="width:${wkPct}%; ${wk.left < 0 ? "background:var(--warn);" : ""}"></i></div><span class="fh-wn">${wkTxt} <span class="tf-chev">${todayOpen ? "▴" : "▾"}</span></span></div>`;
   const det = document.getElementById("todayDetails");
   if (det) det.classList.toggle("hidden", !todayOpen);
   const tm = document.getElementById("todayMacros");
@@ -7238,6 +7281,8 @@ document.getElementById("todayCard").addEventListener("click", (e) => {
 });
 
 // Foods you log often, re-addable in one tap.
+// Hidden foods are stored by lowercase name; "(×2)" servings suffixes count as the same food.
+function isFoodHidden(k) { const h = state.hiddenRecentFoods || []; return h.includes(k) || h.includes(k.replace(/\s*\(×[\d.]+\)\s*$/, "")); }
 let recentFoodList = [];
 let recentFoodsOpen = false;
 function renderRecentFoods() {
@@ -7252,7 +7297,7 @@ function renderRecentFoods() {
   (state.foodLogs || []).forEach(f => {
     if (!f.name || new Date(f.date).getTime() < cutoff) return;
     const k = f.name.trim().toLowerCase();
-    if ((state.hiddenRecentFoods || []).includes(k) || loggedNow.has(k)) return;
+    if (isFoodHidden(k) || loggedNow.has(k)) return;
     const m = map[k] || (map[k] = { count: 0, last: f });
     m.count++;
     if (new Date(f.date) > new Date(m.last.date)) m.last = f;
@@ -7261,12 +7306,13 @@ function renderRecentFoods() {
     .sort((a, b) => b.count - a.count || new Date(b.last.date) - new Date(a.last.date))
     .slice(0, 12).map(m => m.last)
     .sort((a, b) => (a.alcohol ? 1 : 0) - (b.alcohol ? 1 : 0)).slice(0, 6);
-  wrap.classList.toggle("hidden", !recentFoodList.length);
+  wrap.classList.toggle("hidden", !recentFoodList.length && !(state.foodLogs || []).length);
   const shownRecent = recentFoodList.length;
-  el.innerHTML = recentFoodList.slice(0, shownRecent).map((f, i) => `<div class="chip" data-recent-food="${i}"><span class="rn">${escapeHtml(f.name)}</span><span class="rp"><b style="font-size:14px;">${f.protein || 0} g</b>${f.calories ? "<br>" + f.calories + " cal" : ""}</span><button type="button" class="rx" data-recent-hide="${i}" aria-label="Hide ${escapeHtml(f.name)} from recent foods">×</button></div>`).join("");
+  el.innerHTML = recentFoodList.slice(0, shownRecent).map((f, i) => `<div class="chip" data-recent-food="${i}"><span class="rn">${escapeHtml(f.name)}</span>${f.calories ? `<span class="rp">${f.calories}</span>` : ""}</div>`).join("") + '<div class="chip tf-all" data-my-foods-open role="button" tabindex="0">All ›</div>';
 }
 document.getElementById("recentFoods").addEventListener("click", async (e) => {
   if (e.target.closest("[data-recent-more]")) { recentFoodsOpen = !recentFoodsOpen; renderRecentFoods(); return; }
+  if (e.target.closest("[data-my-foods-open]")) { toggleMyFoods(); return; }
   const hide = e.target.closest("[data-recent-hide]");
   if (hide) {
     e.stopPropagation();
@@ -7301,7 +7347,7 @@ function renderMyFoods() {
   (state.foodLogs || []).forEach(f => {
     if (!f.name || !(f.calories || f.protein)) return;
     const k = f.name.trim().toLowerCase().replace(/\s*\(×[\d.]+\)\s*$/, "");
-    if ((state.hiddenRecentFoods || []).includes(f.name.trim().toLowerCase())) return;
+    if (isFoodHidden(k)) return;
     const m = map[k] || (map[k] = { count: 0, last: f });
     m.count++;
     if (new Date(f.date) > new Date(m.last.date)) m.last = f;
@@ -7319,6 +7365,7 @@ function renderMyFoods() {
       <div style="min-width:0; flex:1;"><div class="d" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(f.name)}</div><div class="s">${f.calories || 0} cal · ${f.protein || 0} g protein · logged ${f._count}×</div></div>
       <button class="danger-link" style="color:var(--accent);" data-my-add="${i}" data-mult="1">+1</button>
       <button class="danger-link" style="color:var(--accent);" data-my-add="${i}" data-mult="2">×2</button>
+      <button class="danger-link tf-my-hide" data-my-hide="${i}" aria-label="Hide ${escapeHtml(f.name)} from my foods">Hide</button>
     </div>`).join("") : '<div class="empty">No matches.</div>';
 }
 function toggleMyFoods(force) {
@@ -7330,6 +7377,19 @@ function toggleMyFoods(force) {
 document.getElementById("myFoodsOpen").addEventListener("click", () => toggleMyFoods());
 document.getElementById("myFoodsSearch").addEventListener("input", renderMyFoods);
 document.getElementById("myFoodsList").addEventListener("click", async (e) => {
+  const hb = e.target.closest("[data-my-hide]");
+  if (hb) {
+    const hf = myFoodsList[parseInt(hb.dataset.myHide, 10)]; if (!hf) return;
+    const key = hf.name.trim().toLowerCase();
+    state.hiddenRecentFoods = (state.hiddenRecentFoods || []).concat(key);
+    renderMyFoods(); renderRecentFoods();
+    await persistNow();
+    showToast("Hidden from your foods.", async () => {
+      state.hiddenRecentFoods = state.hiddenRecentFoods.filter(k => k !== key);
+      renderMyFoods(); renderRecentFoods(); await persistNow();
+    });
+    return;
+  }
   const b = e.target.closest("[data-my-add]"); if (!b) return;
   const f = myFoodsList[parseInt(b.dataset.myAdd, 10)]; if (!f) return;
   const mult = parseFloat(b.dataset.mult) || 1;
@@ -7376,16 +7436,20 @@ function renderDayStrip() {
     const logs = foodLogsForDate(k), cal = logs.reduce((n, f) => n + (f.calories || 0), 0);
     cols.push({ k, cal, n: logs.length, lab: d.toLocaleDateString("en-US", { weekday: "short" })[0] });
   }
-  const top = Math.max(dailyBudget * 1.3, ...cols.map(c => c.cal)) * 1.05, H = 38;
+  const top = Math.max(dailyBudget * 1.3, ...cols.map(c => c.cal)) * 1.05, H = 30;
   const yb = H - (dailyBudget / top) * H;
   el.innerHTML = `<div style="position:relative;"><div style="display:flex; align-items:flex-end; gap:6px; height:${H}px; position:relative;">${cols.map(c => {
     const h = c.n ? Math.max(4, Math.round(c.cal / top * H)) : 4;
     const col = !c.n ? "var(--border)" : c.cal <= dailyBudget * 1.1 ? "var(--accent)" : c.cal <= dailyBudget * 1.3 ? "var(--warn)" : "var(--danger)";
     return `<div data-strip-date="${c.k}" role="button" tabindex="0" style="flex:1; height:${H}px; display:flex; align-items:flex-end; cursor:pointer;"><i style="display:block; width:100%; height:${h}px; border-radius:4px; background:${col};${c.k === sel ? " outline:2px solid var(--text); outline-offset:1px;" : ""}"></i></div>`;
-  }).join("")}<div style="position:absolute; left:0; right:0; top:${yb.toFixed(1)}px; border-top:1px dashed rgba(237,234,224,.5); pointer-events:none;"></div></div>
+  }).join("")}</div>
   <div style="display:flex; gap:6px; margin-top:4px;">${cols.map(c => `<div style="flex:1; text-align:center; font-size:11px; color:${c.k === sel ? "var(--text)" : "var(--text-muted)"};">${c.lab}</div>`).join("")}</div></div>
 `;
 }
+document.getElementById("foodHistoryOpen").addEventListener("click", () => {
+  const d = document.getElementById("foodHistoryDetails"); d.open = !d.open;
+  if (d.open) d.scrollIntoView({ behavior: "smooth", block: "nearest" });
+});
 document.getElementById("dayStrip").addEventListener("click", (e) => {
   const c = e.target.closest("[data-strip-date]");
   if (!c) return;
@@ -7403,7 +7467,10 @@ document.getElementById("foodHistory").addEventListener("click", (e) => {
 function updatePhotoOptionsLabel() {
   const open = !document.getElementById("photoOptions").classList.contains("hidden");
   const names = { package: "Package", plated: "Plated", restaurant: "Restaurant", drink: "Drink" };
-  document.getElementById("photoOptionsToggle").textContent = "Photo options" + (scanKind && names[scanKind] ? ": " + names[scanKind] : "") + (open ? " ▴" : " ▾");
+  const pt = document.getElementById("photoOptionsToggle");
+  pt.setAttribute("aria-expanded", open ? "true" : "false");
+  pt.setAttribute("aria-label", "Photo options" + (scanKind && names[scanKind] ? ": " + names[scanKind] : ""));
+  pt.classList.toggle("open", open || !!(scanKind && names[scanKind]));
 }
 document.getElementById("photoOptionsToggle").addEventListener("click", () => {
   document.getElementById("photoOptions").classList.toggle("hidden");
@@ -7448,7 +7515,7 @@ function renderFoodLogList() {
   renderPartialControls();
   const isToday = selectedDate === localDateStr();
   const lab = document.getElementById("tfLogLabel");
-  if (lab) lab.textContent = isToday ? "Today's log" : new Date(selectedDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) + " log";
+  if (lab) lab.textContent = isToday ? "Today" : new Date(selectedDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
   const back = document.getElementById("tfBackToday");
   if (back) back.classList.toggle("hidden", isToday);
   const pb = document.getElementById("pastDayBanner");
@@ -7460,6 +7527,7 @@ function renderFoodLogList() {
   try { renderDayStrip(); } catch (e) {}
   const dayLogs = foodLogsForDate(selectedDate).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
   if (!dayLogs.length) {
+    const c0 = document.getElementById("tfLogCount"); if (c0) c0.textContent = "";
     el.innerHTML = isToday
       ? '<div class="tf-foodempty"><div>Nothing logged yet. Start with a protein hit.</div><button type="button" data-empty-quick>Quick add</button></div>'
       : '<div class="empty">Nothing logged for this day.</div>';
@@ -7468,7 +7536,9 @@ function renderFoodLogList() {
   const totCal = dayLogs.reduce((n, f) => n + (f.calories || 0), 0);
   const totPro = dayLogs.reduce((n, f) => n + (f.protein || 0), 0);
   const newest = dayLogs.slice().reverse();                  // newest first
-  const shown = foodLogOpen ? newest : newest.slice(0, 2);   // collapsed: the latest two entries
+  const shown = foodLogOpen ? newest : newest.slice(0, 3);   // collapsed: the latest three entries
+  const cnt = document.getElementById("tfLogCount");
+  if (cnt) cnt.textContent = dayLogs.length + (dayLogs.length === 1 ? " entry" : " entries");
   const rowHtml = (f) => {
     const realIndex = state.foodLogs.indexOf(f);
     const open = foodRowOpen === realIndex;
@@ -7506,13 +7576,8 @@ function renderFoodLogList() {
         </div>
       </div>`;
   };
-  const header = `
-    <div class="tf-fl-head" data-log-toggle role="button" tabindex="0">
-      <div><div class="t">${dayLogs.length} ${dayLogs.length === 1 ? "entry" : "entries"} · ${totCal.toLocaleString()} cal</div>
-      <div class="s">${totPro} g protein</div></div>
-      <div class="c">${foodLogOpen ? "Hide" : "Show all"} <span class="chev">${foodLogOpen ? "▴" : "▾"}</span></div>
-    </div>`;
-  el.innerHTML = header + shown.map(rowHtml).join("");
+  const more = dayLogs.length > 3 ? `<div class="tf-fl-more" data-log-toggle role="button" tabindex="0">${foodLogOpen ? "Show less" : "Show all " + dayLogs.length + " ›"}</div>` : "";
+  el.innerHTML = `<div class="tf-fl-group">${shown.map(rowHtml).join("")}</div>` + more;
 }
 
 document.getElementById("foodLogList").addEventListener("click", (e) => {
