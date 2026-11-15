@@ -824,6 +824,65 @@
 
   #tfQuickRow{padding-bottom:28px;}
   #saveCardioBtn{background:var(--accent); color:var(--ink); border:0; font-weight:600; min-height:48px;}
+
+  /* ===== Coach, one screen: Progress folded in ===== */
+  nav.tabs .pill{width:72px;}
+  #coachHero{padding:0;}
+  #tab-coach .tf-hero2-in{padding:2px 4px 4px;}
+  #tab-coach .tf-hero2-k{font-size:11px !important; margin-bottom:0;}
+  #tab-coach .tf-hero2 .big{font-size:44px !important;}
+  #tab-coach .tf-hero2 .d{margin-top:0; font-size:14px;}
+  #tab-coach .tf-cchips{margin:4px 0 8px;}
+  .tf-cchip b{font-size:19px;}
+  #coachNoteCard{margin:0 4px 10px !important;}
+  #coachNoteCard .meta{display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:14px !important; line-height:1.4 !important;}
+  #coachNoteCard .tf-clamp-btn, #coachNoteCard button, #coachNoteCard a{display:none;}
+  #coachNoteCard.open .meta{-webkit-line-clamp:unset; overflow:visible;}
+  #coachNoteCard.open .tf-clamp-btn, #coachNoteCard.open button, #coachNoteCard.open a{display:inline-block;}
+  /* log card: weight + energy on one row, one Save, options underneath */
+  #tab-coach .tf-tiles{display:grid !important; grid-template-columns:1.25fr 2fr; gap:8px; align-items:center; padding:12px; margin-bottom:10px;}
+  #tab-coach .tf-tiles .tf-tile{display:contents;}
+  #tab-coach .tf-tile-tag, #tab-coach .tf-tile-q, #tfLastWeight, #dailyCheckinSavedHint{display:none;}
+  #tab-coach .tf-tile-big{margin:0; position:relative;}
+  #tab-coach .tf-tile-big input{font-size:18px !important; min-height:44px; padding:6px 30px 6px 12px !important; width:100%;}
+  #tab-coach .tf-tile-big span{position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:12px; pointer-events:none;}
+  #checkinEnergyChips{margin:0 !important; gap:6px !important;}
+  #checkinEnergyChips .chip{margin:0 !important; min-height:44px; display:grid; place-items:center; padding:0 !important; font-size:14px;}
+  #logTodayBtn{grid-column:1/-1; grid-row:2; margin:2px 0 0 !important; min-height:46px;}
+  #tab-coach .tf-tiles .tf-more{grid-row:3; margin:0; font-size:12px;}
+  #tab-coach .tf-tiles .tf-more summary{padding:4px 2px;}
+  #weighInDetails > .tf-more{grid-column:1;}
+  #dailyCheckinDetails > .tf-more{grid-column:2;}
+  #tab-coach .tf-tiles .tf-more[open]{grid-column:1/-1;}
+  /* this-week card */
+  .tf-wk3{display:flex; gap:8px; background:var(--surface); border-radius:var(--r2); padding:12px 14px; margin-bottom:10px;}
+  .tf-wk3 button{flex:1; min-width:0; background:none; border:0; padding:0; text-align:left; color:var(--text-muted); font-family:Inter,sans-serif; font-size:12px; cursor:pointer; text-shadow:inherit;}
+  .tf-wk3 b{display:block; font-family:var(--font-display); font-size:22px; font-weight:600; color:var(--text); line-height:1.1;}
+  .tf-wk3 .dots3{display:flex; gap:4px; margin-top:6px;}
+  .tf-wk3 .dots3 i{width:10px; height:10px; border-radius:50%; background:var(--surface-3);}
+  .tf-wk3 .dots3 i.o{background:var(--accent);}
+  .tf-wk3 .bar{display:block; height:5px; border-radius:3px; background:var(--surface-3); margin-top:8px; overflow:hidden;}
+  .tf-wk3 .bar i{display:block; height:5px; background:var(--accent);}
+  /* 2x2 tile grid + full-width Details row */
+  .tf-g2{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;}
+  .tf-g2 > details.tf-row{margin:0 !important; padding:0 14px !important; border:0 !important; border-radius:14px !important; background:var(--surface);}
+  .tf-g2 > details.tf-row > summary{min-height:52px; font-size:14px !important; white-space:nowrap;}
+  .tf-g2 > details.tf-row > summary::after{display:none !important;}
+  .tf-g2 > details.tf-row .tf-sv{font-size:12px; margin-right:0;}
+  .tf-g2 > details.tf-row[open]{grid-column:1/-1; padding-bottom:14px !important;}
+  .tf-g2 > details.tf-wide{grid-column:1/-1;}
+  .tf-g2 > details.tf-wide > summary::after{display:block !important; content:"›" !important;}
+  #tfWeekCard{display:none;}
+
+  .tf-g2{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+  .tf-g2 > details.tf-row{min-width:0;}
+  .tf-g2 > details.tf-row > summary{overflow:hidden; text-overflow:ellipsis;}
+  .tf-g2 .tf-dotrow summary::before{margin-right:10px !important; flex:none;}
+  #progressDetails{--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E");}
+  .tf-wk3 button{display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-start;}
+  #tab-coach{overflow-x:hidden;}
+
+  #tab-coach .tf-g2 > details.tf-row{border-top:0 !important; border-radius:14px !important; margin:0 !important;}
 </style>
 </head>
 <body>
@@ -1202,13 +1261,15 @@
       <div id="bellCoach" class="meta"></div>
     </div>
 
+    <div id="coachWeekCard" class="tf-wk3"></div>
+    <div class="tf-g2">
     <div id="tfWeekCard"></div>
     <details class="exercise-group tf-row tf-dotrow" id="chestBoosterDetails" style="--dc:var(--accent);">
-      <summary>Chest booster</summary>
+      <summary>Chest</summary>
       <div id="chestBoosterCoach" style="margin-top:10px;"></div>
     </details>
     <details class="exercise-group tf-row tf-dotrow" id="notesDetails" style="--dc:var(--gold);">
-        <summary id="notesSummary">Notes and questions</summary>
+        <summary id="notesSummary">Notes</summary>
         <div style="padding-top:6px;">
           <p class="meta" style="margin-top:0;">Jot down questions or how a session felt. Each note remembers which exercise you were on. Ask me to check your notes and I'll answer them.</p>
           <textarea id="noteInput" rows="3" placeholder="e.g. Swings felt like all arms, is that normal?" style="width:100%; box-sizing:border-box;"></textarea>
@@ -1221,16 +1282,10 @@
       <div id="weeklyReview" style="margin-top:10px;"></div>
     </details>
     <details class="exercise-group tf-row tf-dotrow" id="bodyCompDetails" style="--dc:var(--slate);">
-      <summary>Body composition</summary>
+      <summary>Body comp</summary>
       <div id="bodyFatSummary" style="margin-top:10px;">Log neck + waist with a weigh-in to get a body-fat estimate here.</div>
     </details>
-  </section>
-
-  <!-- PROGRESS -->
-  <section id="tab-progress" class="tab-panel hidden">
-    <div class="tf-screen-head"><div class="tf-kicker" id="tfProgKicker"></div><h1>Progress</h1></div>
-    <div id="tfProgress"></div>
-    <details class="exercise-group tf-row" id="progressDetails" style="margin-top:14px;">
+    <details class="exercise-group tf-row tf-dotrow tf-wide" id="progressDetails">
       <summary>Details and history</summary>
       <div style="margin-top:12px;">
     <div class="card">
@@ -1283,26 +1338,11 @@
     </div>
       </div>
     </details>
-    
-  <div id="tfPSheet" class="hidden">
-      <div class="tf-pscrim" data-psheet-close></div>
-      <div class="tf-ppanel">
-        <div class="tf-pgrab"><span></span></div>
-        <button type="button" class="tf-pclose" data-psheet-close>Done</button>
-        <div data-psec="weight" id="psWeight" class="hidden"></div>
-        <div data-psec="workouts" id="psWorkouts" class="hidden"></div>
-        <div data-psec="calories" id="psCalories" class="hidden"></div>
-        <div data-psec="protein" id="psProtein" class="hidden"></div>
-        <div data-psec="milestones" id="psMilestones" class="hidden"></div>
-        <div data-psec="walks" id="psWalks" class="hidden">
-          <div class="tf-pcard"><div class="h"><b>Walks &amp; rucks</b><span id="psWalkSum"></span></div>
-            <p style="font-size:13px; color:var(--text-muted); margin:10px 0 0;">Log a walk or ruck from the Today tab. They don't touch your program's rotation, and a "ruck" is a walk carrying extra weight.</p>
-            <div id="recentCardio" style="margin-top:10px;"></div>
-          </div>
-        </div>
-      </div>
     </div>
   </section>
+
+  <!-- Progress tiles are rendered into this hidden holder; the Coach tab shows the weekly summary. -->
+  <div id="tfProgress" hidden></div><span id="tfProgKicker" hidden></span>
 
   <!-- SETTINGS -->
   <section id="tab-settings" class="tab-panel hidden">
@@ -1329,7 +1369,7 @@
         <div class="field"><div class="field-label">Fat (g)</div><input type="text" inputmode="numeric" id="targetFat" placeholder="65"></div>
       </div>
       <div class="row" style="margin-top:8px;">
-        <div class="field"><div class="field-label">Workouts per week (goal line on Progress)</div><input type="text" inputmode="numeric" id="weeklyGoalInput" placeholder="3"></div>
+        <div class="field"><div class="field-label">Workouts per week</div><input type="text" inputmode="numeric" id="weeklyGoalInput" placeholder="3"></div>
       </div>
       <label class="tf-switch"><span>Buzz and gentle motion</span><input type="checkbox" id="feedbackToggle"><i aria-hidden="true"></i></label>
       <button class="secondary" id="saveTargetsBtn" style="margin-top:10px;">Save targets</button>
@@ -1432,11 +1472,29 @@
 
 </main>
 
+  <div id="tfPSheet" class="hidden">
+      <div class="tf-pscrim" data-psheet-close></div>
+      <div class="tf-ppanel">
+        <div class="tf-pgrab"><span></span></div>
+        <button type="button" class="tf-pclose" data-psheet-close>Done</button>
+        <div data-psec="weight" id="psWeight" class="hidden"></div>
+        <div data-psec="workouts" id="psWorkouts" class="hidden"></div>
+        <div data-psec="calories" id="psCalories" class="hidden"></div>
+        <div data-psec="protein" id="psProtein" class="hidden"></div>
+        <div data-psec="milestones" id="psMilestones" class="hidden"></div>
+        <div data-psec="walks" id="psWalks" class="hidden">
+          <div class="tf-pcard"><div class="h"><b>Walks &amp; rucks</b><span id="psWalkSum"></span></div>
+            <p style="font-size:13px; color:var(--text-muted); margin:10px 0 0;">Log a walk or ruck from the Today tab. They don't touch your program's rotation, and a "ruck" is a walk carrying extra weight.</p>
+            <div id="recentCardio" style="margin-top:10px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
 <nav class="tabs">
   <button class="tab-btn active" data-tab="coach"><span class="pill"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg></span>Coach</button>
   <button class="tab-btn" data-tab="food"><span class="pill"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v8a2 2 0 0 0 2 2v8M11 3v8a2 2 0 0 1-2 2M17 3c-2 2-2 6 0 8v10"/></svg></span>Food</button>
   <button class="tab-btn" data-tab="today"><span class="pill"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span>Today</button>
-  <button class="tab-btn" data-tab="progress"><span class="pill"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span>Progress</button>
 </nav>
 
 <script>
@@ -1454,7 +1512,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-15 13:05 CT";
+const APP_BUILD = "2026-11-15 14:10 CT";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -3710,6 +3768,8 @@ function renderCoachTop(rows) {
     if (!m) last.textContent = "Last: none yet";
     else if (m.date === localDateStr()) last.textContent = `Logged today: ${m.weight} lb`;
     else last.textContent = `Last: ${m.weight} · ${new Date(m.date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+    const wi = document.getElementById("weightInput");
+    if (wi) wi.placeholder = !m ? "Weight" : (m.date === localDateStr() ? `Today ${m.weight}` : `Last ${m.weight}`);
   }
   const wkc = document.getElementById("tfWeekCard");
   if (wkc) wkc.innerHTML = weekStripHtml();
@@ -5644,7 +5704,7 @@ function renderChestBoosters() {
   const t = document.getElementById("chestBoosterToday");
   if (t) t.innerHTML = chestBoosterHtml();
   const d = document.querySelector("#chestBoosterDetails summary");
-  if (d) d.textContent = chestSetsInWeek(weekDayList(0)) >= CHEST_WEEKLY_SETS ? "Chest booster · done this week" : `Chest booster · ${chestSetsInWeek(weekDayList(0))}/${CHEST_WEEKLY_SETS} sets`;
+  if (d) d.innerHTML = chestSetsInWeek(weekDayList(0)) >= CHEST_WEEKLY_SETS ? `Chest<span class="tf-sv">done</span>` : `Chest<span class="tf-sv">${chestSetsInWeek(weekDayList(0))}/${CHEST_WEEKLY_SETS}</span>`;
 }
 document.addEventListener("click", async (e) => {
   const q = (sel) => e.target.closest(sel);
@@ -8538,6 +8598,16 @@ function renderProgressTop() {
     + tile("milestones", "Milestones", msBig, msSub, "", `<span style="flex:1; height:8px; border-radius:5px; background:var(--surface-3); display:block;"><span style="display:block; width:${Math.round(msFrac * 100)}%; height:8px; border-radius:5px; background:var(--accent);"></span></span>`, "align-items:center;")
     + tile("walks", "Walks &amp; rucks", `${mi(wkMiles)}<small>mi this week</small>`, `${wkCardio.length} ${wkCardio.length === 1 ? "walk" : "walks"}${wkMin ? " · " + Math.floor(wkMin / 60) + "h " + (wkMin % 60) + "m" : ""}`, "", walkBars)
     + `</div>`;
+  // ---- Coach "this week" card (opens the same detail sheets) ----
+  const wcEl = document.getElementById("coachWeekCard");
+  if (wcEl) {
+    const dots = Array.from({ length: Math.max(goal, 1) }, (_, i) => `<i${i < curWk.count ? ' class="o"' : ""}></i>`).join("");
+    wcEl.innerHTML = `<button type="button" data-ptile="workouts"><b>${curWk.count} / ${goal}</b>workouts<span class="dots3">${dots}</span></button>`
+      + `<button type="button" data-ptile="walks"><b>${wkCardio.length}</b>${wkCardio.length === 1 ? "walk" : "walks"}, ${mi(wkMiles)} mi</button>`
+      + (nxtW
+        ? `<button type="button" data-ptile="milestones"><b>${totalDays} / ${nxtW}</b>next badge<span class="bar"><i style="width:${Math.round(msFrac * 100)}%"></i></span></button>`
+        : `<button type="button" data-ptile="milestones"><b>${totalDays}</b>workouts, all badges</button>`);
+  }
   // ---- sheet sections ----
   const setSec = (id, html) => { const e = document.getElementById(id); if (e) e.innerHTML = html; };
   setSec("psWeight", weightCard);
@@ -8574,6 +8644,8 @@ function progressClick(e) {
   const t = document.querySelector(`nav.tabs .tab-btn[data-tab="${b.dataset.gotoTab}"]`);
   if (t) t.click();
 }
+document.getElementById("coachHero").addEventListener("click", (e) => { if (!e.target.closest("button, a, input")) openProgressSheet("weight"); });
+document.getElementById("coachNoteCard").addEventListener("click", (e) => { if (!e.target.closest("button, a, input")) e.currentTarget.classList.toggle("open"); });
 document.getElementById("tfProgress").addEventListener("click", progressClick);
 document.getElementById("tfPSheet").addEventListener("click", (e) => { if (e.target.closest("[data-open-review]")) closeProgressSheet(); progressClick(e); });
 
@@ -9971,6 +10043,7 @@ document.getElementById("programsSubNav").addEventListener("click", (e) => {
 // between still has the real last-touched tab to fall back to.
 const LS_LAST_TAB_KEY = "trainFuelLastTab";
 let lastActiveTab = localStorage.getItem(LS_LAST_TAB_KEY) || "coach";
+if (lastActiveTab === "progress") lastActiveTab = "coach"; // Progress now lives on Coach
 // Whichever tab was open right before Programs was opened — lets a second
 // tap on the Programs icon return you there, matching how the Settings
 // icon already behaves on a repeat tap.
@@ -10026,7 +10099,7 @@ document.getElementById("profileBtn").addEventListener("click", () => {
 
 // ---- header title follows the visible screen ----
 function syncHeaderTitle() {
-  const names = { coach: "Coach", food: "Food", today: "Today", progress: "Progress", programs: "Programs", settings: "Settings" };
+  const names = { coach: "Coach", food: "Food", today: "Today", programs: "Programs", settings: "Settings" };
   const open = document.querySelector(".tab-panel:not(.hidden)");
   const id = open ? open.id.replace("tab-", "") : "coach";
   const t = document.getElementById("hTitle"); if (t) t.textContent = names[id] || "Train & Fuel";
@@ -10573,7 +10646,7 @@ function renderNotes() {
   if (!list) return;
   const notes = state.sessionNotes || [];
   const open = notes.filter(n => !n.done).length;
-  if (sum) sum.textContent = open ? `Notes and questions (${open} open)` : "Notes and questions";
+  if (sum) sum.innerHTML = open ? `Notes<span class="tf-sv">${open} open</span>` : "Notes";
   if (!notes.length) { list.innerHTML = '<div class="empty">No notes yet.</div>'; return; }
   list.innerHTML = notes.map(n => `
     <div class="list-item" style="flex-direction:column; align-items:stretch; ${n.done ? "opacity:0.55;" : ""}">
@@ -10630,9 +10703,9 @@ async function syncWakeLock() {
 new MutationObserver(syncWakeLock).observe(document.getElementById("sessionPanel"), { attributes: true, attributeFilter: ["class", "data-sx"] });
 document.addEventListener("visibilitychange", syncWakeLock);
 
-// ---- Swipe left/right between the four main tabs ----
+// ---- Swipe left/right between the three main tabs ----
 (function () {
-  const ORDER = ["coach", "food", "today", "progress"];
+  const ORDER = ["coach", "food", "today"];
   let sx = 0, sy = 0, st = 0, ok = false;
   function blocked(t) {
     if (!t || !t.closest) return true;
