@@ -3,8 +3,8 @@
   "short_name": "Train & Fuel",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#120F0D",
-  "theme_color": "#120F0D",
+  "background_color": "#2A3FD6",
+  "theme_color": "#2A3FD6",
   "icons": [
     {
       "src": "icons/icon-192.png",
