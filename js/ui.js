@@ -800,3 +800,27 @@ if ("serviceWorker" in navigator) {
     y0 = null; pulled = 0;
   }, { passive: true });
 })();
+
+// On-screen keyboard: shrink the app to the visible area, hide the colour header so the sheet gets the room,
+// and keep the field being typed in on screen (the page is fixed-height, so the browser won't scroll it for us).
+(function () {
+  const vv = window.visualViewport; if (!vv) return;
+  const root = document.documentElement;
+  let open = false, base = window.innerHeight;
+  const keepInView = () => {
+    const a = document.activeElement;
+    if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) setTimeout(() => { try { a.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {} }, 60);
+  };
+  const sync = () => {
+    base = Math.max(base, window.innerHeight);
+    const kb = vv.height < base * 0.8;
+    if (kb) { document.body.style.height = vv.height + "px"; window.scrollTo(0, 0); }
+    if (kb !== open) {
+      open = kb; root.classList.toggle("kbd", kb);
+      if (!kb) { document.body.style.height = ""; try { fitDayWord(); } catch (e) {} }
+    }
+    if (kb) keepInView();
+  };
+  vv.addEventListener("resize", sync);
+  document.addEventListener("focusin", () => { if (open) keepInView(); });
+})();

@@ -866,3 +866,5 @@
   @keyframes ptrgo{50%{opacity:.35}}
   #dayHero.tight #daySub{display:none}
   #dayHero.tight #dayWord{margin-top:4px}
+  html.kbd #dayHero, html.kbd #wkRibbon{display:none !important}
+  html.kbd main{padding-bottom:12px}

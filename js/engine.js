@@ -673,6 +673,9 @@ document.getElementById("checkinEnergyChips").addEventListener("click", (e) => {
   activeDailyCheckinEnergy = chip.dataset.energy === activeDailyCheckinEnergy ? null : chip.dataset.energy;
   document.getElementById("checkinEnergyChips").querySelectorAll("[data-energy]").forEach(c =>
     c.classList.toggle("active", c.dataset.energy === activeDailyCheckinEnergy));
+
+  // Tapping an energy level saves today's check-in right away (no separate Save needed for it).
+  document.getElementById("saveDailyCheckinBtn").click();
 });
 
 document.getElementById("checkinTagChips").addEventListener("click", (e) => {
