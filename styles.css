@@ -842,7 +842,7 @@
   #wkRibbon .rest.today .wr-c{opacity:1; border-style:solid; background:var(--onfield)}
   #wkRibbon .today{font-weight:800; color:var(--onfield)}
   #wkRibbon .wr-c svg{width:17px; height:17px; stroke-width:3.4}
-  main{flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior-y:none; -webkit-overflow-scrolling:touch; width:100%; max-width:none; margin:0; background:var(--bg); border-radius:28px 28px 0 0; padding:22px 18px 100px}
+  main{flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior-y:none; -webkit-overflow-scrolling:touch; width:100%; max-width:none; margin:0; background:var(--bg); border-radius:28px 28px 0 0; padding:18px 18px 84px}
   header, #wkRibbon{flex:none}
   nav.tabs{background:var(--bg); border-top:1px solid var(--border)}
   button.primary{border-radius:999px}
@@ -864,3 +864,5 @@
   #ptr{position:fixed; top:6px; left:50%; width:84px; height:4px; border-radius:2px; background:var(--onfield); opacity:0; transform:translateX(-50%) scaleX(0); z-index:20; pointer-events:none}
   #ptr.go{opacity:1; animation:ptrgo .8s linear infinite}
   @keyframes ptrgo{50%{opacity:.35}}
+  #dayHero.tight #daySub{display:none}
+  #dayHero.tight #dayWord{margin-top:4px}

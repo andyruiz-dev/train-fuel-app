@@ -65,6 +65,19 @@ function fitDayWord() {
   while (fs > 60) { probe.style.fontSize = fs + "px"; if (probe.offsetWidth <= avail) break; fs -= 2; }
   probe.remove();
   w.style.fontSize = fs + "px"; w.style.height = Math.round(fs * 0.8) + "px";
+  fitHeroToScreen(fs);
+}
+// Make the open screen fit without page scroll where it can: drop the sub line first, then shrink the word (never below 96px).
+function fitHeroToScreen(fs) {
+  const m = document.querySelector("main"), hero = document.getElementById("dayHero"), w = document.getElementById("dayWord");
+  if (!m || !hero || !w || hero.offsetParent === null) return;
+  hero.classList.remove("tight");
+  let over = m.scrollHeight - m.clientHeight;
+  if (over > 0) { hero.classList.add("tight"); over = m.scrollHeight - m.clientHeight; }
+  if (over > 0) {
+    const nf = Math.max(96, fs - Math.ceil(over / 0.8));
+    w.style.fontSize = nf + "px"; w.style.height = Math.round(nf * 0.8) + "px";
+  }
 }
 window.addEventListener("resize", () => { try { fitDayWord(); } catch (e) {} });
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { try { fitDayWord(); } catch (e) {} });
@@ -717,6 +730,7 @@ async function init() {
 // Re-draws everything that shows saved data. Used on first load and after another device's changes are merged in.
 function refreshViews() {
   try { renderWeekRibbon(); } catch (e) {}
+  setTimeout(() => { try { fitDayWord(); } catch (e) {} }, 0);
   renderExercises();
   renderPrograms();
   renderSkillPractice();
