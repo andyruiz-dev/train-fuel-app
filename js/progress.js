@@ -37,8 +37,8 @@ function renderProgressTop() {
       <svg width="124" height="124" viewBox="0 0 124 124" role="img" aria-label="${done} of ${denom} ${pace.mode === "count" ? "workouts" : "weeks"} done">
         <circle cx="62" cy="62" r="52" fill="none" stroke="rgba(var(--ink-rgb),.22)" stroke-width="12"/>
         <circle cx="62" cy="62" r="52" fill="none" stroke="var(--ink)" stroke-width="12" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - frac)).toFixed(1)}" transform="rotate(-90 62 62)"/>
-        <text x="62" y="68" text-anchor="middle" font-family="Rubik, sans-serif" font-size="36" font-weight="700" fill="var(--ink)">${Math.round(frac * 100)}%</text>
-        <text x="62" y="86" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="9" fill="var(--ink)" letter-spacing="1.5">OF PROGRAM</text>
+        <text x="62" y="68" text-anchor="middle" font-family="Big Shoulders Display, sans-serif" font-size="36" font-weight="700" fill="var(--ink)">${Math.round(frac * 100)}%</text>
+        <text x="62" y="86" text-anchor="middle" font-family="Manrope, sans-serif" font-size="9" fill="var(--ink)" letter-spacing="1.5">OF PROGRAM</text>
       </svg>
       <div style="flex:1; min-width:0;">
         <div class="k">${esc(phaseName || "Program")}</div>
@@ -113,7 +113,7 @@ function renderProgressTop() {
       <svg width="100%" viewBox="0 0 ${W} ${H}" style="margin-top:8px; overflow:visible;" role="img" aria-label="Weight trend, latest ${last.weight} pounds">
         <defs><linearGradient id="tfWg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".38"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
         <line x1="0" y1="${H - bot}" x2="${W}" y2="${H - bot}" stroke="var(--surface-2)"/>
-        ${goalW ? `<line x1="0" y1="${Y(goalW).toFixed(1)}" x2="${W}" y2="${Y(goalW).toFixed(1)}" stroke="var(--gold)" stroke-width="1.5" stroke-dasharray="5 5"/><text x="${W - 4}" y="${(Y(goalW) - 5).toFixed(1)}" text-anchor="end" font-family="Roboto Mono, monospace" font-size="9" fill="var(--gold)">GOAL ${goalW}</text>` : ""}
+        ${goalW ? `<line x1="0" y1="${Y(goalW).toFixed(1)}" x2="${W}" y2="${Y(goalW).toFixed(1)}" stroke="var(--gold)" stroke-width="1.5" stroke-dasharray="5 5"/><text x="${W - 4}" y="${(Y(goalW) - 5).toFixed(1)}" text-anchor="end" font-family="Manrope, sans-serif" font-size="9" fill="var(--gold)">GOAL ${goalW}</text>` : ""}
         <path d="${area}" fill="url(#tfWg)"/>
         <polyline fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="${line}"/>
         ${(() => {
@@ -131,7 +131,7 @@ function renderProgressTop() {
         <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="12" fill="var(--accent)" fill-opacity=".2"/>
         <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="6" fill="${findJumps().some(j => j.date === last.date) ? "var(--danger)" : "var(--accent)"}" stroke="var(--surface)" stroke-width="2.5"/>
         <rect x="${(bubbleX - 31).toFixed(1)}" y="${Math.max(0, ly - 40).toFixed(1)}" width="62" height="24" rx="12" fill="var(--text)"/>
-        <text x="${bubbleX.toFixed(1)}" y="${Math.max(16, ly - 24).toFixed(1)}" text-anchor="middle" font-family="Rubik, sans-serif" font-size="14" font-weight="600" fill="var(--ink)">${last.weight}</text>
+        <text x="${bubbleX.toFixed(1)}" y="${Math.max(16, ly - 24).toFixed(1)}" text-anchor="middle" font-family="Big Shoulders Display, sans-serif" font-size="14" font-weight="600" fill="var(--ink)">${last.weight}</text>
       </svg>
       <div class="tf-axis"><span>${fmt(use[0])}</span><span>TODAY</span></div>
       <div class="meta" style="font-size:11px; margin-top:8px;"><span style="color:var(--danger);">●</span> jump of 1.5+ lb · <span style="color:var(--danger);">▮</span> alcohol day · <span style="color:var(--warn);">▮</span> salty or restaurant day</div>

@@ -1,11 +1,10 @@
 /* Self-hosted fonts (latin subset): no network needed, works offline from first launch. */
-@font-face{font-family:'Rubik';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/rubik-latin-500-normal.woff2) format('woff2');}
-@font-face{font-family:'Rubik';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/rubik-latin-600-normal.woff2) format('woff2');}
-@font-face{font-family:'Rubik';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/rubik-latin-700-normal.woff2) format('woff2');}
-@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/inter-latin-400-normal.woff2) format('woff2');}
-@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/inter-latin-500-normal.woff2) format('woff2');}
-@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/inter-latin-600-normal.woff2) format('woff2');}
-@font-face{font-family:'Roboto Mono';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/roboto-mono-latin-500-normal.woff2) format('woff2');}
+@font-face{font-family:'Big Shoulders Display';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/big-shoulders-display-latin-800-normal.woff2) format('woff2');}
+@font-face{font-family:'Big Shoulders Display';font-style:normal;font-weight:900;font-display:swap;src:url(fonts/big-shoulders-display-latin-900-normal.woff2) format('woff2');}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/manrope-latin-500-normal.woff2) format('woff2');}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/manrope-latin-600-normal.woff2) format('woff2');}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/manrope-latin-700-normal.woff2) format('woff2');}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/manrope-latin-800-normal.woff2) format('woff2');}
   /* ---------------------------------------------------------------------
      STYLE MAP (read before editing)
      Order matters: later rules override earlier ones, so do not reorder blocks.
@@ -21,56 +20,28 @@
      screenshot and computed-style comparison before pushing.
      --------------------------------------------------------------------- */
 
+  /* ---- Tokens. Two modes (data-mode on <html>) and three day kinds (data-kind): the kind sets the colour of the
+     top "field" and the accent used inside the sheet. Everything below reads these variables, never hex. ---- */
   :root{
-    --accent:#FF7A3D;
-    --accent-dark:#D9541C;
-    --gold:#F2B84B;
-    --slate:#C98A5E;
-    --bg:#15110D;
-    --surface:#1D1712;
-    --surface-2:#241D17;
-    --border:#33291F;
-    --text:#F2E8D6;
-    --text-muted:#A99A84;
-    --danger:#E5534B;
-    --accent-soft:#FFC49A;
-    --accent-pale:#FFE4D0;
-    --accent-bg:#3A2314;
-    --accent-bg-2:#4A2412;
-    --accent-deep:#7A3A1C;
-    --accent-hot:#D9603B;
-    --accent-line:#5A3A28;
-    --gold-bg:#3A2F18;
-    --gold-deep:#5B4A2A;
-    --warn:#E8B04A;
-    --danger-soft:#F0907D;
-    --ink:#120F0D;
-    --surface-deep:#0E0B09;
-    --surface-deep-2:#1A1612;
-    --surface-warm:#2A1C14;
-    --surface-3:#2C241C;
-    --border-2:#473A2C;
-    --border-3:#5E544B;
-    --track:#4A3A2E;
-    --text-dim:#7A6A5A;
-    --text-faint:#6B6A63;
-    --text-faint-2:#9A9D8E;
-    --text-faint-3:#7C857F;
-    --border-4:#3A3E34;
-    --surface-neutral:#2A2A2A;
-    --sand:#D9B88A;
-    --sand-pale:#E3C9A0;
-    --fat:#8E7CC3;
-    --accent-rgb:255,122,61;
-    --gold-rgb:242,184,75;
-    --ink-rgb:18,15,13;
     --radius:4px;
-    --font-display:'Rubik', -apple-system, sans-serif;
-    --font-mono:'Roboto Mono', ui-monospace, monospace;
+    --font-display:'Manrope', -apple-system, sans-serif;
+    --font-num:'Big Shoulders Display', 'Manrope', sans-serif;
+    --font-mono:'Manrope', ui-monospace, monospace;
   }
+  html[data-mode="dark"]{--bg:#14151B;--surface:#1D1F27;--surface-2:#252832;--surface-3:#2E313D;--surface-deep:#0F1015;--surface-deep-2:#101117;--surface-warm:#262833;--surface-neutral:#2A2C35;--border:#2B2E3A;--border-2:#3A3E4D;--border-3:#50556A;--border-4:#2F3240;--text:#F2F0EA;--text-muted:#A4A6B3;--text-dim:#7E8190;--text-faint:#737685;--text-faint-2:#9396A4;--text-faint-3:#858898;--track:#363948;--ink:#14151B;--danger:#F0645C;--danger-soft:#F5A398;--warn:#F0B64F;--gold:#F2C230;--gold-bg:#3A3414;--gold-deep:#5E5220;--gold-rgb:242,194,48;--slate:#8FA3C8;--sand:#CBB99A;--sand-pale:#DDCDB2;--fat:#9A8AD6;--ink-rgb:20,21,27;}
+  html[data-mode="light"]{--bg:#F6F4F0;--surface:#ECE9E3;--surface-2:#E4E0D8;--surface-3:#DAD6CC;--surface-deep:#E4E0D8;--surface-deep-2:#F6F4F0;--surface-warm:#EAE6DE;--surface-neutral:#E4E1DA;--border:#DDD9D1;--border-2:#CFCAC0;--border-3:#B9B4A9;--border-4:#D4D0C6;--text:#14151B;--text-muted:#5F6270;--text-dim:#80838F;--text-faint:#8A8D98;--text-faint-2:#6E717D;--text-faint-3:#767985;--track:#D8D4CB;--ink:#FFFFFF;--danger:#C93A2B;--danger-soft:#D0695C;--warn:#A8700A;--gold:#C79700;--gold-bg:#F3E8BC;--gold-deep:#E5D48C;--gold-rgb:199,151,0;--slate:#5F77A5;--sand:#8F7A58;--sand-pale:#A38E6B;--fat:#6F5BB8;--ink-rgb:255,255,255;}
+  html[data-kind="rest"]{--field:#2A3FD6;--onfield:#F4F2EE;}
+  html[data-kind="train"]{--field:#FF5A36;--onfield:#14151B;}
+  html[data-kind="chest"]{--field:#FFC531;--onfield:#14151B;}
+  html[data-mode="dark"][data-kind="rest"]{--accent:#7B8DFF;--accent-dark:#5468F0;--accent-soft:#B4BEFF;--accent-pale:#DDE2FF;--accent-bg:#1D2250;--accent-bg-2:#252C6A;--accent-deep:#3A46A8;--accent-hot:#6479F5;--accent-line:#343C86;--accent-rgb:123,141,255;}
+  html[data-mode="dark"][data-kind="train"]{--accent:#FF6A45;--accent-dark:#E04A1F;--accent-soft:#FFB29E;--accent-pale:#FFE0D6;--accent-bg:#3A1E16;--accent-bg-2:#4A261B;--accent-deep:#8A3A25;--accent-hot:#F25A33;--accent-line:#5A2E22;--accent-rgb:255,106,69;}
+  html[data-mode="dark"][data-kind="chest"]{--accent:#FFC531;--accent-dark:#E6A800;--accent-soft:#FFE08A;--accent-pale:#FFF3CC;--accent-bg:#3A3014;--accent-bg-2:#4A3E18;--accent-deep:#8A6A12;--accent-hot:#F2B400;--accent-line:#5A4A1E;--accent-rgb:255,197,49;}
+  html[data-mode="light"][data-kind="rest"]{--accent:#2A3FD6;--accent-dark:#1E2FA8;--accent-soft:#1E2FA8;--accent-pale:#141F7A;--accent-bg:#E3E7FB;--accent-bg-2:#D3D9F7;--accent-deep:#3A46A8;--accent-hot:#2A3FD6;--accent-line:#B7C0F0;--accent-rgb:42,63,214;}
+  html[data-mode="light"][data-kind="train"]{--accent:#D63D14;--accent-dark:#B02D0A;--accent-soft:#B02D0A;--accent-pale:#7A1F06;--accent-bg:#FBE4DC;--accent-bg-2:#F6D2C6;--accent-deep:#B03A1E;--accent-hot:#D63D14;--accent-line:#EBB9AA;--accent-rgb:214,61,20;}
+  html[data-mode="light"][data-kind="chest"]{--accent:#14151B;--accent-dark:#000000;--accent-soft:#3A3A44;--accent-pale:#14151B;--accent-bg:#F7EBC2;--accent-bg-2:#F0DFA0;--accent-deep:#8A6A12;--accent-hot:#14151B;--accent-line:#E3D08A;--accent-rgb:20,21,27;}
   *{box-sizing:border-box;}
   body{
-    margin:0; font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    margin:0; font-family:Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     background:var(--bg); color:var(--text); padding-bottom:72px;
     text-shadow:0 1px 2px rgba(0,0,0,.75), 0 0 1px rgba(0,0,0,.6);
   }
@@ -259,11 +230,11 @@
   .tf-pg-hero .s{font-size:13px; font-weight:500; margin-top:4px;}
   .tf-pg-hero .pill{margin-top:12px; display:inline-block; background:var(--ink); color:var(--text); border-radius:99px; padding:6px 12px; font-size:12px; font-weight:600;}
   .tf-ptiles{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
-  .tf-ptile{text-align:left; border-radius:16px; padding:12px 14px; height:150px; display:flex; flex-direction:column; color:var(--text); cursor:pointer; font-family:Inter,sans-serif}
+  .tf-ptile{text-align:left; border-radius:16px; padding:12px 14px; height:150px; display:flex; flex-direction:column; color:var(--text); cursor:pointer; font-family:Manrope,sans-serif}
   .tf-ptile .n{font-size:12px; color:var(--text-muted); font-weight:600; display:flex; justify-content:space-between; width:100%;}
   .tf-ptile .n b{font-weight:400;}
   .tf-ptile .big{font-family:var(--font-display); font-size:30px; font-weight:600; line-height:1.05; margin-top:6px;}
-  .tf-ptile .big small{font-family:Inter,sans-serif; font-size:12px; font-weight:500; color:var(--text-muted); margin-left:3px;}
+  .tf-ptile .big small{font-family:Manrope,sans-serif; font-size:12px; font-weight:500; color:var(--text-muted); margin-left:3px;}
   .tf-ptile .sub{font-size:12px; margin-top:2px; color:var(--text-muted);}
   .tf-ptile .viz{margin-top:auto; height:44px; width:100%; display:flex; align-items:flex-end; gap:5px;}
   .tf-ptile .viz i{flex:1; border-radius:3px}
@@ -323,14 +294,6 @@
   .fh-wn em.over{color:var(--danger);}
   .fh-bar{ border-radius:5px; background:var(--surface-3); overflow:hidden}
   .fh-bar i{display:block; height:100%; border-radius:5px; background:linear-gradient(90deg,var(--accent),var(--gold));}
-  .tf-themecard{display:flex; align-items:center; gap:12px; background:linear-gradient(180deg,var(--accent-bg),var(--surface)); border:1px solid var(--accent-line); border-radius:14px; padding:10px 14px; margin:0 0 10px;}
-  .tf-themecard .tx{flex:1; font-size:13px; line-height:1.35;}
-  .tf-themecard .tx b{display:block; font-family:var(--font-display); font-size:17px; font-weight:600;}
-  .tf-themecard button{height:36px; padding:0 14px; border-radius:18px; border:1px solid var(--border-2); background:none; color:var(--text); font-size:13px;}
-  .tf-themecard button.go{background:var(--accent); border-color:var(--accent); color:var(--ink); font-weight:600; text-shadow:none;}
-  .tf-themechip{height:38px; padding:0 14px; border-radius:19px; border:1px solid var(--border-2); background:var(--surface); color:var(--text); font-size:14px; display:flex; align-items:center; gap:8px;}
-  .tf-themechip i{width:12px; height:12px; border-radius:50%}
-  .tf-themechip.on{border-color:var(--accent); color:var(--accent);}
 
   /* Food tab: compact so the whole screen fits without scrolling */
   #tab-food .tf-screen-head{padding:8px 4px 4px; flex-direction:row-reverse; justify-content:space-between; align-items:baseline}
@@ -338,8 +301,8 @@
   #tab-food .tf-add svg{width:20px; height:20px;}
   #tab-food .tf-now:empty{display:none;}
   .tf-now{font-size:12px; color:var(--text-muted); padding:0 4px;}
-  .tf-now .meta{font-family:Inter,sans-serif; font-size:12px;}
-  .tf-now button.secondary{width:100% !important; padding:9px 12px; font-size:12px !important; font-family:Inter,sans-serif; border-radius:10px; line-height:1.35; margin-top:6px !important;}
+  .tf-now .meta{font-family:Manrope,sans-serif; font-size:12px;}
+  .tf-now button.secondary{width:100% !important; padding:9px 12px; font-size:12px !important; font-family:Manrope,sans-serif; border-radius:10px; line-height:1.35; margin-top:6px !important;}
   .tf-now .danger-link{font-size:12px; margin-top:8px !important;}
   .tf-adds{display:flex}
   .tf-add{flex:1; min-width:0; display:flex; cursor:pointer}
@@ -364,14 +327,14 @@
   #foodLogList .tf-fl-main{display:flex; justify-content:space-between; align-items:center; gap:10px; cursor:pointer}
   #foodLogList .tf-fl-name{min-width:0; flex:1;}
   #foodLogList .tf-fl-name .n{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-  #foodLogList .tf-fl-name .m{font-family:Inter,sans-serif; color:var(--text-muted)}
+  #foodLogList .tf-fl-name .m{font-family:Manrope,sans-serif; color:var(--text-muted)}
   #foodLogList .tf-fl-pro{ text-align:right; white-space:nowrap}
   #foodLogList .tf-fl-pro small{ color:var(--text-muted)}
   #foodLogList .tf-fl-actions{display:flex; gap:14px; padding:0 12px 10px;}
   #foodLogList{color:var(--text);}
   #foodLogList > .empty{color:var(--text-muted);}
   #foodLogList .name{font-size:15px; font-weight:600;}
-  #foodLogList .meta{font-family:Inter,sans-serif; font-size:12px;}
+  #foodLogList .meta{font-family:Manrope,sans-serif; font-size:12px;}
   .tf-hist-row{display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); cursor:pointer;}
   .tf-hist-row:last-child{border-bottom:0;}
   .tf-hist-row .d{font-size:14px; font-weight:600;}
@@ -396,14 +359,14 @@
   .tf-more{margin-top:10px; font-size:12px; color:var(--text-muted);}
   .tf-more summary{ list-style:none}
   .tf-panel{margin-top:10px; background:var(--surface); padding:14px}
-  #tab-coach .card h2{font-family:Inter,sans-serif; font-size:12px; font-weight:500; color:var(--text-muted); letter-spacing:0; margin:0 0 6px;}
-  #coachNote, #bellCoach{font-family:Inter,sans-serif; font-size:15px; line-height:1.45}
+  #tab-coach .card h2{font-family:Manrope,sans-serif; font-size:12px; font-weight:500; color:var(--text-muted); letter-spacing:0; margin:0 0 6px;}
+  #coachNote, #bellCoach{font-family:Manrope,sans-serif; font-size:15px; line-height:1.45}
   .tf-week{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
   .tf-dots{display:flex; gap:8px;}
   .tf-dots i{width:26px; height:26px; border-radius:50%; border:2px solid var(--border); display:block;}
   .tf-dots i.on{background:var(--accent); border-color:var(--accent);}
   .tf-dots i.today{border-color:var(--accent);}
-  details.tf-row summary{ font-family:Inter,sans-serif; font-weight:600}
+  details.tf-row summary{ font-family:Manrope,sans-serif; font-weight:600}
   #tab-coach #startHereBanner .card, #tab-coach #flagsBanner .card{margin-top:4px;}
   /* Today screen, "Steady" look */
   .tf-screen-head{padding:18px 4px 12px;}
@@ -445,11 +408,11 @@
   #tab-coach .tf-tile-q{margin-top:4px;}
   #tab-coach .tf-hero2{order:0}
   #tab-coach .tf-hero2 .big{font-family:var(--font-display); font-weight:600; line-height:1}
-  #tab-coach .tf-hero2 .big small{font-size:12px; font-family:Inter,sans-serif; color:var(--text-muted); font-weight:500;}
+  #tab-coach .tf-hero2 .big small{font-size:12px; font-family:Manrope,sans-serif; color:var(--text-muted); font-weight:500;}
   .tf-cchips{display:flex}
   .tf-cchip{flex:1}
   .tf-cchip b{display:block; font-family:var(--font-display); font-weight:600; line-height:1.1}
-  .tf-cchip b small{font-size:11px; color:var(--text-muted); font-family:Inter,sans-serif; font-weight:500;}
+  .tf-cchip b small{font-size:11px; color:var(--text-muted); font-family:Manrope,sans-serif; font-weight:500;}
   .tf-cchip span{font-size:11px; color:var(--text-muted);}
   .tf-coachhero .tf-clamp-btn{ font-size:12px; padding:6px 0 2px}
   #tab-coach .tf-weekcard{order:0; margin:0 0 8px;}
@@ -479,7 +442,7 @@
   #todayWorkout details.tf-ph-warm summary::after, #todayWorkout details.tf-ph-cool summary::after{margin-left:auto;}
   .tf-dot{ width:9px; height:9px; border-radius:50%; margin-right:10px}
   .tf-ph-main{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:11px 14px; margin:0 0 8px;}
-  .tf-ph-main .tf-moves-head{font-family:var(--font-body,Inter,sans-serif); font-size:15px; font-weight:600; letter-spacing:0; text-transform:none; color:var(--text); padding:0; cursor:pointer; align-items:center;}
+  .tf-ph-main .tf-moves-head{font-family:var(--font-body,Manrope,sans-serif); font-size:15px; font-weight:600; letter-spacing:0; text-transform:none; color:var(--text); padding:0; cursor:pointer; align-items:center;}
   .tf-moves-names{font-size:12px; color:var(--text-muted); margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .tf-ph-main .tf-mv{margin-top:8px;}
   #todayWorkout details.tf-ph-warm summary::before, #todayWorkout details.tf-ph-cool summary::before{content:""; display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:10px; background:var(--accent);}
@@ -510,7 +473,7 @@
   .tf-pill{font-family:var(--font-mono); font-size:10px; color:var(--ink); background:var(--accent); border-radius:99px; padding:4px 8px; flex:0 0 auto;}
   #todayWorkout details.exercise-group{ padding:10px 14px}
   #startSessionBtn{order:1; position:sticky; bottom:66px; z-index:4; height:56px; font-size:20px; letter-spacing:1px; text-transform:uppercase; box-shadow:0 -14px 14px -4px var(--bg)}
-  #minimumDayBtn{order:2; background:none; border:0; color:var(--text-muted); font-family:Inter,sans-serif; font-size:13px; padding:12px 0 4px;}
+  #minimumDayBtn{order:2; background:none; border:0; color:var(--text-muted); font-family:Manrope,sans-serif; font-size:13px; padding:12px 0 4px;}
   #travelModeToggle{order:3; padding:6px 0 !important}
   #findBarLink, #travelModeExplainer{order:3;}
   #travelModeExplainer{border-bottom:0 !important; margin-bottom:0 !important; padding-bottom:0 !important;}
@@ -521,7 +484,7 @@
   #tfWorkoutLinks #genWorkoutBtn{padding:8px 0 !important;}
   #tfQuickRow{order:4; margin-top:12px;}
   #tfQuickRow .tf-qr{display:flex; gap:8px;}
-  #tfQuickRow .tf-qbtn{flex:1; min-width:0; color:var(--text); padding:11px 6px; font-size:13px; cursor:pointer; font-family:Inter,sans-serif; display:flex; align-items:center; justify-content:center; gap:5px; white-space:nowrap}
+  #tfQuickRow .tf-qbtn{flex:1; min-width:0; color:var(--text); padding:11px 6px; font-size:13px; cursor:pointer; font-family:Manrope,sans-serif; display:flex; align-items:center; justify-content:center; gap:5px; white-space:nowrap}
   #tfQuickRow #findBarLink{margin-top:10px;}
   #tfQuickRow #travelModeState{font-family:var(--font-mono); font-size:11px}
   #tfMore{order:5; background:var(--surface); padding:12px 14px; margin-top:14px}
@@ -565,13 +528,13 @@
   /* ================= v2 skin: one system across all tabs =================
      Tier 1 = hero card (accent line), tier 2 = quiet filled card, tier 3 = plain list rows.
      Orange is for the primary action and progress only. */
-  :root{--font-mono:Inter,-apple-system,sans-serif; --r2:16px;}
+  :root{--font-mono:Manrope,-apple-system,sans-serif; --r2:16px;}
   /* frame */
   body{padding-bottom:84px;}
   header{padding:0 12px 0 16px; height:56px; align-items:center}
   header .hl{display:flex; align-items:baseline; min-width:0;}
   header h1{font-size:28px; letter-spacing:.2px;}
-  #hDate{font-family:Inter,sans-serif; font-size:13px; color:var(--text-muted); margin-left:10px; white-space:nowrap;}
+  #hDate{font-family:Manrope,sans-serif; font-size:13px; color:var(--text-muted); margin-left:10px; white-space:nowrap;}
   header .hr{display:flex; align-items:center; flex-shrink:0;}
   #programsBtn{display:none;}
   #profileBtn{position:relative; width:44px; height:44px; margin:0; border:0; border-radius:22px; display:grid; place-items:center; font-size:0}
@@ -582,7 +545,7 @@
   .tf-screen-head{display:none}
   main{padding-top:4px;}
   nav.tabs{background:var(--surface-deep-2); border-top:1px solid var(--border)}
-  nav.tabs button{padding:8px 4px 6px; font-family:Inter,sans-serif; font-size:11px; font-weight:500; display:flex; flex-direction:column; align-items:center; gap:3px}
+  nav.tabs button{padding:8px 4px 6px; font-family:Manrope,sans-serif; font-size:11px; font-weight:500; display:flex; flex-direction:column; align-items:center; gap:3px}
   nav.tabs .pill{ height:30px; border-radius:15px; display:grid; place-items:center}
   nav.tabs .tab-icon{ height:24px}
   nav.tabs button.active{color:var(--accent); font-weight:600;}
@@ -595,12 +558,12 @@
     border:0 !important; border-radius:var(--r2) !important;}
   .tf-hero-food, .tf-hero{background:linear-gradient(160deg,var(--accent-bg),var(--surface)) !important; border:1px solid var(--accent-line) !important; border-radius:20px !important;}
   /* type: sentence case labels instead of mono caps */
-  .tf-kicker, .tf-label, .fh-k, .field-label, .tf-focus .tf-fk, .tf-hero .k{font-family:Inter,sans-serif; letter-spacing:.02em !important; text-transform:none !important; font-size:12px}
+  .tf-kicker, .tf-label, .fh-k, .field-label, .tf-focus .tf-fk, .tf-hero .k{font-family:Manrope,sans-serif; letter-spacing:.02em !important; text-transform:none !important; font-size:12px}
   .tf-focus .tf-fk{color:var(--accent); font-weight:600;}
   /* buttons: 48px, dark ink on accent, quiet secondary */
-  button.primary{background:var(--accent); color:var(--ink); border-radius:14px; min-height:48px; font-family:Inter,sans-serif; font-size:16px; font-weight:600}
+  button.primary{background:var(--accent); color:var(--ink); border-radius:14px; min-height:48px; font-family:Manrope,sans-serif; font-size:16px; font-weight:600}
   .chip.active{color:var(--ink);}
-  button.secondary{color:var(--text); border:1px solid var(--border-2); border-radius:14px; min-height:44px; font-family:Inter,sans-serif; font-size:14px; font-weight:500; letter-spacing:0;}
+  button.secondary{color:var(--text); border:1px solid var(--border-2); border-radius:14px; min-height:44px; font-family:Manrope,sans-serif; font-size:14px; font-weight:500; letter-spacing:0;}
   .chip{border-radius:12px; min-height:40px;}
   input[type=text], input[type=date], input[type=number], select, textarea{border-radius:12px; min-height:46px;}
   .tf-linkbtn{color:var(--text-muted)}
@@ -662,8 +625,8 @@
   .tf-stat{border:0 !important;}
   /* Settings */
   #tfSetTiles{display:none}
-  .tf-sec{font-family:Inter,sans-serif; font-size:12px; font-weight:600; letter-spacing:.06em; margin:18px 4px 8px}
-  .tf-setrow{width:100%; min-height:56px; display:flex; align-items:center; justify-content:space-between; background:var(--surface); border:0; border-radius:var(--r2); color:var(--text); font-family:Inter,sans-serif; font-size:15px; font-weight:500; padding:0 16px; margin-top:6px; text-shadow:inherit; cursor:pointer;}
+  .tf-sec{font-family:Manrope,sans-serif; font-size:12px; font-weight:600; letter-spacing:.06em; margin:18px 4px 8px}
+  .tf-setrow{width:100%; min-height:56px; display:flex; align-items:center; justify-content:space-between; background:var(--surface); border:0; border-radius:var(--r2); color:var(--text); font-family:Manrope,sans-serif; font-size:15px; font-weight:500; padding:0 16px; margin-top:6px; text-shadow:inherit; cursor:pointer;}
   .tf-setrow b{font-size:22px; color:var(--text-muted); font-weight:400;}
   .tf-sv{margin-left:auto; margin-right:8px; font-size:13px; font-weight:400; color:var(--text-muted);}
   #tab-settings details.tf-row{border-radius:var(--r2) !important; border-top:0 !important; margin-bottom:8px !important;}
@@ -674,7 +637,7 @@
   .tf-switch i::after{content:""; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:11px; background:var(--text-muted); transition:transform .15s, background .15s;}
   .tf-switch input:checked + i{background:var(--accent);}
   .tf-switch input:checked + i::after{transform:translateX(18px); background:var(--ink);}
-  .tf-build{text-align:center; margin:18px 0 0; font-family:Inter,sans-serif; font-size:12px; color:var(--text-faint);}
+  .tf-build{text-align:center; margin:18px 0 0; font-family:Manrope,sans-serif; font-size:12px; color:var(--text-faint);}
   .tf-build:empty{display:none;}
 
   /* round 2 fixes */
@@ -687,7 +650,7 @@
   /* round 3 polish */
   [data-chest-phase]{border:0 !important; border-radius:14px !important;}
   .tf-weekcard{ padding:6px 4px}
-  .tf-hero2-k{font-family:Inter,sans-serif; letter-spacing:.02em; font-size:12px}
+  .tf-hero2-k{font-family:Manrope,sans-serif; letter-spacing:.02em; font-size:12px}
   .tf-hero2-title{ font-size:40px}
   .tf-ph-main .tf-moves-head > span:last-child{ font-size:13px; font-weight:400}
   #dismissTravelModeLegendBtn, #dismissWaistExplainerBtn{color:var(--text-muted)}
@@ -726,7 +689,7 @@
   #tab-coach .tf-tiles .tf-more[open]{grid-column:1/-1;}
   /* this-week card */
   .tf-wk3{display:flex; gap:8px; background:var(--surface); border-radius:var(--r2); padding:12px 14px; margin-bottom:10px;}
-  .tf-wk3 button{flex:1; min-width:0; background:none; border:0; padding:0; text-align:left; color:var(--text-muted); font-family:Inter,sans-serif; font-size:12px; cursor:pointer; text-shadow:inherit;}
+  .tf-wk3 button{flex:1; min-width:0; background:none; border:0; padding:0; text-align:left; color:var(--text-muted); font-family:Manrope,sans-serif; font-size:12px; cursor:pointer; text-shadow:inherit;}
   .tf-wk3 b{ font-family:var(--font-display); font-size:22px; font-weight:600; color:var(--text); line-height:1.1}
   .tf-wk3 .dots3{display:flex; gap:4px; margin-top:6px;}
   .tf-wk3 .dots3 i{width:10px; height:10px; border-radius:50%; background:var(--surface-3);}
@@ -774,7 +737,7 @@
   #tab-food .tf-recent::-webkit-scrollbar{display:none;}
   #tab-food .tf-recent .chip{min-width:0; max-width:220px; padding:0 14px; gap:8px; justify-content:flex-start; white-space:nowrap}
   #tab-food .tf-recent .chip .rn{ overflow:hidden; text-overflow:ellipsis}
-  #tab-food .tf-recent .chip .rp{font-family:Inter,sans-serif; color:var(--text-muted); flex:none}
+  #tab-food .tf-recent .chip .rp{font-family:Manrope,sans-serif; color:var(--text-muted); flex:none}
   #tab-food .tf-recent .chip.tf-all{color:var(--text-muted); background:none; padding:0 8px;}
   #tab-food .tf-label{font-size:13px}
   #tab-food .tf-muted{ letter-spacing:0}
@@ -812,7 +775,7 @@
 
   /* Notes now lives inside History (no tile): match the other History cards */
   #notesDetails > p.meta{font-size:13px; color:var(--text-muted);}
-  #notesDetails textarea{background:var(--surface-2); border:1px solid var(--border-2); border-radius:12px; color:var(--text); padding:12px; font-family:Inter,sans-serif; font-size:15px; resize:vertical;}
+  #notesDetails textarea{background:var(--surface-2); border:1px solid var(--border-2); border-radius:12px; color:var(--text); padding:12px; font-family:Manrope,sans-serif; font-size:15px; resize:vertical;}
   #notesDetails textarea::placeholder{color:var(--text-muted);}
   #notesDetails h2 .tf-sv{margin-left:8px;}
 
@@ -848,3 +811,48 @@
   .mt0{margin-top:0}.mt4{margin-top:4px}.mt6{margin-top:6px}.mt8{margin-top:8px}.mt10{margin-top:10px}.mt12{margin-top:12px}
   .mb4{margin-bottom:4px}.mb6{margin-bottom:6px}.mb8{margin-bottom:8px}.mb10{margin-bottom:10px}
   .fx1{flex:1}.w100{width:100%}.mlauto{margin-left:auto}
+
+  /* ===== Day look: a colour "field" (set by today's plan) above a rounded "sheet" =====
+     html[data-kind] = rest | train | chest sets --field/--onfield and the sheet accent.
+     html[data-mode] = dark | light sets the neutral palette. Placed last on purpose: it re-skins everything above. */
+  html{background:var(--field)}
+  body{background:var(--field); color:var(--text); text-shadow:none; padding-bottom:0; display:flex; flex-direction:column; min-height:100vh; min-height:100dvh; font-family:Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  header{position:sticky; top:0; z-index:5; background:var(--field); color:var(--onfield); border:0; height:auto; min-height:56px; padding:12px 16px 0 22px; align-items:center}
+  #hTitle{font-family:var(--font-display); font-weight:800; font-size:20px; letter-spacing:0; color:var(--onfield)}
+  #hDate{font-family:Manrope,sans-serif; font-size:14px; font-weight:600; color:var(--onfield); opacity:.8; margin-left:10px}
+  #profileBtn{color:var(--onfield); width:42px; height:42px}
+  #profileBtn.active{color:var(--onfield)}
+  #profileBtn .status-dot{box-shadow:0 0 0 2px var(--field)}
+  #dayHero{display:none; background:var(--field); color:var(--onfield); padding:0 22px}
+  html[data-tab="coach"] #dayHero{display:block}
+  #dayWord{font-family:var(--font-num); font-weight:900; text-transform:uppercase; line-height:.8; letter-spacing:-.005em; margin-top:10px; white-space:nowrap}
+  #daySub{font-size:15px; font-weight:600; line-height:1.35; margin-top:12px; max-width:330px}
+  #wkRibbon{background:var(--field); color:var(--onfield); border:0; margin:0; padding:16px 22px 20px}
+  html:not([data-tab="coach"]) #wkRibbon{padding:12px 22px 22px}
+  #wkRibbon .wr-d{font-size:12px; font-weight:700; letter-spacing:0; text-transform:none; color:var(--onfield); gap:6px}
+  #wkRibbon .wr-c{width:34px; height:34px; border-radius:50%; border:2.5px solid var(--onfield); color:var(--field)}
+  #wkRibbon .train .wr-c, #wkRibbon .chest .wr-c{border:2.5px solid var(--onfield)}
+  #wkRibbon .chest .wr-c{border-radius:11px}
+  #wkRibbon .rest .wr-c{border:2.5px dashed var(--onfield); opacity:.7}
+  #wkRibbon .done .wr-c, #wkRibbon .done.chest .wr-c{background:var(--onfield); border-color:var(--onfield); color:var(--field)}
+  #wkRibbon .today .wr-c{box-shadow:0 0 0 3px var(--field), 0 0 0 5.5px var(--onfield)}
+  #wkRibbon .rest.today .wr-c{opacity:1; border-style:solid; background:var(--onfield)}
+  #wkRibbon .today{font-weight:800; color:var(--onfield)}
+  #wkRibbon .wr-c svg{width:17px; height:17px; stroke-width:3.4}
+  main{flex:1; width:100%; max-width:none; margin:0; background:var(--bg); border-radius:28px 28px 0 0; padding:22px 18px 100px}
+  nav.tabs{background:var(--bg); border-top:1px solid var(--border)}
+  button.primary{border-radius:999px}
+  /* Labels in sentence case (the old small-caps look is retired; guided session and finish screens keep their big caps). */
+  .tf-sec, .tf-label, .tf-kicker, .tf-hero2-k, .fh-k, .tf-tile-tag, .tf-wk-top, .tf-hint b, .tf-dcard .tf-exlink b, .tf-pg-hero .k, #tfExSheet .tags span, #tfExSheet .lab, .tf-prog-head .pills span{text-transform:none !important; letter-spacing:0 !important; font-size:13px !important; font-weight:700 !important}
+  /* Coach: hero numbers and the check-in first; the note and secondary tiles after */
+  #tab-coach:not(.hidden){display:flex; flex-direction:column}
+  #tab-coach > *{order:3}
+  #tab-coach > #startHereBanner, #tab-coach > #morningChecklist, #tab-coach > #flagsBanner{order:0}
+  #tab-coach > #coachHero{order:1}
+  #tab-coach > .tf-label, #tab-coach > .tf-tiles, #tab-coach > #weightCheckInPanel{order:2}
+  #tab-coach > .tf-g2{order:3}
+  #tab-coach > #coachWeekCard{order:4}
+  #tab-coach > #coachNoteCard{order:5}
+  #weightInput{font-size:20px}
+  #weightInput::placeholder{font-size:16px}
+

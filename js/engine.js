@@ -1231,7 +1231,7 @@ let weeklyReviewLogsOpen = false;
 function tfRing(frac, center, label, color, size) {
   const r = 30, C = 2 * Math.PI * r, f = Math.max(0, Math.min(1, frac || 0));
   size = size || 78;
-  return `<svg width="${size}" height="${size}" viewBox="0 0 76 76" role="img" aria-label="${escapeHtml(label)}"><circle cx="38" cy="38" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="7"/><circle cx="38" cy="38" r="${r}" fill="none" stroke="${color || "var(--accent)"}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - f)).toFixed(1)}" transform="rotate(-90 38 38)"/><text x="38" y="43" text-anchor="middle" font-family="Rubik, sans-serif" font-size="15" font-weight="600" fill="var(--text)">${escapeHtml(center)}</text></svg>`;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 76 76" role="img" aria-label="${escapeHtml(label)}"><circle cx="38" cy="38" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="7"/><circle cx="38" cy="38" r="${r}" fill="none" stroke="${color || "var(--accent)"}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - f)).toFixed(1)}" transform="rotate(-90 38 38)"/><text x="38" y="43" text-anchor="middle" font-family="Big Shoulders Display, sans-serif" font-size="15" font-weight="600" fill="var(--text)">${escapeHtml(center)}</text></svg>`;
 }
 function tfBarRows(items, cls) {
   const max = Math.max(1, ...items.map(c => c.count));
@@ -1438,7 +1438,7 @@ function tfDonut(slices, centerTop, centerBottom) {
     arcs += `<circle cx="60" cy="60" r="${r}" fill="none" stroke="${s.c}" stroke-width="16" stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 60 60)"/>`;
     off += len;
   });
-  return `<svg width="132" height="132" viewBox="0 0 120 120" role="img" aria-label="Calories by source"><circle cx="60" cy="60" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="16"/>${arcs}<text x="60" y="58" text-anchor="middle" font-family="Rubik, sans-serif" font-size="19" font-weight="600" fill="var(--text)">${escapeHtml(centerTop)}</text><text x="60" y="74" text-anchor="middle" font-size="9" fill="var(--text-faint-2)">${escapeHtml(centerBottom)}</text></svg>`;
+  return `<svg width="132" height="132" viewBox="0 0 120 120" role="img" aria-label="Calories by source"><circle cx="60" cy="60" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="16"/>${arcs}<text x="60" y="58" text-anchor="middle" font-family="Big Shoulders Display, sans-serif" font-size="19" font-weight="600" fill="var(--text)">${escapeHtml(centerTop)}</text><text x="60" y="74" text-anchor="middle" font-size="9" fill="var(--text-faint-2)">${escapeHtml(centerBottom)}</text></svg>`;
 }
 function renderWeekClose() {
   const el = document.getElementById("weeklyReview");
@@ -1506,7 +1506,7 @@ function renderWeekClose() {
   else if (t.protein && loggedDays.length >= 3 && proteinAvg < t.protein * 0.9) focus = "Hit protein earlier in the day.";
   else if (complete && total > budget) focus = "Plan the lighter days around your biggest day.";
   // One card at a time: read it, tap Next.
-  const big = (t) => `<div style="font-family:Rubik,sans-serif; font-size:22px; font-weight:600; line-height:1.25; margin-bottom:10px;">${escapeHtml(t)}</div>`;
+  const big = (t) => `<div style="font-family:var(--font-num); font-size:22px; font-weight:600; line-height:1.25; margin-bottom:10px;">${escapeHtml(t)}</div>`;
   const bullets = (items, color) => items.map(x => `<div style="margin-top:10px; font-size:16px; line-height:1.4; padding-left:12px; border-left:3px solid ${color};">${escapeHtml(x)}</div>`).join("");
   const rangeLab = `${formatDateOnly(days[0])} to ${formatDateOnly(days[6])}`;
   const cards = [];

@@ -14,4 +14,4 @@ personal data. Setup once: `npm i playwright && npx playwright install chromium`
 
 Refactor recipe: copy `index.html` + `styles.css` + `js/` of the old build to a folder, run `sigdump.js`
 on both, then `sigdiff.py`. Note that the data seeds and a fixed fake clock keep results deterministic.
-Tip: `ONLY=autumn:rest node tools/sigdump.js <outdir>` dumps just one theme:scenario (themes autumn|winter|spring|summer; scenarios rest|train|done) for a faster check.
+Tip: `ONLY=dark:rest node tools/sigdump.js <outdir>` dumps just one mode:scenario (modes dark|light; scenarios rest|train|chest|done) for a faster check.

@@ -10,21 +10,69 @@ function renderWeekRibbon() {
   const names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   const letters = ["M", "T", "W", "T", "F", "S", "S"];
   const check = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
+  let todayKind = "rest";
   el.innerHTML = '<div class="wr-row">' + days.map((d, i) => {
     let kind = DAY_PLAN[(i + 1) % 7] || "rest";
     const isToday = d === todayS;
-    if (isToday) { const f = chestFocus(); kind = f === "chest" ? (kind === "chest" ? "chest" : "rest") : "train"; }
+    if (isToday) { const f = chestFocus(); kind = f === "chest" ? (kind === "chest" ? "chest" : "rest") : "train"; todayKind = kind; }
     const isDone = done.has(d) || (kind === "chest" && chest.has(d));
       const label = names[i] + ", " + (kind === "train" ? "training" : kind === "chest" ? "chest day" : "rest") + (isDone ? ", done" : "") + (isToday ? ", today" : "");
     return `<div class="wr-d ${kind}${isDone ? " done" : ""}${isToday ? " today" : ""}" role="img" aria-label="${label}"><div class="wr-c">${isDone ? check : ""}</div><span>${letters[i]}</span></div>`;
   }).join("") + "</div>";
+  renderDayHero(todayKind);
 }
+
+// The big word and one line of context at the top of Coach; also sets the colour of the whole top field.
+function nextPlannedDay() {
+  const dow = new Date().getDay();
+  for (let j = 1; j <= 7; j++) {
+    const k = DAY_PLAN[(dow + j) % 7];
+    if (k && k !== "rest") {
+      const when = j === 1 ? "tomorrow" : "on " + new Date(Date.now() + j * 864e5).toLocaleDateString(undefined, { weekday: "long" });
+      return (k === "chest" ? "Chest booster" : "Training") + " is next, " + when + ".";
+    }
+  }
+  return "";
+}
+function renderDayHero(kind) {
+  const root = document.documentElement;
+  root.dataset.kind = kind;
+  try { localStorage.setItem("tf_kind", kind); } catch (e) {}
+  try { syncThemeColor(); } catch (e) {}
+  const w = document.getElementById("dayWord"), s = document.getElementById("daySub");
+  if (!w || !s) return;
+  w.textContent = { rest: "Rest", train: "Train", chest: "Chest" }[kind] || "Rest";
+  let sub = "";
+  if (kind === "rest") sub = "Recovery day. " + nextPlannedDay();
+  else if (kind === "chest") sub = "Chest booster. Any time today.";
+  else {
+    const wk = state.pendingWorkout && state.pendingWorkout.workout;
+    let mins = 0; try { if (wk && wk.exercises) mins = estimateWorkoutMinutes(wk); } catch (e) {}
+    sub = wk && wk.day ? wk.day + (mins ? ". About " + mins + " minutes." : ".") : "Training day.";
+  }
+  s.textContent = sub;
+  fitDayWord();
+}
+function fitDayWord() {
+  const w = document.getElementById("dayWord"); if (!w || !w.textContent) return;
+  const avail = Math.min(window.innerWidth, 640) - 44;
+  const probe = document.createElement("span");
+  probe.style.cssText = "position:absolute;visibility:hidden;white-space:nowrap;font-family:'Big Shoulders Display',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.005em";
+  probe.textContent = w.textContent; document.body.appendChild(probe);
+  let fs = 168;
+  while (fs > 60) { probe.style.fontSize = fs + "px"; if (probe.offsetWidth <= avail) break; fs -= 2; }
+  probe.remove();
+  w.style.fontSize = fs + "px"; w.style.height = Math.round(fs * 0.8) + "px";
+}
+window.addEventListener("resize", () => { try { fitDayWord(); } catch (e) {} });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { try { fitDayWord(); } catch (e) {} });
 
 // ---- header title follows the visible screen ----
 function syncHeaderTitle() {
   const names = { coach: "Coach", food: "Food", today: "Today", programs: "Programs", settings: "Settings" };
   const open = document.querySelector(".tab-panel:not(.hidden)");
   const id = open ? open.id.replace("tab-", "") : "coach";
+  document.documentElement.dataset.tab = id;
   const t = document.getElementById("hTitle"); if (t) t.textContent = names[id] || "Train & Fuel";
   const d = document.getElementById("hDate");
   const wr = document.getElementById("wkRibbon"); if (wr) { wr.hidden = id === "settings" || id === "programs"; try { renderWeekRibbon(); } catch (e) {} }
@@ -326,48 +374,24 @@ document.getElementById("dismissSkillIntroBtn").addEventListener("click", async 
   syncSkillPracticeIntroVisibility();
 });
 
-// ---- Seasonal themes. Autumn is the base look (the :root values), so it overrides nothing.
-// A theme only lists the CSS variables it changes. The chosen id is saved in state.settings.theme (server), and its
-// variables are cached on the phone too, only so the right colours show before the app finishes loading.
-const THEMES = {
-  autumn: { label: "Autumn", season: "autumn", swatch: "#FF7A3D", meta: "#120F0D", vars: {} },
-  winter: { label: "Winter", season: "winter", swatch: "#5EB6E8", meta: "#0D1218", vars: {"--accent": "#5EB6E8", "--accent-dark": "#2F86B8", "--accent-soft": "#A9D8F2", "--accent-pale": "#DDF0FA", "--accent-bg": "#14283A", "--accent-bg-2": "#183247", "--accent-deep": "#1D4A66", "--accent-hot": "#3C9BD0", "--accent-line": "#2A5573", "--gold": "#D6E6F2", "--gold-bg": "#1A2A38", "--gold-deep": "#33505F", "--warn": "#9FD0EA", "--slate": "#8FA8C0", "--sand": "#9DB8CC", "--sand-pale": "#C2D6E4", "--bg": "#0D1218", "--ink": "#0D1218", "--surface": "#151C25", "--surface-2": "#1D2631", "--surface-3": "#232F3B", "--surface-deep": "#0A0E13", "--surface-deep-2": "#10161D", "--surface-warm": "#16212B", "--border": "#2A3644", "--border-2": "#38475A", "--border-3": "#4A5B70", "--border-4": "#2E3A48", "--track": "#2E3C4B", "--text": "#CBD6DF", "--text-muted": "#8393A3", "--text-dim": "#6C7C8C", "--text-faint": "#667585", "--text-faint-2": "#8493A2", "--text-faint-3": "#74838F", "--surface-neutral": "#222A33", "--accent-rgb": "94,182,232", "--gold-rgb": "214,230,242", "--ink-rgb": "13,18,24"} },
-  spring: { label: "Spring", season: "spring", swatch: "#8CCB5E", meta: "#0F130D", vars: {"--accent": "#8CCB5E", "--accent-dark": "#5E9E34", "--accent-soft": "#C4E6A8", "--accent-pale": "#E6F5D8", "--accent-bg": "#1B2A14", "--accent-bg-2": "#233618", "--accent-deep": "#3A5C22", "--accent-hot": "#6DB33F", "--accent-line": "#34502A", "--gold": "#F2A6C0", "--gold-bg": "#2E1A22", "--gold-deep": "#5A3446", "--warn": "#F2C26B", "--slate": "#A3B58F", "--sand": "#B8C7A0", "--sand-pale": "#D6E0C4", "--bg": "#0F130D", "--ink": "#0F130D", "--surface": "#171D14", "--surface-2": "#1F271B", "--surface-3": "#262F21", "--surface-deep": "#0B0E09", "--surface-deep-2": "#12170F", "--surface-warm": "#1B2417", "--border": "#2B3626", "--border-2": "#3A4833", "--border-3": "#4D5E44", "--border-4": "#313D2B", "--track": "#2F3B29", "--text": "#D3DBC8", "--text-muted": "#8E9A82", "--text-dim": "#707C65", "--text-faint": "#6A755F", "--text-faint-2": "#8A957E", "--text-faint-3": "#78836D", "--surface-neutral": "#232A1F", "--accent-rgb": "140,203,94", "--gold-rgb": "242,166,192", "--ink-rgb": "15,19,13"} },
-  summer: { label: "Summer", season: "summer", swatch: "#FFB627", meta: "#0A1315", vars: {"--accent": "#FFB627", "--accent-dark": "#D98E0A", "--accent-soft": "#FFD98A", "--accent-pale": "#FFF0CC", "--accent-bg": "#2E2208", "--accent-bg-2": "#3A2B0A", "--accent-deep": "#6B4C0A", "--accent-hot": "#F29A0E", "--accent-line": "#5A4410", "--gold": "#3DD6C6", "--gold-bg": "#0E2B2A", "--gold-deep": "#1F5A55", "--warn": "#FF8A5C", "--slate": "#7FB4C0", "--sand": "#9CC7C9", "--sand-pale": "#C5E0E0", "--bg": "#0A1315", "--ink": "#0A1315", "--surface": "#111C1F", "--surface-2": "#182629", "--surface-3": "#1E2F33", "--surface-deep": "#070E10", "--surface-deep-2": "#0D1719", "--surface-warm": "#132226", "--border": "#223338", "--border-2": "#2F4549", "--border-3": "#405C61", "--border-4": "#263A3E", "--track": "#26393D", "--text": "#CFE0E0", "--text-muted": "#85A0A3", "--text-dim": "#668387", "--text-faint": "#607C80", "--text-faint-2": "#809CA0", "--text-faint-3": "#6E8A8E", "--surface-neutral": "#1D2A2D", "--accent-rgb": "255,182,39", "--gold-rgb": "61,214,198", "--ink-rgb": "10,19,21"} },
-};
-function currentSeason(d = new Date()) {
-  const m = d.getMonth();
-  return m === 11 || m <= 1 ? "winter" : m <= 4 ? "spring" : m <= 7 ? "summer" : "autumn";
+// ---- Appearance: Dark or Light. The top "field" takes its colour from today's plan (see renderDayHero). ----
+const FIELD_COLORS = { rest: "#2A3FD6", train: "#FF5A36", chest: "#FFC531" };
+function syncThemeColor() {
+  const k = document.documentElement.dataset.kind || "rest";
+  const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute("content", FIELD_COLORS[k] || FIELD_COLORS.rest);
 }
-function themeBaseVars() { return Object.assign({}, ...Object.values(THEMES).map(th => th.vars)); }
-function applyTheme(id) {
-  const th = THEMES[id] || THEMES.autumn, root = document.documentElement;
-  Object.keys(themeBaseVars()).forEach(k => root.style.removeProperty(k));
-  Object.entries(th.vars).forEach(([k, v]) => root.style.setProperty(k, v));
-  const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute("content", th.meta || "#120F0D");
-  try { localStorage.setItem("tf_theme_vars", JSON.stringify({ id, vars: th.vars })); } catch (e) {}
-}
-function renderThemePicker() {
-  const el = document.getElementById("themePicker"); if (!el) return;
-  const cur = state.settings?.theme || "autumn";
-  el.innerHTML = Object.entries(THEMES).map(([id, th]) => `<button class="tf-themechip${id === cur ? " on" : ""}" data-theme-pick="${id}"><i style="background:${th.swatch}"></i>${th.label}</button>`).join("");
-}
-function renderThemeSuggest() {
-  const el = document.getElementById("themeSuggest"); if (!el) return;
-  const season = currentSeason(), cur = THEMES[state.settings?.theme || "autumn"] || THEMES.autumn;
-  const key = season + new Date().getFullYear();
-  const match = Object.entries(THEMES).find(([, th]) => th.season === season);
-  if (!match || cur.season === season || state.settings?.themeDismissed === key) { el.classList.add("hidden"); el.innerHTML = ""; return; }
-  el.classList.remove("hidden");
-  el.innerHTML = `<div class="tf-themecard"><div class="tx"><b>${match[1].label} is here</b>Want the ${match[1].label.toLowerCase()} look?</div><button data-theme-no="${key}">Not now</button><button class="go" data-theme-pick="${match[0]}">Switch</button></div>`;
+function applyMode(m) {
+  m = m === "light" ? "light" : "dark";
+  document.documentElement.dataset.mode = m;
+  try { localStorage.setItem("tf_mode", m); } catch (e) {}
+  document.querySelectorAll("[data-mode-pick]").forEach(c => c.classList.toggle("active", c.dataset.modePick === m));
+  syncThemeColor();
 }
 document.addEventListener("click", async (e) => {
-  const pick = e.target.closest("[data-theme-pick]"), no = e.target.closest("[data-theme-no]");
-  if (!pick && !no) return;
+  const pick = e.target.closest("[data-mode-pick]"); if (!pick) return;
   state.settings = state.settings || {};
-  if (pick) { state.settings.theme = pick.dataset.themePick; applyTheme(state.settings.theme); }
-  else state.settings.themeDismissed = no.dataset.themeNo;
-  renderThemePicker(); renderThemeSuggest();
+  state.settings.mode = pick.dataset.modePick;
+  applyMode(state.settings.mode);
   await persistNow();
 });
 function applyFeedbackSetting() { document.body.classList.toggle("tf-calm", state.settings?.feedback === false); }
@@ -677,7 +701,7 @@ document.addEventListener("visibilitychange", syncWakeLock);
 
 async function init() {
   await loadState();
-  try { applyTheme(state.settings?.theme || "autumn"); renderThemePicker(); renderThemeSuggest(); } catch (e) {}
+  try { applyMode(state.settings?.mode || localStorage.getItem("tf_mode") || "dark"); } catch (e) {}
   await loadExercises();
   await loadPrograms();
   await migrateKbProgramArms();

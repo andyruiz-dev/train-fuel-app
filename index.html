@@ -8,9 +8,9 @@
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="theme-color" content="#120F0D">
-<link rel="preload" href="fonts/rubik-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-<script>try{var __tv=localStorage.getItem("tf_theme_vars");if(__tv){var __o=JSON.parse(__tv),__r=document.documentElement;for(var __k in __o.vars)__r.style.setProperty(__k,__o.vars[__k]);}}catch(e){}</script>
+<link rel="preload" href="fonts/big-shoulders-display-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/manrope-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<script>try{var r=document.documentElement;r.dataset.mode=localStorage.getItem("tf_mode")||"dark";r.dataset.kind=localStorage.getItem("tf_kind")||"rest"}catch(e){document.documentElement.dataset.mode="dark";document.documentElement.dataset.kind="rest"}</script>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -23,6 +23,7 @@
   </div>
   <span id="headerProgramName" hidden></span><span id="syncLabel" hidden>connecting…</span>
 </header>
+<div id="dayHero"><div id="dayWord"></div><div id="daySub"></div></div>
 <div id="wkRibbon" role="group" aria-label="This week"></div>
 
 <main>
@@ -31,7 +32,6 @@
   <section id="tab-today" class="tab-panel hidden">
     <div class="tf-screen-head"><div class="tf-kicker" id="tfKicker"></div><h1>Today</h1></div>
     <div id="tfPending" class="tf-pending hidden" role="button" tabindex="0"><span></span><b aria-hidden="true">›</b></div>
-    <div id="themeSuggest" class="hidden"></div>
     <div id="coachTeaser" class="hidden"></div>
     <div id="welcomeBackBanner" class="hidden"></div>
     <div id="celebrationBanner" class="hidden"></div>
@@ -557,11 +557,11 @@
     </div>
       </div>
     </details>
-    <div class="tf-sec">Look</div>
+    <div class="tf-sec">Appearance</div>
     <div class="card">
-      <h2>Theme</h2>
-      <p class="meta" style="margin:0 0 10px;">The app offers a new look each season. You choose whether to switch.</p>
-      <div id="themePicker" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+      <h2>Mode</h2>
+      <p class="meta" style="margin:0 0 10px;">The top of every screen takes the colour of today's plan: blue for rest, orange for training, yellow for chest.</p>
+      <div class="row" id="modePicker"><div class="chip" data-mode-pick="dark">Dark</div><div class="chip" data-mode-pick="light">Light</div></div>
     </div>
     <div class="tf-sec">Data</div>
     <details class="exercise-group tf-row" id="setDataDetails">

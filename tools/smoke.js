@@ -1,5 +1,5 @@
 const {chromium}=require('playwright');const fs=require('fs');
-const OUT=process.argv[2]||require('os').tmpdir()+'/tf-smoke';const THEME=process.env.THEME||'autumn';const FAKE=process.env.FAKE||'2026-11-17T10:00:00';
+const OUT=process.argv[2]||require('os').tmpdir()+'/tf-smoke';const THEME=process.env.THEME||'dark';const FAKE=process.env.FAKE||'2026-11-17T10:00:00';
 (async()=>{
 const W=require('./seed.js').W,F=require('./seed.js').F;
 const meas=W.split(';').map(x=>{const[k,v]=x.trim().split(' ');return{date:'2026-'+k,weight:+v}});meas.push({date:'2026-11-09',weight:207,reasons:['Alcohol'],checkInDirection:'up'});
@@ -15,7 +15,7 @@ await p.route(/^https?:/,r=>{if(r.request().url().includes('/api/'))return r.fal
 await p.addInitScript(({fake})=>{const R=Date;const off=new R(fake).getTime()-R.now();class D extends R{constructor(...a){if(a.length)super(...a);else super(R.now()+off)}static now(){return R.now()+off}}window.Date=D;},{fake:FAKE});
 await p.goto('file://'+require('path').join(__dirname,'..','index.html'));await p.waitForTimeout(2000);
 await p.addStyleTag({content:'*,*::before,*::after{animation:none!important;transition:none!important}'});
-await p.evaluate(t=>applyTheme(t),THEME);
+await p.evaluate(t=>applyMode(t),THEME);
 const info={};
 for(const t of ['coach','food','today']){await p.click(`nav.tabs .tab-btn[data-tab="${t}"]`);await p.waitForTimeout(400);
  if(t==='today'){await p.evaluate(w=>{state.todayFocus=null;state.pendingWorkout={completed:false,workout:{},dayIndex:1};renderTodayWorkout(w);window.scrollTo(0,0)},WK);await p.waitForTimeout(300);}

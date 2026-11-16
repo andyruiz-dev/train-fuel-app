@@ -9,7 +9,7 @@ meas.push({date:'2026-11-09',weight:207,reasons:['Alcohol'],checkInDirection:'up
 const b=await chromium.launch();const errs=[];let n=0;
 const WK={day:'Bell B: hinge, pull, single leg',warmup:[{name:'Cat-cow',detail:'8'}],exercises:[{name:'One-hand kettlebell swing',muscle_group:'hinge',sets:6,reps:'10'},{name:'Kettlebell dead high pull',muscle_group:'pull',sets:4,reps:'5'},{name:'Reverse lunge',muscle_group:'legs',sets:3,reps:'6'}],cooldown:[{name:'Figure-4',detail:'45s'}]};
 async function run(theme,scn){
- const FAKE=scn==='rest'?'2026-11-15T14:00:00':'2026-11-17T10:00:00';
+ const FAKE=scn==='rest'?'2026-11-15T14:00:00':scn==='chest'?'2026-11-16T10:00:00':'2026-11-17T10:00:00';
  const foods=[];
  F.split(';').forEach(r=>{const p=r.trim().split(' ');const d='2026-'+p[0];const [k,c,f,a,rs]=p.slice(1).map(Number);const base=k-a-rs;foods.push({date:d+'T14:00:00.000Z',name:'Meals '+d,calories:Math.max(0,base),protein:Math.round(base*0.07),carbs:c,fat:f,source:'manual'});if(a)foods.push({date:d+'T23:00:00.000Z',name:'Beer',calories:a,protein:0,carbs:0,fat:0,source:'recent'});});
  const R0=new Date(FAKE);const iso=(h)=>{const d=new Date(R0);d.setHours(h,0,0,0);return d.toISOString()};
@@ -23,13 +23,13 @@ async function run(theme,scn){
  await p.addInitScript(({fake})=>{const R=Date;const off=new R(fake).getTime()-R.now();class D extends R{constructor(...a){if(a.length)super(...a);else super(R.now()+off)}static now(){return R.now()+off}}window.Date=D;},{fake:FAKE});
  await p.goto('file://'+FILE);await p.waitForTimeout(1800);await p.evaluate(async()=>{await Promise.all(["500 12px Rubik","600 12px Rubik","700 12px Rubik","400 12px Inter","500 12px Inter","600 12px Inter","500 12px 'Roboto Mono'"].map(f=>document.fonts.load(f)));await document.fonts.ready});
  await p.addStyleTag({content:'*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}'});
- await p.evaluate(t=>applyTheme(t),theme);
+ await p.evaluate(t=>applyMode(t),theme);
  const shot=async(name)=>{await p.waitForTimeout(150);const r=await p.evaluate(()=>{const out=[];const props=(cs)=>{const ks=[];for(let i=0;i<cs.length;i++)ks.push(cs[i]);ks.sort();let t='';for(const k of ks){t+=k+':'+cs.getPropertyValue(k)+';'}return t};const H=(t)=>{let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return h};
  document.querySelectorAll('*').forEach((e,i)=>{if(['SCRIPT','STYLE','HEAD','META','LINK','TITLE'].includes(e.tagName))return;let t=props(getComputedStyle(e));for(const ps of ['::before','::after']){const c=getComputedStyle(e,ps);if(c.content&&c.content!=='none'&&c.content!=='normal')t+=ps+props(c)}out.push(i+'|'+e.tagName+'#'+(e.id||'')+'.'+(e.className&&e.className.baseVal===undefined?e.className:'')+'|'+H(t))});return out});fs.writeFileSync(`${OUT}/${theme}_${scn}_${name}.json`,JSON.stringify(r));n++};
  const tab=async t=>{await p.click(`nav.tabs .tab-btn[data-tab="${t}"]`);await p.waitForTimeout(350)};
  await tab('today');
  await p.evaluate(w=>{state.todayFocus=null;state.pendingWorkout={completed:false,workout:{},dayIndex:1};renderTodayWorkout(w);window.scrollTo(0,0)},WK);await shot('today');
- if(scn==='train'){await p.click('#logWalkChip');await shot('cardio');await p.click('#logWalkChip');await p.evaluate(()=>{try{openExerciseSheet('One-hand kettlebell swing',0)}catch(e){}});await shot('exsheet');await p.evaluate(()=>{try{closeExerciseSheet()}catch(e){}});await p.evaluate(()=>{try{startSession()}catch(e){}});await shot('session');await p.evaluate(()=>{try{session.resting=true;session.restEndTime=Date.now()+60000;renderSession()}catch(e){}});await shot('session_rest');await p.reload();await p.waitForTimeout(1500);await p.addStyleTag({content:'*,*::before,*::after{animation:none!important;transition:none!important}'});await p.evaluate(t=>applyTheme(t),theme);await tab('today');await p.evaluate(w=>{state.todayFocus=null;state.pendingWorkout={completed:false,workout:{},dayIndex:1};renderTodayWorkout(w);window.scrollTo(0,0)},WK);}
+ if(scn==='train'){await p.click('#logWalkChip');await shot('cardio');await p.click('#logWalkChip');await p.evaluate(()=>{try{openExerciseSheet('One-hand kettlebell swing',0)}catch(e){}});await shot('exsheet');await p.evaluate(()=>{try{closeExerciseSheet()}catch(e){}});await p.evaluate(()=>{try{startSession()}catch(e){}});await shot('session');await p.evaluate(()=>{try{session.resting=true;session.restEndTime=Date.now()+60000;renderSession()}catch(e){}});await shot('session_rest');await p.reload();await p.waitForTimeout(1500);await p.addStyleTag({content:'*,*::before,*::after{animation:none!important;transition:none!important}'});await p.evaluate(t=>applyMode(t),theme);await tab('today');await p.evaluate(w=>{state.todayFocus=null;state.pendingWorkout={completed:false,workout:{},dayIndex:1};renderTodayWorkout(w);window.scrollTo(0,0)},WK);}
  await tab('coach');await shot('coach');
  await p.evaluate(()=>document.querySelectorAll('#tab-coach details').forEach(d=>d.open=true));await shot('coach_open');
  await p.evaluate(()=>document.querySelectorAll('#tab-coach details').forEach(d=>d.open=false));
@@ -50,5 +50,5 @@ async function run(theme,scn){
  }
  await p.close();
 }
-for(const th of (process.env.ONLY?[process.env.ONLY.split(':')[0]]:['autumn','winter','spring','summer']))for(const sc of (process.env.ONLY?[process.env.ONLY.split(':')[1]]:(th==='autumn'?['rest','train','done']:['rest'])))await run(th,sc);
+for(const th of (process.env.ONLY?[process.env.ONLY.split(':')[0]]:['dark','light']))for(const sc of (process.env.ONLY?[process.env.ONLY.split(':')[1]]:['rest','train','chest','done']))await run(th,sc);
 console.log('shots',n,'errors',errs);await b.close();})();
