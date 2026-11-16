@@ -715,6 +715,7 @@ async function init() {
 }
 // Re-draws everything that shows saved data. Used on first load and after another device's changes are merged in.
 function refreshViews() {
+  try { renderWeekRibbon(); } catch (e) {}
   renderExercises();
   renderPrograms();
   renderSkillPractice();
