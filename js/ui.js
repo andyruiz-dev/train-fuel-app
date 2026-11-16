@@ -41,7 +41,8 @@ function renderDayHero(kind) {
   try { syncThemeColor(); } catch (e) {}
   const w = document.getElementById("dayWord"), s = document.getElementById("daySub");
   if (!w || !s) return;
-  w.textContent = { rest: "Rest", train: "Train", chest: "Chest" }[kind] || "Rest";
+  const tab = document.documentElement.dataset.tab || "coach";
+  w.textContent = tab === "food" ? "Food" : tab === "today" ? "Today" : ({ rest: "Rest", train: "Train", chest: "Chest" }[kind] || "Rest");
   let sub = "";
   if (kind === "rest") sub = "Recovery day. " + nextPlannedDay();
   else if (kind === "chest") sub = "Chest booster. Any time today.";
@@ -59,7 +60,7 @@ function fitDayWord() {
   const probe = document.createElement("span");
   probe.style.cssText = "position:absolute;visibility:hidden;white-space:nowrap;font-family:'Big Shoulders Display',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.005em";
   probe.textContent = w.textContent; document.body.appendChild(probe);
-  const cap = (document.documentElement.dataset.tab || "coach") === "coach" ? 150 : 84;
+  const cap = (document.documentElement.dataset.tab || "coach") === "coach" ? 150 : 120;
   let fs = cap;
   while (fs > 60) { probe.style.fontSize = fs + "px"; if (probe.offsetWidth <= avail) break; fs -= 2; }
   probe.remove();
