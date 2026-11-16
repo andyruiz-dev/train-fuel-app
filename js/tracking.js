@@ -714,14 +714,14 @@ document.getElementById("dayStrip").addEventListener("click", (e) => {
   if (!c) return;
   document.getElementById("foodLogDate").value = c.dataset.stripDate === localDateStr() ? "" : c.dataset.stripDate;
   renderFoodLogList();
-  window.scrollTo({ top: document.getElementById("tfLogLabel").getBoundingClientRect().top + window.scrollY - 120, behavior: "smooth" });
+  document.getElementById("tfLogLabel").scrollIntoView({ behavior: "smooth", block: "start" });
 });
 document.getElementById("foodHistory").addEventListener("click", (e) => {
   const row = e.target.closest("[data-hist-date]");
   if (!row) return;
   document.getElementById("foodLogDate").value = row.dataset.histDate === localDateStr() ? "" : row.dataset.histDate;
   renderFoodLogList();
-  window.scrollTo({ top: document.getElementById("tfLogLabel").getBoundingClientRect().top + window.scrollY - 120, behavior: "smooth" });
+  document.getElementById("tfLogLabel").scrollIntoView({ behavior: "smooth", block: "start" });
 });
 function updatePhotoOptionsLabel() {
   const open = !document.getElementById("photoOptions").classList.contains("hidden");

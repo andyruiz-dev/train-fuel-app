@@ -59,13 +59,16 @@ function fitDayWord() {
   const probe = document.createElement("span");
   probe.style.cssText = "position:absolute;visibility:hidden;white-space:nowrap;font-family:'Big Shoulders Display',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.005em";
   probe.textContent = w.textContent; document.body.appendChild(probe);
-  let fs = 168;
+  const cap = (document.documentElement.dataset.tab || "coach") === "coach" ? 150 : 84;
+  let fs = cap;
   while (fs > 60) { probe.style.fontSize = fs + "px"; if (probe.offsetWidth <= avail) break; fs -= 2; }
   probe.remove();
   w.style.fontSize = fs + "px"; w.style.height = Math.round(fs * 0.8) + "px";
 }
 window.addEventListener("resize", () => { try { fitDayWord(); } catch (e) {} });
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { try { fitDayWord(); } catch (e) {} });
+
+function scrollMainTop() { const m = document.querySelector("main"); if (m) m.scrollTop = 0; window.scrollTo(0, 0); }
 
 // ---- header title follows the visible screen ----
 function syncHeaderTitle() {
@@ -74,11 +77,12 @@ function syncHeaderTitle() {
   const id = open ? open.id.replace("tab-", "") : "coach";
   document.documentElement.dataset.tab = id;
   const t = document.getElementById("hTitle"); if (t) t.textContent = names[id] || "Train & Fuel";
+  try { fitDayWord(); } catch (e) {}
   const d = document.getElementById("hDate");
   const wr = document.getElementById("wkRibbon"); if (wr) { wr.hidden = id === "settings" || id === "programs"; try { renderWeekRibbon(); } catch (e) {} }
   if (d) d.textContent = id === "settings" ? "" : new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 }
-document.querySelectorAll(".tab-btn").forEach(b => b.addEventListener("click", syncHeaderTitle));
+document.querySelectorAll(".tab-btn").forEach(b => b.addEventListener("click", () => { syncHeaderTitle(); scrollMainTop(); try { fitDayWord(); } catch (e) {} }));
 document.getElementById("profileBtn").addEventListener("click", syncHeaderTitle);
 syncHeaderTitle();
 document.getElementById("setProgramsRow").addEventListener("click", () => document.getElementById("programsBtn").click());
@@ -695,7 +699,7 @@ document.addEventListener("visibilitychange", syncWakeLock);
     const next = ORDER[i + (dx < 0 ? 1 : -1)];
     if (!next) return;
     const btn = document.querySelector(`nav.tabs .tab-btn[data-tab="${next}"]`);
-    if (btn) { btn.click(); window.scrollTo(0, 0); buzz(10); }
+    if (btn) { btn.click(); scrollMainTop(); buzz(10); }
   }, { passive: true });
 })();
 
