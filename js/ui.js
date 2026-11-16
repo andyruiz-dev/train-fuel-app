@@ -758,4 +758,31 @@ init();
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js");
+  // A new version took over: reload once so the open screen is never stale (not during a guided session).
+  const hadController = !!navigator.serviceWorker.controller; let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController || reloaded) return;
+    const sp = document.getElementById("sessionPanel");
+    if (sp && !sp.classList.contains("hidden") && sp.offsetParent !== null) return;
+    reloaded = true; location.reload();
+  });
 }
+
+// Pull down to refresh: the page itself no longer scrolls (the sheet does), so the browser's own gesture is off.
+(function () {
+  const m = document.querySelector("main"); if (!m) return;
+  let y0 = null, pulled = 0;
+  const bar = document.createElement("div"); bar.id = "ptr"; bar.setAttribute("aria-hidden", "true"); document.body.appendChild(bar);
+  m.addEventListener("touchstart", e => { y0 = m.scrollTop <= 0 && e.touches.length === 1 ? e.touches[0].clientY : null; pulled = 0; }, { passive: true });
+  m.addEventListener("touchmove", e => {
+    if (y0 == null) return;
+    if (m.scrollTop > 0) { y0 = null; bar.style.opacity = 0; return; }
+    pulled = Math.max(0, e.touches[0].clientY - y0);
+    bar.style.opacity = Math.min(1, pulled / 90); bar.style.transform = "translateX(-50%) scaleX(" + Math.min(1, pulled / 90) + ")";
+  }, { passive: true });
+  m.addEventListener("touchend", () => {
+    if (y0 != null && pulled > 90) { bar.classList.add("go"); location.reload(); }
+    else { bar.style.opacity = 0; }
+    y0 = null; pulled = 0;
+  }, { passive: true });
+})();
