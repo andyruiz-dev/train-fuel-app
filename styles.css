@@ -837,6 +837,7 @@
   #wkRibbon .chest .wr-c{border-radius:11px}
   #wkRibbon .rest .wr-c{border:2.5px dashed var(--onfield); opacity:.7}
   #wkRibbon .done .wr-c, #wkRibbon .done.chest .wr-c{background:var(--onfield); border-color:var(--onfield); color:var(--field)}
+  #wkRibbon .rest.done .wr-c{opacity:1; border-style:solid}
   #wkRibbon .today .wr-c{box-shadow:0 0 0 3px var(--field), 0 0 0 5.5px var(--onfield)}
   #wkRibbon .rest.today .wr-c{opacity:1; border-style:solid; background:var(--onfield)}
   #wkRibbon .today{font-weight:800; color:var(--onfield)}
