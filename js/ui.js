@@ -659,7 +659,7 @@ let tfWakeLock = null;
 function sessionIsOnScreen() {
   const p = document.getElementById("sessionPanel");
   const sx = p && p.getAttribute("data-sx");
-  return !!(p && !p.classList.contains("hidden") && sx && sx !== "done");
+  return !!(p && !p.classList.contains("hidden") && sx && sx !== "done" && !(typeof session !== "undefined" && session && session.paused));
 }
 async function syncWakeLock() {
   try {
