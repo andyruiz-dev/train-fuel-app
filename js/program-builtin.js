@@ -983,9 +983,9 @@ function renderTodayWorkout(workout) {
   const resumeSnap = loadSessionSnapshot();
   const resumeHtml = resumeSnap ? `
     <div class="card" style="border-color:var(--accent); margin-bottom:10px;">
-      <div class="name">Session in progress</div>
-      <div class="meta">You were ${resumeSnap.session.pos} of ${resumeSnap.session.queue.length} sets in when the app closed. Your finished sets were kept.</div>
-      <button class="primary mt8 w100" id="resumeSessionBtn">Resume where I left off</button>
+      <div class="name">${resumeSnap.session.paused ? "Workout paused" : "Session in progress"}</div>
+      <div class="meta">${resumeSnap.session.paused ? "You paused " + resumeSnap.session.pos + " of " + resumeSnap.session.queue.length + " sets in. The clock is stopped and your finished sets were kept." : "You were " + resumeSnap.session.pos + " of " + resumeSnap.session.queue.length + " sets in when the app closed. Your finished sets were kept."}</div>
+      <button class="primary mt8 w100" id="resumeSessionBtn">${resumeSnap.session.paused ? "Resume workout" : "Resume where I left off"}</button>
     </div>` : "";
   const showFocus = !hasLoggedWorkoutToday();
    const chestMount = !showFocus ? doneBannerHtml() : focusSwitchHtml(String(workout.day || "").split(/[:·—-]/)[0].trim()) + `<div class="mt6" id="chestBoosterToday"></div>`;

@@ -32,6 +32,9 @@ function resumeSessionFromSnapshot() {
   const snap = loadSessionSnapshot();
   if (!snap) return;
   session = { ...snap.session, timerId: null, holding: false };
+  // A session saved with Pause: put the paused time back (clock, rest) before the checks below.
+  // The rest timer itself is re-armed by the resting block further down.
+  if (session.paused) applyUnpause(false);
   if (session.emom && session.emom.startedAt) {
     // Far past the end of the block (app was away a long time): don't credit rounds nobody can vouch for.
     if (Date.now() - session.emom.startedAt > (session.emom.rounds * session.emom.interval + 120) * 1000) {
@@ -208,6 +211,7 @@ function supersetCueHtml(step) {
 }
 function startSession() {
   if (!currentWorkout) return;
+  if (loadSessionSnapshot() && !confirm("You have a workout in progress (paused). Start over and lose it?")) return;
   session = {
     phase: (currentWorkout.warmup && currentWorkout.warmup.length) ? "warmup" : "main",
     queue: buildSessionQueue(currentWorkout.exercises),
@@ -234,6 +238,7 @@ function startSession() {
 // warmup entirely to keep the barrier as low as possible.
 function startMinimumDay() {
   if (!currentWorkout) return;
+  if (loadSessionSnapshot() && !confirm("You have a workout in progress (paused). Start over and lose it?")) return;
   const fullQueue = buildSessionQueue(currentWorkout.exercises);
   const firstExIndex = fullQueue[0]?.exIndex;
   const firstGroup = currentWorkout.exercises[firstExIndex]?.superset_group;
@@ -398,18 +403,120 @@ function renderWarmupCooldownStep(phase) {
       finishSession();
     }
   });
-  document.getElementById("endSessionBtn").addEventListener("click", () => {
-    if (!confirm("End session early? Remaining exercises won't be logged.")) return;
-    session = null; clearSessionSnapshot();
-    document.getElementById("sessionPanel").classList.add("hidden");
-    document.getElementById("todayWorkout").classList.remove("hidden");
-    document.getElementById("startSessionBtn").classList.remove("hidden");
-    document.getElementById("minimumDayBtn").classList.remove("hidden");
-    document.getElementById("genWorkoutBtn").classList.remove("hidden");
-  });
+  document.getElementById("endSessionBtn").addEventListener("click", endSessionEarly);
 }
 
+// End session early: whatever sets were finished get logged and the day counts as done (same as the
+// minimum-day "stop here"). With nothing finished there is nothing to log, so it just leaves.
+function leaveSessionPanel() {
+  if (session) clearInterval(session.timerId);
+  wcStopTimer();
+  session = null; clearSessionSnapshot();
+  const panel = document.getElementById("sessionPanel");
+  panel.removeAttribute("data-sx");
+  panel.classList.add("hidden");
+  document.getElementById("todayWorkout").classList.remove("hidden");
+  document.getElementById("startSessionBtn").classList.remove("hidden");
+  document.getElementById("minimumDayBtn").classList.remove("hidden");
+  document.getElementById("genWorkoutBtn").classList.remove("hidden");
+}
+async function endSessionEarly() {
+  if (!session) return;
+  const didAny = Object.values(session.setsActual || {}).some(a => a.length);
+  if (!didAny) {
+    if (!confirm("You haven't finished any sets yet, so nothing will be logged. Leave the workout?")) return;
+    leaveSessionPanel();
+    return;
+  }
+  if (!confirm("End session early? The sets you finished will be logged and today counts as done.")) return;
+  clearInterval(session.timerId); session.timerId = null;
+  wcStopTimer();
+  session.paused = false; session.resting = false; session.holding = false; session.emom = null;
+  await finishSessionPartial();
+}
+
+// ---- Pause / resume ----
+// Pause freezes everything: the clock, the rest countdown, and the screen. Your finished sets are kept.
+// A set you were in the middle of (a hold, or a timed block round) starts again from the top.
+// The paused state is saved with the rest of the session, so it survives closing the app.
+function pauseSession() {
+  if (!session || session.paused) return;
+  if (session.emom && session.emom.startedAt) { try { tickEmom(); } catch (e) {} }  // credit rounds already due
+  if (!session || session.paused) return;
+  const now = Date.now();
+  clearInterval(session.timerId); session.timerId = null;
+  wcStopTimer();
+  session.pausedWasResting = !!session.resting;
+  session.pausedRestMs = session.resting ? Math.max(0, session.restEndTime - now) : 0;
+  session.resting = false;
+  session.holding = false; session.holdSide = 1; session.holdSide1Held = null; session.holdSwitchEnd = 0;
+  session.emom = null;
+  session.paused = true; session.pausedAt = now;
+  saveSessionSnapshot();
+  renderPausedScreen();
+  try { syncWakeLock(); } catch (e) {}
+}
+// Puts the clock and rest time back. startTimers=false when the caller re-arms the rest timer itself.
+function applyUnpause(startTimers) {
+  const now = Date.now();
+  session.startedAt = (session.startedAt || now) + Math.max(0, now - (session.pausedAt || now));
+  if (session.pausedWasResting && session.pausedRestMs > 0) {
+    session.resting = true;
+    session.restEndTime = now + session.pausedRestMs;
+    if (startTimers) session.timerId = setInterval(tickRest, 1000);
+  }
+  session.paused = false; session.pausedAt = null; session.pausedWasResting = false; session.pausedRestMs = 0;
+}
+function unpauseSession() {
+  if (!session || !session.paused) return;
+  applyUnpause(true);
+  buzz(20);
+  renderSession();
+  try { syncWakeLock(); } catch (e) {}
+}
+function renderPausedScreen() {
+  const panel = document.getElementById("sessionPanel");
+  panel.classList.remove("hidden");
+  sx("rest");
+  const total = session.queue.length;
+  const done = Math.min(session.pos, total);
+  const pct = total ? Math.min(100, Math.round((done / total) * 100)) : 0;
+  const secs = Math.max(0, Math.floor(((session.pausedAt || Date.now()) - (session.startedAt || Date.now())) / 1000));
+  const step = session.queue[session.pos];
+  let next;
+  if (session.phase === "warmup") next = "Warm-up";
+  else if (session.phase === "cooldown" || !step) next = "Cool-down";
+  else next = escapeHtml(step.name) + ", set " + step.setNum + " of " + step.totalSets;
+  const restNote = session.pausedWasResting && session.pausedRestMs > 0 ? " Your rest picks up with " + formatTime(Math.ceil(session.pausedRestMs / 1000)) + " left." : "";
+  panel.innerHTML = `
+    <div class="card">
+      <div class="sx-top"><span>Paused</span><span>${formatTime(secs)}</span></div><div class="sx-bar"><i style="width:${pct}%"></i></div>
+      <h2>Workout paused</h2>
+      <div class="meta">${done} of ${total} sets done. The clock is stopped.</div>
+      <div class="meta mt8">Next up: ${next}.${restNote}</div>
+      <div class="meta mt8">Your spot is saved. You can leave this screen or close the app. Come back to Today and tap Resume.</div>
+      <div class="sx-spacer"></div>
+      <button class="primary w100" id="resumePausedBtn">Resume workout</button>
+      <button class="secondary mt8 w100" id="pausedEndBtn">End session early</button>
+    </div>`;
+  document.getElementById("resumePausedBtn").addEventListener("click", unpauseSession);
+  document.getElementById("pausedEndBtn").addEventListener("click", endSessionEarly);
+}
+// Every guided screen gets a Pause button (just above End session early when there is one).
 function renderSession() {
+  if (session && session.paused) { renderPausedScreen(); return; }
+  renderSessionInner();
+  const panel = document.getElementById("sessionPanel");
+  if (!session || !panel || panel.classList.contains("hidden") || panel.getAttribute("data-sx") === "done") return;
+  const card = panel.querySelector(".card");
+  if (!card || card.querySelector("#pauseSessionBtn")) return;
+  const end = card.querySelector("#endSessionBtn");
+  const html = '<button class="secondary mt8 w100" id="pauseSessionBtn">Pause workout</button>';
+  if (end) end.insertAdjacentHTML("beforebegin", html); else card.insertAdjacentHTML("beforeend", html);
+  card.querySelector("#pauseSessionBtn").addEventListener("click", pauseSession);
+}
+
+function renderSessionInner() {
   saveSessionSnapshot();
   const panel = document.getElementById("sessionPanel");
   if (!session) { panel.classList.add("hidden"); panel.innerHTML = ""; return; }
@@ -477,15 +584,7 @@ function renderSession() {
   }
 
   const endSessionHandler = () => {
-    document.getElementById("endSessionBtn").addEventListener("click", () => {
-      if (!confirm("End session early? Remaining exercises won't be logged.")) return;
-      session = null; clearSessionSnapshot();
-      document.getElementById("sessionPanel").classList.add("hidden");
-      document.getElementById("todayWorkout").classList.remove("hidden");
-      document.getElementById("startSessionBtn").classList.remove("hidden");
-      document.getElementById("minimumDayBtn").classList.remove("hidden");
-      document.getElementById("genWorkoutBtn").classList.remove("hidden");
-    });
+    document.getElementById("endSessionBtn").addEventListener("click", endSessionEarly);
   };
 
   if (step.emom) {
@@ -760,16 +859,7 @@ function renderEmom(step, stepCueHtml) {
     });
     tickEmom();
   }
-  document.getElementById("endSessionBtn").addEventListener("click", () => {
-    if (!confirm("End session early? Remaining exercises won't be logged.")) return;
-    clearInterval(session.timerId);
-    session = null; clearSessionSnapshot();
-    document.getElementById("sessionPanel").classList.add("hidden");
-    document.getElementById("todayWorkout").classList.remove("hidden");
-    document.getElementById("startSessionBtn").classList.remove("hidden");
-    document.getElementById("minimumDayBtn").classList.remove("hidden");
-    document.getElementById("genWorkoutBtn").classList.remove("hidden");
-  });
+  document.getElementById("endSessionBtn").addEventListener("click", endSessionEarly);
 }
 
 function startHold(step, targetSeconds) {

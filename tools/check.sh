@@ -10,4 +10,6 @@ echo "$out" | grep -q "errors \[\]" || { echo "BOOT FAILED"; fail=1; }
 out=$(node est-tag.js 2>&1); echo "$out"
 echo "$out" | grep -q "Burrito | .* · est\." || { echo "EST TAG FAILED"; fail=1; }
 node two-devices.js | tail -12 || fail=1
+out=$(node pause.js 2>&1); echo "$out" | tail -3
+echo "$out" | grep -q FAIL && { echo "PAUSE FAILED"; fail=1; }
 [ $fail = 0 ] && echo "ALL CHECKS PASSED" || { echo "CHECKS FAILED"; exit 1; }
