@@ -443,7 +443,7 @@ document.getElementById("feedbackToggle").addEventListener("change", async (e) =
 });
 document.getElementById("travelModeToggle").addEventListener("click", async () => {
   state.travelMode = !state.travelMode;
-  syncTravelModeLabel();
+  syncTravelModeLabel(); syncArmToolLabel();
   renderChestBoosters();
   await persistNow();
   const program = programs.find(p => p.id === state.activeProgramId);
@@ -462,6 +462,23 @@ document.getElementById("travelModeToggle").addEventListener("click", async () =
   } catch (err) {
     box.innerHTML = `<div class="empty">Couldn't regenerate (${err.message}). Use Regenerate below to retry.</div>`;
   }
+});
+
+// Arm finisher tool: kettlebell by default, rings when there's no bell handy (travel always uses rings).
+function syncArmToolLabel() {
+  const b = document.getElementById("armToolBtn"); if (!b) return;
+  b.textContent = "Arms: " + (armToolNow() === "rings" ? "rings" : "kettlebell");
+  b.disabled = !!state.travelMode;
+}
+document.getElementById("armToolBtn").addEventListener("click", async () => {
+  state.armTool = state.armTool === "rings" ? "kb" : "rings";
+  const pw = state.pendingWorkout, program = programs.find(p => p.id === state.activeProgramId);
+  if (pw && !pw.completed && pw.workout && program) {
+    stripArmFinisher(pw.workout); addArmFinisher(pw.workout, program);
+    renderTodayWorkout(pw.workout);
+  }
+  syncArmToolLabel();
+  await persistNow();
 });
 
 // ---- library search/filter ----
@@ -785,7 +802,7 @@ function refreshViews() {
   document.getElementById("weeklyGoalInput").value = state.settings.weeklyWorkoutGoal || 3;
   document.getElementById("feedbackToggle").checked = state.settings.feedback !== false;
   try { renderSettingsTiles(); } catch (e) {}
-  syncTravelModeLabel();
+  syncTravelModeLabel(); syncArmToolLabel();
   syncTravelModeLegendVisibility();
   syncSkillPracticeIntroVisibility();
   syncWaistExplainerVisibility();

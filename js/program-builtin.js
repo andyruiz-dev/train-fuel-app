@@ -247,6 +247,7 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
     if (program?.structure?.equipment && !program.structure.equipment.includes(e.equipment || "bodyweight")) return false;
     if (program?.structure?.avoid && program.structure.avoid.includes(e.id)) return false;
     if ((state.dislikedExercises || []).includes(e.id)) return false; // moves you asked never to see
+    if (e.id === "ring-curl" || e.id === "ring-triceps-extension") return false; // arm finisher only, never a main slot
     if (e.id === "bw-complex") return false; // only used as the travel stand-in inside the kettlebell program
     // Skill-ladder exercises (handstand/L-sit/planche/back lever/front
     // lever/muscle-up) are deliberately NEVER auto-generated into a
@@ -427,22 +428,30 @@ function addBackBlock(result, program) {
   return result;
 }
 
-// Arm finisher for the daily short program: one kettlebell biceps move and one triceps move as a superset after the
-// main work, to balance all the pushing and pulling. Deliberately breaks the 15-20 minute target (about +5 minutes).
-// Skipped in travel mode (no bell) and when either move is already in today's work.
+// Arm finisher for the daily short program: one biceps move and one triceps move as a superset after the main work,
+// to balance all the pushing and pulling. Deliberately breaks the 15-20 minute target (about +5 minutes).
+// Kettlebell by default; rings when travelling or when "Arms: rings" is switched on (no bell handy).
+// Skipped when either move is already in today's work.
+const ARM_MOVES = { kb: ["kb-curl", "kb-overhead-triceps-ext"], rings: ["ring-curl", "ring-triceps-extension"] };
+function armToolNow() { return state.travelMode || state.armTool === "rings" ? "rings" : "kb"; }
+function stripArmFinisher(result) {
+  const names = new Set(Object.values(ARM_MOVES).flat().map(id => (exercises.find(x => x.id === id) || {}).name).filter(Boolean));
+  if (result && Array.isArray(result.exercises)) result.exercises = result.exercises.filter(e => !(e && names.has(e.name)));
+  return result;
+}
 function addArmFinisher(result, program) {
   if (!result || !Array.isArray(result.exercises)) return result;
   if (!(program?.structure?.backBlock || /^prog-daily-/.test(program?.id || ""))) return result;
-  if (state.travelMode) return result;
-  const curl = exercises.find(x => x.id === "kb-curl"), tri = exercises.find(x => x.id === "kb-overhead-triceps-ext");
+  const tool = armToolNow();
+  const [curl, tri] = ARM_MOVES[tool].map(id => exercises.find(x => x.id === id));
   if (!curl || !tri) return result;
   if (result.exercises.some(e => e && (e.name === curl.name || e.name === tri.name))) return result;
   const used = new Set(result.exercises.map(e => e && e.superset_group).filter(Boolean));
   let letter = 65; while (used.has(String.fromCharCode(letter))) letter++;
   const sg = String.fromCharCode(letter);
   result.exercises.push(
-    { name: curl.name, muscle_group: curl.muscle_group, sets: 2, reps: "8-10", superset_group: sg, note: "each side", emom: null },
-    { name: tri.name, muscle_group: tri.muscle_group, sets: 2, reps: "8-10", superset_group: sg, note: null, emom: null }
+    { name: curl.name, muscle_group: curl.muscle_group, sets: 2, reps: tool === "kb" ? "8-10" : "8-12", superset_group: sg, note: tool === "kb" ? "each side" : null, emom: null },
+    { name: tri.name, muscle_group: tri.muscle_group, sets: 2, reps: tool === "kb" ? "8-10" : "8-12", superset_group: sg, note: null, emom: null }
   );
   return result;
 }
@@ -917,6 +926,7 @@ document.addEventListener("click", async (e) => {
 });
 function renderTodayWorkout(workout) {
   currentWorkout = workout;
+  if (typeof syncArmToolLabel === "function") syncArmToolLabel();
   const kick = document.getElementById("tfKicker"); if (kick) kick.textContent = todayKickerText();
   const box = document.getElementById("todayWorkout");
   const sessionBtn = document.getElementById("startSessionBtn");

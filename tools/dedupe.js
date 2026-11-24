@@ -28,9 +28,11 @@ const arm=await p.evaluate(()=>{
   const twice=addArmFinisher(a,prog);
   state.travelMode=true;const tr=addArmFinisher(mk(),prog);state.travelMode=false;
   const other=addArmFinisher(mk(),{id:'prog-kb-1',structure:{}});
-  return {names:a.exercises.map(e=>e.name+'|'+e.superset_group),n2:twice.exercises.length,trn:tr.exercises.length,on:other.exercises.length};});
+  state.armTool='rings';const w=addArmFinisher(mk(),prog);const rg={exercises:w.exercises.map(e=>({name:e.name}))};addArmFinisher(stripArmFinisher(w),prog);const sw={exercises:w.exercises.slice()};state.armTool='kb';addArmFinisher(stripArmFinisher(w),prog);const back=w;
+  return {rg:rg.exercises.map(e=>e.name),swn:sw.exercises.length,back:back.exercises.map(e=>e.name),names:a.exercises.map(e=>e.name+'|'+e.superset_group),n2:twice.exercises.length,trn:tr.exercises.length,trnames:tr.exercises.map(e=>e.name),on:other.exercises.length};});
 t('arm finisher added as its own superset',arm.names.length===4&&/curl\|B/i.test(arm.names[2])&&/triceps.*\|B/i.test(arm.names[3]));
+t('rings option gives ring moves, switching back restores kettlebell',/Ring biceps curl/.test(arm.rg[2])&&arm.swn===4&&/Kettlebell curl/.test(arm.back[2])&&arm.back.length===4);
 t('arm finisher not added twice',arm.n2===4);
-t('arm finisher skipped in travel mode',arm.trn===2);
+t('arm finisher uses rings in travel mode',arm.trn===4&&/Ring biceps curl/.test(arm.trnames[2])&&/Ring triceps/.test(arm.trnames[3]));
 t('arm finisher only on the daily short program',arm.on===2);
 console.log('errors',errs.filter(e=>!/ServiceWorker/.test(e)));await b.close()})();
