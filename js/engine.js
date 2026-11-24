@@ -2063,6 +2063,36 @@ function enforceSlotCount(result, slots) {
   return result;
 }
 
+// Two guarantees the AI only gets asked for: (1) no move twice in one session (two push slots both returning
+// "Ring support hold"), and (2) push, pull and leg slots use rep-based moves (8-12) rather than isometric holds, unless
+// the level-filtered list has nothing else for that muscle group. Core can stay a hold. A swapped hold gets 8-12 reps.
+function enforceUniqueAndRepMoves(result, available, recentNames) {
+  if (!result || !Array.isArray(result.exercises)) return result;
+  const recent = new Set([...(recentNames || [])].map(n => String(n).toLowerCase()));
+  const repGroups = new Set(["push", "pull", "legs", "hinge"]);
+  const used = new Set();
+  result.exercises.forEach((e) => {
+    const nm = String(e.name || "").toLowerCase();
+    const isHold = isHoldExercise(e.name);
+    const dup = used.has(nm);
+    const wantReps = repGroups.has(e.muscle_group) && isHold;
+    if (dup || wantReps) {
+      const poolAll = (available || []).filter(c => c.muscle_group === e.muscle_group && !used.has(c.name.toLowerCase()) && c.name.toLowerCase() !== nm);
+      const reps = poolAll.filter(c => !isHoldExercise(c.name));
+      const pool = wantReps ? reps : (reps.length ? reps : poolAll);
+      if (pool.length) {
+        const fresh = pool.filter(c => !recent.has(c.name.toLowerCase()));
+        const pick = (fresh.length ? fresh : pool)[0];
+        if (isHoldExercise(e.name) && !isHoldExercise(pick.name)) e.reps = "8-12";
+        e.name = pick.name;
+        e.muscle_group = pick.muscle_group;
+      }
+    }
+    used.add(String(e.name || "").toLowerCase());
+  });
+  return result;
+}
+
 // Hard backstop for main-exercise variety. The prompt only ASKS the AI to
 // avoid recently used exercises, and with a small pool at your current level
 // it often repeats them (e.g. the same box squat two days running). This swaps
