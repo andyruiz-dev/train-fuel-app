@@ -401,6 +401,7 @@ superset_group is a letter shared by paired exercises, or null if standalone.`;
   // repeating the same warmup/cool-down items — callers already persist
   // state right after calling this, so no separate save needed here.
   addBackBlock(result, program);
+  addArmFinisher(result, program);
   state.lastWarmupCooldownNames = [
     ...(result.warmup || []).map(w => w.name),
     ...(result.cooldown || []).map(c => c.name),
@@ -423,6 +424,26 @@ function addBackBlock(result, program) {
   });
   const have = new Set(block.map(b => b.name.toLowerCase()));
   result.warmup = [...block, ...(result.warmup || []).filter(w => w && w.name && !have.has(w.name.toLowerCase()))];
+  return result;
+}
+
+// Arm finisher for the daily short program: one kettlebell biceps move and one triceps move as a superset after the
+// main work, to balance all the pushing and pulling. Deliberately breaks the 15-20 minute target (about +5 minutes).
+// Skipped in travel mode (no bell) and when either move is already in today's work.
+function addArmFinisher(result, program) {
+  if (!result || !Array.isArray(result.exercises)) return result;
+  if (!(program?.structure?.backBlock || /^prog-daily-/.test(program?.id || ""))) return result;
+  if (state.travelMode) return result;
+  const curl = exercises.find(x => x.id === "kb-curl"), tri = exercises.find(x => x.id === "kb-overhead-triceps-ext");
+  if (!curl || !tri) return result;
+  if (result.exercises.some(e => e && (e.name === curl.name || e.name === tri.name))) return result;
+  const used = new Set(result.exercises.map(e => e && e.superset_group).filter(Boolean));
+  let letter = 65; while (used.has(String.fromCharCode(letter))) letter++;
+  const sg = String.fromCharCode(letter);
+  result.exercises.push(
+    { name: curl.name, muscle_group: curl.muscle_group, sets: 2, reps: "8-10", superset_group: sg, note: "each side", emom: null },
+    { name: tri.name, muscle_group: tri.muscle_group, sets: 2, reps: "8-10", superset_group: sg, note: null, emom: null }
+  );
   return result;
 }
 

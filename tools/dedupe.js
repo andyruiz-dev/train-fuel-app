@@ -21,4 +21,16 @@ t('falls back if no alternative (unchanged, no crash)',out.only.length===2&&/sup
 const dis=await p.evaluate(()=>({d:state.dislikedExercises,ids:['supine-heel-taps','plank-reach-out'].map(i=>!!BUILTIN_EXERCISES.find(e=>e.id===i))}));
 t('bear crawl is on the never-show list',Array.isArray(dis.d)&&dis.d.includes('bear-crawl'));
 t('replacement core moves exist',dis.ids.every(Boolean));
+const arm=await p.evaluate(()=>{
+  const prog={id:'prog-daily-1',structure:{backBlock:true}};
+  const mk=()=>({exercises:[{name:'Ring row',muscle_group:'pull',sets:3,reps:'8-12',superset_group:'A'},{name:'Ring dip',muscle_group:'push',sets:3,reps:'8-12',superset_group:'A'}]});
+  state.travelMode=false;const a=addArmFinisher(mk(),prog);
+  const twice=addArmFinisher(a,prog);
+  state.travelMode=true;const tr=addArmFinisher(mk(),prog);state.travelMode=false;
+  const other=addArmFinisher(mk(),{id:'prog-kb-1',structure:{}});
+  return {names:a.exercises.map(e=>e.name+'|'+e.superset_group),n2:twice.exercises.length,trn:tr.exercises.length,on:other.exercises.length};});
+t('arm finisher added as its own superset',arm.names.length===4&&/curl\|B/i.test(arm.names[2])&&/triceps.*\|B/i.test(arm.names[3]));
+t('arm finisher not added twice',arm.n2===4);
+t('arm finisher skipped in travel mode',arm.trn===2);
+t('arm finisher only on the daily short program',arm.on===2);
 console.log('errors',errs.filter(e=>!/ServiceWorker/.test(e)));await b.close()})();
