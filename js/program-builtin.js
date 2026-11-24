@@ -484,7 +484,10 @@ function consistencyStats() {
   }
   let sinceTrain = null;
   for (let i = 0; i < 60; i++) { if (trained.has(dayAgo(i))) { sinceTrain = i; break; } }
-  return { goal, weeks, thisWeek: weeks[3], logged7, walk7, proteinHit, sinceTrain };
+  // Planned training days (not rest days) that passed with no session since the last one. Today doesn't count yet.
+  let missed = 0;
+  if (sinceTrain !== null) for (let i = 1; i < sinceTrain; i++) { if (DAY_PLAN[new Date(now.getFullYear(), now.getMonth(), now.getDate() - i).getDay()] === "train") missed++; }
+  return { goal, weeks, thisWeek: weeks[3], logged7, walk7, proteinHit, sinceTrain, missed };
 }
 function renderCoachHero() {
   const el = document.getElementById("coachHero");
@@ -492,9 +495,9 @@ function renderCoachHero() {
   const c = consistencyStats();
   let line;
   if (c.sinceTrain === null) line = "Your first session is the whole goal.";
-  else if (c.sinceTrain <= 1) line = c.thisWeek >= c.goal ? "Week goal hit. Extra is a bonus." : "On track. Keep it easy.";
-  else if (c.sinceTrain === 2) line = "One day off is fine. Keep it to one.";
-  else line = "Day " + c.sinceTrain + " off. Start small today.";
+  else if (c.missed === 0) line = c.thisWeek >= c.goal ? "Week goal hit. Extra is a bonus." : "On track. Keep it easy.";
+  else if (c.missed === 1) line = "1 training day missed. Keep it to one.";
+  else line = c.missed + " training days missed. Start small today.";
   const dots = c.weeks.map((n, i) => {
     const hit = n >= c.goal, part = n > 0;
     const label = i === 3 ? "this week" : (3 - i) + (3 - i === 1 ? " week ago" : " weeks ago");
