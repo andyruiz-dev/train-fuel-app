@@ -730,8 +730,22 @@ function chestTickRest() {
   document.querySelectorAll("[data-chest-rest-clock]").forEach(el => { el.textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`; });
   if (left <= 0) { clearInterval(chestRestTimer); chestRestTimer = null; try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} renderChestBoosters(); }
 }
+// Optional 3-minute back-care routine for rest days (daily short program). Tap each move as you do it. Not counted as training.
+const BACK_CARE = [
+  { n: "Cat-cow", d: "8 slow reps · breathe with the movement" },
+  { n: "Child's pose", d: "30 seconds · let your lower back soften" },
+  { n: "Glute bridge", d: "10 slow reps · squeeze at the top" },
+  { n: "Bird-dog", d: "5 each side · hold 3 seconds" },
+  { n: "Knees-to-chest hold", d: "30 seconds · gentle, no pulling hard" },
+];
+function backCareDone() { const w = state.backCare; return w && w.day === localDateStr() && Array.isArray(w.ids) ? w.ids : []; }
+function backCareHtml() {
+  const done = backCareDone(), all = done.length >= BACK_CARE.length;
+  const rows = BACK_CARE.map((m, i) => { const ok = done.includes(i); return `<div data-back-care="${i}" style="display:flex; align-items:center; gap:10px; padding:11px 0; ${i < BACK_CARE.length - 1 ? "border-bottom:1px solid var(--surface-3);" : ""} cursor:pointer;"><span style="width:24px; height:24px; border-radius:50%; border:2px solid ${ok ? "var(--accent)" : "var(--border)"}; background:${ok ? "var(--accent)" : "transparent"}; color:var(--ink); display:flex; align-items:center; justify-content:center; font-size:13px; flex:none;">${ok ? "✓" : ""}</span><div class="fx1"><div style="font-size:15px; ${ok ? "color:var(--text-muted);" : ""}">${escapeHtml(m.n)}</div><div class="meta" style="font-size:12px;">${escapeHtml(m.d)}</div></div></div>`; }).join("");
+  return `<div class="tf-hero2" style="order:-3;"><div class="tf-hero2-in" style="padding:16px;"><div class="tf-hero2-k">Optional · about 3 minutes</div><div style="font-family:var(--font-display); font-size:28px; line-height:1.05; text-transform:uppercase; margin-top:6px;">${all ? "Back care done" : "Back care"}</div><div style="font-size:13px; color:var(--accent-pale); margin-top:6px;">${all ? "Nice. Your back thanks you." : "Slow and easy. Skip anything that hurts."}</div><div style="margin-top:8px;">${rows}</div></div></div>`;
+}
 function chestBoosterHtml(opts) {
-  if (!chestBoosterOn()) return "";
+  if (!chestBoosterOn()) return backCareHtml();
   state.chestMode = state.travelMode ? "travel" : "home";
   const plan = CHEST_PLANS[state.chestMode] || CHEST_PLANS.home;
   const wk = chestSetsInWeek(weekDayList(0));
@@ -870,6 +884,11 @@ document.addEventListener("click", async (e) => {
     const i = Number(q("[data-chest-warm]").dataset.chestWarm), cur = chestWarmDone().slice();
     if (!cur.includes(i)) cur.push(i);
     state.chestWarm = { day: localDateStr(), ids: cur }; changed = true; chestPhaseSel = null;
+  }
+  else if (q("[data-back-care]")) {
+    const i = Number(q("[data-back-care]").dataset.backCare), cur = backCareDone().slice(), at = cur.indexOf(i);
+    if (at >= 0) cur.splice(at, 1); else cur.push(i);
+    state.backCare = { day: localDateStr(), ids: cur }; changed = true;
   }
   else if (q("[data-chest-undo]")) {
     state.chestLogs = state.chestLogs.filter(l => l.id !== q("[data-chest-undo]").dataset.chestUndo); changed = true;
