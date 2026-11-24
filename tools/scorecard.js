@@ -23,8 +23,8 @@ await p.addInitScript(({fake})=>{const R=Date;const off=new R(fake).getTime()-R.
 await p.goto('file://'+require('path').join(__dirname,'..','index.html'));await p.waitForTimeout(1800);
 const ok=[];const t=(n,c)=>ok.push((c?'PASS ':'FAIL ')+n);
 const hero=await p.evaluate(()=>document.getElementById('coachHero').innerText);
-t('scorecard shows 2 of 5',/2\s*of 5 sessions/.test(hero));
-t('weight is secondary',/Weight 203\.4/.test(hero));
+t('scorecard shows 2 / 5',/2\s*\/\s*5 sessions/.test(hero));
+t('hero is short and has no weight line',!/Weight/.test(hero) && hero.length < 260);
 t('food logged 4/7',/4 \/ 7\s*food logged/.test(hero.replace(/\n/g,' ')));
 t('walk days 1/7',/1 \/ 7\s*walk days/.test(hero.replace(/\n/g,' ')));
 await p.screenshot({path:'/tmp/claude-0/-home-claude/83ad12a1-a0e9-5399-853a-4bd37ae84b17/scratchpad/coach.png'});

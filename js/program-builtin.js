@@ -493,26 +493,21 @@ function renderCoachHero() {
   const el = document.getElementById("coachHero");
   if (!el) return;
   const c = consistencyStats();
-  const ms = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
-  const wk = ms.filter(m => new Date(m.date + "T12:00:00").getTime() >= Date.now() - 7 * 86400000);
-  const avg = wk.length ? wk.reduce((a, m) => a + m.weight, 0) / wk.length : (ms.length ? ms[ms.length - 1].weight : null);
   let line;
-  if (c.sinceTrain === null) line = "Your first session is the whole goal. A minimum day counts.";
-  else if (c.sinceTrain <= 1) line = c.thisWeek >= c.goal ? "Week goal hit. Everything extra is a bonus." : "You're on track. Keep the next one small and easy.";
-  else if (c.sinceTrain === 2) line = "One rest day is fine. Today, a walk or a minimum day keeps it from becoming two.";
-  else line = "Day " + c.sinceTrain + " off. Walk today, then do a minimum day. Starting small counts as showing up.";
+  if (c.sinceTrain === null) line = "Your first session is the whole goal.";
+  else if (c.sinceTrain <= 1) line = c.thisWeek >= c.goal ? "Week goal hit. Extra is a bonus." : "On track. Keep it easy.";
+  else if (c.sinceTrain === 2) line = "One day off is fine. Keep it to one.";
+  else line = "Day " + c.sinceTrain + " off. Start small today.";
   const dots = c.weeks.map((n, i) => {
     const hit = n >= c.goal, part = n > 0;
-    const label = i === 3 ? "this week" : (3 - i) + (3 - i === 1 ? " wk ago" : " wks ago");
-    return `<div style="flex:1; text-align:center;"><div style="height:8px; border-radius:4px; background:${hit ? "var(--accent)" : part ? "var(--accent-pale)" : "var(--surface-2)"}; opacity:${i === 3 ? 1 : 0.85};"></div><div class="meta" style="font-size:11px; margin-top:4px;">${n}/${c.goal} ${label}</div></div>`;
+    const label = i === 3 ? "this week" : (3 - i) + (3 - i === 1 ? " week ago" : " weeks ago");
+    return `<div title="${n}/${c.goal} ${label}" style="flex:1; height:8px; border-radius:4px; background:${hit ? "var(--accent)" : part ? "var(--accent-pale)" : "var(--surface-2)"}; opacity:${i === 3 ? 1 : 0.85};"></div>`;
   }).join("");
   const chip = (l, v, u) => `<div class="tf-cchip"><b>${v}<small>${u}</small></b><span>${l}</span></div>`;
   el.innerHTML = `<div class="tf-hero2"><div class="tf-hero2-in">
-      <div class="tf-hero2-k">Showing up · this week</div>
-      <div class="big" style="margin-top:6px;">${c.thisWeek}<small> of ${c.goal} sessions</small></div>
+      <div class="big">${c.thisWeek}<small> / ${c.goal} sessions this week</small></div>
       <div class="d" style="margin-top:4px;">${escapeHtml(line)}</div>
       <div style="display:flex; gap:6px; margin-top:12px;">${dots}</div>
-      <div class="meta" style="margin-top:10px; font-size:12px;">Last session: ${c.sinceTrain === null ? "none yet" : c.sinceTrain === 0 ? "today" : c.sinceTrain === 1 ? "yesterday" : c.sinceTrain + " days ago"}${avg != null ? " · Weight " + avg.toFixed(1) + " lb (tracked slowly)" : ""}</div>
     </div>
     <div class="tf-cchips">${chip("food logged", c.logged7 + " / 7", "")}${chip("walk days", c.walk7 + " / 7", "")}${chip("protein days hit", c.proteinHit + " / 7", "")}</div></div>`;
 }
