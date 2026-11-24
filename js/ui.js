@@ -87,12 +87,16 @@ function fitToScreen() {
     const sec = m.querySelector(".tab-panel:not(.hidden)"); if (!sec) return;
     const root = document.documentElement;
     sec.style.zoom = ""; root.dataset.fit = "0";
-    const over = () => m.scrollHeight - m.clientHeight;
+    // How far the screen's content reaches under the tab bar (with 8px breathing room). Measured from real positions, not main's
+    // scroll height, because main's bottom padding hides the problem when the tab bar is taller than that padding (gesture bar, safe area).
+    const nav = document.querySelector("nav.tabs");
+    const over = () => { m.scrollTop = 0; return Math.ceil(sec.getBoundingClientRect().bottom + 8 - (nav ? nav.getBoundingClientRect().top : m.getBoundingClientRect().bottom)); };
     if (over() <= 1) return;
     for (const lvl of ["1", "2", "3"]) { root.dataset.fit = lvl; if (over() <= 1) return; }
     for (let i = 0; i < 6; i++) {
       const cur = parseFloat(sec.style.zoom) || 1;
-      const next = Math.max(0.74, cur * (m.clientHeight / m.scrollHeight) * 0.995);
+      const secH = sec.getBoundingClientRect().height, avail = secH - over();
+      const next = Math.max(0.7, cur * (avail / secH) * 0.995);
       if (Math.abs(next - cur) < 0.002) break;
       sec.style.zoom = String(next);
       if (over() <= 1) break;
@@ -105,6 +109,15 @@ try {
   const fm = document.querySelector("main");
   if (fm) new MutationObserver(scheduleFit).observe(fm, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden", "open"] });
 } catch (e) {}
+// Re-fit whenever anything that changes the room available moves: the header or tab bar resizing, fonts arriving, rotation, window changes.
+try {
+  const ro = new ResizeObserver(scheduleFit);
+  ["main", "nav.tabs", "#dayHero", "#wkRibbon"].forEach(sel => { const el = document.querySelector(sel); if (el) ro.observe(el); });
+} catch (e) {}
+try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(scheduleFit); } catch (e) {}
+window.addEventListener("load", scheduleFit);
+window.addEventListener("orientationchange", scheduleFit);
+if (window.visualViewport) window.visualViewport.addEventListener("resize", scheduleFit);
 window.addEventListener("resize", () => { try { fitDayWord(); scheduleFit(); } catch (e) {} });
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { try { fitDayWord(); } catch (e) {} });
 

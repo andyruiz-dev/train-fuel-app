@@ -557,7 +557,7 @@ function restDayCaution(workout) {
   const overlap = [...todayGroups].filter(mg => lastGroups.has(mg));
   if (!overlap.length) return null;
 
-  return `Rest day check: ${overlap.join(", ")} trained ${dayGap === 0 ? "earlier today" : "yesterday"} too — no rest day between sessions for ${overlap.length > 1 ? "these muscle groups" : "this muscle group"}. Consider resting it today or swapping to something else.`;
+  return `${overlap.join(", ")} trained ${dayGap === 0 ? "earlier today" : "yesterday"}.`;
 }
 
 // Same idea as travel mode, but for the other named consistency trigger:
