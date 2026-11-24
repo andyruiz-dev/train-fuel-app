@@ -464,6 +464,7 @@
   .tf-mv.ss{border-left-color:var(--gold); display:block;}
   .tf-mv.fin{background:linear-gradient(90deg,var(--accent-bg),var(--surface)); border-color:var(--accent);}
   .tf-mv-name{font-size:15px; font-weight:600;}
+  .tf-mv-i{display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; margin-left:8px; border:1px solid var(--text-muted); border-radius:50%; color:var(--text-muted); font-size:10px; font-weight:600; font-style:italic; vertical-align:2px;}
   .tf-mv-det{font-size:12px; color:var(--text-muted); font-weight:400;}
   .tf-mv-tag{font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--gold); margin-bottom:5px;}
   .tf-mv.fin .tf-mv-tag{color:var(--accent); margin-bottom:2px;}
