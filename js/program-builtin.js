@@ -113,7 +113,8 @@ function dailyShortProgram() {
     source: "built-in",
     structure: {
       name,
-      rev: 1,
+      rev: 2,
+      backBlock: true,
       session: { days: 5, minutes: "15-20" },
       equipment: ["bodyweight", "rings", "parallettes", "ab wheel"],
       avoid: ["good-morning-bw"],
@@ -397,10 +398,29 @@ superset_group is a letter shared by paired exercises, or null if standalone.`;
   // Remembered so the NEXT generation's prompt (above) can nudge away from
   // repeating the same warmup/cool-down items — callers already persist
   // state right after calling this, so no separate save needed here.
+  addBackBlock(result, program);
   state.lastWarmupCooldownNames = [
     ...(result.warmup || []).map(w => w.name),
     ...(result.cooldown || []).map(c => c.name),
   ].filter(Boolean);
+  return result;
+}
+
+// Two-minute lower-back prep at the front of every warm-up in the daily short program: cat-cow to loosen the
+// spine, bird-dog to switch on the back and glutes, dead bug to brace the core. Gentle, no load, no spinal flexion
+// under weight. Skipped for any move already in today's main work (the fallback is a glute bridge).
+function addBackBlock(result, program) {
+  if (!result || !(program?.structure?.backBlock || /^prog-daily-/.test(program?.id || ""))) return result;
+  const inMain = name => (result.exercises || []).some(e => e && e.name && e.name.toLowerCase() === name.toLowerCase());
+  const want = [["cat-cow", "6 slow reps"], ["bird-dog", "5 each side, hold 3 seconds"], ["dead-bug", "6 each side, slow"]];
+  const block = [];
+  want.forEach(([id, detail]) => {
+    let ex = exercises.find(x => x.id === id);
+    if (ex && inMain(ex.name)) { ex = exercises.find(x => x.id === "glute-bridge"); detail = "10 slow reps"; }
+    if (ex && !block.some(b => b.name === ex.name)) block.push({ name: ex.name, detail });
+  });
+  const have = new Set(block.map(b => b.name.toLowerCase()));
+  result.warmup = [...block, ...(result.warmup || []).filter(w => w && w.name && !have.has(w.name.toLowerCase()))];
   return result;
 }
 
