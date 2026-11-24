@@ -434,15 +434,16 @@ function addBackBlock(result, program) {
 // Kettlebell by default; rings/bodyweight when travelling or when "Arms: rings" is switched on. The two curl and
 // two triceps moves alternate by weekday. Skipped for any move already in today's work.
 const ARM_MOVES = {
-  kb:    { bi: ["kb-curl", "kb-hammer-curl"], tri: ["kb-overhead-triceps-ext", "kb-skull-crusher"], sh: ["kb-lateral-raise"], grip: "kb-goblet-carry" },
-  rings: { bi: ["ring-curl", "ring-curl-feet-elevated"], tri: ["ring-triceps-extension", "ring-closegrip-pushup"], sh: ["prone-y-raise"], grip: "dead-hang" },
+  kb:    { bi: ["kb-curl", "kb-hammer-curl"], tri: ["kb-overhead-triceps-ext", "kb-skull-crusher"], sh: ["lean-away-raise"], grip: "kb-goblet-carry" },
+  rings: { bi: ["ring-curl", "ring-curl-feet-elevated"], tri: ["ring-triceps-extension", "ring-closegrip-pushup"], sh: ["lean-away-raise"], grip: "dead-hang" },
 };
-const ARM_ONLY_IDS = new Set(["kb-curl", "kb-overhead-triceps-ext", "kb-hammer-curl", "kb-skull-crusher", "kb-lateral-raise", "kb-goblet-carry",
+const ARM_ONLY_IDS = new Set(["kb-curl", "kb-overhead-triceps-ext", "kb-hammer-curl", "kb-skull-crusher", "lean-away-raise", "kb-goblet-carry",
   "ring-curl", "ring-triceps-extension", "ring-curl-feet-elevated", "ring-closegrip-pushup"]);
 const ARM_MAX_MINUTES = 45;
 function armToolNow() { return state.travelMode || state.armTool === "rings" ? "rings" : "kb"; }
 function stripArmFinisher(result) {
   const names = new Set([...ARM_ONLY_IDS].map(id => (exercises.find(x => x.id === id) || {}).name).filter(Boolean));
+  names.add("Kettlebell lateral raise"); // retired: too heavy at 35 lb; strips it from any workout generated earlier
   if (result && Array.isArray(result.exercises)) result.exercises = result.exercises.filter(e => !(e && (e.arm || names.has(e.name))));
   return result;
 }
@@ -459,8 +460,8 @@ function addArmFinisher(result, program, dow) {
   let letter = 65; while (used.has(String.fromCharCode(letter))) letter++;
   const sg = String.fromCharCode(letter);
   const mk = (ex, sets, reps, note, group) => ({ name: ex.name, muscle_group: ex.muscle_group, sets, reps, superset_group: group, note: note || null, emom: null, arm: true });
-  const each = ex => ex.equipment === "kettlebell" && /curl$|raise$/.test(ex.id) && !/hammer/.test(ex.id);
-  members.forEach(ex => result.exercises.push(mk(ex, 2, tool === "kb" ? (ex.id === "kb-lateral-raise" ? "8-12" : "8-10") : "8-12", each(ex) ? "each side" : null, sg)));
+  const each = ex => ex.id === "kb-curl" || ex.id === "lean-away-raise";
+  members.forEach(ex => result.exercises.push(mk(ex, 2, tool === "kb" ? (ex.id === "lean-away-raise" ? "8-12" : "8-10") : "8-12", each(ex) ? "each side" : null, sg)));
   const grip = lib(m.grip);
   const isFull = /full body/i.test(result.day || "");
   if (grip && isFull && !inMain(grip)) result.exercises.push(mk(grip, 2, tool === "kb" ? "30-40" : "20-30", "seconds", null));

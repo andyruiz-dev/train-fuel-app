@@ -40,11 +40,11 @@ const arm=await p.evaluate(()=>{
   const bigN=big.exercises.length-n;
   const gen=['ring-face-pull','ring-reverse-fly'].map(i=>!!BUILTIN_EXERCISES.find(e=>e.id===i));
   return {k0,k1,fullLast:nm(full).slice(-1)[0],fullN:full.exercises.length,twice:twice.exercises.length,tr,trfull,rg,stripped,other,bigN,bigMin:estimateWorkoutMinutes(big),before,gen,group:full.exercises.slice(2,5).map(e=>e.superset_group)};});
-t('kettlebell finisher: curl, triceps, lateral raise in one superset',arm.k0.length===5&&/Kettlebell curl/.test(arm.k0[2])&&/overhead triceps/.test(arm.k0[3])&&/lateral raise/.test(arm.k0[4])&&arm.group.every(g=>g===arm.group[0]&&g));
+t('kettlebell finisher: curl, triceps, lateral raise in one superset',arm.k0.length===5&&/Kettlebell curl/.test(arm.k0[2])&&/overhead triceps/.test(arm.k0[3])&&/Lean-away/.test(arm.k0[4])&&arm.group.every(g=>g===arm.group[0]&&g));
 t('other weekday rotates to hammer curl and skull-crusher',/hammer curl/i.test(arm.k1[2])&&/skull-crusher/.test(arm.k1[3]));
 t('full body day adds a goblet carry',/goblet carry/i.test(arm.fullLast)&&arm.fullN===6);
 t('finisher not added twice',arm.twice===5);
-t('travel mode uses ring moves and a Y raise',/Ring biceps curl/.test(arm.tr[2])&&/Ring triceps/.test(arm.tr[3])&&/Prone Y raise/.test(arm.tr[4]));
+t('travel mode uses ring moves and a lean-away raise',/Ring biceps curl/.test(arm.tr[2])&&/Ring triceps/.test(arm.tr[3])&&/Lean-away/.test(arm.tr[4]));
 t('travel full body day adds a dead hang',/Dead hang/.test(arm.trfull.slice(-1)[0]));
 t('rings option gives ring moves',/Ring biceps curl/.test(arm.rg[2]));
 t('strip removes only the finisher',arm.stripped===2);
