@@ -482,8 +482,9 @@
   #travelModeExplainer{border-bottom:0 !important; margin-bottom:0 !important; padding-bottom:0 !important;}
   #travelModeExplainer p{font-size:12px; line-height:1.5; color:var(--text-muted); text-align:center}
   #travelModeExplainer button{display:block; margin:0 auto; font-size:12px;}
-  #tfWorkoutLinks{order:3; display:flex; justify-content:center; align-items:center; gap:18px; padding:2px 0;}
-  #tfWorkoutLinks .tf-linkbtn{width:auto; padding:8px 0;}
+  #tfWorkoutLinks{order:3; display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:0 22px; padding:2px 0;}
+  #tfWorkoutLinks button{white-space:nowrap;}
+  #tfWorkoutLinks .tf-linkbtn{width:auto; padding:8px 0; flex-basis:100%; text-align:center;}
   #tfWorkoutLinks #genWorkoutBtn{padding:8px 0 !important;}
   #tfQuickRow{order:4; margin-top:12px;}
   #tfQuickRow .tf-qr{display:flex; gap:8px;}
@@ -897,3 +898,9 @@ html[data-tab="today"] main{padding-bottom:66px;}
 /* Guided session: the main button on the coloured screens is a dark pill, so it reads on any accent colour */
 #sessionPanel[data-sx="work"] button.primary, #sessionPanel[data-sx="emom"] button.primary, #sessionPanel[data-sx="hold"] button.primary, #sessionPanel[data-sx="done"] button.primary{background:var(--ink) !important; color:var(--text) !important;}
 #sessionPanel[data-sx="work"] button.secondary, #sessionPanel[data-sx="emom"] button.secondary, #sessionPanel[data-sx="hold"] button.secondary, #sessionPanel[data-sx="done"] button.secondary{color:var(--ink) !important; border-color:rgba(var(--ink-rgb),.55) !important; background:transparent !important; opacity:1;}
+
+/* Tap targets: small text links get a taller hit area without changing how they look. */
+button.danger-link{min-height:36px; display:inline-flex; align-items:center;}
+.tf-focus .tf-flink{min-height:36px; display:inline-flex; align-items:center;}
+#tfWorkoutLinks button{min-height:36px;}
+#tab-food #foodHistoryOpen{display:inline-flex; align-items:center; min-height:36px; padding-left:12px;}

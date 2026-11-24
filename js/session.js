@@ -95,7 +95,7 @@ function renderSessionSummary(summary, opts = {}) {
   // Distinct training days in the last 7 days (this includes today, since the session is already logged).
   const weekCut = Date.now() - 7 * 86400000;
   const thisWeek = new Set((state.logs || []).filter(l => new Date(l.date).getTime() >= weekCut).map(l => new Date(l.date).toDateString())).size;
-  const dayName = escapeHtml(String(currentWorkout?.day || "Workout"));
+  const dayName = escapeHtml(dayTitle(String(currentWorkout?.day || "Workout")));
   const note = opts.partial
     ? "You logged what you did, and that counts. The full workout waits for next time."
     : summary.maxCount

@@ -467,7 +467,7 @@ document.getElementById("travelModeToggle").addEventListener("click", async () =
 // Arm finisher tool: kettlebell by default, rings when there's no bell handy (travel always uses rings).
 function syncArmToolLabel() {
   const b = document.getElementById("armToolBtn"); if (!b) return;
-  b.textContent = "Arms: " + (armToolNow() === "rings" ? "rings" : "kettlebell");
+  b.textContent = "Arms: " + (armToolNow() === "rings" ? "Rings" : "Kettlebell");
   b.disabled = !!state.travelMode;
 }
 document.getElementById("armToolBtn").addEventListener("click", async () => {
@@ -643,7 +643,7 @@ async function applyStartingLevelsIfUntrained() {
 function notesContext(explicit) {
   if (explicit) return explicit;
   const pw = state.pendingWorkout;
-  return pw && pw.workout && pw.workout.day ? pw.workout.day : "";
+  return pw && pw.workout && pw.workout.day ? dayTitle(pw.workout.day) : "";
 }
 async function addSessionNote(text, context) {
   const t = String(text || "").trim();
