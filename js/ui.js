@@ -58,14 +58,14 @@ function fitDayWord() {
   const probe = document.createElement("span");
   probe.style.cssText = "position:absolute;visibility:hidden;white-space:nowrap;font-family:'Big Shoulders Display',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.005em";
   probe.textContent = w.textContent; document.body.appendChild(probe);
-  const cap = (document.documentElement.dataset.tab || "coach") === "coach" ? 150 : 120;
+  const cap = 72; // compact masthead: content starts near the top of the screen
   let fs = cap;
-  while (fs > 60) { probe.style.fontSize = fs + "px"; if (probe.offsetWidth <= avail) break; fs -= 2; }
+  while (fs > 40) { probe.style.fontSize = fs + "px"; if (probe.offsetWidth <= avail) break; fs -= 2; }
   probe.remove();
   w.style.fontSize = fs + "px"; w.style.height = Math.round(fs * 0.8) + "px";
   fitHeroToScreen(fs);
 }
-// Make the open screen fit without page scroll where it can: drop the sub line first, then shrink the word (never below 96px).
+// Make the open screen fit without page scroll where it can: drop the sub line first, then shrink the word (never below 48px).
 function fitHeroToScreen(fs) {
   const m = document.querySelector("main"), hero = document.getElementById("dayHero"), w = document.getElementById("dayWord");
   if (!m || !hero || !w || hero.offsetParent === null) return;
@@ -73,11 +73,39 @@ function fitHeroToScreen(fs) {
   let over = m.scrollHeight - m.clientHeight;
   if (over > 0) { hero.classList.add("tight"); over = m.scrollHeight - m.clientHeight; }
   if (over > 0) {
-    const nf = Math.max(96, fs - Math.ceil(over / 0.8));
+    const nf = Math.max(48, fs - Math.ceil(over / 0.8));
     w.style.fontSize = nf + "px"; w.style.height = Math.round(nf * 0.8) + "px";
   }
 }
-window.addEventListener("resize", () => { try { fitDayWord(); } catch (e) {} });
+// Fit to page: every screen must fit the display with nothing cut off. Tighten spacing, then drop secondary lines, then shrink slightly.
+// tools/screens.js checks this on three phone sizes. Last resort only: if it still cannot fit, the screen scrolls.
+let fitBusy = false;
+function fitToScreen() {
+  if (fitBusy) return; fitBusy = true;
+  try {
+    const m = document.querySelector("main"); if (!m) return;
+    const sec = m.querySelector(".tab-panel:not(.hidden)"); if (!sec) return;
+    const root = document.documentElement;
+    sec.style.zoom = ""; root.dataset.fit = "0";
+    const over = () => m.scrollHeight - m.clientHeight;
+    if (over() <= 1) return;
+    for (const lvl of ["1", "2", "3"]) { root.dataset.fit = lvl; if (over() <= 1) return; }
+    for (let i = 0; i < 6; i++) {
+      const cur = parseFloat(sec.style.zoom) || 1;
+      const next = Math.max(0.74, cur * (m.clientHeight / m.scrollHeight) * 0.995);
+      if (Math.abs(next - cur) < 0.002) break;
+      sec.style.zoom = String(next);
+      if (over() <= 1) break;
+    }
+  } catch (e) {} finally { fitBusy = false; }
+}
+let fitTimer = null;
+function scheduleFit() { clearTimeout(fitTimer); fitTimer = setTimeout(() => { try { fitToScreen(); } catch (e) {} }, 60); }
+try {
+  const fm = document.querySelector("main");
+  if (fm) new MutationObserver(scheduleFit).observe(fm, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden", "open"] });
+} catch (e) {}
+window.addEventListener("resize", () => { try { fitDayWord(); scheduleFit(); } catch (e) {} });
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { try { fitDayWord(); } catch (e) {} });
 
 function scrollMainTop() { const m = document.querySelector("main"); if (m) m.scrollTop = 0; window.scrollTo(0, 0); }

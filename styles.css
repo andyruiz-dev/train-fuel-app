@@ -916,3 +916,65 @@ button.danger-link{min-height:36px; display:inline-flex; align-items:center;}
   .sx-actions .danger-link{margin:0; padding:8px 0; min-height:36px;}
   #tab-coach .tf-tiles .tf-more, #tab-coach .tf-tiles .tf-more summary{color:var(--text); font-size:13px;}
   #tab-coach .tf-tiles .tf-more summary{min-height:36px; display:flex; align-items:center;}
+
+/* Compact masthead: smaller word and ribbon so content starts higher */
+#dayWord{margin-top:6px}
+#wkRibbon, html:not([data-tab="coach"]) #wkRibbon{padding:8px 22px 12px}
+#wkRibbon .wr-c{width:28px; height:28px; border-width:2px}
+#wkRibbon .train .wr-c, #wkRibbon .chest .wr-c{border-width:2px}
+#wkRibbon .rest .wr-c{border-width:2px}
+#wkRibbon .wr-c svg{width:14px; height:14px}
+
+/* Food: headers as strong as the cards, recents fade at the edge, week total clearly tappable */
+#tab-food .tf-label, #tab-food .tf-label *{font-size:14px !important; font-weight:600; color:var(--text) !important; letter-spacing:0 !important; text-transform:none !important;}
+#tab-food .tf-label .tf-muted, #tab-food #tfLogCount{font-weight:500; color:var(--text-muted) !important;}
+#tab-food .tf-recent{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 32px),transparent); mask-image:linear-gradient(90deg,#000 calc(100% - 32px),transparent);}
+#tab-food .fh-week{min-height:40px;}
+.tf-chev{font-size:16px; padding:0 2px;}
+
+/* Coach: check-in leads, stats sit together, secondary links fold into one More row */
+#tab-coach > .tf-tiles{order:1}
+#tab-coach > #coachHero{order:2}
+#tab-coach > #coachWeekCard{order:3}
+#tab-coach > #coachMoreDetails{order:4; margin:0 0 10px !important;}
+#tab-coach > #coachNoteCard{order:5}
+#tab-coach #coachMoreDetails > summary{min-height:48px; font-size:14px;}
+
+.tf-hero2-why{font-size:13px; color:var(--text-muted); margin-top:4px;}
+
+.tf-mprog{display:flex; align-items:flex-end; gap:12px; margin-top:6px;}
+.tf-mprog span{font-size:13px; color:var(--text-muted);}
+
+/* Tap targets: every row you can tap is at least 36px tall (tools/screens.js enforces this) */
+details.exercise-group > summary{padding-top:9px; padding-bottom:9px;}
+.tf-ph-main .tf-moves-head{padding-top:9px !important; padding-bottom:9px !important;}
+.tf-pending{min-height:36px;}
+#tab-today #minimumDayBtn{min-height:36px !important; height:auto !important;}
+.tf-mv-i{width:20px !important; height:20px !important; font-size:12px !important;}
+
+/* Fit to page (js/ui.js fitToScreen): level 1 tightens spacing, level 2 drops secondary lines */
+html:is([data-fit="1"],[data-fit="2"],[data-fit="3"]) .tf-hero2-k, html:is([data-fit="2"],[data-fit="3"]) .tf-hero2-k{display:none;}
+html:is([data-fit="1"],[data-fit="2"],[data-fit="3"]) #tab-today .tf-label, html:is([data-fit="1"],[data-fit="2"],[data-fit="3"]) #tab-coach .card, html:is([data-fit="1"],[data-fit="2"],[data-fit="3"]) .tf-tile, html:is([data-fit="1"],[data-fit="2"],[data-fit="3"]) .tf-wk3{margin-bottom:6px !important;}
+html:is([data-fit="1"],[data-fit="2"],[data-fit="3"]) #tab-today .tf-hero2-in{padding-top:6px; padding-bottom:6px;}
+html:is([data-fit="1"],[data-fit="2"],[data-fit="3"]) #tab-food .tf-label{padding-top:8px !important; padding-bottom:4px !important;}
+html:is([data-fit="2"],[data-fit="3"]) .tf-hero2-why, html:is([data-fit="2"],[data-fit="3"]) .tf-hero2-sub, html:is([data-fit="2"],[data-fit="3"]) #tab-today #minimumDayBtn{display:none !important;}
+html:is([data-fit="2"],[data-fit="3"]) #tab-today .tf-label, html:is([data-fit="2"],[data-fit="3"]) #tab-today .tf-pending{display:none;}
+html:is([data-fit="2"],[data-fit="3"]) #tab-food .tf-recent{display:none;}
+html:is([data-fit="2"],[data-fit="3"]) #tab-coach #coachNoteCard{display:none;}
+html[data-fit="3"] #welcomeBackBanner, html[data-fit="3"] #tab-today .tf-pending{display:none !important;}
+/* 40px+ tap targets so they stay above 36px even after fit-to-page shrinks the screen a little */
+details.exercise-group > summary, .tf-more > summary{padding-top:11px; padding-bottom:11px;}
+button.danger-link{min-height:40px; padding-top:8px; padding-bottom:8px; padding-left:8px; padding-right:8px;}
+#dismissWelcomeBackBtn{min-height:40px; min-width:56px;}
+.tf-foodempty button, #tab-food .tf-add, #tab-food button.danger-link{min-height:40px;}
+.tf-flink, #minimumDayBtn, #genWorkoutBtn, .tf-linkbtn{min-height:42px;}
+.tf-more > summary{min-height:44px; box-sizing:border-box;}
+.tf-recent .chip, #tab-food .tf-recent .chip{min-height:42px;}
+#tab-food .fh-week{min-height:44px;}
+#foodHistoryOpen, #tab-food .tf-label [role=button]{min-height:40px; display:inline-flex; align-items:center; padding:0 4px;}
+
+/* Text budget: fewer words on every screen (see docs/UI-RULES.md) */
+html[data-tab="coach"] #daySub{display:none}
+.tf-focus .tf-fbar{justify-content:flex-end;}
+.tf-moves-names{-webkit-line-clamp:1;}
+#tab-coach #coachNoteCard .meta{display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden;}

@@ -422,9 +422,9 @@ function renderWelcomeBackBanner() {
   }
   el.classList.remove("hidden");
   el.innerHTML = `
-    <div class="card">
-      <div class="meta" style="color:var(--text);"><strong>Welcome back.</strong> ${gap} days away — that's just life, and showing up again is the part that counts. Nothing's lost and nothing is owed: your program picks up right where you are, and today's workout is ready whenever you are.</div>
-      <button class="danger-link mt6" id="dismissWelcomeBackBtn">Dismiss</button>
+    <div class="card" style="display:flex; align-items:center; gap:12px; padding:10px 14px;">
+      <div class="meta" style="color:var(--text); flex:1;"><strong>Welcome back.</strong> ${gap} days away, nothing owed. Today's workout is ready.</div>
+      <button class="danger-link" id="dismissWelcomeBackBtn" style="flex:none;">Dismiss</button>
     </div>`;
   document.getElementById("dismissWelcomeBackBtn").addEventListener("click", async () => {
     state.welcomeBackDismissedDate = today;
@@ -892,7 +892,7 @@ function updatePendingIndicators(rows) {
   if (chip) {
     if (rows.length) {
       chip.classList.remove("hidden");
-      chip.querySelector("span").textContent = rows.map(r => r.label.toLowerCase()).join(" · ") + " still to do";
+      chip.querySelector("span").textContent = rows.map(r => r.label.toLowerCase()).join(" · ") + " due";
     } else {
       chip.classList.add("hidden");
     }
@@ -1099,8 +1099,8 @@ function renderCoachNote() {
     ? tfInsightList(result.insights, false)
     : `<div class="meta">${
         result.totalCheckins === 0
-          ? "Still gathering enough days to spot real patterns — check back once you've logged a few daily check-ins."
-          : `Logged ${result.totalCheckins} daily check-in${result.totalCheckins === 1 ? "" : "s"} so far — keep going and patterns will start showing up here once there's enough matched data (roughly 5 days with and without a given reason).`
+          ? "Still gathering data."
+          : `${result.totalCheckins} check-in${result.totalCheckins === 1 ? "" : "s"} so far.`
       }</div>`;
   el.innerHTML = body + `<button class="tf-clamp-btn mt6" id="dismissCoachNote">Got it, hide for a week</button>`;
   document.getElementById("dismissCoachNote").addEventListener("click", async () => {

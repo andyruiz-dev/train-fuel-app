@@ -606,10 +606,10 @@ function renderCoachHero() {
   if (!el) return;
   const c = consistencyStats();
   let line;
-  if (c.sinceTrain === null) line = "Your first session is the whole goal.";
-  else if (c.missed === 0) line = c.thisWeek >= c.goal ? "Week goal hit. Extra is a bonus." : "On track. Keep it easy.";
-  else if (c.missed === 1) line = "1 training day missed. Keep it to one.";
-  else line = c.missed + " training days missed. Start small today.";
+  if (c.sinceTrain === null) line = "First session is the goal.";
+  else if (c.missed === 0) line = c.thisWeek >= c.goal ? "Week goal hit." : "On track.";
+  else if (c.missed === 1) line = "1 day missed.";
+  else line = c.missed + " days missed.";
   const dots = c.weeks.map((n, i) => {
     const hit = n >= c.goal, part = n > 0;
     const label = i === 3 ? "this week" : (3 - i) + (3 - i === 1 ? " week ago" : " weeks ago");
@@ -617,11 +617,11 @@ function renderCoachHero() {
   }).join("");
   const chip = (l, v, u) => `<div class="tf-cchip"><b>${v}<small>${u}</small></b><span>${l}</span></div>`;
   el.innerHTML = `<div class="tf-hero2"><div class="tf-hero2-in">
-      <div class="big">${c.thisWeek}<small> / ${c.goal} sessions this week</small></div>
+      <div class="big">${c.thisWeek}<small> / ${c.goal} this week</small></div>
       <div class="d" style="margin-top:4px;">${escapeHtml(line)}</div>
       <div style="display:flex; gap:6px; margin-top:12px;">${dots}</div>
     </div>
-    <div class="tf-cchips">${chip("food logged", c.logged7 + " / 7", "")}${chip("walk days", c.walk7 + " / 7", "")}${chip("protein days hit", c.proteinHit + " / 7", "")}</div></div>`;
+    <div class="tf-cchips">${chip("food", c.logged7 + " / 7", "")}${chip("walks", c.walk7 + " / 7", "")}${chip("protein", c.proteinHit + " / 7", "")}</div></div>`;
 }
 function weekStripHtml() {
   const goal = state.settings?.weeklyWorkoutGoal || 3;
@@ -630,6 +630,27 @@ function weekStripHtml() {
   const doneN = days.filter(d => doneSet.has(d)).length;
   const letters = ["M", "T", "W", "T", "F", "S", "S"];
   return `<div class="tf-weekcard"><div class="tf-wk-top"><span>This week</span><b>${doneN} of ${goal} done</b></div><div class="tf-wk">${days.map((d, i) => `<div class="tf-wd${doneSet.has(d) ? " done" : ""}${d === todayS ? " today" : ""}"><i>${doneSet.has(d) ? "✓" : ""}</i>${letters[i]}</div>`).join("")}</div></div>`;
+}
+// One short reason line for today's session: when its main muscle group was last trained. Empty when there is nothing useful to say.
+function todayReasonText(workout) {
+  try {
+    const counts = {};
+    (workout.exercises || []).forEach(e => { const g = String(e.muscle_group || "").toLowerCase(); if (g && g !== "core") counts[g] = (counts[g] || 0) + (e.sets || 1); });
+    const grp = Object.keys(counts).sort((x, y) => counts[y] - counts[x])[0];
+    if (!grp) return "";
+    const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+    let last = 0;
+    (state.logs || []).forEach(l => {
+      if (String(l.muscle_group || "").toLowerCase() !== grp) return;
+      const t = new Date(l.date).getTime();
+      if (t < midnight.getTime() && t > last) last = t;
+    });
+    if (!last) return "";
+    const days = Math.round((midnight.getTime() - new Date(last).setHours(0, 0, 0, 0)) / 86400000);
+    if (days < 1) return "";
+    const name = grp.charAt(0).toUpperCase() + grp.slice(1);
+    return `Last ${grp} ${days === 1 ? "yesterday" : days + " days ago"}`;
+  } catch (e) { return ""; }
 }
 function todayHeroHtml(workout) {
   let week = 0, total = 0;
@@ -655,9 +676,10 @@ function todayHeroHtml(workout) {
   const bar = segs.map(sg => `<i style="flex:${sg[1]}; background:${sg[0]};"></i>`).join("");
   const kicker = week ? `Week ${week}${total ? " of " + total : ""}` : "Today's session";
   const strip = weekStripHtml();
+  const why = todayReasonText(workout);
   return `<div class="tf-hero2"><div class="tf-hero2-in">
       <div class="tf-hero2-k">${kicker}</div>
-      <div class="tf-hero2-title">${title}</div>${sub ? `<div class="tf-hero2-sub">${sub}</div>` : ""}
+      <div class="tf-hero2-title">${title}</div>${sub ? `<div class="tf-hero2-sub">${sub}</div>` : ""}${why ? `<div class="tf-hero2-why">${escapeHtml(why)}</div>` : ""}
       <div class="tf-hero2-stats"><div><b>${mins}</b><span>min</span></div><div><b>${moves}</b><span>moves</span></div><div><b>${sets}</b><span>sets</span></div></div>
     </div><div class="tf-hero2-bar">${bar}</div></div>${strip}`;
 }
@@ -713,6 +735,20 @@ function todayNoteHtml(name) {
   n = n.charAt(0).toUpperCase() + n.slice(1);
   return `<div class="lab">Today</div><p>${escapeHtml(n)}</p>`;
 }
+// Last six sessions of a move as a tiny bar line (best set each time). Shown only once there are at least two sessions with reps logged.
+function moveProgressHtml(name) {
+  try {
+    const vals = (state.logs || []).filter(l => l.exercise === name && Array.isArray(l.actuals) && l.actuals.length)
+      .sort((x, y) => new Date(x.date) - new Date(y.date))
+      .map(l => Math.max(...l.actuals.map(v => parseInt(v, 10) || 0)))
+      .filter(v => v > 0).slice(-6);
+    if (vals.length < 2) return "";
+    const mx = Math.max(...vals), mn = Math.min(...vals);
+    const bars = vals.map((v, i) => { const h = 6 + Math.round((v - Math.min(mn, 0)) / (mx || 1) * 22); return `<rect x="${i * 14}" y="${30 - h}" width="10" height="${h}" rx="2" fill="var(--accent)" opacity="${i === vals.length - 1 ? 1 : .55}"/>`; }).join("");
+    const unit = isHoldExercise(name) ? " s" : "";
+    return `<div class="lab">Last ${vals.length} sessions</div><div class="tf-mprog"><svg width="${vals.length * 14 - 4}" height="30" viewBox="0 0 ${vals.length * 14 - 4} 30" aria-hidden="true">${bars}</svg><span>${vals.join(", ")}${unit}</span></div>`;
+  } catch (e) { return ""; }
+}
 function openExerciseSheet(name, idx) {
   const info = exerciseInfoFor(name);
   const esc = escapeHtml;
@@ -730,6 +766,7 @@ function openExerciseSheet(name, idx) {
   el.innerHTML = `<div class="sheet"><div class="grab"></div><h3>${esc(name)}</h3>${tags}
     ${bellHintHtml(name, (currentWorkout && currentWorkout.exercises || []).find(x => x.name === name)?.reps)}
     ${todayNoteHtml(name)}
+    ${moveProgressHtml(name)}
     ${info && info.cue ? `<div class="lab">How to</div><p>${esc(info.cue)}</p>` : `<p style="margin-top:14px;color:var(--text-muted);">No written cue for this one yet. The demo link shows it.</p>`}
     ${mistakes ? `<div class="lab">Common mistakes</div><ul>${mistakes.map(m => `<li>${esc(m)}</li>`).join("")}</ul>` : ""}
     ${idx !== undefined ? `<div class="lab">Swap or log</div><div id="tfSheetSlot"></div>` : ""}
@@ -938,7 +975,7 @@ function focusSwitchHtml(label) {
         : ["Rest day", "Taking today off", "Next session: " + lab + (chestBoosterOn() ? ". The chest booster is optional." : ". One day off never counts as a miss.")];
     return `<div class="tf-focus" data-label="${lab}"><div class="tf-fcard"><div class="tf-fk">${k}</div><div class="tf-ft">${ttl}</div><div class="tf-fs">${sub}</div></div><button class="tf-fwide" data-focus="workout">Train anyway · ${lab}</button></div>`;
   }
-  return `<div class="tf-focus" data-label="${lab}"><div class="tf-fbar"><span class="tf-fk">Train day</span><button class="tf-flink" data-focus="chest">Rest today instead</button></div></div>`;
+  return `<div class="tf-focus" data-label="${lab}"><div class="tf-fbar"><span class="tf-fk"></span><button class="tf-flink" data-focus="chest">Rest today instead</button></div></div>`;
 }
 function doneBannerHtml() {
   return `<div class="tf-focus"><div class="tf-fcard"><div class="tf-fk">Done today ✓</div><div class="tf-ft">Session logged</div><div class="tf-fs">Tomorrow: ${({ train: "next session", rest: "rest day" })[planKind(new Date(Date.now() + 864e5))]}.</div></div></div>`;
