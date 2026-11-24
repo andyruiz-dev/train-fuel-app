@@ -401,6 +401,7 @@ superset_group is a letter shared by paired exercises, or null if standalone.`;
   // Remembered so the NEXT generation's prompt (above) can nudge away from
   // repeating the same warmup/cool-down items — callers already persist
   // state right after calling this, so no separate save needed here.
+  ensurePlaneMix(result, program, recentFromHistory);
   addBackBlock(result, program);
   if (day?.day) result.day = day.day; // the AI sometimes rewrites the day label; the day rules below key off the plan's own name
   addBackStrength(result, program);
@@ -427,6 +428,44 @@ function addBackBlock(result, program) {
   });
   const have = new Set(block.map(b => b.name.toLowerCase()));
   result.warmup = [...block, ...(result.warmup || []).filter(w => w && w.name && !have.has(w.name.toLowerCase()))];
+  return result;
+}
+
+// One plane per workout means two push (or pull) slots can both land on the same pattern, e.g. two dips. The plane
+// still alternates from workout to workout, but when a session has two or more push (or pull) moves that all share
+// one plane, swap the smaller slot for a rep move from the other plane that fits the current level for that plane.
+// No eligible swap leaves the workout as it was.
+function ensurePlaneMix(result, program, recentNames) {
+  if (!result || !Array.isArray(result.exercises)) return result;
+  const planeLevels = state.planeLevels || {};
+  const recent = new Set([...(recentNames || [])].map(n => String(n).toLowerCase()));
+  ["push", "pull"].forEach(mg => {
+    const idxs = result.exercises.map((e, i) => (e && e.muscle_group === mg ? i : -1)).filter(i => i >= 0);
+    if (idxs.length < 2) return;
+    const planes = idxs.map(i => planeOf(result.exercises[i].name, mg));
+    if (planes.some(pl => pl !== planes[0])) return; // already mixed
+    const other = planes[0] === "h" ? "v" : "h";
+    const cap = planeLevels[`${mg}_${other}`] ?? 1;
+    const used = new Set(result.exercises.map(e => String(e && e.name || "").toLowerCase()));
+    const pool = exercises.filter(e => {
+      if (e.muscle_group !== mg || used.has(e.name.toLowerCase())) return false;
+      if (state.travelMode && !TRAVEL_EQUIPMENT.has(e.equipment || "bodyweight")) return false;
+      if (e.equipment === "weighted vest") return false;
+      if (program?.structure?.equipment && !program.structure.equipment.includes(e.equipment || "bodyweight")) return false;
+      if (program?.structure?.avoid && program.structure.avoid.includes(e.id)) return false;
+      if ((state.dislikedExercises || []).includes(e.id)) return false;
+      if (ARM_ONLY_IDS.has(e.id) || e.id === "bw-complex" || SKILL_LADDER_MAP[e.id]) return false;
+      if (isHoldExercise(e.id)) return false;
+      return planeOf(e.id, mg) === other && levelOf(e.id) <= cap;
+    });
+    if (!pool.length) return;
+    const fresh = pool.filter(e => !recent.has(e.name.toLowerCase()));
+    const list = (fresh.length ? fresh : pool).slice().sort((a, b) => levelOf(b.id) - levelOf(a.id));
+    // Swap the smaller slot (the later one on a tie), keeping its sets and superset pairing.
+    const target = idxs.slice().sort((a, b) => (result.exercises[a].sets || 0) - (result.exercises[b].sets || 0) || b - a)[0];
+    const e = result.exercises[target], pick = list[0];
+    e.name = pick.name; e.muscle_group = pick.muscle_group; e.reps = "8-12"; e.note = null;
+  });
   return result;
 }
 
