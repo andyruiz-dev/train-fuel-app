@@ -554,7 +554,7 @@ function renderSessionInner() {
   // this isn't about pushing to failure — and, if the session opens on a
   // superset, how to actually run one.
   const levelLegendHtml = (session.pos === 0 && !state.dismissedExerciseLegend)
-    ? `<div class="meta mt4">Level 1-5 is difficulty. Stop any time your form breaks down or something hurts.${step.supersetLabel ? " Superset: one set of each, back-to-back, then rest." : ""}</div>`
+    ? `<div class="meta mt8">Stop if your form breaks down or something hurts.</div>`
     : "";
 
   if (session.resting) {
@@ -680,13 +680,11 @@ function renderSessionInner() {
       ${step.supersetLabel ? `<div class="meta mt8">${step.supersetLabel}</div>${supersetCueHtml(step)}` : ""}
       <h2>${step.name}</h2>
       <div class="sx-hero">${step.reps}<small>reps${step.note ? " · " + escapeHtml(step.note) : ""}</small></div>
-      <div class="meta mt12">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${step.reps} reps${step.note ? " " + step.note : ""} · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
       ${eachSideCueHtml(step, false)}
+      ${ringStrapNoteFor(step) ? `<div class="meta mt8">${ringStrapNoteFor(step).replace(/^\s*·\s*/, "")}</div>` : ""}
       ${levelLegendHtml}
       ${bellHintHtml(step.name, step.reps)}
-      ${stepCueHtml}
-      <button class="danger-link" style="color:var(--accent); margin-top:4px;" id="sessionSwapOpenBtn">Swap</button>
-      <button class="danger-link" style="color:var(--accent); margin-top:4px; margin-left:12px;" data-quick-note="${escapeHtml(step.name)}">Note</button>
+      <div class="sx-actions"><button class="danger-link" style="color:var(--accent);" id="sessionSwapOpenBtn">Swap</button><button class="danger-link" style="color:var(--accent);" data-quick-note="${escapeHtml(step.name)}">Note</button></div>
       <div class="hidden mt8" id="sessionSwapPanel">
         <div class="meta">Pick a swap — grouped by easier/harder:</div>
         ${swapAlternatesHtml(currentWorkout.exercises[step.exIndex], step.exIndex)}

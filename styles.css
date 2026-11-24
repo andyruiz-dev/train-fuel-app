@@ -910,3 +910,9 @@ button.danger-link{min-height:36px; display:inline-flex; align-items:center;}
 .tf-focus .tf-flink{min-height:36px; display:inline-flex; align-items:center;}
 #tfWorkoutLinks button{min-height:36px;}
 #tab-food #foodHistoryOpen{display:inline-flex; align-items:center; min-height:36px; padding-left:12px;}
+
+  /* Guided set screen: Swap / Note aligned as one row; Coach "More" links readable */
+  .sx-actions{display:flex; gap:20px; align-items:center; margin-top:10px;}
+  .sx-actions .danger-link{margin:0; padding:8px 0; min-height:36px;}
+  #tab-coach .tf-tiles .tf-more, #tab-coach .tf-tiles .tf-more summary{color:var(--text); font-size:13px;}
+  #tab-coach .tf-tiles .tf-more summary{min-height:36px; display:flex; align-items:center;}
