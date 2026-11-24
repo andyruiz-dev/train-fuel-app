@@ -45,7 +45,7 @@
           <div id="recoveryCautionNote"></div>
           <div id="todayWorkout" class="empty">Pick an active program first.</div>
           <button class="primary mt10 w100" id="startSessionBtn" disabled>Start workout</button>
-          <button class="secondary mt8 w100" id="minimumDayBtn" disabled>Not feeling it? Do the minimum</button>
+          <button class="secondary mt8 w100" id="minimumDayBtn" disabled>Minimum day</button>
           <div id="tfQuickRow">
             <div class="tf-qr">
               <button type="button" class="tf-qbtn" id="travelModeToggle">✈️ Travel <span id="travelModeState">Off</span></button>
@@ -67,7 +67,7 @@
           </div>
           </div>
           <details id="tfMore" class="exercise-group">
-            <summary>More: skill practice, regenerate</summary>
+            <summary>More</summary>
             <div style="padding-top:8px;">
 <div id="tfWorkoutLinks"><button id="genWorkoutBtn" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; padding:4px 0;" disabled>Regenerate</button><button id="armToolBtn" type="button" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; padding:4px 0;">Arms: Kettlebell</button><button id="completeWorkoutBtn" type="button" class="tf-linkbtn">Complete workout without guided session ▸</button></div>
 
@@ -200,7 +200,7 @@
     <div class="tf-label" style="display:flex; justify-content:space-between; align-items:center; padding-top:4px; padding-bottom:2px;"><span id="tfLogLabel">Today</span><span style="display:flex; gap:14px; align-items:center;"><span id="tfLogCount" class="tf-muted"></span><span id="tfBackToday" class="hidden" role="button" tabindex="0" style="color:var(--accent); cursor:pointer;">Back to today</span><span id="foodLogPartialRow" style="position:relative;"></span></span></div>
     <div id="foodLogList" class="empty">Nothing logged for this day.</div>
 
-    <div class="tf-label" style="display:flex; justify-content:space-between; margin-top:0;"><span>Last 7 days</span><span id="foodHistoryOpen" role="button" tabindex="0" style="cursor:pointer;">History ›</span></div>
+    <div class="tf-label" style="display:flex; justify-content:space-between; align-items:center; margin-top:0;"><span>7 days</span><span id="foodHistoryOpen" role="button" tabindex="0" style="cursor:pointer;">History ›</span></div>
     <div id="dayStrip" class="tf-hero-food" style="display:block; padding:8px 14px 6px; margin-bottom:6px;"></div>
     <details class="exercise-group tf-row mt0" id="foodHistoryDetails">
       <summary>Older days and date jump</summary>
@@ -344,7 +344,7 @@
     <div id="coachHero"></div>
     <div class="tf-coachhero" id="coachNoteCard">
       <div class="tf-hero2-k">Coach's note</div>
-      <div id="coachNote" class="meta">Still gathering enough days to spot real patterns. Check back once you've logged a bit more.</div>
+      <div id="coachNote" class="meta">Still gathering data.</div>
     </div>
     <div class="tf-label">Check in</div>
     <div class="tf-tiles">
@@ -377,7 +377,7 @@
         </div>
         <button class="primary" id="saveDailyCheckinBtn" style="margin-top:12px;">Save</button>
         <details class="tf-more">
-          <summary>Anything going on?</summary>
+          <summary>Reason</summary>
           <div class="row" id="checkinTagChips" style="flex-wrap:wrap; margin-top:8px;"></div>
         </details>
         <div class="tf-tile-sub mt8" id="dailyCheckinSavedHint"></div>
@@ -404,7 +404,9 @@
     </div>
 
     <div id="coachWeekCard" class="tf-wk3"></div>
-    <div class="tf-g2">
+    <details class="exercise-group tf-row" id="coachMoreDetails">
+    <summary>More</summary>
+    <div class="tf-g2" style="margin-top:8px;">
     <div id="tfWeekCard"></div>
     <details class="exercise-group tf-row tf-dotrow" id="chestBoosterDetails" style="--dc:var(--accent);">
       <summary>Chest</summary>
@@ -479,6 +481,7 @@
       </div>
     </details>
     </div>
+    </details>
   </section>
 
   <!-- Progress tiles are rendered into this hidden holder; the Coach tab shows the weekly summary. -->

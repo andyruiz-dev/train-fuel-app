@@ -18,4 +18,8 @@ out=$(node dedupe.js 2>&1); echo "$out" | tail -3
 echo "$out" | grep -q FAIL && { echo "DEDUPE FAILED"; fail=1; }
 out=$(node extractjson.js 2>&1); echo "$out" | tail -3
 echo "$out" | grep -qE "FAIL|THROW" && { echo "EXTRACTJSON FAILED"; fail=1; }
+for vp in 360x740 390x844 412x915; do
+  out=$(VP=$vp node screens.js 2>&1); echo "$vp: $(echo "$out" | tail -1)"
+  echo "$out" | grep -q "SCREENS OK" || { echo "$out" | grep -E "FAIL|   "; echo "SCREENS FAILED at $vp"; fail=1; }
+done
 [ $fail = 0 ] && echo "ALL CHECKS PASSED" || { echo "CHECKS FAILED"; exit 1; }

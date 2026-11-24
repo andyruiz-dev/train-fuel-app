@@ -695,7 +695,7 @@ function renderDayStrip() {
     const logs = foodLogsForDate(k), cal = logs.reduce((n, f) => n + (f.calories || 0), 0);
     cols.push({ k, cal, n: logs.length, lab: d.toLocaleDateString("en-US", { weekday: "short" })[0] });
   }
-  const top = Math.max(dailyBudget * 1.3, ...cols.map(c => c.cal)) * 1.05, H = 30;
+  const top = Math.max(dailyBudget * 1.3, ...cols.map(c => c.cal)) * 1.05, H = 40;
   const yb = H - (dailyBudget / top) * H;
   el.innerHTML = `<div style="position:relative;"><div style="display:flex; align-items:flex-end; gap:6px; height:${H}px; position:relative;">${cols.map(c => {
     const h = c.n ? Math.max(4, Math.round(c.cal / top * H)) : 4;
@@ -788,7 +788,7 @@ function renderFoodLogList() {
   if (!dayLogs.length) {
     const c0 = document.getElementById("tfLogCount"); if (c0) c0.textContent = "";
     el.innerHTML = isToday
-      ? '<div class="tf-foodempty"><div>Nothing logged yet. Start with a protein hit.</div><button type="button" data-empty-quick>Quick add</button></div>'
+      ? '<div class="tf-foodempty"><div>Nothing logged.</div><button type="button" data-empty-quick>Quick add</button></div>'
       : '<div class="empty">Nothing logged for this day.</div>';
     return;
   }
