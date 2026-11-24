@@ -382,10 +382,11 @@ function syncTravelModeLabel() {
   el.style.color = state.travelMode ? "var(--accent)" : "var(--text-muted)";
   const barLink = document.getElementById("findBarLink");
   if (barLink) barLink.classList.toggle("hidden", !state.travelMode);
+  syncTravelModeLegendVisibility();
 }
 function syncTravelModeLegendVisibility() {
   const el = document.getElementById("travelModeExplainer");
-  if (el) el.classList.toggle("hidden", state.dismissedTravelModeLegend);
+  if (el) el.classList.toggle("hidden", state.dismissedTravelModeLegend || !state.travelMode); // only explain Travel while it is on, so Today fits the screen
 }
 document.getElementById("dismissTravelModeLegendBtn").addEventListener("click", async () => {
   state.dismissedTravelModeLegend = true;

@@ -868,3 +868,17 @@
   #dayHero.tight #dayWord{margin-top:4px}
   html.kbd #dayHero, html.kbd #wkRibbon{display:none !important}
   html.kbd main{padding-bottom:12px}
+
+/* Today: tighter spacing so a training day fits one phone screen without scrolling */
+#tab-today .tf-hero2{margin-bottom:8px;}
+#tab-today .tf-hero2-in{padding:10px 16px 8px;}
+#tab-today .tf-hero2-title{font-size:30px !important; margin-top:2px;}
+#tab-today .tf-hero2-stats{margin-top:6px;}
+#tab-today .tf-hero2-stats b{font-size:20px;}
+#tab-today .tf-focus{margin-bottom:6px;}
+#tab-today #tfQuickRow{margin-top:8px;}
+#tab-today #tfMore{margin-top:8px; padding:8px 14px;}
+#tab-today #minimumDayBtn{height:38px !important; min-height:0 !important; margin-top:6px;}
+#tab-today #tfQuickRow .tf-qbtn{padding:9px 6px;}
+#tab-today .tf-ph-main{padding-top:8px; padding-bottom:8px;}
+#tab-today #startSessionBtn{height:52px;}
