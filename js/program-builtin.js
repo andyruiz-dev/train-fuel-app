@@ -734,8 +734,10 @@ const BACK_CARE = [
   { n: "Knees-to-chest hold", d: "30 seconds · gentle, no pulling hard" },
 ];
 function backCareDone() { const w = state.backCare; return w && w.day === localDateStr() && Array.isArray(w.ids) ? w.ids : []; }
+let backCareOpen = false;
 function backCareHtml() {
   const done = backCareDone(), all = done.length >= BACK_CARE.length;
+  if (!backCareOpen) return `<div data-back-care-open style="display:flex; align-items:center; gap:10px; margin-top:8px; padding:0 14px; height:52px; background:var(--surface); border:1px solid var(--border); border-radius:12px; font-size:15px; cursor:pointer;"><span style="width:22px; height:22px; border-radius:50%; border:2px solid ${all ? "var(--accent)" : "var(--border)"}; background:${all ? "var(--accent)" : "transparent"}; color:var(--ink); display:flex; align-items:center; justify-content:center; font-size:12px; flex:none;">${all ? "✓" : ""}</span><span>Back care · optional, 3 min</span><span style="margin-left:auto; color:var(--text-muted);">${done.length}/${BACK_CARE.length} ▸</span></div>`;
   const rows = BACK_CARE.map((m, i) => { const ok = done.includes(i); return `<div data-back-care="${i}" style="display:flex; align-items:center; gap:10px; padding:11px 0; ${i < BACK_CARE.length - 1 ? "border-bottom:1px solid var(--surface-3);" : ""} cursor:pointer;"><span style="width:24px; height:24px; border-radius:50%; border:2px solid ${ok ? "var(--accent)" : "var(--border)"}; background:${ok ? "var(--accent)" : "transparent"}; color:var(--ink); display:flex; align-items:center; justify-content:center; font-size:13px; flex:none;">${ok ? "✓" : ""}</span><div class="fx1"><div style="font-size:15px; ${ok ? "color:var(--text-muted);" : ""}">${escapeHtml(m.n)}</div><div class="meta" style="font-size:12px;">${escapeHtml(m.d)}</div></div></div>`; }).join("");
   return `<div class="tf-hero2" style="order:-3;"><div class="tf-hero2-in" style="padding:16px;"><div class="tf-hero2-k">Optional · about 3 minutes</div><div style="font-family:var(--font-display); font-size:28px; line-height:1.05; text-transform:uppercase; margin-top:6px;">${all ? "Back care done" : "Back care"}</div><div style="font-size:13px; color:var(--accent-pale); margin-top:6px;">${all ? "Nice. Your back thanks you." : "Slow and easy. Skip anything that hurts."}</div><div style="margin-top:8px;">${rows}</div></div></div>`;
 }
@@ -880,6 +882,7 @@ document.addEventListener("click", async (e) => {
     if (!cur.includes(i)) cur.push(i);
     state.chestWarm = { day: localDateStr(), ids: cur }; changed = true; chestPhaseSel = null;
   }
+  else if (q("[data-back-care-open]")) { backCareOpen = true; }
   else if (q("[data-back-care]")) {
     const i = Number(q("[data-back-care]").dataset.backCare), cur = backCareDone().slice(), at = cur.indexOf(i);
     if (at >= 0) cur.splice(at, 1); else cur.push(i);
