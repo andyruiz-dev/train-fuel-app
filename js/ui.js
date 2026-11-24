@@ -1,12 +1,11 @@
 // ---- week ribbon: this week as the plan sees it (Mon to Sun) ----
-// Kind comes from the fixed DAY_PLAN; done comes from logged sessions (and chest booster logs on chest days).
+// Kind comes from the fixed DAY_PLAN; done comes from logged sessions.
 // Today follows the Rest/Train switch. Past planned days with nothing logged are dimmed.
 function renderWeekRibbon() {
   const el = document.getElementById("wkRibbon");
   if (!el) return;
   const days = weekDayList(0), todayS = localDateStr();
   const done = new Set((state.logs || []).map(l => dayKeyOf(l.date)));
-  const chest = new Set((state.chestLogs || []).map(l => dayKeyOf(l.date)));
   const names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   const letters = ["M", "T", "W", "T", "F", "S", "S"];
   const check = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
@@ -14,9 +13,9 @@ function renderWeekRibbon() {
   el.innerHTML = '<div class="wr-row">' + days.map((d, i) => {
     let kind = DAY_PLAN[(i + 1) % 7] || "rest";
     const isToday = d === todayS;
-    if (isToday) { const f = chestFocus(); kind = f === "chest" ? (kind === "chest" ? "chest" : "rest") : "train"; todayKind = kind; }
-    const isDone = done.has(d) || (kind === "chest" && chest.has(d));
-      const label = names[i] + ", " + (kind === "train" ? "training" : kind === "chest" ? "chest day" : "rest") + (isDone ? ", done" : "") + (isToday ? ", today" : "");
+    if (isToday) { const f = chestFocus(); kind = f === "chest" ? "rest" : "train"; todayKind = kind; }
+    const isDone = done.has(d);
+      const label = names[i] + ", " + (kind === "train" ? "training" : "rest") + (isDone ? ", done" : "") + (isToday ? ", today" : "");
     return `<div class="wr-d ${kind}${isDone ? " done" : ""}${isToday ? " today" : ""}" role="img" aria-label="${label}"><div class="wr-c">${isDone ? check : ""}</div><span>${letters[i]}</span></div>`;
   }).join("") + "</div>";
   renderDayHero(todayKind);
@@ -29,7 +28,7 @@ function nextPlannedDay() {
     const k = DAY_PLAN[(dow + j) % 7];
     if (k && k !== "rest") {
       const when = j === 1 ? "tomorrow" : "on " + new Date(Date.now() + j * 864e5).toLocaleDateString(undefined, { weekday: "long" });
-      return (k === "chest" ? "Chest booster" : "Training") + " is next, " + when + ".";
+      return "Training is next, " + when + ".";
     }
   }
   return "";
@@ -42,10 +41,9 @@ function renderDayHero(kind) {
   const w = document.getElementById("dayWord"), s = document.getElementById("daySub");
   if (!w || !s) return;
   const tab = document.documentElement.dataset.tab || "coach";
-  w.textContent = tab === "food" ? "Food" : tab === "today" ? "Today" : ({ rest: "Rest", train: "Train", chest: "Chest" }[kind] || "Rest");
+  w.textContent = tab === "food" ? "Food" : tab === "today" ? "Today" : ({ rest: "Rest", train: "Train" }[kind] || "Rest");
   let sub = "";
   if (kind === "rest") sub = "Recovery day. " + nextPlannedDay();
-  else if (kind === "chest") sub = "Chest booster. Any time today.";
   else {
     const wk = state.pendingWorkout && state.pendingWorkout.workout;
     let mins = 0; try { if (wk && wk.exercises) mins = estimateWorkoutMinutes(wk); } catch (e) {}
