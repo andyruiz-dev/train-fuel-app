@@ -246,6 +246,7 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
     if (e.equipment === "weighted vest") return false; // not owned
     if (program?.structure?.equipment && !program.structure.equipment.includes(e.equipment || "bodyweight")) return false;
     if (program?.structure?.avoid && program.structure.avoid.includes(e.id)) return false;
+    if ((state.dislikedExercises || []).includes(e.id)) return false; // moves you asked never to see
     if (e.id === "bw-complex") return false; // only used as the travel stand-in inside the kettlebell program
     // Skill-ladder exercises (handstand/L-sit/planche/back lever/front
     // lever/muscle-up) are deliberately NEVER auto-generated into a
@@ -284,6 +285,7 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
       if (state.travelMode && !TRAVEL_EQUIPMENT.has(e.equipment || "bodyweight")) return;
       if (program?.structure?.equipment && !program.structure.equipment.includes(e.equipment || "bodyweight")) return;
       if (program?.structure?.avoid && program.structure.avoid.includes(e.id)) return;
+      if ((state.dislikedExercises || []).includes(e.id)) return;
       const plane = planeOf(e.id, e.muscle_group);
       if (plane !== fallbackPlane) return;
       const cap = planeLevels[`${mg}_${plane}`] ?? 1;

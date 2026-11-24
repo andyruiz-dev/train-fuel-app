@@ -18,4 +18,7 @@ t('push slots use rep moves',!/support hold/i.test(out.r[0]+out.r[1]));
 t('swapped hold gets 8-12 reps',/8-12/.test(out.r[0])&&/8-12/.test(out.r[1]));
 t('core can stay as is',/Dead bug 8-10/.test(out.r[2]));
 t('falls back if no alternative (unchanged, no crash)',out.only.length===2&&/support hold/i.test(out.only[0]));
+const dis=await p.evaluate(()=>({d:state.dislikedExercises,ids:['supine-heel-taps','plank-reach-out'].map(i=>!!BUILTIN_EXERCISES.find(e=>e.id===i))}));
+t('bear crawl is on the never-show list',Array.isArray(dis.d)&&dis.d.includes('bear-crawl'));
+t('replacement core moves exist',dis.ids.every(Boolean));
 console.log('errors',errs.filter(e=>!/ServiceWorker/.test(e)));await b.close()})();
