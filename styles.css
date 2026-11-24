@@ -882,3 +882,12 @@
 #tab-today #tfQuickRow .tf-qbtn{padding:9px 6px;}
 #tab-today .tf-ph-main{padding-top:8px; padding-bottom:8px;}
 #tab-today #startSessionBtn{height:52px;}
+/* Today: the workout card already names the session, so skip the repeated subtitle under the big word (saves a line of height) */
+html[data-tab="today"] #daySub{display:none}
+#tab-today #minimumDayBtn{height:32px !important; margin-top:4px;}
+#tab-today #tfQuickRow{margin-top:6px;}
+#tab-today #tfMore{margin-top:6px;}
+#tab-today #tfQuickRow .tf-qbtn{padding:7px 6px;}
+html[data-tab="today"] main{padding-bottom:66px;}
+/* On shorter phones, drop the "Week 1 of 24" line above the session name so the whole Today screen fits */
+@media (max-height: 980px){ #tab-today .tf-hero2-k{display:none;} }
