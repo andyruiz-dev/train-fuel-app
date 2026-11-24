@@ -16,4 +16,6 @@ out=$(node scorecard.js 2>&1); echo "$out" | tail -3
 echo "$out" | grep -q FAIL && { echo "SCORECARD FAILED"; fail=1; }
 out=$(node dedupe.js 2>&1); echo "$out" | tail -3
 echo "$out" | grep -q FAIL && { echo "DEDUPE FAILED"; fail=1; }
+out=$(node extractjson.js 2>&1); echo "$out" | tail -3
+echo "$out" | grep -qE "FAIL|THROW" && { echo "EXTRACTJSON FAILED"; fail=1; }
 [ $fail = 0 ] && echo "ALL CHECKS PASSED" || { echo "CHECKS FAILED"; exit 1; }
