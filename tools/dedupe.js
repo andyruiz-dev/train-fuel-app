@@ -85,4 +85,6 @@ const pm=await p.evaluate(()=>{
 t('two dips become one vertical and one horizontal push ('+pm.r.join(', ')+')',pm.pl[0]!==pm.pl[1]&&pm.r[0].endsWith('3')&&pm.r[1].endsWith('2A')&&pm.r[0].startsWith('Supported ring dip'));
 t('pull slots get mixed planes too',pm.ppl[0]!==pm.ppl[1]);
 t('already mixed, single, and no-eligible-swap workouts are untouched, other groups too',pm.mixedSame&&pm.singleSame&&pm.noneSame&&pm.core==='Dead bug');
+const dt=await p.evaluate(()=>[dayTitle('Push + core A'),dayTitle('Pull + legs B'),dayTitle('Full body'),dayTitle('Rest day'),dayTitle('Bell A: squat, press, row'),dayTitle(undefined)]);
+t('day names are Title Case ('+dt.join(' | ')+')',dt[0]==='Push + Core A'&&dt[1]==='Pull + Legs B'&&dt[2]==='Full Body'&&dt[3]==='Rest Day'&&dt[4]==='Bell A: Squat, Press, Row'&&dt[5]==='');
 console.log('errors',errs.filter(e=>!/ServiceWorker/.test(e)));await b.close()})();

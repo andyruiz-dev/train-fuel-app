@@ -898,3 +898,9 @@ html[data-tab="today"] main{padding-bottom:66px;}
 /* Guided session: the main button on the coloured screens is a dark pill, so it reads on any accent colour */
 #sessionPanel[data-sx="work"] button.primary, #sessionPanel[data-sx="emom"] button.primary, #sessionPanel[data-sx="hold"] button.primary, #sessionPanel[data-sx="done"] button.primary{background:var(--ink) !important; color:var(--text) !important;}
 #sessionPanel[data-sx="work"] button.secondary, #sessionPanel[data-sx="emom"] button.secondary, #sessionPanel[data-sx="hold"] button.secondary, #sessionPanel[data-sx="done"] button.secondary{color:var(--ink) !important; border-color:rgba(var(--ink-rgb),.55) !important; background:transparent !important; opacity:1;}
+
+/* Tap targets: small text links get a taller hit area without changing how they look. */
+button.danger-link{min-height:36px; display:inline-flex; align-items:center;}
+.tf-focus .tf-flink{min-height:36px; display:inline-flex; align-items:center;}
+#tfWorkoutLinks button{min-height:36px;}
+#tab-food #foodHistoryOpen{display:inline-flex; align-items:center; min-height:36px; padding-left:12px;}

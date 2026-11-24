@@ -98,11 +98,11 @@ function kbProgram() {
 function dailyShortProgram() {
   const S = (mg, sets, reps) => ({ muscle_group: mg, sets, reps: reps || "8-12", exercise_name: null });
   const days = () => [
-    { day: "Push + core A", slots: [S("push", 3), S("push", 2), S("core", 3)] },
-    { day: "Pull + legs A", slots: [S("pull", 3), S("pull", 2), S("legs", 3)] },
-    { day: "Push + core B", slots: [S("push", 3), S("push", 2), S("core", 3)] },
-    { day: "Pull + legs B", slots: [S("pull", 3), S("legs", 3), S("hinge", 2)] },
-    { day: "Full body", slots: [S("push", 2), S("pull", 2), S("legs", 2), S("core", 2)] },
+    { day: "Push + Core A", slots: [S("push", 3), S("push", 2), S("core", 3)] },
+    { day: "Pull + Legs A", slots: [S("pull", 3), S("pull", 2), S("legs", 3)] },
+    { day: "Push + Core B", slots: [S("push", 3), S("push", 2), S("core", 3)] },
+    { day: "Pull + Legs B", slots: [S("pull", 3), S("legs", 3), S("hinge", 2)] },
+    { day: "Full Body", slots: [S("push", 2), S("pull", 2), S("legs", 2), S("core", 2)] },
   ];
   const phase = (label, ws) => ({ phase: label, week_start: ws, week_end: ws + 3, deload_weeks: [ws + 3], days: days() });
   const name = "Daily short: rings and bodyweight";
@@ -200,7 +200,7 @@ function buildFixedWorkout(day, isDeload, weekNumber) {
     const m = exercises.find(x => x.id === id);
     return m ? { name: m.name, detail } : null;
   }).filter(Boolean);
-  const result = { day: day.day, warmup: pick(day.fixed.warmup), exercises: out, cooldown: pick(day.fixed.cooldown) };
+  const result = { day: dayTitle(day.day), warmup: pick(day.fixed.warmup), exercises: out, cooldown: pick(day.fixed.cooldown) };
   // Same posture/hip staples as every other day (wall slides, levator stretch, glute bridge, hip-flexor stretch).
   return ensureShoulderStaples(result, allowedMobilityRegions(day.slots), day.slots);
 }
@@ -403,7 +403,7 @@ superset_group is a letter shared by paired exercises, or null if standalone.`;
   // state right after calling this, so no separate save needed here.
   ensurePlaneMix(result, program, recentFromHistory);
   addBackBlock(result, program);
-  if (day?.day) result.day = day.day; // the AI sometimes rewrites the day label; the day rules below key off the plan's own name
+  if (day?.day) result.day = dayTitle(day.day); // the AI sometimes rewrites the day label; keep the plan's own name, in Title Case
   addBackStrength(result, program);
   addArmFinisher(result, program);
   state.lastWarmupCooldownNames = [
@@ -640,7 +640,7 @@ function todayHeroHtml(workout) {
       total = Math.max(...prog.structure.phases.map(x => x.week_end || 0)) || 0;
     }
   } catch (e) {}
-  const full = String(workout.day || "Today's workout");
+  const full = dayTitle(String(workout.day || "Today's workout"));
   const ci = full.indexOf(":");
   const title = escapeHtml(ci > 0 ? full.slice(0, ci).trim() : full);
   const sub = ci > 0 ? escapeHtml(full.slice(ci + 1).trim().replace(/^./, c => c.toUpperCase()).replace(/,\s*/g, " · ")) : "";
@@ -1102,13 +1102,13 @@ function renderTodayWorkout(workout) {
         // normal flow to say "I've already rested enough this week, give me
         // the next real workout instead." Lets that next day's session
         // generate immediately rather than forcing today to stay empty.
-        skipBtnHtml = `<button class="primary" id="skipRestDayBtn" style="margin-top:12px; width:100%;">Skip rest — start ${nextDay.day}</button>`;
+        skipBtnHtml = `<button class="primary" id="skipRestDayBtn" style="margin-top:12px; width:100%;">Skip rest — start ${dayTitle(nextDay.day)}</button>`;
       }
     }
     const restLine = hasLoggedWorkoutToday()
       ? "Nothing scheduled next in the rotation — a rest slot is up."
       : "Nothing scheduled today — rest and recover.";
-    box.innerHTML = `<div id="chestBoosterToday"></div><div class="card">${previewNote}<h2>${workout.day || "Rest day"}</h2><div class="meta">${restLine}</div>${nextUpHtml}${previewAreaHtml}${skipBtnHtml}</div>`;
+    box.innerHTML = `<div id="chestBoosterToday"></div><div class="card">${previewNote}<h2>${dayTitle(workout.day) || "Rest day"}</h2><div class="meta">${restLine}</div>${nextUpHtml}${previewAreaHtml}${skipBtnHtml}</div>`;
     renderChestBoosters();
     applyTodayFocus(false);
     const skipBtn = document.getElementById("skipRestDayBtn");

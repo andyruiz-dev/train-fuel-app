@@ -853,7 +853,7 @@ function renderProgramView() {
     } else {
       exs = (d.slots || []).map(s => `${esc(s.muscle_group)} ${esc(String(s.sets))}×${esc(String(s.reps))}`).join("<br>");
     }
-    return `<div class="tf-dcard ${st}" data-dcard><div class="r"><div><div class="k">${label}</div><div class="t">${esc(String(d.day || ""))}</div></div>${icon}</div><div class="ex hidden">${exs}</div></div>`;
+    return `<div class="tf-dcard ${st}" data-dcard><div class="r"><div><div class="k">${label}</div><div class="t">${esc(dayTitle(d.day))}</div></div>${icon}</div><div class="ex hidden">${exs}</div></div>`;
   }).join("");
 
   const pills = `<span class="on">${esc(String(program.source || "program"))}</span><span>${maxWeek} weeks</span>${program.structure.session?.days ? `<span>${program.structure.session.days} days/wk</span>` : `<span>${perWeek} days/wk</span>`}`;
@@ -905,7 +905,7 @@ function renderProgramPreview(program) {
     <div style="border-top:1px solid var(--border); padding-top:8px; margin-top:8px;">
       <div class="name">${ph.phase} · weeks ${ph.week_start}-${ph.week_end}${ph.deload_weeks?.length ? ` (deload: wk ${ph.deload_weeks.join(", ")})` : ""}</div>
       ${(ph.days || []).map(d => `
-        <div class="meta mt6"><strong style="color:var(--text);">${d.day}</strong>${d.fixed ? " · about " + estimateWorkoutMinutes(buildFixedWorkout(d, false)) + " min" : ""}</div>
+        <div class="meta mt6"><strong style="color:var(--text);">${dayTitle(d.day)}</strong>${d.fixed ? " · about " + estimateWorkoutMinutes(buildFixedWorkout(d, false)) + " min" : ""}</div>
         <div class="meta">${d.fixed ? d.fixed.exercises.map(f => { const x = BUILTIN_EXERCISES.find(b => b.id === f.id); return `${x ? x.name : f.id} ${f.sets}×${f.reps}`; }).join(" · ") : (d.slots || []).map(s => `${s.muscle_group} ${s.sets}×${s.reps}`).join(" · ")}</div>
       `).join("")}
     </div>

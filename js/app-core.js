@@ -13,7 +13,12 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-24 Capitalisation";
+const APP_BUILD = "2026-11-24 Day names";
+
+// Day names show in Title Case ("Push + Core A") wherever they appear, whatever case the stored plan uses.
+function dayTitle(name) {
+  return String(name == null ? "" : name).replace(/(^|[\s(+/-])([a-z])/g, (m, a, b) => a + b.toUpperCase());
+}
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.

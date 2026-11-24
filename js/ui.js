@@ -643,7 +643,7 @@ async function applyStartingLevelsIfUntrained() {
 function notesContext(explicit) {
   if (explicit) return explicit;
   const pw = state.pendingWorkout;
-  return pw && pw.workout && pw.workout.day ? pw.workout.day : "";
+  return pw && pw.workout && pw.workout.day ? dayTitle(pw.workout.day) : "";
 }
 async function addSessionNote(text, context) {
   const t = String(text || "").trim();
