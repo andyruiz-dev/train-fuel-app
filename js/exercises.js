@@ -185,6 +185,8 @@ const BUILTIN_EXERCISES = [
   { id: "single-leg-calf-raise", name: "Single-leg calf raise", muscle_group: "legs", equipment: "bodyweight", cue: "Use a wall for balance only, not assistance." },
 
   // ---- core: more skill-line variety ----
+  { id: "supine-heel-taps", name: "Supine heel taps", muscle_group: "core", equipment: "bodyweight", cue: "On your back, knees at 90°, low back pressed down; lower one heel to tap the floor, then switch. Slow and quiet." },
+  { id: "plank-reach-out", name: "Plank reach-out", muscle_group: "core", equipment: "bodyweight", cue: "Forearm or high plank, hips level; reach one arm long in front, hold a beat, switch. No sagging." },
   { id: "superman", name: "Superman", muscle_group: "core", equipment: "bodyweight", cue: "Lift chest and legs together, squeeze glutes, don't yank the neck." },
   { id: "reverse-plank", name: "Reverse plank", muscle_group: "core", equipment: "bodyweight", cue: "Hips up, squeeze glutes, fingers pointed toward feet." },
   { id: "copenhagen-plank", name: "Copenhagen plank", muscle_group: "core", equipment: "bodyweight", cue: "Top foot on a bench/couch edge, hips lifted and level." },
@@ -410,7 +412,7 @@ const EXERCISE_LEVEL_MAP = {
   "handstand-walk": 5,
   "one-arm-pullup-negative": 5, "one-arm-pullup": 5,
   "broad-jump": 3, "jumping-lunge": 4, "burpee": 2,
-  "mountain-climbers": 2, "bear-crawl": 2, "inchworm": 1,
+  "mountain-climbers": 2, "bear-crawl": 2, "inchworm": 1, "supine-heel-taps": 1, "plank-reach-out": 2,
   "wall-bridge": 1, "wheel-bridge": 3, "full-bridge": 4, "stand-to-stand-bridge": 5,
   "standing-twist": 1, "ring-pullover": 4,
   "archer-squat": 3, "hover-lunge": 3, "l-sit-pullup": 4, "l-sit-archer-pullup": 5,
