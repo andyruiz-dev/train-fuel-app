@@ -445,7 +445,7 @@
   .tf-dot{ width:9px; height:9px; border-radius:50%; margin-right:10px}
   .tf-ph-main{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:11px 14px; margin:0 0 8px;}
   .tf-ph-main .tf-moves-head{font-family:var(--font-body,Manrope,sans-serif); font-size:15px; font-weight:600; letter-spacing:0; text-transform:none; color:var(--text); padding:0; cursor:pointer; align-items:center;}
-  .tf-moves-names{font-size:12px; color:var(--text-muted); margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .tf-moves-names{font-size:14px; font-weight:600; line-height:1.4; color:var(--text); margin-top:6px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
   .tf-ph-main .tf-mv{margin-top:8px;}
   #todayWorkout details.tf-ph-warm summary::before, #todayWorkout details.tf-ph-cool summary::before{content:""; display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:10px; background:var(--accent);}
   #todayWorkout details.tf-ph-cool summary::before{background:var(--sand);}
@@ -588,7 +588,11 @@
   #todayWorkout details.tf-ph-warm summary::before, #todayWorkout details.tf-ph-cool summary::before{display:none;}
   #todayWorkout details.exercise-group summary, .tf-ph-main .tf-moves-head{font-size:15px; font-weight:500;}
   #todayWorkout .tf-dot{display:none;}
-  .tf-mv{border:0; border-left:0; background:var(--surface-2); border-radius:12px;}
+  .tf-mv{border:1px solid var(--border-3); border-left:4px solid var(--border-3); background:var(--surface-3); border-radius:12px; padding:9px 12px;}
+  .tf-mv.ss{border-left-width:4px;}
+  .tf-mv-name{font-size:16px; font-weight:700; color:var(--text);}
+  .tf-mv-det{font-size:14px; font-weight:600; color:var(--text);}
+  .tf-mv-tag{display:none;}
   #tfQuickRow .tf-qbtn{border:0; background:var(--surface); border-radius:14px; min-height:46px; font-weight:500;}
   #tfMore{ border-radius:var(--r2)}
 
