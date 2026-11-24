@@ -782,7 +782,7 @@ function movesListHtml(workout) {
   const blocks = workoutBlocks(workout);
   const line = (j) => { const x = ex[j]; return `<div class="tf-mv-line"><div class="tf-mv-name" data-exidx="${j}" data-exinfo="${escapeHtml(x.name)}">${escapeHtml(x.name)}<span class="tf-mv-i" aria-label="How to">i</span></div><div class="tf-mv-det">${det(x)}${x.emom ? ' <span class="tf-pill">EMOM</span>' : ""}</div></div>`; };
   const rows = blocks.map(bk => `<div class="tf-mv ss" style="border-left-color:${bk.color};">${bk.label ? `<div class="tf-mv-tag" style="color:${bk.color};">${bk.label}</div>` : ""}${bk.idx.map(line).join("")}</div>`).join("");
-  const names = [...new Set(ex.map(e => String(e.name).replace(/^(kettlebell|kb)\s+/i, "")))].map(n => escapeHtml(n)).join(" · ");
+  const names = [...new Set(ex.map(e => String(e.name).replace(/^(kettlebell|kb)\s+/i, "").replace(/^./, c => c.toUpperCase())))].map(n => escapeHtml(n)).join(" · ");
   const head = `<div class="tf-moves-head" data-moves-toggle role="button" tabindex="0"><span><i class="tf-dot" style="background:var(--accent);"></i>Main work · ${ex.length} moves</span><span style="color:var(--accent);">${movesOpen ? "Hide ▴" : "See all ▾"}</span></div>`;
   if (!movesOpen) return `<div class="tf-moves tf-ph-main" data-moves-toggle style="cursor:pointer;">${head}<div class="tf-moves-names">${names}</div></div>`;
   return `<div class="tf-moves tf-ph-main">${head}${rows}</div>`;

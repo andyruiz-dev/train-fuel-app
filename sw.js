@@ -2,7 +2,7 @@
 // and skipWaiting + clients.claim mean a refresh (not a hard-refresh) is
 // enough to pick up a new version — this fixes the old app's "must clear
 // cache after every push" problem.
-const CACHE_VERSION = "tf-v54";
+const CACHE_VERSION = "tf-v55";
 const SHELL_FILES = [
   "./", "./index.html", "./manifest.json", "./styles.css",
   "./js/app-core.js", "./js/exercises.js", "./js/engine.js", "./js/program-builtin.js", "./js/tracking.js", "./js/progress.js", "./js/session.js", "./js/ui.js",
