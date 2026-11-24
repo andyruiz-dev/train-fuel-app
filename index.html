@@ -242,6 +242,7 @@
             </div>
             <div class="meta mt12">Session length (with warm-up and cool-down)</div>
             <div class="row" id="minutesChips">
+              <div class="chip" data-minutes="15-20">15-20 min</div>
               <div class="chip" data-minutes="25-35">25-35 min</div>
               <div class="chip active" data-minutes="35-45">35-45 min</div>
               <div class="chip" data-minutes="45-60">45-60 min</div>
@@ -250,6 +251,16 @@
               <input type="text" id="programFocus" placeholder="Focus, e.g. rings + rucking, upper body strength">
             </div>
             <button class="primary mt12" id="generateProgramBtn">Generate program</button>
+          </div>
+        </details>
+      </div>
+
+      <div class="card">
+        <details class="exercise-group">
+          <summary>Daily short: rings and bodyweight</summary>
+          <div style="padding-top:6px;">
+            <div class="meta">Five short sessions a week, 15 to 20 minutes each: push and core, pull and legs, then a full-body day. Rings and bodyweight only, no swings, back-friendly leg work. Monday, Tuesday, Thursday, Friday and Saturday are training days; Wednesday and Sunday are rest. Every session has a one-set minimum version for low-energy days. Tapping the button switches your active program (your old one stays saved) and sets your weekly goal to 5.</div>
+            <button class="primary mt12" id="addDailyProgramBtn">Add and start daily short</button>
           </div>
         </details>
       </div>

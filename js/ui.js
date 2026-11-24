@@ -161,6 +161,31 @@ document.getElementById("addKbProgramBtn").addEventListener("click", async (e) =
   }
 });
 
+document.getElementById("addDailyProgramBtn").addEventListener("click", async (e) => {
+  const btn = e.target;
+  if (state.activeProgramId && !confirm("Switch to the daily short program? Your current program stays saved and you can switch back under Saved programs.")) return;
+  btn.disabled = true; btn.textContent = "Adding…";
+  try {
+    const program = dailyShortProgram();
+    await apiFetch("/api/programs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(program) });
+    await loadPrograms();
+    renderPrograms();
+    state.activeProgramId = program.id;
+    state.programStartedAt = state.programStartedAt || {};
+    state.programStartedAt[program.id] = new Date().toISOString();
+    state.settings.weeklyWorkoutGoal = 5;
+    state.todayFocus = null;
+    await applyStartingLevelsIfUntrained();
+    renderActiveProgramInfo();
+    document.getElementById("weeklyGoalInput").value = 5;
+    alert(`"${program.name}" is now your active program. Open the Today tab for your first session.`);
+  } catch (err) {
+    alert("Couldn't add it: " + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = "Add and start daily short";
+  }
+});
+
 // ---- upload / import program ----
 document.getElementById("uploadDrop").addEventListener("click", () => document.getElementById("uploadInput").click());
 document.getElementById("uploadInput").addEventListener("change", async (e) => {

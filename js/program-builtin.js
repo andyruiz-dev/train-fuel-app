@@ -92,6 +92,38 @@ function kbProgram() {
     },
   };
 }
+// Daily short program: rings and bodyweight only, no kettlebell, no loaded spinal hinging. Five short sessions a
+// week (Mon, Tue, Thu, Fri, Sat; Wed and Sun are rest). Slots are filled each day from the library at the current
+// level, so progression works the same as any generated program. Every session is 7-8 sets, about 15-20 minutes.
+function dailyShortProgram() {
+  const S = (mg, sets, reps) => ({ muscle_group: mg, sets, reps: reps || "8-12", exercise_name: null });
+  const days = () => [
+    { day: "Push + core A", slots: [S("push", 3), S("push", 2), S("core", 3)] },
+    { day: "Pull + legs A", slots: [S("pull", 3), S("pull", 2), S("legs", 3)] },
+    { day: "Push + core B", slots: [S("push", 3), S("push", 2), S("core", 3)] },
+    { day: "Pull + legs B", slots: [S("pull", 3), S("legs", 3), S("hinge", 2)] },
+    { day: "Full body", slots: [S("push", 2), S("pull", 2), S("legs", 2), S("core", 2)] },
+  ];
+  const phase = (label, ws) => ({ phase: label, week_start: ws, week_end: ws + 3, deload_weeks: [ws + 3], days: days() });
+  const name = "Daily short: rings and bodyweight";
+  return {
+    id: "prog-daily-" + Date.now(),
+    name,
+    duration_weeks: 24,
+    source: "built-in",
+    structure: {
+      name,
+      rev: 1,
+      session: { days: 5, minutes: "15-20" },
+      equipment: ["bodyweight", "rings", "parallettes", "ab wheel"],
+      avoid: ["good-morning-bw"],
+      phases: [
+        phase("Block 1: build the habit", 1), phase("Block 2: add reps", 5), phase("Block 3: harder variations", 9),
+        phase("Block 4: keep going", 13), phase("Block 5: keep going", 17), phase("Block 6: keep going", 21),
+      ],
+    },
+  };
+}
 // Rough session length in minutes for a built workout, using the same rest the
 // guided session uses (15s inside a superset pair, 45s after a round, 60s after
 // a solo set). Warm-up/cool-down items are about a minute each. An estimate, not a promise.
@@ -211,6 +243,8 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
   const availableExercises = exercises.filter(e => {
     if (state.travelMode && !TRAVEL_EQUIPMENT.has(e.equipment || "bodyweight")) return false;
     if (e.equipment === "weighted vest") return false; // not owned
+    if (program?.structure?.equipment && !program.structure.equipment.includes(e.equipment || "bodyweight")) return false;
+    if (program?.structure?.avoid && program.structure.avoid.includes(e.id)) return false;
     if (e.id === "bw-complex") return false; // only used as the travel stand-in inside the kettlebell program
     // Skill-ladder exercises (handstand/L-sit/planche/back lever/front
     // lever/muscle-up) are deliberately NEVER auto-generated into a
@@ -247,6 +281,8 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
       if (e.muscle_group !== mg) return;
       if (SKILL_LADDER_MAP[e.id]) return; // skill-ladder exercises never auto-generate — see above
       if (state.travelMode && !TRAVEL_EQUIPMENT.has(e.equipment || "bodyweight")) return;
+      if (program?.structure?.equipment && !program.structure.equipment.includes(e.equipment || "bodyweight")) return;
+      if (program?.structure?.avoid && program.structure.avoid.includes(e.id)) return;
       const plane = planeOf(e.id, e.muscle_group);
       if (plane !== fallbackPlane) return;
       const cap = planeLevels[`${mg}_${plane}`] ?? 1;
@@ -312,7 +348,7 @@ rather than generic. Warmup: 2-3 items marked
 (dynamic) from the list (~3-4 minutes total). Cool-down: 1-2 items marked
 (hold) from the list, for the muscles just worked (~2 minutes total). All
 mobility library items are already bodyweight-only, so this works anywhere
-including while traveling. ${program?.structure?.session ? `This is a ${program.structure.session.minutes}-minute session overall, so give the person a full, efficient workout (follow the slots below; pair them as supersets with short rest).` : "Genuinely quick — this is a 20-25 minute session overall."} Prefer different warmup/cool-down items than last session where a
+including while traveling. ${program?.structure?.session ? `This is a ${program.structure.session.minutes}-minute session overall, so give the person a full, efficient workout (follow the slots below; keep warm-up to 2 items and cool-down to 1 when the session is 15-20 minutes; pair them as supersets with short rest).` : "Genuinely quick — this is a 20-25 minute session overall."} Prefer different warmup/cool-down items than last session where a
 good alternative exists for the same muscle groups, rather than defaulting
 to the same handful every time — see "Last session's warmup/cool-down"
 below.
@@ -407,43 +443,58 @@ function recentStressCaution(days = 3) {
 }
 
 // Today "Steady" look: one card (progress ring + what today is) and an open list of the moves.
+// What success looks like here: showing up, not the scale. Training days, food logged, walks, and how fast you
+// get back after a gap. Weight stays visible, but small.
+function consistencyStats() {
+  const goal = state.settings?.weeklyWorkoutGoal || 5;
+  const trained = new Set((state.logs || []).map(l => dayKeyOf(l.date)));
+  const walked = new Set((state.cardioLogs || []).map(l => dayKeyOf(l.date)));
+  const today = localDateStr();
+  const weekCount = off => weekDayList(off).filter(d => trained.has(d) && d <= today).length;
+  const weeks = [-3, -2, -1, 0].map(o => weekCount(o));
+  const now = new Date();
+  const dayAgo = n => localDateStr(new Date(now.getFullYear(), now.getMonth(), now.getDate() - n));
+  let logged7 = 0, walk7 = 0, proteinHit = 0;
+  const pT = state.settings?.macroTargets?.protein || 0;
+  for (let i = 0; i < 7; i++) {
+    const ds = dayAgo(i), fl = foodLogsForDate(ds);
+    if (fl.length) logged7++;
+    if (pT && fl.reduce((n, f) => n + (f.protein || 0), 0) >= pT) proteinHit++;
+    if (walked.has(ds)) walk7++;
+  }
+  let sinceTrain = null;
+  for (let i = 0; i < 60; i++) { if (trained.has(dayAgo(i))) { sinceTrain = i; break; } }
+  // Longest stretch with no training in the last 28 days (a rest day or two is normal; 3+ is a gap).
+  let longest = 0, run = 0;
+  for (let i = 27; i >= 0; i--) { if (trained.has(dayAgo(i))) run = 0; else { run++; longest = Math.max(longest, run); } }
+  return { goal, weeks, thisWeek: weeks[3], logged7, walk7, proteinHit, sinceTrain, longest };
+}
 function renderCoachHero() {
   const el = document.getElementById("coachHero");
   if (!el) return;
+  const c = consistencyStats();
   const ms = (state.measurements || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
-  const now = new Date(), msDay = 86400000;
-  const recent = ms.filter(m => new Date(m.date + "T12:00:00").getTime() >= Date.now() - 14 * msDay);
-  const pts = recent.length >= 2 ? recent : ms.slice(-2);
-  let left = `<div class="big">·</div><div class="d" style="color:var(--text-muted);">Log two weigh-ins to see your trend.</div>`, spark = "";
-  if (ms.length >= 2) {
-    const wk = ms.filter(m => new Date(m.date + "T12:00:00").getTime() >= Date.now() - 7 * msDay);
-    const avg = (wk.length ? wk : ms.slice(-1)).reduce((a, m) => a + m.weight, 0) / (wk.length || 1);
-    const delta = ms[ms.length - 1].weight - ms[0].weight, down = delta <= 0;
-    left = `<div class="big">${avg.toFixed(1)}<small> lb</small></div><div class="d" style="color:${down ? "var(--gold)" : "var(--gold)"};">${down ? "−" : "+"}${Math.abs(delta).toFixed(1)} lb since ${formatDateOnly(ms[0].date)}</div>`;
-    const vals = pts.map(m => m.weight), lo = Math.min(...vals) - 0.6, hi = Math.max(...vals) + 0.6, W = 130, H = 52;
-    const t0 = new Date(pts[0].date + "T12:00:00").getTime(), t1 = new Date(pts[pts.length - 1].date + "T12:00:00").getTime();
-    const X = m => t1 === t0 ? W / 2 : ((new Date(m.date + "T12:00:00").getTime() - t0) / (t1 - t0)) * (W - 8) + 4;
-    const Y = w => 4 + (1 - (w - lo) / (hi - lo)) * (H - 8);
-    const line = pts.map(m => `${X(m).toFixed(1)},${Y(m.weight).toFixed(1)}`).join(" ");
-    const l = pts[pts.length - 1];
-    spark = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight, last 14 days"><polyline fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="${line}"/><circle cx="${X(l).toFixed(1)}" cy="${Y(l.weight).toFixed(1)}" r="4.5" fill="var(--text)"/></svg>`;
-  }
-  const wb = weekBudgetNumbers();
-  const pT = state.settings?.macroTargets?.protein || 0;
-  let hit = 0, logged = 0;
-  for (let i = 0; i < 7; i++) {
-    const ds = localDateStr(new Date(now.getFullYear(), now.getMonth(), now.getDate() - i));
-    const fl = foodLogsForDate(ds);
-    if (fl.length) logged++;
-    if (pT && fl.reduce((n, f) => n + (f.protein || 0), 0) >= pT) hit++;
-  }
+  const wk = ms.filter(m => new Date(m.date + "T12:00:00").getTime() >= Date.now() - 7 * 86400000);
+  const avg = wk.length ? wk.reduce((a, m) => a + m.weight, 0) / wk.length : (ms.length ? ms[ms.length - 1].weight : null);
+  let line;
+  if (c.sinceTrain === null) line = "Your first session is the whole goal. A minimum day counts.";
+  else if (c.sinceTrain <= 1) line = c.thisWeek >= c.goal ? "Week goal hit. Everything extra is a bonus." : "You're on track. Keep the next one small and easy.";
+  else if (c.sinceTrain === 2) line = "One rest day is fine. Today, a walk or a minimum day keeps it from becoming two.";
+  else line = "Day " + c.sinceTrain + " off. Walk today, then do a minimum day. Starting small counts as showing up.";
+  const dots = c.weeks.map((n, i) => {
+    const hit = n >= c.goal, part = n > 0;
+    const label = i === 3 ? "this week" : (3 - i) + (3 - i === 1 ? " wk ago" : " wks ago");
+    return `<div style="flex:1; text-align:center;"><div style="height:8px; border-radius:4px; background:${hit ? "var(--accent)" : part ? "var(--accent-pale)" : "var(--surface-2)"}; opacity:${i === 3 ? 1 : 0.85};"></div><div class="meta" style="font-size:11px; margin-top:4px;">${n}/${c.goal} ${label}</div></div>`;
+  }).join("");
   const chip = (l, v, u) => `<div class="tf-cchip"><b>${v}<small>${u}</small></b><span>${l}</span></div>`;
-  const budgetChip = wb.left >= 0 ? chip("week budget left", wb.left.toLocaleString(), " cal") : chip("over week budget", Math.abs(wb.left).toLocaleString(), " cal");
   el.innerHTML = `<div class="tf-hero2"><div class="tf-hero2-in">
-      <div class="tf-hero2-k">7-day average · last 14 days</div>
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:6px;"><div>${left}</div>${spark}</div>
+      <div class="tf-hero2-k">Showing up · this week</div>
+      <div class="big" style="margin-top:6px;">${c.thisWeek}<small> of ${c.goal} sessions</small></div>
+      <div class="d" style="margin-top:4px;">${escapeHtml(line)}</div>
+      <div style="display:flex; gap:6px; margin-top:12px;">${dots}</div>
+      <div class="meta" style="margin-top:10px; font-size:12px;">Longest stretch off in 28 days: ${c.longest} day${c.longest === 1 ? "" : "s"}${avg != null ? " · Weight " + avg.toFixed(1) + " lb (tracked slowly)" : ""}</div>
     </div>
-    <div class="tf-cchips">${budgetChip}${chip("protein days hit", hit + " / 7", "")}${chip("days logged", logged + " / 7", "")}</div></div>`;
+    <div class="tf-cchips">${chip("food logged", c.logged7 + " / 7", "")}${chip("walk days", c.walk7 + " / 7", "")}${chip("protein days hit", c.proteinHit + " / 7", "")}</div></div>`;
 }
 function weekStripHtml() {
   const goal = state.settings?.weeklyWorkoutGoal || 3;
@@ -715,7 +766,7 @@ function chestBoosterHtml(opts) {
 }
 // Fixed weekly plan. The calendar alone decides what each day is. Nothing looks at yesterday or at weekly counts.
 // 0 = Sunday ... 6 = Saturday.
-const DAY_PLAN = { 0: "rest", 1: "chest", 2: "train", 3: "rest", 4: "train", 5: "chest", 6: "train" };
+const DAY_PLAN = { 0: "rest", 1: "train", 2: "train", 3: "rest", 4: "train", 5: "train", 6: "train" };
 function planKind(d = new Date()) { return DAY_PLAN[d.getDay()] || "rest"; }
 function chestRecommended() { return planKind() === "train" ? "workout" : "chest"; }
 function chestFocus() { const f = state.todayFocus; return f && f.day === localDateStr() ? f.v : chestRecommended(); }
