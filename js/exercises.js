@@ -346,6 +346,14 @@ const BUILTIN_EXERCISES = [
   { id: "kb-overhead-triceps-ext", name: "Kettlebell overhead triceps extension", muscle_group: "push", equipment: "kettlebell", cue: "Hold the handle with both hands and press the bell overhead so it hangs behind your head, elbows pointing forward. Bend the elbows to lower it slowly behind your head, then straighten. Keep ribs down, and use control, not speed." },
   { id: "ring-curl", name: "Ring biceps curl", muscle_group: "pull", equipment: "rings", cue: "Rings about chest height, palms up. Lean back with straight arms and a straight body, then bend your elbows to bring your hands toward your forehead. Lower slowly. Walk your feet forward to make it easier, back to make it harder." },
   { id: "ring-triceps-extension", name: "Ring triceps extension", muscle_group: "push", equipment: "rings", cue: "Rings about chest height. Lean forward into a high plank with your hands near your forehead and elbows bent. Press your elbows straight so your arms reach out in front, keeping your body in one line, then bend back down slowly. Walk your feet back to make it harder." },
+  { id: "ring-face-pull", name: "Ring face pull", muscle_group: "pull", equipment: "rings", cue: "Rings at about chest height, palms facing each other. Lean back with straight arms, then pull your hands toward your face with the elbows high and wide, hands finishing by your ears. Squeeze your shoulder blades together and lower slowly. Walk your feet forward to make it easier." },
+  { id: "ring-reverse-fly", name: "Ring reverse fly", muscle_group: "pull", equipment: "rings", cue: "Rings at about chest height, lean back with your arms straight out in front. Open your arms wide like a T with a soft bend in the elbows, squeeze your shoulder blades together, then return slowly. Keep your body in one line. Feet closer to the anchor makes it easier." },
+  { id: "kb-lateral-raise", name: "Kettlebell lateral raise", muscle_group: "push", equipment: "kettlebell", cue: "Hold the bell by the handle at your side with a soft elbow. Raise your arm out to the side until it is about shoulder height, thumb slightly down, then lower slowly. Keep your torso still. A 35 lb bell is heavy for this, so use a shorter range and slow reps, or lean your free hand on a wall. Switch sides each set." },
+  { id: "kb-hammer-curl", name: "Kettlebell hammer curl", muscle_group: "pull", equipment: "kettlebell", cue: "Hold the bell by the horns with both hands so it hangs like a goblet. Elbows pinned to your sides, curl the bell up toward your chest and lower it slowly. Keep your torso still." },
+  { id: "kb-skull-crusher", name: "Kettlebell floor skull-crusher", muscle_group: "push", equipment: "kettlebell", cue: "Lie on your back with your knees bent, holding the bell by the horns with both hands over your chest. Bend only your elbows to lower the bell toward your forehead, then press back up. Upper arms stay vertical. Go slow." },
+  { id: "kb-goblet-carry", name: "Kettlebell goblet carry", muscle_group: "core", equipment: "kettlebell", cue: "Hold the bell by the horns at your chest, elbows tucked. Walk tall with your ribs down and squeeze the handle hard. Grip and trunk work in one." },
+  { id: "ring-curl-feet-elevated", name: "Ring biceps curl (feet elevated)", muscle_group: "pull", equipment: "rings", cue: "Same as the ring curl but with your feet on a low step or chair so your body sits closer to horizontal. Palms up, curl your hands toward your forehead, lower slowly. Harder than the regular ring curl." },
+  { id: "ring-closegrip-pushup", name: "Ring close-grip push-up", muscle_group: "push", equipment: "rings", cue: "Rings close together under your chest, elbows tight to your ribs. Lower under control and press up, keeping your body in one line. Works the triceps hard. Do it from your knees or with the rings higher to make it easier." },
   { id: "kb-push-press", name: "Kettlebell push press", muscle_group: "push", equipment: "kettlebell", cue: "From the rack, dip a few inches by bending the knees, then drive the legs and press the bell overhead in one motion. Lower it back to the rack. Lets you move heavier loads overhead than a strict press." },
 ];
 
@@ -370,7 +378,7 @@ const EXERCISE_LEVEL_MAP = {
   // pull
   "dead-hang": 1, "active-hang": 1, "scap-pull": 2, "band-assisted-pullup": 2,
   "negative-pullup": 2, "chinup": 3, "typewriter-pullup": 5, "one-arm-pullup-assisted": 4, "ring-row-easy": 2,
-  "ring-row": 3, "ring-curl": 2, "ring-triceps-extension": 2, "ring-row-feet-elevated": 4, "ring-pullup-assisted": 3,
+  "ring-row": 3, "ring-curl": 2, "ring-triceps-extension": 2, "ring-face-pull": 2, "ring-reverse-fly": 3, "ring-curl-feet-elevated": 3, "ring-closegrip-pushup": 3, "ring-row-feet-elevated": 4, "ring-pullup-assisted": 3,
   "ring-pullup": 4, "ring-archer-pullup": 5, "band-pull-apart": 1,
   "db-single-arm-row": 3, "db-renegade-row": 4, "weighted-pullup": 4,
   "towel-pull-apart": 1, "prone-t-raise": 1, "prone-y-raise": 1, "superman-pulldown": 2,
@@ -569,7 +577,7 @@ const EXERCISE_PLANE_MAP = {
   "ring-support-hold": "v", "bench-dip": "v", "ring-negative-dip": "v",
   "handstand-walk": "v",
   // pull - horizontal (rows)
-  "ring-row-easy": "h", "ring-row": "h", "ring-row-feet-elevated": "h",
+  "ring-face-pull": "h", "ring-reverse-fly": "h", "ring-row-easy": "h", "ring-row": "h", "ring-row-feet-elevated": "h",
   "band-pull-apart": "h", "db-single-arm-row": "h", "db-renegade-row": "h", "archer-row": "h",
   "towel-pull-apart": "h", "prone-t-raise": "h", "doorframe-row": "h", "backpack-row": "h",
   "towel-door-row": "h", "table-row": "h",
@@ -604,7 +612,7 @@ function planeOf(exerciseIdOrName, muscleGroup) {
 
 // Static holds — their "reps" field represents seconds to hold, not a rep count.
 const HOLD_EXERCISE_IDS = new Set([
-  "kb-suitcase-carry", "kb-waiter-carry",
+  "kb-suitcase-carry", "kb-waiter-carry", "kb-goblet-carry",
   "wall-sit", "dead-hang", "active-hang", "wall-handstand-hold", "plank", "side-plank",
   "ring-plank", "ring-lsit-tucked", "ring-lsit", "ring-front-lever-tuck",
   "hollow-hold-tucked", "hollow-hold",

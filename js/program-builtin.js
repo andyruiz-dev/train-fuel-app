@@ -247,7 +247,7 @@ async function generateTodayWorkout(program, dayIndex = 0, avoidNames = []) {
     if (program?.structure?.equipment && !program.structure.equipment.includes(e.equipment || "bodyweight")) return false;
     if (program?.structure?.avoid && program.structure.avoid.includes(e.id)) return false;
     if ((state.dislikedExercises || []).includes(e.id)) return false; // moves you asked never to see
-    if (e.id === "ring-curl" || e.id === "ring-triceps-extension") return false; // arm finisher only, never a main slot
+    if (ARM_ONLY_IDS.has(e.id)) return false; // arm finisher only, never a main slot
     if (e.id === "bw-complex") return false; // only used as the travel stand-in inside the kettlebell program
     // Skill-ladder exercises (handstand/L-sit/planche/back lever/front
     // lever/muscle-up) are deliberately NEVER auto-generated into a
@@ -428,31 +428,47 @@ function addBackBlock(result, program) {
   return result;
 }
 
-// Arm finisher for the daily short program: one biceps move and one triceps move as a superset after the main work,
-// to balance all the pushing and pulling. Deliberately breaks the 15-20 minute target (about +5 minutes).
-// Kettlebell by default; rings when travelling or when "Arms: rings" is switched on (no bell handy).
-// Skipped when either move is already in today's work.
-const ARM_MOVES = { kb: ["kb-curl", "kb-overhead-triceps-ext"], rings: ["ring-curl", "ring-triceps-extension"] };
+// Finisher for the daily short program, after the main work: biceps, triceps and side delts as one superset, to
+// balance all the pushing and pulling. On the Full body day a short grip carry is added too. Deliberately goes past
+// the 15-20 minute target (about +6 minutes) but is trimmed if the whole session would run past 45 minutes.
+// Kettlebell by default; rings/bodyweight when travelling or when "Arms: rings" is switched on. The two curl and
+// two triceps moves alternate by weekday. Skipped for any move already in today's work.
+const ARM_MOVES = {
+  kb:    { bi: ["kb-curl", "kb-hammer-curl"], tri: ["kb-overhead-triceps-ext", "kb-skull-crusher"], sh: ["kb-lateral-raise"], grip: "kb-goblet-carry" },
+  rings: { bi: ["ring-curl", "ring-curl-feet-elevated"], tri: ["ring-triceps-extension", "ring-closegrip-pushup"], sh: ["prone-y-raise"], grip: "dead-hang" },
+};
+const ARM_ONLY_IDS = new Set(["kb-curl", "kb-overhead-triceps-ext", "kb-hammer-curl", "kb-skull-crusher", "kb-lateral-raise", "kb-goblet-carry",
+  "ring-curl", "ring-triceps-extension", "ring-curl-feet-elevated", "ring-closegrip-pushup"]);
+const ARM_MAX_MINUTES = 45;
 function armToolNow() { return state.travelMode || state.armTool === "rings" ? "rings" : "kb"; }
 function stripArmFinisher(result) {
-  const names = new Set(Object.values(ARM_MOVES).flat().map(id => (exercises.find(x => x.id === id) || {}).name).filter(Boolean));
-  if (result && Array.isArray(result.exercises)) result.exercises = result.exercises.filter(e => !(e && names.has(e.name)));
+  const names = new Set([...ARM_ONLY_IDS].map(id => (exercises.find(x => x.id === id) || {}).name).filter(Boolean));
+  if (result && Array.isArray(result.exercises)) result.exercises = result.exercises.filter(e => !(e && (e.arm || names.has(e.name))));
   return result;
 }
-function addArmFinisher(result, program) {
+function addArmFinisher(result, program, dow) {
   if (!result || !Array.isArray(result.exercises)) return result;
   if (!(program?.structure?.backBlock || /^prog-daily-/.test(program?.id || ""))) return result;
-  const tool = armToolNow();
-  const [curl, tri] = ARM_MOVES[tool].map(id => exercises.find(x => x.id === id));
-  if (!curl || !tri) return result;
-  if (result.exercises.some(e => e && (e.name === curl.name || e.name === tri.name))) return result;
+  const tool = armToolNow(), m = ARM_MOVES[tool];
+  const v = (dow === undefined ? new Date().getDay() : dow) % 2;
+  const lib = id => exercises.find(x => x.id === id);
+  const inMain = ex => result.exercises.some(e => e && e.name === ex.name);
+  const members = [lib(m.bi[v]), lib(m.tri[v]), lib(m.sh[0])].filter(ex => ex && !inMain(ex));
+  if (!members.length) return result;
   const used = new Set(result.exercises.map(e => e && e.superset_group).filter(Boolean));
   let letter = 65; while (used.has(String.fromCharCode(letter))) letter++;
   const sg = String.fromCharCode(letter);
-  result.exercises.push(
-    { name: curl.name, muscle_group: curl.muscle_group, sets: 2, reps: tool === "kb" ? "8-10" : "8-12", superset_group: sg, note: tool === "kb" ? "each side" : null, emom: null },
-    { name: tri.name, muscle_group: tri.muscle_group, sets: 2, reps: tool === "kb" ? "8-10" : "8-12", superset_group: sg, note: null, emom: null }
-  );
+  const mk = (ex, sets, reps, note, group) => ({ name: ex.name, muscle_group: ex.muscle_group, sets, reps, superset_group: group, note: note || null, emom: null, arm: true });
+  const each = ex => ex.equipment === "kettlebell" && /curl$|raise$/.test(ex.id) && !/hammer/.test(ex.id);
+  members.forEach(ex => result.exercises.push(mk(ex, 2, tool === "kb" ? (ex.id === "kb-lateral-raise" ? "8-12" : "8-10") : "8-12", each(ex) ? "each side" : null, sg)));
+  const grip = lib(m.grip);
+  const isFull = /full body/i.test(result.day || "");
+  if (grip && isFull && !inMain(grip)) result.exercises.push(mk(grip, 2, tool === "kb" ? "30-40" : "20-30", "seconds", null));
+  // Keep the whole session under the cap so there is room to grow: drop the grip carry first, then the side-delt move.
+  const over = () => typeof estimateWorkoutMinutes === "function" && estimateWorkoutMinutes(result) > ARM_MAX_MINUTES;
+  const dropArm = pred => { const i = result.exercises.findIndex(e => e && e.arm && pred(e)); if (i >= 0) result.exercises.splice(i, 1); };
+  if (over()) dropArm(e => !e.superset_group);
+  if (over()) dropArm(e => e.superset_group && lib(m.sh[0]) && e.name === lib(m.sh[0]).name);
   return result;
 }
 
