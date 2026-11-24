@@ -1410,7 +1410,7 @@ function renderSkillPractice() {
     const prescription = skillPrescription(current, rung, maxRung);
     return `
       <details class="exercise-group">
-        <summary>${SKILL_DISPLAY_NAMES[skill]} <span class="meta" style="display:inline;">rung ${rung}${atMax ? " (mastered)" : ` of ${maxRung}`}</span></summary>
+        <summary>${SKILL_DISPLAY_NAMES[skill]} <span class="meta" style="display:inline; margin-left:8px;">rung ${rung}${atMax ? " (mastered)" : ` of ${maxRung}`}</span></summary>
         <div style="padding-top:6px;">
           <div class="name">${current.name}</div>
           <div class="meta">${atMax ? "" : `${streak}/${REQUIRED_SKILL_STREAK} sessions toward next rung`}</div>
