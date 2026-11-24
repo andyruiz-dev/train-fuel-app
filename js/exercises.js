@@ -344,6 +344,8 @@ const BUILTIN_EXERCISES = [
   { id: "bw-complex", name: "Bodyweight complex", muscle_group: "legs", equipment: "bodyweight", cue: "One round = 4 good mornings, 4 reverse lunges each side, 4 push-ups and 4 squats, back to back without stopping. Start a new round every minute and rest in whatever time is left. Used as the travel version of the kettlebell complex." },
   { id: "kb-curl", name: "Kettlebell curl", muscle_group: "pull", equipment: "kettlebell", cue: "Hold the handle in one hand with your elbow pinned to your side. Curl the bell to your shoulder, then lower it slowly. Keep your torso still. If 35 lb is too heavy for clean reps, hold the horns with both hands." },
   { id: "kb-overhead-triceps-ext", name: "Kettlebell overhead triceps extension", muscle_group: "push", equipment: "kettlebell", cue: "Hold the handle with both hands and press the bell overhead so it hangs behind your head, elbows pointing forward. Bend the elbows to lower it slowly behind your head, then straighten. Keep ribs down, and use control, not speed." },
+  { id: "ring-curl", name: "Ring biceps curl", muscle_group: "pull", equipment: "rings", cue: "Rings about chest height, palms up. Lean back with straight arms and a straight body, then bend your elbows to bring your hands toward your forehead. Lower slowly. Walk your feet forward to make it easier, back to make it harder." },
+  { id: "ring-triceps-extension", name: "Ring triceps extension", muscle_group: "push", equipment: "rings", cue: "Rings about chest height. Lean forward into a high plank with your hands near your forehead and elbows bent. Press your elbows straight so your arms reach out in front, keeping your body in one line, then bend back down slowly. Walk your feet back to make it harder." },
   { id: "kb-push-press", name: "Kettlebell push press", muscle_group: "push", equipment: "kettlebell", cue: "From the rack, dip a few inches by bending the knees, then drive the legs and press the bell overhead in one motion. Lower it back to the rack. Lets you move heavier loads overhead than a strict press." },
 ];
 
@@ -368,7 +370,7 @@ const EXERCISE_LEVEL_MAP = {
   // pull
   "dead-hang": 1, "active-hang": 1, "scap-pull": 2, "band-assisted-pullup": 2,
   "negative-pullup": 2, "chinup": 3, "typewriter-pullup": 5, "one-arm-pullup-assisted": 4, "ring-row-easy": 2,
-  "ring-row": 3, "ring-row-feet-elevated": 4, "ring-pullup-assisted": 3,
+  "ring-row": 3, "ring-curl": 2, "ring-triceps-extension": 2, "ring-row-feet-elevated": 4, "ring-pullup-assisted": 3,
   "ring-pullup": 4, "ring-archer-pullup": 5, "band-pull-apart": 1,
   "db-single-arm-row": 3, "db-renegade-row": 4, "weighted-pullup": 4,
   "towel-pull-apart": 1, "prone-t-raise": 1, "prone-y-raise": 1, "superman-pulldown": 2,

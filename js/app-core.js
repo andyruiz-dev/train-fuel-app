@@ -13,7 +13,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-24 Mono icon";
+const APP_BUILD = "2026-11-24 Arm finisher (rings option)";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -261,6 +261,7 @@ async function loadState() {
   }
   if (!(state.settings.weeklyWorkoutGoal > 0)) state.settings.weeklyWorkoutGoal = 3;
   if (typeof state.travelMode !== "boolean") state.travelMode = false;
+  if (state.armTool !== "rings") state.armTool = "kb";
   if (typeof state.macroSuggestionAppliedAt !== "string") state.macroSuggestionAppliedAt = "";
   if (!Array.isArray(state.macroSuggestionHistory)) state.macroSuggestionHistory = [];
   if (!Array.isArray(state.dislikedExercises)) state.dislikedExercises = ["bear-crawl"]; // never generated; add more ids here to drop a move
