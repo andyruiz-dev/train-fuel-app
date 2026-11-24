@@ -705,6 +705,14 @@ function exerciseInfoFor(name) {
   const n = String(name).toLowerCase();
   return all.find(x => String(x.name).toLowerCase() === n) || null;
 }
+// Today's note for a move (each side, pause, switch hands...), shown in the how-to sheet instead of on the list.
+function todayNoteHtml(name) {
+  const ex = (currentWorkout && currentWorkout.exercises || []).find(x => x.name === name);
+  let n = ex && ex.note ? String(ex.note).replace(/^\s*seconds?\s*/i, "").replace(/^\s*[,·-]\s*/, "").trim() : "";
+  if (!n) return "";
+  n = n.charAt(0).toUpperCase() + n.slice(1);
+  return `<div class="lab">Today</div><p>${escapeHtml(n)}</p>`;
+}
 function openExerciseSheet(name, idx) {
   const info = exerciseInfoFor(name);
   const esc = escapeHtml;
@@ -721,6 +729,7 @@ function openExerciseSheet(name, idx) {
   const tags = info ? `<div class="tags">${info.muscle_group ? `<span>${esc(info.muscle_group)}</span>` : ""}${info.equipment ? `<span>${esc(info.equipment)}</span>` : ""}</div>` : "";
   el.innerHTML = `<div class="sheet"><div class="grab"></div><h3>${esc(name)}</h3>${tags}
     ${bellHintHtml(name, (currentWorkout && currentWorkout.exercises || []).find(x => x.name === name)?.reps)}
+    ${todayNoteHtml(name)}
     ${info && info.cue ? `<div class="lab">How to</div><p>${esc(info.cue)}</p>` : `<p style="margin-top:14px;color:var(--text-muted);">No written cue for this one yet. The demo link shows it.</p>`}
     ${mistakes ? `<div class="lab">Common mistakes</div><ul>${mistakes.map(m => `<li>${esc(m)}</li>`).join("")}</ul>` : ""}
     ${idx !== undefined ? `<div class="lab">Swap or log</div><div id="tfSheetSlot"></div>` : ""}
@@ -777,10 +786,12 @@ function workoutBlocks(workout) {
 function movesListHtml(workout) {
   const ex = workout.exercises || [];
   const secNote = (e) => /^\s*seconds?\b/i.test(String(e.note || ""));
-  const noteOf = (e) => { let n = e.note ? String(e.note) : ""; if (isHoldExercise(e.name) || secNote(e)) n = n.replace(/^\s*seconds?\s*/i, "").replace(/^\s*[,·-]\s*/, ""); return n; };
-  const det = (e) => `${e.sets} × ${escapeHtml(String(e.reps))}${isHoldExercise(e.name) || secNote(e) ? " s" + (isHoldExercise(e.name) ? " hold" : "") : ""}${noteOf(e) ? " · " + escapeHtml(noteOf(e)) : ""}`;
+  // Names and numbers only on the list: sets x reps (and s for seconds). Notes like "each side" or "pause 2 seconds" live in the how-to sheet.
+  const det = (e) => `${e.sets} × ${escapeHtml(String(e.reps))}${isHoldExercise(e.name) || secNote(e) ? " s" : ""}`;
+  // Keep the (i) glued to the last word so it never wraps onto a line of its own.
+  const nameHtml = (n) => { const t = String(n); const k = t.lastIndexOf(" "); const head = k > 0 ? escapeHtml(t.slice(0, k)) + " " : ""; const last = escapeHtml(k > 0 ? t.slice(k + 1) : t); return `${head}<span class="tf-nw">${last}<span class="tf-mv-i" aria-label="How to">i</span></span>`; };
   const blocks = workoutBlocks(workout);
-  const line = (j) => { const x = ex[j]; return `<div class="tf-mv-line"><div class="tf-mv-name" data-exidx="${j}" data-exinfo="${escapeHtml(x.name)}">${escapeHtml(x.name)}<span class="tf-mv-i" aria-label="How to">i</span></div><div class="tf-mv-det">${det(x)}${x.emom ? ' <span class="tf-pill">EMOM</span>' : ""}</div></div>`; };
+  const line = (j) => { const x = ex[j]; return `<div class="tf-mv-line"><div class="tf-mv-name" data-exidx="${j}" data-exinfo="${escapeHtml(x.name)}">${nameHtml(x.name)}</div><div class="tf-mv-det">${det(x)}${x.emom ? ' <span class="tf-pill">EMOM</span>' : ""}</div></div>`; };
   const rows = blocks.map(bk => `<div class="tf-mv ss" style="border-left-color:${bk.color};">${bk.label ? `<div class="tf-mv-tag" style="color:${bk.color};">${bk.label}</div>` : ""}${bk.idx.map(line).join("")}</div>`).join("");
   const names = [...new Set(ex.map(e => String(e.name).replace(/^(kettlebell|kb)\s+/i, "").replace(/^./, c => c.toUpperCase())))].map(n => escapeHtml(n)).join(" · ");
   const head = `<div class="tf-moves-head" data-moves-toggle role="button" tabindex="0"><span><i class="tf-dot" style="background:var(--accent);"></i>Main work · ${ex.length} moves</span><span style="color:var(--accent);">${movesOpen ? "Hide ▴" : "See all ▾"}</span></div>`;
