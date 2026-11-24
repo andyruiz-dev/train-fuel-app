@@ -484,10 +484,7 @@ function consistencyStats() {
   }
   let sinceTrain = null;
   for (let i = 0; i < 60; i++) { if (trained.has(dayAgo(i))) { sinceTrain = i; break; } }
-  // Longest stretch with no training in the last 28 days (a rest day or two is normal; 3+ is a gap).
-  let longest = 0, run = 0;
-  for (let i = 27; i >= 0; i--) { if (trained.has(dayAgo(i))) run = 0; else { run++; longest = Math.max(longest, run); } }
-  return { goal, weeks, thisWeek: weeks[3], logged7, walk7, proteinHit, sinceTrain, longest };
+  return { goal, weeks, thisWeek: weeks[3], logged7, walk7, proteinHit, sinceTrain };
 }
 function renderCoachHero() {
   const el = document.getElementById("coachHero");
@@ -810,9 +807,7 @@ function focusSwitchHtml(label) {
   const cur = chestFocus(), lab = escapeHtml(String(label || "workout"));
   if (cur === "chest") {
     const kind = planKind();
-    const [k, ttl, sub] = kind === "chest"
-      ? ["Chest day", "Chest booster", "4 sets of rings. Next session: " + lab + "."]
-      : kind === "rest"
+    const [k, ttl, sub] = kind === "rest"
         ? ["Rest day", "Recovery day", "Next session: " + lab + (chestBoosterOn() ? ". The chest booster is optional." : ". Walk, stretch, eat well. That is the whole job today.")]
         : ["Rest day", "Taking today off", "Next session: " + lab + (chestBoosterOn() ? ". The chest booster is optional." : ". One day off never counts as a miss.")];
     return `<div class="tf-focus" data-label="${lab}"><div class="tf-fcard"><div class="tf-fk">${k}</div><div class="tf-ft">${ttl}</div><div class="tf-fs">${sub}</div></div><button class="tf-fwide" data-focus="workout">Train anyway · ${lab}</button></div>`;
@@ -820,7 +815,7 @@ function focusSwitchHtml(label) {
   return `<div class="tf-focus" data-label="${lab}"><div class="tf-fbar"><span class="tf-fk">Train day</span><button class="tf-flink" data-focus="chest">Rest today instead</button></div></div>`;
 }
 function doneBannerHtml() {
-  return `<div class="tf-focus"><div class="tf-fcard"><div class="tf-fk">Done today ✓</div><div class="tf-ft">Session logged</div><div class="tf-fs">Tomorrow: ${({ train: "next session", chest: "chest booster day", rest: "rest day" })[planKind(new Date(Date.now() + 864e5))]}.</div></div></div>`;
+  return `<div class="tf-focus"><div class="tf-fcard"><div class="tf-fk">Done today ✓</div><div class="tf-ft">Session logged</div><div class="tf-fs">Tomorrow: ${({ train: "next session", rest: "rest day" })[planKind(new Date(Date.now() + 864e5))]}.</div></div></div>`;
 }
 function applyTodayFocus(on) {
   const col = document.querySelector("#tab-today .tf-today-col");
