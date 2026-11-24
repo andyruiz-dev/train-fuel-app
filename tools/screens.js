@@ -13,7 +13,7 @@ const FAKE = '2026-11-26T08:00:00'; // a Thursday, training day
 const iso = (dd, h = 12) => { const x = new Date(FAKE); x.setDate(x.getDate() + dd); x.setHours(h, 0, 0, 0); return x.toISOString(); };
 const prog = { id: 'prog-daily-1', name: 'Daily short: rings and bodyweight', duration_weeks: 24, source: 'built-in', structure: { name: 'Daily short', backBlock: true, session: { days: 5, minutes: '15-20' }, equipment: ['bodyweight', 'rings'], avoid: [], phases: [{ phase: 'Block 1', week_start: 1, week_end: 4, deload_weeks: [4], days: ['Push + core A', 'Pull + legs A', 'Push + core B', 'Pull + legs B', 'Full body'].map(n => ({ day: n, slots: [{ muscle_group: 'push', sets: 3, reps: '8-12' }, { muscle_group: 'core', sets: 3, reps: '8-12' }] })) }] } };
 const WK = { day: 'Push + core A', warmup: [{ name: 'Cat-cow', detail: '6 slow reps' }], exercises: [{ name: 'Ring push-up', muscle_group: 'push', sets: 3, reps: '8-12', superset_group: 'A' }, { name: 'Ring row', muscle_group: 'pull', sets: 3, reps: '8-12', superset_group: 'A' }, { name: 'Hollow hold (tucked)', muscle_group: 'core', sets: 3, reps: '20-30', superset_group: null }], cooldown: [{ name: 'Childs pose reach', detail: 'hold 45s' }] };
-const state = JSON.stringify({ progressLevels: { push: 3, pull: 2, legs: 1, hinge: 1, core: 2, ruck: 1 }, planeLevels: { push_h: 3, push_v: 1, pull_h: 2, pull_v: 1 }, logs: [{ date: iso(-3), exercise: 'Ring push-up', result: 'hold', muscle_group: 'push', actuals: [8, 9, 9] }, { date: iso(-6), exercise: 'Ring push-up', result: 'hold', muscle_group: 'push', actuals: [8, 8, 8] }], settings: { macroTargets: { calories: 2000, protein: 125, carbs: 230, fat: 65 }, weeklyWorkoutGoal: 5, startingLevels: {} }, foodLogs: [{ date: iso(-1, 13), name: 'Chicken bowl with a very long descriptive name', calories: 700, protein: 50, carbs: 60, fat: 20, source: 'photo' }], cardioLogs: [], measurements: [{ date: '2026-11-24', weight: 203.2 }], flags: [], sessionNotes: [], chestLogs: [], activeProgramId: 'prog-daily-1', pendingWorkout: { programId: 'prog-daily-1', phaseKey: 'x', dayIndex: 0, workout: WK, completed: false }, programProgress: { 'prog-daily-1': { mode: 'count', completed: 0 } }, programStartedAt: { 'prog-daily-1': iso(-1) } });
+const state = JSON.stringify({ progressLevels: { push: 3, pull: 2, legs: 1, hinge: 1, core: 2, ruck: 1 }, planeLevels: { push_h: 3, push_v: 1, pull_h: 2, pull_v: 1 }, logs: [{ date: iso(-1), exercise: 'Ring push-up', result: 'hold', muscle_group: 'push', actuals: [8, 9, 9] }, { date: iso(-6), exercise: 'Ring push-up', result: 'hold', muscle_group: 'push', actuals: [8, 8, 8] }], settings: { macroTargets: { calories: 2000, protein: 125, carbs: 230, fat: 65 }, weeklyWorkoutGoal: 5, startingLevels: {} }, foodLogs: [{ date: iso(-1, 13), name: 'Chicken bowl with a very long descriptive name', calories: 700, protein: 50, carbs: 60, fat: 20, source: 'photo' }], cardioLogs: [], measurements: [{ date: '2026-11-24', weight: 203.2 }], flags: [], sessionNotes: [], chestLogs: [], activeProgramId: 'prog-daily-1', pendingWorkout: { programId: 'prog-daily-1', phaseKey: 'x', dayIndex: 0, workout: WK, completed: false }, programProgress: { 'prog-daily-1': { mode: 'count', completed: 0 } }, programStartedAt: { 'prog-daily-1': iso(-1) } });
 
 // Rules measured inside the page. Each returns a list of problems (empty = pass).
 function pageRules() {
@@ -32,7 +32,7 @@ function pageRules() {
   document.querySelectorAll('.tf-hero2-title, .tf-fin-day').forEach(e => { if (!vis(e)) return; const bad = e.textContent.trim().split(/\s+/).filter(wd => /^[a-z]/.test(wd) && !['and', 'of', 'the', 'a', 'to', 'for'].includes(wd)); if (bad.length) out.title.push('day name not Title Case: "' + e.textContent.trim() + '"'); });
   const bg = getComputedStyle(document.body).backgroundColor;
   document.querySelectorAll('.tf-tile, .tf-hero-food, .tf-hero2, .tf-recent .chip, .tf-qbtn, #foodLogList, .tf-mv').forEach(e => { if (!vis(e)) return; const c = getComputedStyle(e).backgroundColor; if (/rgba\(.*,\s*0\)/.test(c) || c === 'transparent') return; const rt = ratio(c, bg); if (rt < 1.12) out.contrast.push((e.className || e.id) + ' card vs background ' + rt.toFixed(2)); });
-  const mainEl = document.querySelector('main'); out.fit = mainEl ? mainEl.scrollHeight - mainEl.clientHeight : 0;
+  const mainEl = document.querySelector('main'), navEl = document.querySelector('nav.tabs'), secEl = mainEl && mainEl.querySelector('.tab-panel:not(.hidden)'); if (mainEl) mainEl.scrollTop = 0; out.fit = secEl && navEl ? Math.ceil(secEl.getBoundingClientRect().bottom + 8 - navEl.getBoundingClientRect().top) : 0;
   const hero = document.getElementById('dayHero'), rib = document.getElementById('wkRibbon');
   if (hero && hero.offsetParent !== null && rib) out.mast = Math.round(rib.getBoundingClientRect().bottom);
   return out;
@@ -59,6 +59,15 @@ function pageRules() {
     if (o.mast !== null && o.mast > VP[1] * 0.3) probs.push('masthead too tall: content starts at ' + o.mast + 'px (max 30% of screen)');
     if (probs.length) { fails++; console.log('FAIL ' + name); probs.slice(0, 8).forEach(x => console.log('   ' + x)); } else console.log('PASS ' + name);
   };
+  // Late layout change (a web font arriving, the header resizing): the screen must re-fit by itself.
+  for (const tab of ['coach', 'food', 'today']) {
+    await p.click('nav.tabs .tab-btn[data-tab="' + tab + '"]'); await p.waitForTimeout(tab === 'today' ? 3500 : 800);
+    await p.evaluate(() => { const h = document.getElementById('dayHero'); h.style.paddingBottom = '50px'; });
+    await p.waitForTimeout(600);
+    const over = await p.evaluate(() => { const m = document.querySelector('main'), n = document.querySelector('nav.tabs'), c = m.querySelector('.tab-panel:not(.hidden)'); m.scrollTop = 0; return Math.ceil(c.getBoundingClientRect().bottom + 8 - n.getBoundingClientRect().top); });
+    await p.evaluate(() => { document.getElementById('dayHero').style.paddingBottom = ''; }); await p.waitForTimeout(400);
+    if (over > 1) { fails++; console.log('FAIL late-layout ' + tab + ': still ' + over + 'px cut off after the header grew'); } else console.log('PASS late-layout ' + tab);
+  }
   for (const tab of ['coach', 'food', 'today']) { await p.click('nav.tabs .tab-btn[data-tab="' + tab + '"]'); await p.waitForTimeout(tab === 'today' ? 3500 : 500); await report(tab); }
   await p.click('.tf-ph-main [data-moves-toggle]').catch(() => {}); await p.waitForTimeout(400); await report('today-expanded');
   await p.evaluate(w => { currentWorkout = w; startSession(); }, WK); await p.waitForTimeout(400);

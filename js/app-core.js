@@ -13,7 +13,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-24 Less text";
+const APP_BUILD = "2026-11-24 Refit fix";
 
 // Day names show in Title Case ("Push + Core A") wherever they appear, whatever case the stored plan uses.
 function dayTitle(name) {
