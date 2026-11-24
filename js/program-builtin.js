@@ -388,10 +388,10 @@ superset_group is a letter shared by paired exercises, or null if standalone.`;
     ...(lastLogDate ? state.logs.filter(l => l.date === lastLogDate).map(l => l.exercise) : []),
   ]);
   const result = ensureShoulderStaples(
-    enforceSlotCount(enforceMainVariety(
+    enforceSlotCount(enforceUniqueAndRepMoves(enforceMainVariety(
       enforceWarmupCooldownVariety(extractJson(text), todayMobilityRegions),
       availableExercises, lastSessionNames, new Set(recentFromHistory)
-    ), day?.slots),
+    ), availableExercises, new Set(recentFromHistory)), day?.slots),
     todayMobilityRegions,
     day?.slots
   );
