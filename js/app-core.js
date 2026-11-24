@@ -13,7 +13,7 @@
 // whether a given device is actually running a fix or just looks like it
 // might be — instead of guessing from symptoms or trusting a claim that a
 // push "should" have propagated by now.
-const APP_BUILD = "2026-11-24 No bear crawl";
+const APP_BUILD = "2026-11-24 JSON fix";
 
 function extractJson(text) {
   // Claude sometimes wraps JSON in ```json ... ``` fences even when told not to.
@@ -21,12 +21,43 @@ function extractJson(text) {
   try {
     return JSON.parse(cleaned);
   } catch (err) {
+    // Valid JSON followed (or preceded) by extra prose / a second block:
+    // take the first balanced top-level object or array and ignore the rest.
+    const first = firstBalancedJson(cleaned);
+    if (first !== null) return first;
     // Likely truncated mid-array (hit max_tokens). Try to salvage complete
     // top-level array entries (e.g. finished "phases") instead of failing outright.
     const repaired = repairTruncatedJson(cleaned);
     if (repaired) return repaired;
     throw err;
   }
+}
+
+function firstBalancedJson(text) {
+  for (let start = 0; start < text.length; start++) {
+    const open = text[start];
+    if (open !== "{" && open !== "[") continue;
+    let depth = 0, inStr = false, esc = false;
+    for (let i = start; i < text.length; i++) {
+      const c = text[i];
+      if (inStr) {
+        if (esc) esc = false;
+        else if (c === "\\") esc = true;
+        else if (c === '"') inStr = false;
+        continue;
+      }
+      if (c === '"') inStr = true;
+      else if (c === "{" || c === "[") depth++;
+      else if (c === "}" || c === "]") {
+        depth--;
+        if (depth === 0) {
+          try { return JSON.parse(text.slice(start, i + 1)); } catch (e) { return null; }
+        }
+      }
+    }
+    return null; // first bracket never closed (truncated): let the repair path handle it
+  }
+  return null;
 }
 
 function repairTruncatedJson(text) {
