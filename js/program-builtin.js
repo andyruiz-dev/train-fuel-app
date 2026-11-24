@@ -512,7 +512,7 @@ function renderCoachHero() {
       <div class="big" style="margin-top:6px;">${c.thisWeek}<small> of ${c.goal} sessions</small></div>
       <div class="d" style="margin-top:4px;">${escapeHtml(line)}</div>
       <div style="display:flex; gap:6px; margin-top:12px;">${dots}</div>
-      <div class="meta" style="margin-top:10px; font-size:12px;">Longest stretch off in 28 days: ${c.longest} day${c.longest === 1 ? "" : "s"}${avg != null ? " · Weight " + avg.toFixed(1) + " lb (tracked slowly)" : ""}</div>
+      <div class="meta" style="margin-top:10px; font-size:12px;">Last session: ${c.sinceTrain === null ? "none yet" : c.sinceTrain === 0 ? "today" : c.sinceTrain === 1 ? "yesterday" : c.sinceTrain + " days ago"}${avg != null ? " · Weight " + avg.toFixed(1) + " lb (tracked slowly)" : ""}</div>
     </div>
     <div class="tf-cchips">${chip("food logged", c.logged7 + " / 7", "")}${chip("walk days", c.walk7 + " / 7", "")}${chip("protein days hit", c.proteinHit + " / 7", "")}</div></div>`;
 }
@@ -691,6 +691,8 @@ const CHEST_WARM = {
   travel: [{ n: "Wall slides", d: "10 reps · arms flat to the wall" }, { n: "Floor scap push-ups", d: "10 slow reps · shoulder blades only" }]
 };
 const CHEST_COOL = [{ n: "Doorway chest stretch", d: "20 s each side" }, { n: "Cross-body shoulder stretch", d: "20 s each side · spend extra on the right" }];
+// The chest booster belongs to the older kettlebell-era plan. The daily short program (backBlock) drops it.
+function chestBoosterOn() { const p = (typeof programs !== "undefined" ? programs : []).find(x => x.id === state.activeProgramId); return !(p && p.structure && p.structure.backBlock); }
 function chestPhaseDone(key) { const w = state[key]; return w && w.day === localDateStr() && Array.isArray(w.ids) ? w.ids.filter(i => i < 2) : []; }
 function chestWarmDone() { return chestPhaseDone("chestWarm"); }
 let chestPhaseSel = null;
@@ -729,6 +731,7 @@ function chestTickRest() {
   if (left <= 0) { clearInterval(chestRestTimer); chestRestTimer = null; try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} renderChestBoosters(); }
 }
 function chestBoosterHtml(opts) {
+  if (!chestBoosterOn()) return "";
   state.chestMode = state.travelMode ? "travel" : "home";
   const plan = CHEST_PLANS[state.chestMode] || CHEST_PLANS.home;
   const wk = chestSetsInWeek(weekDayList(0));
@@ -799,8 +802,8 @@ function focusSwitchHtml(label) {
     const [k, ttl, sub] = kind === "chest"
       ? ["Chest day", "Chest booster", "4 sets of rings. Next session: " + lab + "."]
       : kind === "rest"
-        ? ["Rest day", "Recovery day", "Next session: " + lab + ". The chest booster is optional."]
-        : ["Rest day", "Taking today off", "Next session: " + lab + ". The chest booster is optional."];
+        ? ["Rest day", "Recovery day", "Next session: " + lab + (chestBoosterOn() ? ". The chest booster is optional." : ". Walk, stretch, eat well. That is the whole job today.")]
+        : ["Rest day", "Taking today off", "Next session: " + lab + (chestBoosterOn() ? ". The chest booster is optional." : ". One day off never counts as a miss.")];
     return `<div class="tf-focus" data-label="${lab}"><div class="tf-fcard"><div class="tf-fk">${k}</div><div class="tf-ft">${ttl}</div><div class="tf-fs">${sub}</div></div><button class="tf-fwide" data-focus="workout">Train anyway · ${lab}</button></div>`;
   }
   return `<div class="tf-focus" data-label="${lab}"><div class="tf-fbar"><span class="tf-fk">Train day</span><button class="tf-flink" data-focus="chest">Rest today instead</button></div></div>`;
@@ -829,6 +832,8 @@ function renderChestBoosters() {
   if (c) c.innerHTML = chestBoosterHtml();
   const t = document.getElementById("chestBoosterToday");
   if (t) t.innerHTML = chestBoosterHtml();
+  const tile = document.getElementById("chestBoosterDetails");
+  if (tile) tile.classList.toggle("hidden", !chestBoosterOn());
   const d = document.querySelector("#chestBoosterDetails summary");
   if (d) d.innerHTML = chestSetsInWeek(weekDayList(0)) >= CHEST_WEEKLY_SETS ? `Chest<span class="tf-sv">done</span>` : `Chest<span class="tf-sv">${chestSetsInWeek(weekDayList(0))}/${CHEST_WEEKLY_SETS}</span>`;
 }

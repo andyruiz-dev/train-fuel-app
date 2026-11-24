@@ -554,7 +554,7 @@ function renderSessionInner() {
   // this isn't about pushing to failure — and, if the session opens on a
   // superset, how to actually run one.
   const levelLegendHtml = (session.pos === 0 && !state.dismissedExerciseLegend)
-    ? `<div class="meta mt4">Level is a 1-5 difficulty tier (1 = easiest in the library, 5 = hardest); straps is your ring-strap setting (rings only). Stop a set any time your form breaks down or something hurts — this isn't about pushing to failure.${step.supersetLabel ? " For a superset: do one set of each paired exercise back-to-back, then rest." : ""}</div>`
+    ? `<div class="meta mt4">Level 1-5 is difficulty. Stop any time your form breaks down or something hurts.${step.supersetLabel ? " Superset: one set of each, back-to-back, then rest." : ""}</div>`
     : "";
 
   if (session.resting) {
@@ -692,6 +692,7 @@ function renderSessionInner() {
         ${swapAlternatesHtml(currentWorkout.exercises[step.exIndex], step.exIndex)}
       </div>
       <div class="sx-spacer"></div>
+      ${quickRepsHtml(step)}
       <input type="text" inputmode="numeric" id="actualRepsInput" placeholder="${/each (side|arm|leg)/i.test(step.note || "") ? "Reps completed on each side" : "Actual reps completed"}" style="margin-top:14px;">
       <button class="primary mt12" id="completeSetBtn">Complete set</button>
       <button class="secondary mt8 w100" id="endSessionBtn">End session early</button>
@@ -706,6 +707,10 @@ function renderSessionInner() {
     if (!pick) return;
     await sessionSwapExercise(parseInt(pick.dataset.swapPick, 10), pick.dataset.swapName);
   });
+  document.getElementById("sessionQuickReps")?.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-quick-rep]");
+    if (b) recordSetAndAdvance(step, parseInt(b.dataset.quickRep, 10));
+  });
   document.getElementById("completeSetBtn").addEventListener("click", () => {
     const input = document.getElementById("actualRepsInput");
     const val = parseInt(input.value, 10);
@@ -717,6 +722,17 @@ function renderSessionInner() {
   });
 
   endSessionHandler();
+}
+
+// One-tap rep buttons: the target range (8-12 gives 8 9 10 11 12) or the single target number and the two below it.
+function quickRepsHtml(step) {
+  const t = String(step.reps || "");
+  let lo, hi;
+  const r = t.match(/(\d+)\s*[-–]\s*(\d+)/);
+  if (r) { lo = +r[1]; hi = +r[2]; } else { const n = t.match(/(\d+)/); if (!n) return ""; hi = +n[1]; lo = Math.max(1, hi - 2); }
+  if (hi < lo || hi - lo > 9) return "";
+  const chips = []; for (let n = lo; n <= hi; n++) chips.push(`<button class="secondary" data-quick-rep="${n}" style="flex:1; min-width:52px; height:52px; font-size:20px;">${n}</button>`);
+  return `<div class="meta" style="margin-top:14px;">Tap the reps you did</div><div id="sessionQuickReps" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">${chips.join("")}</div><div class="meta" style="margin-top:8px;">Different number? Type it:</div>`;
 }
 
 async function sessionSwapExercise(exIndex, newName) {
