@@ -30,14 +30,16 @@
   }
   html[data-mode="dark"]{--bg:#14151B;--surface:#1D1F27;--surface-2:#252832;--surface-3:#2E313D;--surface-deep:#0F1015;--surface-deep-2:#101117;--surface-warm:#262833;--surface-neutral:#2A2C35;--border:#2B2E3A;--border-2:#3A3E4D;--border-3:#50556A;--border-4:#2F3240;--text:#F2F0EA;--text-muted:#A4A6B3;--text-dim:#7E8190;--text-faint:#737685;--text-faint-2:#9396A4;--text-faint-3:#858898;--track:#363948;--ink:#14151B;--danger:#F0645C;--danger-soft:#F5A398;--warn:#F0B64F;--gold:#F2C230;--gold-bg:#3A3414;--gold-deep:#5E5220;--gold-rgb:242,194,48;--slate:#8FA3C8;--sand:#CBB99A;--sand-pale:#DDCDB2;--fat:#9A8AD6;--ink-rgb:20,21,27;}
   html[data-mode="light"]{--bg:#F6F4F0;--surface:#ECE9E3;--surface-2:#E4E0D8;--surface-3:#DAD6CC;--surface-deep:#E4E0D8;--surface-deep-2:#F6F4F0;--surface-warm:#EAE6DE;--surface-neutral:#E4E1DA;--border:#DDD9D1;--border-2:#CFCAC0;--border-3:#B9B4A9;--border-4:#D4D0C6;--text:#14151B;--text-muted:#5F6270;--text-dim:#80838F;--text-faint:#8A8D98;--text-faint-2:#6E717D;--text-faint-3:#767985;--track:#D8D4CB;--ink:#FFFFFF;--danger:#C93A2B;--danger-soft:#D0695C;--warn:#A8700A;--gold:#C79700;--gold-bg:#F3E8BC;--gold-deep:#E5D48C;--gold-rgb:199,151,0;--slate:#5F77A5;--sand:#8F7A58;--sand-pale:#A38E6B;--fat:#6F5BB8;--ink-rgb:255,255,255;}
-  html[data-kind="rest"]{--field:#2A3FD6;--onfield:#F4F2EE;}
-  html[data-kind="train"]{--field:#FF5A36;--onfield:#14151B;}
+  html[data-kind="rest"]{--field:#2A2C35;--onfield:#F2F0EA;}
+  html[data-kind="train"]{--field:#F2F0EA;--onfield:#14151B;}
   html[data-kind="chest"]{--field:#FFC531;--onfield:#14151B;}
-  html[data-mode="dark"][data-kind="rest"]{--accent:#7B8DFF;--accent-dark:#5468F0;--accent-soft:#B4BEFF;--accent-pale:#DDE2FF;--accent-bg:#1D2250;--accent-bg-2:#252C6A;--accent-deep:#3A46A8;--accent-hot:#6479F5;--accent-line:#343C86;--accent-rgb:123,141,255;}
-  html[data-mode="dark"][data-kind="train"]{--accent:#FF6A45;--accent-dark:#E04A1F;--accent-soft:#FFB29E;--accent-pale:#FFE0D6;--accent-bg:#3A1E16;--accent-bg-2:#4A261B;--accent-deep:#8A3A25;--accent-hot:#F25A33;--accent-line:#5A2E22;--accent-rgb:255,106,69;}
+  html[data-mode="light"][data-kind="rest"]{--field:#CFCAC0;--onfield:#14151B;}
+  html[data-mode="light"][data-kind="train"]{--field:#14151B;--onfield:#F2F0EA;}
+  html[data-mode="dark"][data-kind="rest"]{--accent:#A4A6B3;--accent-dark:#7E8190;--accent-soft:#C9CAD3;--accent-pale:#E6E7EC;--accent-bg:#1F2027;--accent-bg-2:#262831;--accent-deep:#50556A;--accent-hot:#C9CAD3;--accent-line:#30323D;--accent-rgb:164,166,179;}
+  html[data-mode="dark"][data-kind="train"]{--accent:#F2F0EA;--accent-dark:#CFCCC4;--accent-soft:#E6E3DB;--accent-pale:#FFFFFF;--accent-bg:#2A2B31;--accent-bg-2:#34353C;--accent-deep:#6B6D78;--accent-hot:#FFFFFF;--accent-line:#3A3C45;--accent-rgb:242,240,234;}
   html[data-mode="dark"][data-kind="chest"]{--accent:#FFC531;--accent-dark:#E6A800;--accent-soft:#FFE08A;--accent-pale:#FFF3CC;--accent-bg:#3A3014;--accent-bg-2:#4A3E18;--accent-deep:#8A6A12;--accent-hot:#F2B400;--accent-line:#5A4A1E;--accent-rgb:255,197,49;}
-  html[data-mode="light"][data-kind="rest"]{--accent:#2A3FD6;--accent-dark:#1E2FA8;--accent-soft:#1E2FA8;--accent-pale:#141F7A;--accent-bg:#E3E7FB;--accent-bg-2:#D3D9F7;--accent-deep:#3A46A8;--accent-hot:#2A3FD6;--accent-line:#B7C0F0;--accent-rgb:42,63,214;}
-  html[data-mode="light"][data-kind="train"]{--accent:#D63D14;--accent-dark:#B02D0A;--accent-soft:#B02D0A;--accent-pale:#7A1F06;--accent-bg:#FBE4DC;--accent-bg-2:#F6D2C6;--accent-deep:#B03A1E;--accent-hot:#D63D14;--accent-line:#EBB9AA;--accent-rgb:214,61,20;}
+  html[data-mode="light"][data-kind="rest"]{--accent:#5F6270;--accent-dark:#3E414D;--accent-soft:#3E414D;--accent-pale:#14151B;--accent-bg:#E4E1DA;--accent-bg-2:#D8D4CB;--accent-deep:#80838F;--accent-hot:#5F6270;--accent-line:#CFCAC0;--accent-rgb:95,98,112;}
+  html[data-mode="light"][data-kind="train"]{--accent:#14151B;--accent-dark:#000000;--accent-soft:#3A3C45;--accent-pale:#14151B;--accent-bg:#E4E1DA;--accent-bg-2:#D8D4CB;--accent-deep:#5F6270;--accent-hot:#14151B;--accent-line:#CFCAC0;--accent-rgb:20,21,27;}
   html[data-mode="light"][data-kind="chest"]{--accent:#14151B;--accent-dark:#000000;--accent-soft:#3A3A44;--accent-pale:#14151B;--accent-bg:#F7EBC2;--accent-bg-2:#F0DFA0;--accent-deep:#8A6A12;--accent-hot:#14151B;--accent-line:#E3D08A;--accent-rgb:20,21,27;}
   *{box-sizing:border-box;}
   body{
@@ -891,3 +893,6 @@ html[data-tab="today"] #daySub{display:none}
 html[data-tab="today"] main{padding-bottom:66px;}
 /* On shorter phones, drop the "Week 1 of 24" line above the session name so the whole Today screen fits */
 @media (max-height: 980px){ #tab-today .tf-hero2-k{display:none;} }
+/* Guided session: the main button on the coloured screens is a dark pill, so it reads on any accent colour */
+#sessionPanel[data-sx="work"] button.primary, #sessionPanel[data-sx="emom"] button.primary, #sessionPanel[data-sx="hold"] button.primary, #sessionPanel[data-sx="done"] button.primary{background:var(--ink) !important; color:var(--text) !important;}
+#sessionPanel[data-sx="work"] button.secondary, #sessionPanel[data-sx="emom"] button.secondary, #sessionPanel[data-sx="hold"] button.secondary, #sessionPanel[data-sx="done"] button.secondary{color:var(--ink) !important; border-color:rgba(var(--ink-rgb),.55) !important; background:transparent !important; opacity:1;}

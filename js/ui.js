@@ -417,7 +417,7 @@ document.getElementById("dismissSkillIntroBtn").addEventListener("click", async 
 });
 
 // ---- Appearance: Dark or Light. The top "field" takes its colour from today's plan (see renderDayHero). ----
-const FIELD_COLORS = { rest: "#2A3FD6", train: "#FF5A36", chest: "#FFC531" };
+const FIELD_COLORS = { rest: "#2A2C35", train: "#F2F0EA", chest: "#FFC531" };
 function syncThemeColor() {
   const k = document.documentElement.dataset.kind || "rest";
   const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute("content", FIELD_COLORS[k] || FIELD_COLORS.rest);
