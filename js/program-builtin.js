@@ -402,6 +402,8 @@ superset_group is a letter shared by paired exercises, or null if standalone.`;
   // repeating the same warmup/cool-down items — callers already persist
   // state right after calling this, so no separate save needed here.
   addBackBlock(result, program);
+  if (day?.day) result.day = day.day; // the AI sometimes rewrites the day label; the day rules below key off the plan's own name
+  addBackStrength(result, program);
   addArmFinisher(result, program);
   state.lastWarmupCooldownNames = [
     ...(result.warmup || []).map(w => w.name),
@@ -425,6 +427,28 @@ function addBackBlock(result, program) {
   });
   const have = new Set(block.map(b => b.name.toLowerCase()));
   result.warmup = [...block, ...(result.warmup || []).filter(w => w && w.name && !have.has(w.name.toLowerCase()))];
+  return result;
+}
+
+// Lower-back and posterior-chain strength in the daily short program, 2 gentle sets after the main work: Superman with
+// a pause on the push days, and a glute bridge variant (matched to the hinge level) on Pull + legs A and Full body,
+// the two days with no hinge slot of their own. Pull + legs B already has one. Skipped if the move is already in
+// today's work. Built to be skipped on any day something feels off.
+function addBackStrength(result, program) {
+  if (!result || !Array.isArray(result.exercises)) return result;
+  if (!(program?.structure?.backBlock || /^prog-daily-/.test(program?.id || ""))) return result;
+  const day = String(result.day || "");
+  const lib = id => exercises.find(x => x.id === id);
+  let ex = null, note = null, reps = "8-10";
+  if (/^push/i.test(day)) { ex = lib("superman"); note = "pause 2 seconds at the top"; }
+  else if (/^pull \+ legs a|full body/i.test(day)) {
+    const lvl = (state.progressLevels && state.progressLevels.hinge) || 1;
+    if (lvl >= 3) { ex = lib("single-leg-glute-bridge"); note = "each side, pause at the top"; }
+    else if (lvl === 2) { ex = lib("glute-bridge-march"); note = "slow, hips level"; }
+    else { ex = lib("glute-bridge"); reps = "10-12"; note = "pause 2 seconds at the top"; }
+  }
+  if (!ex || result.exercises.some(e => e && e.name === ex.name)) return result;
+  result.exercises.push({ name: ex.name, muscle_group: ex.muscle_group, sets: 2, reps, superset_group: null, note, emom: null, back: true });
   return result;
 }
 
