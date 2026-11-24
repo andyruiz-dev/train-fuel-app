@@ -9,9 +9,13 @@ let st=JSON.stringify({progressLevels:{push:1,pull:1,legs:1,hinge:1,core:1,ruck:
 const b=await chromium.launch();const errs=[];const p=await b.newPage({viewport:{width:390,height:844},deviceScaleFactor:2});
 p.on('pageerror',e=>{if(!/ServiceWorker/.test(e.message))errs.push(e.message)});p.on('dialog',d=>d.accept());
 let genPrompt='',posted=null;
+const src=require('fs').readFileSync(require('path').join(__dirname,'..','js','exercises.js'),'utf8');
+const i0=src.indexOf('[',src.indexOf('const BUILTIN_EXERCISES'));let dd=0,k=i0;for(;k<src.length;k++){if(src[k]=='[')dd++;if(src[k]==']'){dd--;if(!dd)break}}
+const LIB=eval(src.slice(i0,k+1)).map(e=>Object.assign({source:'built-in'},e));
 await p.route(/^https?:/,r=>{if(r.request().url().includes('/api/'))return r.fallback();r.abort()});
 await p.route('**/api/**',r=>{const u=r.request().url(),m=r.request().method();
  if(u.includes('/api/generate')){genPrompt=r.request().postData()||'';return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({content:[{text:JSON.stringify({exercises:[{name:'Ring row',muscle_group:'pull',sets:3,reps:'8-12',superset_group:null},{name:'Bodyweight squat',muscle_group:'legs',sets:3,reps:'8-12',superset_group:null}],warmup:[{name:'Cat-cow',detail:'8'}],cooldown:[{name:'Childs pose reach',detail:'hold 45s'}]})}]})})}
+ if(u.includes('/api/exercises')&&m==='GET')return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(LIB)});
  if(u.includes('/api/programs')&&m==='POST'){posted=JSON.parse(r.request().postData());return r.fulfill({status:200,contentType:'application/json',body:'{}'})}
  if(u.includes('/api/state')&&m==='PUT'){st=r.request().postData();return r.fulfill({status:200,contentType:'application/json',body:'{}'})}
  r.fulfill({status:200,contentType:'application/json',body:u.includes('/api/state')&&m==='GET'?st:(u.includes('/api/programs')&&m==='GET'?JSON.stringify(posted?[posted]:[]):(m==='PUT'?'{}':'[]'))})});
@@ -34,8 +38,11 @@ t('goal set to 5',await p.evaluate(()=>state.settings.weeklyWorkoutGoal===5));
 const act=await p.evaluate(()=>state.activeProgramId);console.log('active=',act);t('program active',/prog-daily-/.test(act||''));
 t('chip 15-20 present',await p.locator('#minutesChips [data-minutes="15-20"]').count()===1);
 await p.waitForTimeout(800);
+t('AI prompt lists real exercises',/Ring row|Push-up/.test(genPrompt.split('Available exercises:')[1]||''));
 t('AI prompt excludes kettlebell',genPrompt.length>0&&!/kettlebell/i.test(genPrompt.split('Available exercises:')[1]||''));
 t('AI prompt excludes good morning',!/Good morning/i.test(genPrompt.split('Mobility library')[0]));
 t('15-20 minute session told to AI',/15-20-minute/.test(genPrompt));
 t('rest days Wed/Sun',await p.evaluate(()=>[0,3].every(d=>DAY_PLAN[d]==='rest')&&[1,2,4,5,6].every(d=>DAY_PLAN[d]==='train')));
+const wu=await p.evaluate(()=>((state.pendingWorkout&&state.pendingWorkout.workout&&state.pendingWorkout.workout.warmup)||[]).map(w=>w.name));
+console.log('WU',JSON.stringify(wu));t('back block leads the warm-up ('+wu.slice(0,3).join(', ')+')',wu[0]==='Cat-cow'&&wu.some(n=>/bird/i.test(n))&&wu.some(n=>/dead bug/i.test(n)));
 console.log(ok.join('\n'));console.log('errors',errs);await b.close()})();
