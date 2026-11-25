@@ -851,7 +851,11 @@ function renderProgramView() {
     if (d.fixed) {
       exs = d.fixed.exercises.map(f => { const v = kbFinisherVariant(f, wk); const x = BUILTIN_EXERCISES.find(b => b.id === ((v && v.id) || f.id)); const nm = x ? x.name : f.id; const reps = (v && v.reps) || f.reps; return `<button type="button" class="tf-exlink" data-pexinfo="${esc(nm)}"><span>${esc(nm)} ${esc(String(f.sets))}×${esc(String(reps))}</span><b>How to ›</b></button>`; }).join("");
     } else {
-      exs = (d.slots || []).map(s => `${esc(s.muscle_group)} ${esc(String(s.sets))}×${esc(String(s.reps))}`).join("<br>");
+      // Up-next day: show the real moves Today picked. Later days only have slots (picked on the day).
+      const real = st === "next" && pw && pw.workout && !pw.completed ? (pw.workout.exercises || []) : [];
+      exs = real.length
+        ? real.map(x => `${esc(x.name)} ${esc(String(x.sets))}×${esc(String(x.reps))}`).join("<br>")
+        : (d.slots || []).map(s => `${esc(s.muscle_group)} ${esc(String(s.sets))}×${esc(String(s.reps))}`).join("<br>");
     }
     return `<div class="tf-dcard ${st}" data-dcard><div class="r"><div><div class="k">${label}</div><div class="t">${esc(dayTitle(d.day))}</div></div>${icon}</div><div class="ex hidden">${exs}</div></div>`;
   }).join("");
