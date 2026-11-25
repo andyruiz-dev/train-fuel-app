@@ -54,12 +54,13 @@ t('ring face pull and reverse fly exist',arm.gen.every(Boolean));
 const bs=await p.evaluate(()=>{
   const prog={id:'prog-daily-1',structure:{backBlock:true}};
   const mk=day=>({day,exercises:[{name:'Ring row',muscle_group:'pull',sets:3,reps:'8-12',superset_group:null}]});
-  const last=r=>r.exercises[r.exercises.length-1];
+  const last=r=>r.exercises.filter(e=>e.name!=='Kettlebell pullover').pop();
   const out={};
   out.push=last(addBackStrength(mk('Push + core A'),prog)).name;
   state.progressLevels.hinge=2;out.pla=last(addBackStrength(mk('Pull + legs A'),prog)).name;
   out.full=last(addBackStrength(mk('Full body'),prog)).name;
-  out.plb=addBackStrength(mk('Pull + legs B'),prog).exercises.length;
+  out.plb=addBackStrength(mk('Pull + legs B'),prog).exercises.filter(e=>e.name!=='Kettlebell pullover').length;
+  out.poA=addBackStrength(mk('Pull + legs A'),prog).exercises.some(e=>e.name==='Kettlebell pullover');out.poB=addBackStrength(mk('Pull + legs B'),prog).exercises.some(e=>e.name==='Kettlebell pullover');out.poPush=addBackStrength(mk('Push + core A'),prog).exercises.some(e=>e.name==='Kettlebell pullover');out.poTwice=addBackStrength(addBackStrength(mk('Pull + legs B'),prog),prog).exercises.filter(e=>e.name==='Kettlebell pullover').length;state.travelMode=true;out.poTravel=addBackStrength(mk('Pull + legs B'),prog).exercises.some(e=>e.name==='Kettlebell pullover');state.travelMode=false;
   state.progressLevels.hinge=1;out.l1=last(addBackStrength(mk('Full body'),prog)).name;
   state.progressLevels.hinge=3;out.l3=last(addBackStrength(mk('Full body'),prog)).name;
   const dup={day:'Push + core A',exercises:[{name:'Superman',muscle_group:'core',sets:2,reps:'8',superset_group:null}]};out.dup=addBackStrength(dup,prog).exercises.length;
@@ -68,6 +69,7 @@ const bs=await p.evaluate(()=>{
 t('back strength: Superman on push days',bs.push==='Superman');
 t('back strength: bridge variant matches hinge level on Pull + legs A and Full body',bs.pla==='Glute bridge march'&&bs.full==='Glute bridge march'&&bs.l1==='Glute bridge'&&bs.l3==='Single-leg glute bridge');
 t('back strength: not on Pull + legs B (it has a hinge slot)',bs.plb===1);
+t('kettlebell pullover: on both pull days, not push, once only, not in travel mode',bs.poA&&bs.poB&&!bs.poPush&&bs.poTwice===1&&!bs.poTravel);
 t('back strength: not duplicated and only on the daily short program',bs.dup===1&&bs.other===1);
 const pm=await p.evaluate(()=>{
   const prog={id:'prog-daily-1',structure:{backBlock:true,equipment:['bodyweight','rings','parallettes','ab wheel']}};

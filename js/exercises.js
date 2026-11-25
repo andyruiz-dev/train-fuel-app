@@ -351,6 +351,7 @@ const BUILTIN_EXERCISES = [
   { id: "lean-away-raise", name: "Lean-away lateral raise", muscle_group: "push", equipment: "bodyweight", cue: "Hold a ring strap or a doorframe with one hand and lean your body away from it. Raise your free arm out to the side to shoulder height with a soft elbow, then lower it slowly over about three seconds. Leaning further makes it harder. For more load, hold a full water bottle. Switch sides each set." },
   { id: "kb-hammer-curl", name: "Kettlebell hammer curl", muscle_group: "pull", equipment: "kettlebell", cue: "Hold the bell by the horns with both hands so it hangs like a goblet. Elbows pinned to your sides, curl the bell up toward your chest and lower it slowly. Keep your torso still." },
   { id: "kb-skull-crusher", name: "Kettlebell floor skull-crusher", muscle_group: "push", equipment: "kettlebell", cue: "Lie on your back with your knees bent, holding the bell by the horns with both hands over your chest. Bend only your elbows to lower the bell toward your forehead, then press back up. Upper arms stay vertical. Go slow." },
+  { id: "kb-pullover", name: "Kettlebell pullover", muscle_group: "pull", equipment: "kettlebell", cue: "Lie on your back, knees bent, ribs down. Hold the bell by the horns with both hands over your chest, arms nearly straight with a soft elbow. Lower it back overhead in a slow arc until you feel a deep stretch in your lats, then pull it back over your chest. The shoulders move, the elbows barely bend. Stop before any pinch in the shoulder." },
   { id: "kb-goblet-carry", name: "Kettlebell goblet carry", muscle_group: "core", equipment: "kettlebell", cue: "Hold the bell by the horns at your chest, elbows tucked. Walk tall with your ribs down and squeeze the handle hard. Grip and trunk work in one." },
   { id: "ring-curl-feet-elevated", name: "Ring biceps curl (feet elevated)", muscle_group: "pull", equipment: "rings", cue: "Same as the ring curl but with your feet on a low step or chair so your body sits closer to horizontal. Palms up, curl your hands toward your forehead, lower slowly. Harder than the regular ring curl." },
   { id: "ring-closegrip-pushup", name: "Ring close-grip push-up", muscle_group: "push", equipment: "rings", cue: "Rings close together under your chest, elbows tight to your ribs. Lower under control and press up, keeping your body in one line. Works the triceps hard. Do it from your knees or with the rings higher to make it easier." },
@@ -365,7 +366,7 @@ const EXERCISE_LEVEL_MAP = {
   "kb-swing": 2, "kb-swing-1h": 3, "kb-goblet-squat": 2, "kb-rack-reverse-lunge": 3, "kb-press-hk": 3,
   "kb-floor-press": 2, "kb-row": 2, "kb-row-2h": 2, "kb-clean": 3, "kb-sl-rdl": 3, "kb-suitcase-carry": 2,
   "kb-waiter-carry": 3, "kb-turkish-getup": 3, "kb-overhead-lunge": 3, "kb-halo": 2, "kb-figure8": 2,
-  "kb-deadlift": 1, "kb-dead-high-pull": 2, "kb-dead-snatch": 3, "kb-snatch": 4,
+  "kb-deadlift": 1, "kb-pullover": 2, "kb-dead-high-pull": 2, "kb-dead-snatch": 3, "kb-snatch": 4,
   "kb-windmill": 3, "kb-racked-squat": 3, "kb-push-press": 3, "kb-complex": 3, "bw-complex": 2,
   // push
   "wall-pushup": 1, "incline-pushup-high": 1, "incline-pushup": 2, "knee-pushup": 2,
