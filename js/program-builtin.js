@@ -1052,7 +1052,12 @@ document.addEventListener("click", async (e) => {
   renderChestBoosters();
   if (changed) { try { await persistNow(); } catch (err) {} }
 });
+// A re-render (sync, a late load) must not throw the user back up the page.
 function renderTodayWorkout(workout) {
+  const m = document.querySelector("main"), y = m ? m.scrollTop : 0;
+  try { renderTodayWorkoutInner(workout); } finally { if (m && y) m.scrollTop = y; }
+}
+function renderTodayWorkoutInner(workout) {
   currentWorkout = workout;
   if (typeof syncArmToolLabel === "function") syncArmToolLabel();
   const kick = document.getElementById("tfKicker"); if (kick) kick.textContent = todayKickerText();
