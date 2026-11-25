@@ -486,8 +486,12 @@ function addBackStrength(result, program) {
     else if (lvl === 2) { ex = lib("glute-bridge-march"); note = "slow, hips level"; }
     else { ex = lib("glute-bridge"); reps = "10-12"; note = "pause 2 seconds at the top"; }
   }
-  if (!ex || result.exercises.some(e => e && e.name === ex.name)) return result;
-  result.exercises.push({ name: ex.name, muscle_group: ex.muscle_group, sets: 2, reps, superset_group: null, note, emom: null, back: true });
+  if (ex && !result.exercises.some(e => e && e.name === ex.name))
+    result.exercises.push({ name: ex.name, muscle_group: ex.muscle_group, sets: 2, reps, superset_group: null, note, emom: null, back: true });
+  // Pull days: kettlebell pullover for the lats, 2 slow sets.
+  const po = lib("kb-pullover");
+  if (po && !state.travelMode && /^pull/i.test(day) && !result.exercises.some(e => e && e.name === po.name))
+    result.exercises.push({ name: po.name, muscle_group: po.muscle_group, sets: 2, reps: "8-10", superset_group: null, note: "slow, stop at a stretch, no pinch", emom: null, back: true });
   return result;
 }
 
