@@ -69,6 +69,9 @@ function pageRules() {
     if (over > 1) { fails++; console.log('FAIL late-layout ' + tab + ': still ' + over + 'px cut off after the header grew'); } else console.log('PASS late-layout ' + tab);
   }
   for (const tab of ['coach', 'food', 'today']) { await p.click('nav.tabs .tab-btn[data-tab="' + tab + '"]'); await p.waitForTimeout(tab === 'today' ? 3500 : 500); await report(tab); }
+  // Programs: the up-next day lists real move names, not just muscle groups.
+  const pv = await p.evaluate(() => { try { renderProgramView(); } catch (e) { return 'err ' + e.message; } const c = document.querySelector('#tfProgramView .tf-dcard.next .ex'); return c ? c.textContent : 'no card'; });
+  if (!pv || /^(err|no card)/.test(pv) || /^(push|pull|legs|core) \d/i.test(pv)) { fails++; console.log('FAIL programs up-next: ' + pv); } else console.log('PASS programs up-next');
   // Opened sections must scroll: open More on Today, scroll down, wait, and the scroll position must stay.
   await p.waitForTimeout(2000); await p.click('#tfMore > summary').catch(() => {}); await p.waitForTimeout(800);
   const sc = await p.evaluate(async () => { const m = document.querySelector('main'); const max = m.scrollHeight - m.clientHeight; const can = max > 20; m.scrollTop = max; await new Promise(r => setTimeout(r, 600)); return { can, top: m.scrollTop, max: m.scrollHeight - m.clientHeight, zoom: document.querySelector('.tab-panel:not(.hidden)').style.zoom }; });
