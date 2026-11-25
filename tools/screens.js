@@ -69,6 +69,12 @@ function pageRules() {
     if (over > 1) { fails++; console.log('FAIL late-layout ' + tab + ': still ' + over + 'px cut off after the header grew'); } else console.log('PASS late-layout ' + tab);
   }
   for (const tab of ['coach', 'food', 'today']) { await p.click('nav.tabs .tab-btn[data-tab="' + tab + '"]'); await p.waitForTimeout(tab === 'today' ? 3500 : 500); await report(tab); }
+  // Opened sections must scroll: open More on Today, scroll down, wait, and the scroll position must stay.
+  await p.waitForTimeout(2000); await p.click('#tfMore > summary').catch(() => {}); await p.waitForTimeout(800);
+  const sc = await p.evaluate(async () => { const m = document.querySelector('main'); const max = m.scrollHeight - m.clientHeight; const can = max > 20; m.scrollTop = max; await new Promise(r => setTimeout(r, 600)); return { can, top: m.scrollTop, max: m.scrollHeight - m.clientHeight, zoom: document.querySelector('.tab-panel:not(.hidden)').style.zoom }; });
+  if (!sc.can || sc.top < sc.max - 2 || sc.zoom) { fails++; console.log('FAIL scroll-when-open: scrollable=' + sc.can + ' scrollTop=' + sc.top + '/' + sc.max + ' zoom=' + (sc.zoom || 'none')); } else console.log('PASS scroll-when-open');
+  await p.click('#tfMore > summary').catch(() => {}); await p.waitForTimeout(400);
+  await p.evaluate(() => { document.querySelector('main').scrollTop = 0; });
   await p.click('.tf-ph-main [data-moves-toggle]').catch(() => {}); await p.waitForTimeout(400); await report('today-expanded');
   await p.evaluate(w => { currentWorkout = w; startSession(); }, WK); await p.waitForTimeout(400);
   await p.click('#warmCoolContinueBtn').catch(() => {}); await p.waitForTimeout(400); await report('guided-set');

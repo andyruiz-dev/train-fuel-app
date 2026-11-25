@@ -87,10 +87,12 @@ function fitToScreen() {
     const sec = m.querySelector(".tab-panel:not(.hidden)"); if (!sec) return;
     const root = document.documentElement;
     sec.style.zoom = ""; root.dataset.fit = "0";
+    // Fit-to-page only applies to the collapsed screen. Once something is opened (More, See all, a section) the page scrolls normally.
+    if (sec.querySelector("details[open]:not(#todayWorkoutDetails), .tf-ph-main .tf-mv")) return;
     // How far the screen's content reaches under the tab bar (with 8px breathing room). Measured from real positions, not main's
     // scroll height, because main's bottom padding hides the problem when the tab bar is taller than that padding (gesture bar, safe area).
     const nav = document.querySelector("nav.tabs");
-    const over = () => { m.scrollTop = 0; return Math.ceil(sec.getBoundingClientRect().bottom + 8 - (nav ? nav.getBoundingClientRect().top : m.getBoundingClientRect().bottom)); };
+    const over = () => Math.ceil(sec.getBoundingClientRect().bottom + m.scrollTop + 8 - (nav ? nav.getBoundingClientRect().top : m.getBoundingClientRect().bottom));
     if (over() <= 1) return;
     for (const lvl of ["1", "2", "3"]) { root.dataset.fit = lvl; if (over() <= 1) return; }
     for (let i = 0; i < 6; i++) {
