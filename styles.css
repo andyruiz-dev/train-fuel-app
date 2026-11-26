@@ -981,3 +981,6 @@ html[data-tab="coach"] #daySub{display:none}
 html:is([data-fit="2"],[data-fit="3"]) .tf-moves-names{display:none;}
 html[data-fit="3"] .tf-hero2-bar{display:none;}
 html[data-fit="3"] #tab-today .tf-ph-main, html[data-fit="3"] #tab-today details.exercise-group > summary{padding-top:7px; padding-bottom:7px;}
+
+/* Programs: "Show likely moves" button inside a later day */
+.tf-dcard .ex button[data-fpreview]{display:block;margin-top:10px;min-height:36px;padding:6px 14px;font-size:13px}

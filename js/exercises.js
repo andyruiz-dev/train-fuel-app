@@ -813,6 +813,22 @@ function renderSettingsTiles() {
   const bv = document.getElementById("setBodyVal");
   if (bv) bv.textContent = state.settings?.heightInches ? state.settings.heightInches + " in" : "";
 }
+// Likely moves for the days after "up next" (in memory only, nothing saved). They're a forecast: tied to the
+// up-next workout they were made from, and dropped when that changes.
+let tfFuture = {};
+function tfFutureSig(program, phaseKey, pw) { return [program.id, phaseKey, (pw && pw.workout && pw.workout.exercises || []).map(x => x.name).join("|")].join("::"); }
+function tfFutureList(w) { return (w.exercises || []).map(x => `${escapeHtml(x.name)} ${escapeHtml(String(x.sets))}×${escapeHtml(String(x.reps))}`).join("<br>"); }
+async function tfPreviewFutureDay(program, phase, phaseKey, pw, dayIdx) {
+  const sig = tfFutureSig(program, phaseKey, pw);
+  if (tfFuture.sig !== sig) tfFuture = { sig, days: {} };
+  // Avoid repeating the up-next moves, or moves already shown for the days before this one.
+  const avoid = [...(pw && pw.workout && pw.workout.exercises || []).map(x => x.name)];
+  Object.keys(tfFuture.days).forEach(k => { if (+k < dayIdx) avoid.push(...tfFuture.days[k].exercises.map(x => x.name)); });
+  const keepNames = state.lastWarmupCooldownNames; // generating a forecast must not change what the real next workout avoids
+  try { tfFuture.days[dayIdx] = await generateTodayWorkout(program, dayIdx, avoid); }
+  finally { state.lastWarmupCooldownNames = keepNames; }
+}
+
 function renderProgramView() {
   const el = document.getElementById("tfProgramView");
   if (!el) return;
@@ -854,9 +870,13 @@ function renderProgramView() {
     } else {
       // Up-next day: show the real moves Today picked. Later days only have slots (picked on the day).
       const real = st === "next" && pw && pw.workout && !pw.completed ? (pw.workout.exercises || []) : [];
-      exs = real.length
-        ? real.map(x => `${esc(x.name)} ${esc(String(x.sets))}×${esc(String(x.reps))}`).join("<br>")
-        : (d.slots || []).map(s => `${esc(s.muscle_group)} ${esc(String(s.sets))}×${esc(String(s.reps))}`).join("<br>");
+      const pi = (phase.days || []).indexOf(d), pk = phaseKeyFor(program, phase), fut = tfFuture.sig === tfFutureSig(program, pk, pw) ? tfFuture.days[pi] : null;
+      if (real.length) exs = tfFutureList({ exercises: real });
+      else if (fut) exs = tfFutureList(fut) + '<div class="tf-pnote">Likely. May change.</div>';
+      else {
+        exs = (d.slots || []).map(s => `${esc(s.muscle_group)} ${esc(String(s.sets))}×${esc(String(s.reps))}`).join("<br>");
+        if (st === "pre" && wk === cur && pw && pi >= 0) exs += `<button type="button" class="secondary" data-fpreview="${pi}">Show likely moves</button>`;
+      }
     }
     return `<div class="tf-dcard ${st}" data-dcard><div class="r"><div><div class="k">${label}</div><div class="t">${esc(dayTitle(d.day))}</div></div>${icon}</div><div class="ex hidden">${exs}</div></div>`;
   }).join("");
@@ -878,6 +898,19 @@ document.getElementById("tfProgramView").addEventListener("click", (e) => {
   }
   const xl = e.target.closest("[data-pexinfo]");
   if (xl) { openExerciseSheet(xl.dataset.pexinfo); return; }
+  const fp = e.target.closest("[data-fpreview]");
+  if (fp) {
+    const program = programs.find(x => x.id === state.activeProgramId);
+    const pw = state.pendingWorkout && state.pendingWorkout.programId === (program && program.id) ? state.pendingWorkout : null;
+    if (!program || !pw || fp.disabled) return;
+    const cards = [...document.querySelectorAll("#tfProgramView [data-dcard]")], cardIdx = cards.indexOf(fp.closest("[data-dcard]"));
+    fp.disabled = true; fp.textContent = "Working…";
+    const { phase } = currentPhaseFor(program);
+    tfPreviewFutureDay(program, phase, phaseKeyFor(program, phase), pw, +fp.dataset.fpreview)
+      .then(() => { renderProgramView(); const c = document.querySelectorAll("#tfProgramView [data-dcard]")[cardIdx]; if (c) c.querySelector(".ex").classList.remove("hidden"); })
+      .catch(() => { fp.disabled = false; fp.textContent = "Couldn't load. Try again"; });
+    return;
+  }
   const c = e.target.closest("[data-dcard]");
   if (c) c.querySelector(".ex").classList.toggle("hidden");
 });
