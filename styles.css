@@ -984,3 +984,13 @@ html[data-fit="3"] #tab-today .tf-ph-main, html[data-fit="3"] #tab-today details
 
 /* Programs: "Show likely moves" button inside a later day */
 .tf-dcard .ex button[data-fpreview]{display:block;margin-top:10px;min-height:36px;padding:6px 14px;font-size:13px}
+
+/* Programs: keep the same gap between the last day and the "All programs" row as between days (details.tf-row zeroes its own margin) */
+#tab-programs .tf-days-list{padding-bottom:10px;}
+
+/* Programs > "All programs": flat rows with dividers inside the panel, not cards inside a card */
+#programManage #subtab-my-programs > .card{background:none !important; border:0 !important; border-top:1px solid var(--border) !important; border-radius:0 !important; padding:0 !important; margin:0 !important; box-shadow:none !important;}
+#programManage #subtab-my-programs > .card > details.exercise-group{border:0; padding:0;}
+#programManage #subtab-my-programs > .card > details.exercise-group > summary{min-height:52px; padding-top:0; padding-bottom:0; align-items:center;}
+#programManage #subtab-my-programs > .card > details[open]{padding-bottom:14px;}
+#programManage #programsSubNav{margin-bottom:6px !important;}

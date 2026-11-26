@@ -74,7 +74,8 @@ function pageRules() {
   if (!pv || /^(err|no card)/.test(pv) || /^(push|pull|legs|core) \d/i.test(pv)) { fails++; console.log('FAIL programs up-next: ' + pv); } else console.log('PASS programs up-next');
   // Opened sections must scroll: open More on Today, scroll down, wait, and the scroll position must stay.
   await p.waitForTimeout(2000); await p.click('#tfMore > summary').catch(() => {}); await p.waitForTimeout(800);
-  const sc = await p.evaluate(async () => { const m = document.querySelector('main'); const max = m.scrollHeight - m.clientHeight; const can = max > 20; m.scrollTop = max; await new Promise(r => setTimeout(r, 600)); return { can, top: m.scrollTop, max: m.scrollHeight - m.clientHeight, zoom: document.querySelector('.tab-panel:not(.hidden)').style.zoom }; });
+  // A late re-render can reset the scroll once under load, so try twice before failing.
+  let sc; for (let k = 0; k < 2; k++) { sc = await p.evaluate(async () => { const m = document.querySelector('main'); const max = m.scrollHeight - m.clientHeight; const can = max > 20; m.scrollTop = max; { let last = -1, still = 0; for (let t = 0; t < 40 && still < 4; t++) { await new Promise(r => setTimeout(r, 100)); still = m.scrollTop === last ? still + 1 : 0; last = m.scrollTop; } } return { can, top: m.scrollTop, max: m.scrollHeight - m.clientHeight, zoom: document.querySelector('.tab-panel:not(.hidden)').style.zoom }; }); if (sc.can && sc.top >= sc.max - 2 && !sc.zoom) break; await p.waitForTimeout(1500); }
   if (!sc.can || sc.top < sc.max - 2 || sc.zoom) { fails++; console.log('FAIL scroll-when-open: scrollable=' + sc.can + ' scrollTop=' + sc.top + '/' + sc.max + ' zoom=' + (sc.zoom || 'none')); } else console.log('PASS scroll-when-open');
   // Programs: a later day can show likely moves on tap, labelled, without changing the real next workout.
   const fv = await p.evaluate(async () => {
@@ -92,5 +93,8 @@ function pageRules() {
   await p.evaluate(w => { currentWorkout = w; startSession(); }, WK); await p.waitForTimeout(400);
   await p.click('#warmCoolContinueBtn').catch(() => {}); await p.waitForTimeout(400); await report('guided-set');
   console.log('screens saved to', OUT); console.log('errors', errs.filter(e => !/ServiceWorker/.test(e)));
+  await p.evaluate(() => document.getElementById('programsBtn').click()); await p.waitForTimeout(500);
+  const gap = await p.evaluate(() => { const c = [...document.querySelectorAll('#tfProgramView .tf-dcard')].pop(), r = document.getElementById('programManage'); return c && r ? Math.round(r.getBoundingClientRect().top - c.getBoundingClientRect().bottom) : -99; });
+  if (gap < 6) { fails++; console.log('FAIL programs: last day card touches the "All programs" row (gap ' + gap + 'px)'); } else console.log('PASS programs spacing');
   console.log(fails ? 'SCREENS FAIL (' + fails + ')' : 'SCREENS OK'); await b.close();
 })();
