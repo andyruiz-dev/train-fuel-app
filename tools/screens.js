@@ -76,6 +76,16 @@ function pageRules() {
   await p.waitForTimeout(2000); await p.click('#tfMore > summary').catch(() => {}); await p.waitForTimeout(800);
   const sc = await p.evaluate(async () => { const m = document.querySelector('main'); const max = m.scrollHeight - m.clientHeight; const can = max > 20; m.scrollTop = max; await new Promise(r => setTimeout(r, 600)); return { can, top: m.scrollTop, max: m.scrollHeight - m.clientHeight, zoom: document.querySelector('.tab-panel:not(.hidden)').style.zoom }; });
   if (!sc.can || sc.top < sc.max - 2 || sc.zoom) { fails++; console.log('FAIL scroll-when-open: scrollable=' + sc.can + ' scrollTop=' + sc.top + '/' + sc.max + ' zoom=' + (sc.zoom || 'none')); } else console.log('PASS scroll-when-open');
+  // Programs: a later day can show likely moves on tap, labelled, without changing the real next workout.
+  const fv = await p.evaluate(async () => {
+    const keep = JSON.stringify(state.lastWarmupCooldownNames || null); const orig = generateTodayWorkout;
+    generateTodayWorkout = async (pr, i, ...rest) => { if (i < 1) return orig(pr, i, ...rest); state.lastWarmupCooldownNames = ['x']; return { day: 'Pull + Legs A', exercises: [{ name: 'Ring row', muscle_group: 'pull', sets: 3, reps: '8-12' }] }; };
+    renderProgramView(); const btn = document.querySelector('#tfProgramView [data-fpreview]'); if (!btn) { generateTodayWorkout = orig; return 'no button'; }
+    btn.click(); await new Promise(r => setTimeout(r, 500)); generateTodayWorkout = orig;
+    const card = [...document.querySelectorAll('#tfProgramView .tf-dcard.pre .ex')].find(e => /Ring row/.test(e.textContent));
+    return { shown: !!card, label: card ? /Likely/.test(card.textContent) : false, kept: !(state.lastWarmupCooldownNames || []).includes('x') };
+  });
+  if (typeof fv === 'string' || !fv.shown || !fv.label || !fv.kept) { fails++; console.log('FAIL programs later-day preview: ' + JSON.stringify(fv)); } else console.log('PASS programs later-day preview');
   await p.click('#tfMore > summary').catch(() => {}); await p.waitForTimeout(400);
   await p.evaluate(() => { document.querySelector('main').scrollTop = 0; });
   await p.click('.tf-ph-main [data-moves-toggle]').catch(() => {}); await p.waitForTimeout(400); await report('today-expanded');
