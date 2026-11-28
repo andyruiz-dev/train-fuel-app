@@ -1066,3 +1066,6 @@ html[data-tab="today"] #dayHero, html[data-tab="today"] #wkRibbon{display:none !
 #muscleFilterChips,#levelFilterChips,#equipmentFilterChips{flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; margin-left:-16px; margin-right:-16px; padding:0 16px;}
 #muscleFilterChips::-webkit-scrollbar,#levelFilterChips::-webkit-scrollbar,#equipmentFilterChips::-webkit-scrollbar{display:none;}
 #muscleFilterChips .chip,#levelFilterChips .chip,#equipmentFilterChips .chip{flex:0 0 auto; border-radius:999px; white-space:nowrap;}
+
+/* Coach and Food match Today and Plan: no big word, no letter ribbon */
+html[data-tab="coach"] #dayHero, html[data-tab="coach"] #wkRibbon, html[data-tab="food"] #dayHero, html[data-tab="food"] #wkRibbon{display:none !important;}
