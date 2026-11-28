@@ -21,6 +21,33 @@ function renderWeekRibbon() {
   renderDayHero(todayKind);
 }
 
+
+// Today's top block, Fitloop-style: this week's days, three tiles (weight, walking minutes today, workouts this week) and one coach line.
+function renderTodayTop() {
+  const el = document.getElementById("tfTodayTop"); if (!el) return;
+  const days = weekDayList(0), todayS = localDateStr();
+  const done = new Set((state.logs || []).map(l => dayKeyOf(l.date)));
+  const dn = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], full = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const strip = days.map((d, i) => `<div class="tf-wd${d === todayS ? " on" : ""}${done.has(d) ? " done" : ""}" role="img" aria-label="${full[i]} ${+d.slice(8)}${d === todayS ? ", today" : ""}${done.has(d) ? ", trained" : ""}"><span>${dn[i]}</span><b>${+d.slice(8)}</b><i></i></div>`).join("");
+  let weight = "—";
+  try { const ws = sortedWeights(); if (ws.length) weight = String(Math.round(ws[ws.length - 1].weight * 10) / 10); } catch (e) {}
+  let mins = 0; try { mins = (state.cardioLogs || []).filter(l => dayKeyOf(l.date) === todayS).reduce((n, l) => n + (parseFloat(l.duration) || 0), 0); } catch (e) {}
+  let wk = 0, goal = 5; try { const c = consistencyStats(); wk = c.thisWeek; goal = c.goal || 5; } catch (e) {}
+  const ring = (frac, col) => { const r = 19, C = 2 * Math.PI * r, f = Math.max(0, Math.min(1, frac)); return `<svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="${r}" fill="none" stroke="var(--border)" stroke-width="5"/><circle cx="26" cy="26" r="${r}" fill="none" stroke="${col}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${(C * f).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 26 26)"/></svg>`; };
+  let msg = "";
+  try {
+    const w = typeof currentWorkout !== "undefined" ? currentWorkout : null;
+    msg = w && w.exercises && w.exercises.length ? (todayReasonText(w) || "Ready when you are.") : "Rest day. Recover well.";
+  } catch (e) {}
+  el.innerHTML = `<div class="tf-wk">${strip}</div>
+    <div class="tf-t2s">
+      <div class="tf-t2"><div class="k">WEIGHT</div><div class="v">${weight}</div><div class="s">${weight === "—" ? "not logged" : "lb"}</div></div>
+      <div class="tf-t2"><div class="k">WALK</div><div class="rg">${ring(mins / 30, "var(--accent)")}<b>${Math.round(mins)}</b></div><div class="s">min today</div></div>
+      <div class="tf-t2"><div class="k">WEEK</div><div class="rg">${ring(wk / goal, "var(--gold)")}<b>${wk}/${goal}</b></div><div class="s">workouts</div></div>
+    </div>
+    <div class="tf-coach1"><b>COACH</b><span>${escapeHtml(msg)}</span></div>`;
+}
+
 // The big word and one line of context at the top of Coach; also sets the colour of the whole top field.
 function nextPlannedDay() {
   const dow = new Date().getDay();
@@ -87,6 +114,8 @@ function fitToScreen() {
     const sec = m.querySelector(".tab-panel:not(.hidden)"); if (!sec) return;
     const root = document.documentElement;
     sec.style.zoom = ""; root.dataset.fit = "0";
+    // Today is a scrolling screen with its own Start button pinned above the tab bar; it is not squeezed to fit.
+    if (root.dataset.tab === "today") return;
     // Fit-to-page only applies to the collapsed screen. Once something is opened (More, See all, a section) the page scrolls normally.
     if (sec.querySelector("details[open]:not(#todayWorkoutDetails), .tf-ph-main .tf-mv")) return;
     // How far the screen's content reaches under the tab bar (with 8px breathing room). Measured from real positions, not main's
@@ -814,6 +843,7 @@ async function init() {
 // Re-draws everything that shows saved data. Used on first load and after another device's changes are merged in.
 function refreshViews() {
   try { renderWeekRibbon(); } catch (e) {}
+  try { renderTodayTop(); } catch (e) {}
   setTimeout(() => { try { fitDayWord(); } catch (e) {} }, 0);
   renderExercises();
   renderPrograms();

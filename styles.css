@@ -999,3 +999,35 @@ nav.tabs{left:12px !important; right:12px !important; bottom:calc(8px + env(safe
 nav.tabs .pill{width:64px;}
 nav.tabs button.active .pill{background:var(--accent-bg); box-shadow:inset 0 0 0 1px var(--accent-line);}
 main{padding-bottom:96px !important;}
+
+/* ===== Today, Fitloop-style: week strip, tiles, coach line, flat move rows, Start pinned above the tab bar ===== */
+html[data-tab="today"] #dayHero, html[data-tab="today"] #wkRibbon{display:none !important;}
+#tfTodayTop .tf-wk{display:grid; grid-template-columns:repeat(7,1fr); gap:2px; padding:0 0 12px;}
+.tf-wd{display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--text-muted); font-size:12px; font-weight:600; letter-spacing:.3px; text-transform:uppercase;}
+.tf-wd b{width:38px; height:38px; border-radius:50%; display:grid; place-items:center; font-size:17px; font-weight:600; color:var(--text); font-family:Manrope,sans-serif;}
+.tf-wd.on b{background:var(--text); color:var(--bg);}
+.tf-wd i{width:6px; height:6px; border-radius:50%; background:transparent;}
+.tf-wd.done i{background:var(--accent);}
+.tf-t2s{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px;}
+.tf-t2{background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:12px 8px 10px; text-align:center; min-height:112px; display:flex; flex-direction:column; align-items:center; justify-content:space-between;}
+.tf-t2 .k{font-size:11px; letter-spacing:.9px; font-weight:600; color:var(--text-muted); align-self:flex-start;}
+.tf-t2 .v{font-family:var(--font-display); font-size:30px; font-weight:600; line-height:1;}
+.tf-t2 .s{font-size:12px; color:var(--text-muted);}
+.tf-t2 .rg{position:relative; width:52px; height:52px; display:grid; place-items:center;}
+.tf-t2 .rg svg{position:absolute; inset:0;}
+.tf-t2 .rg b{position:relative; font-size:13px; font-weight:700;}
+.tf-coach1{display:flex; gap:10px; align-items:baseline; font-size:15px; line-height:1.4; margin:0 2px 12px;}
+.tf-coach1 b{font-size:11px; letter-spacing:1px; color:var(--accent); font-weight:700; flex:0 0 auto;}
+#tab-today .tf-ph-main{border-radius:22px !important; border:1px solid var(--border) !important; padding:8px 16px 10px; margin-bottom:10px;}
+#tab-today .tf-ph-main .tf-mv{background:none !important; border:0 !important; border-top:1px solid var(--border) !important; border-radius:0 !important; padding:6px 0; margin:0;}
+#tab-today .tf-ph-main .tf-moves-head + .tf-mv{border-top:0 !important;}
+#tab-today .tf-ph-main .tf-mv-line{align-items:center; gap:12px; padding:3px 0;}
+.tf-mv-ic{width:46px; height:46px; border-radius:13px; display:grid; place-items:center; flex:0 0 auto; background:var(--accent-bg); color:var(--accent); font-weight:700; font-size:17px; font-family:Manrope,sans-serif;}
+#tab-today .tf-hero2{border-radius:22px;}
+#startSessionBtn{position:sticky; bottom:calc(82px + env(safe-area-inset-bottom)); z-index:6; min-height:54px; border-radius:27px; font-size:17px; box-shadow:0 10px 26px rgba(0,0,0,.45);}
+.tf-hero2-why{display:none !important;}
+#startSessionBtn{order:6 !important; position:sticky !important;}
+#minimumDayBtn{order:7 !important;}
+#tfQuickRow{order:8 !important;}
+#tfMore{order:9 !important;}
+#tab-today .tf-ph-main{order:5;}
