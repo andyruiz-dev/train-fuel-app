@@ -767,7 +767,7 @@ function openExerciseSheet(name, idx) {
   }
   const mistakes = info && EX_MISTAKES[info.id];
   const tags = info ? `<div class="tags">${info.muscle_group ? `<span>${esc(info.muscle_group)}</span>` : ""}${info.equipment ? `<span>${esc(info.equipment)}</span>` : ""}</div>` : "";
-  el.innerHTML = `<div class="sheet"><div class="grab"></div><h3>${esc(name)}</h3>${tags}
+  el.innerHTML = `<div class="sheet"><div class="grab"></div>${exFigureHtml(name)}<h3>${esc(name)}</h3>${tags}
     ${bellHintHtml(name, (currentWorkout && currentWorkout.exercises || []).find(x => x.name === name)?.reps)}
     ${todayNoteHtml(name)}
     ${moveProgressHtml(name)}
@@ -832,7 +832,7 @@ function movesListHtml(workout) {
   // Keep the (i) glued to the last word so it never wraps onto a line of its own.
   const nameHtml = (n) => { const t = String(n); const k = t.lastIndexOf(" "); const head = k > 0 ? escapeHtml(t.slice(0, k)) + " " : ""; const last = escapeHtml(k > 0 ? t.slice(k + 1) : t); return `${head}<span class="tf-nw">${last}<span class="tf-mv-i" aria-label="How to">i</span></span>`; };
   const blocks = workoutBlocks(workout);
-  const line = (j) => { const x = ex[j]; return `<div class="tf-mv-line"><span class="tf-mv-ic" aria-hidden="true">${escapeHtml(String(x.name).replace(/^(kettlebell|kb|ring)\s+/i, "").charAt(0).toUpperCase())}</span><div class="tf-mv-name" data-exidx="${j}" data-exinfo="${escapeHtml(x.name)}">${nameHtml(x.name)}</div><div class="tf-mv-det">${det(x)}${x.emom ? ' <span class="tf-pill">EMOM</span>' : ""}</div></div>`; };
+  const line = (j) => { const x = ex[j]; return `<div class="tf-mv-line"><span class="tf-mv-ic" aria-hidden="true">${exThumbHtml(x.name) || escapeHtml(String(x.name).replace(/^(kettlebell|kb|ring)\s+/i, "").charAt(0).toUpperCase())}</span><div class="tf-mv-name" data-exidx="${j}" data-exinfo="${escapeHtml(x.name)}">${nameHtml(x.name)}</div><div class="tf-mv-det">${det(x)}${x.emom ? ' <span class="tf-pill">EMOM</span>' : ""}</div></div>`; };
   const rows = blocks.map(bk => `<div class="tf-mv ss" style="border-left-color:${bk.color};">${bk.label ? `<div class="tf-mv-tag" style="color:${bk.color};">${bk.label}</div>` : ""}${bk.idx.map(line).join("")}</div>`).join("");
   const names = [...new Set(ex.map(e => String(e.name).replace(/^(kettlebell|kb)\s+/i, "").replace(/^./, c => c.toUpperCase())))].map(n => escapeHtml(n)).join(" · ");
   const head = `<div class="tf-moves-head" data-moves-toggle role="button" tabindex="0"><span><i class="tf-dot" style="background:var(--accent);"></i>Main work · ${ex.length} moves</span><span style="color:var(--accent);">${movesOpen ? "Hide ▴" : "See all ▾"}</span></div>`;
