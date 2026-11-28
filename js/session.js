@@ -102,18 +102,25 @@ function renderSessionSummary(summary, opts = {}) {
       ? `${summary.maxCount} move${summary.maxCount === 1 ? "" : "s"} at the top of the rep range. Next time, aim for a little more there.`
       : "Solid work. Same targets next time, and the reps will come.";
   const tile = (n, label) => `<div class="tf-fin-tile"><b>${n}</b><span>${label}</span></div>`;
+  // Streak: consecutive training days ending today. Today's sets: each move with the reps you did.
+  const dayset = new Set((state.logs || []).map(l => dayKeyOf(l.date)));
+  let streak = 0; for (let d = new Date(); dayset.has(dayKeyOf(d.toISOString())); d.setDate(d.getDate() - 1)) streak++;
+  const todays = new Map(); (state.logs || []).filter(l => dayKeyOf(l.date) === localDateStr() && Array.isArray(l.actuals) && l.actuals.length).forEach(l => todays.set(l.exercise, l.actuals));
+  const rows = [...todays].slice(0, 6).map(([n, a], i) => `<div class="tf-fin-row" style="animation-delay:${0.25 + i * 0.07}s"><span class="ic">${exThumbHtml(n) || ""}</span><span class="n">${escapeHtml(n)}</span><b>${a.join(" · ")}</b></div>`).join("");
   panel.classList.remove("hidden");
   panel.innerHTML = `
     <div class="card">
       <div class="tf-fin-kicker">${opts.partial ? "SESSION STOPPED" : "WORKOUT COMPLETE"}</div>
       <div class="tf-fin-big">${opts.partial ? "Logged" : "Done"}</div>
-      <div class="tf-fin-day">${dayName}</div>
+      <div class="tf-fin-day">${dayName}${streak > 1 ? ` · ${streak} day streak` : ""}</div>
+      <div class="tf-wk tf-fin-wk">${typeof tfWeekCircles === "function" ? tfWeekCircles() : ""}</div>
       <div class="tf-fin-tiles">
         ${tile(duration || "·", "total time")}
         ${tile(summary.exercisesDone, summary.exercisesDone === 1 ? "move" : "moves")}
         ${tile(summary.totalSets, summary.totalSets === 1 ? "set" : "sets")}
         ${tile(thisWeek, thisWeek === 1 ? "day this week" : "days this week")}
       </div>
+      ${rows ? `<div class="tf-fin-rows">${rows}</div>` : ""}
       <div class="tf-fin-note">${note}</div>
       <div style="flex:1"></div>
       <button class="primary w100" id="sessionSummaryDoneBtn">Done</button>
