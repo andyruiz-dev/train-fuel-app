@@ -564,7 +564,7 @@ function renderSessionInner() {
       <div class="card">
         ${sxTop("Rest · " + Math.min(session.pos + 1, session.queue.length) + " of " + session.queue.length)}
         <h2>Rest</h2>
-        <div id="restClock" style="font-size:36px; font-weight:600; text-align:center; margin:14px 0; font-family:var(--font-mono);">${formatTime(remaining)}</div>
+        ${restDialHtml(remaining, session.restTotal || remaining)}
         <div style="padding:10px 12px; margin-bottom:10px; border:1px solid var(--border); border-radius:8px;">
           <div class="meta" style="text-transform:uppercase; letter-spacing:0.6px; font-size:11px;">Up next${step.supersetLabel ? " · " + step.supersetLabel : ""}</div>
           ${exFigureHtml(step.name)}<div class="name" style="margin-top:2px;">${step.name}</div>
@@ -642,7 +642,8 @@ function renderSessionInner() {
       <div class="card">
         ${sxTop("Set " + step.setNum + " of " + step.totalSets)}
         ${step.supersetLabel ? `<div class="meta mt8">${step.supersetLabel}</div>${supersetCueHtml(step)}` : ""}
-        <h2>${step.name}</h2>
+        ${exFigureHtml(step.name)}<h2>${step.name}</h2>
+        ${lastTimeHtml(step.name)}
         <div class="sx-hero">${targetSeconds}<small>seconds · hold</small></div>
         <div class="meta mt12">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · target ${targetSeconds}s hold · ${stepLevelLabel}${ringStrapNoteFor(step)}</div>
         ${eachSideCueHtml(step, true)}
@@ -679,6 +680,7 @@ function renderSessionInner() {
       ${sxTop("Set " + step.setNum + " of " + step.totalSets)}
       ${step.supersetLabel ? `<div class="meta mt8">${step.supersetLabel}</div>${supersetCueHtml(step)}` : ""}
       ${exFigureHtml(step.name)}<h2>${step.name}</h2>
+      ${lastTimeHtml(step.name)}
       <div class="sx-hero">${step.reps}<small>reps${step.note ? " · " + escapeHtml(step.note) : ""}</small></div>
       ${eachSideCueHtml(step, false)}
       ${ringStrapNoteFor(step) ? `<div class="meta mt8">${ringStrapNoteFor(step).replace(/^\s*·\s*/, "")}</div>` : ""}
@@ -941,7 +943,18 @@ function beginSecondHoldSide() {
   startHold(session.holdStep, session.holdTargetSeconds);
 }
 
+// Reps from the most recent logged session of this move, e.g. "Last time: 8 · 8 · 7".
+function lastTimeHtml(name) {
+  const l = (state.logs || []).slice().reverse().find(x => x.exercise === name && Array.isArray(x.actuals) && x.actuals.length);
+  return l ? `<div class="sx-last">Last time: ${l.actuals.join(" · ")}</div>` : "";
+}
+const REST_R = 96, REST_C = 2 * Math.PI * REST_R;
+function restDialHtml(remaining, total) {
+  const off = REST_C * (1 - Math.min(1, remaining / Math.max(1, total)));
+  return `<div class="sx-dial"><svg viewBox="0 0 220 220" aria-hidden="true"><circle cx="110" cy="110" r="${REST_R}" class="bg"/><circle id="restArc" cx="110" cy="110" r="${REST_R}" class="fg" stroke-dasharray="${REST_C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/></svg><div id="restClock">${formatTime(remaining)}</div></div>`;
+}
 function startRest(seconds) {
+  session.restTotal = seconds;
   session.resting = true;
   session.restEndTime = Date.now() + seconds * 1000;
   renderSession();
@@ -953,6 +966,8 @@ function tickRest() {
   const remaining = Math.max(0, Math.ceil((session.restEndTime - Date.now()) / 1000));
   const clock = document.getElementById("restClock");
   if (clock) clock.textContent = formatTime(remaining);
+  const arc = document.getElementById("restArc");
+  if (arc) arc.style.strokeDashoffset = (REST_C * (1 - Math.min(1, remaining / Math.max(1, session.restTotal || remaining || 1)))).toFixed(1);
   sxTick();
   if (remaining <= 0) {
     clearInterval(session.timerId);
