@@ -127,7 +127,7 @@ function scrollMainTop() { const m = document.querySelector("main"); if (m) m.sc
 
 // ---- header title follows the visible screen ----
 function syncHeaderTitle() {
-  const names = { coach: "Coach", food: "Food", today: "Today", programs: "Programs", settings: "Settings" };
+  const names = { coach: "Coach", food: "Food", today: "Today", programs: "Plan", settings: "Settings" };
   const open = document.querySelector(".tab-panel:not(.hidden)");
   const id = open ? open.id.replace("tab-", "") : "coach";
   document.documentElement.dataset.tab = id;
