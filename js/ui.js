@@ -800,7 +800,7 @@ document.addEventListener("visibilitychange", syncWakeLock);
 
 // ---- Swipe left/right between the three main tabs ----
 (function () {
-  const ORDER = ["coach", "food", "today"];
+  const ORDER = ["today", "programs", "coach", "food"];
   let sx = 0, sy = 0, st = 0, ok = false;
   function blocked(t) {
     if (!t || !t.closest) return true;

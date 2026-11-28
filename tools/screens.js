@@ -98,7 +98,17 @@ function pageRules() {
   await p.click('#warmCoolContinueBtn').catch(() => {}); await p.waitForTimeout(400); await report('guided-set');
   console.log('screens saved to', OUT); console.log('errors', errs.filter(e => !/ServiceWorker/.test(e)));
   await p.evaluate(() => document.getElementById('programsBtn').click()); await p.waitForTimeout(500);
-  const gap = await p.evaluate(() => { const c = [...document.querySelectorAll('#tfProgramView .tf-dcard')].pop(), r = document.getElementById('programManage'); return c && r ? Math.round(r.getBoundingClientRect().top - c.getBoundingClientRect().bottom) : -99; });
+  
+{ const cdp = await p.context().newCDPSession(p);
+  const swipe = async (x0,y0,x1,y1) => { await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:x0,y:y0}]}); for(let k=1;k<=4;k++){ await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x0+(x1-x0)*k/4,y:y0+(y1-y0)*k/4}]}); } await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]}); await p.waitForTimeout(500); };
+  await p.evaluate(() => { session=null; const sp=document.getElementById('sessionPanel'); sp.removeAttribute('data-sx'); sp.classList.add('hidden'); });
+  const act = () => p.evaluate(() => document.querySelector('nav.tabs .tab-btn.active').dataset.tab);
+  await p.evaluate(() => document.querySelector('nav.tabs [data-tab=today]').click()); await p.waitForTimeout(500);
+  const seq = []; const go = async (a,b) => { const before = await act(); await swipe(a,250,b,250); if (await act() === before) await swipe(a,250,b,250); seq.push(await act()); }; for (let k = 0; k < 3; k++) await go(330,60); for (let k = 0; k < 3; k++) await go(60,330);
+  const want = 'programs,coach,food,coach,programs,today';
+  if (seq.join(',') !== want) { fails++; console.log('FAIL swipe order: ' + seq.join(',') + ' wanted ' + want); } else console.log('PASS swipe between tabs follows the tab bar order'); }
+await p.evaluate(() => document.getElementById('programsBtn').click()); await p.waitForTimeout(400);
+const gap = await p.evaluate(() => { const c = [...document.querySelectorAll('#tfProgramView .tf-dcard')].pop(), r = document.getElementById('programManage'); return c && r ? Math.round(r.getBoundingClientRect().top - c.getBoundingClientRect().bottom) : -99; });
   if (gap < 6) { fails++; console.log('FAIL programs: last day card touches the "All programs" row (gap ' + gap + 'px)'); } else console.log('PASS programs spacing');
   console.log(fails ? 'SCREENS FAIL (' + fails + ')' : 'SCREENS OK'); await b.close();
 })();
