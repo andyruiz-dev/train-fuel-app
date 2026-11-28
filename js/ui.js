@@ -120,6 +120,8 @@ function fitToScreen() {
     const root = document.documentElement;
     sec.style.zoom = ""; root.dataset.fit = "0";
     // Today is a scrolling screen with its own Start button pinned above the tab bar; it is not squeezed to fit.
+    // Every screen scrolls like a normal app screen now; nothing is shrunk to fit (shrinking made text small and blurry and fought with scrolling).
+    return;
     if (root.dataset.tab === "today") return;
     // Fit-to-page only applies to the collapsed screen. Once something is opened (More, See all, a section) the page scrolls normally.
     if (sec.querySelector("details[open]:not(#todayWorkoutDetails), .tf-ph-main .tf-mv")) return;
