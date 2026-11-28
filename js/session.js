@@ -999,22 +999,16 @@ document.getElementById("programsSubNav").addEventListener("click", (e) => {
   document.getElementById("subtab-library").classList.toggle("hidden", chip.dataset.subtab !== "library");
 });
 
-// The app always opens on Coach (the front door), however it was launched: fresh open,
+// The app always opens on Today (the front door), however it was launched: fresh open,
 // relaunch after the OS killed it, or pull-to-refresh. The last tab is deliberately not saved.
-let lastActiveTab = "coach";
+let lastActiveTab = "today";
 // Whichever tab was open right before Programs was opened — lets a second
 // tap on the Programs icon return you there, matching how the Settings
 // icon already behaves on a repeat tap.
-let tabBeforePrograms = "coach";
+let tabBeforePrograms = "today";
 
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
-    if (btn.dataset.tab === "programs" && btn.classList.contains("active")) {
-      // already in Programs — pressing again exits back to whichever tab was open before, same as Settings
-      const targetBtn = document.querySelector(`.tab-btn[data-tab="${tabBeforePrograms}"]`);
-      if (targetBtn) targetBtn.click();
-      return;
-    }
     if (btn.dataset.tab === "programs") tabBeforePrograms = lastActiveTab;
     lastActiveTab = btn.dataset.tab;
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
