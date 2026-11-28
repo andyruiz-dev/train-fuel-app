@@ -22,13 +22,18 @@ function renderWeekRibbon() {
 }
 
 
-// Today's top block, Fitloop-style: this week's days, three tiles (weight, walking minutes today, workouts this week) and one coach line.
-function renderTodayTop() {
-  const el = document.getElementById("tfTodayTop"); if (!el) return;
+// Seven weekday circles for this week (trained days get a dot). Used on Today and Plan.
+function tfWeekCircles() {
   const days = weekDayList(0), todayS = localDateStr();
   const done = new Set((state.logs || []).map(l => dayKeyOf(l.date)));
   const dn = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], full = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   const strip = days.map((d, i) => `<div class="tf-wd${d === todayS ? " on" : ""}${done.has(d) ? " done" : ""}" role="img" aria-label="${full[i]} ${+d.slice(8)}${d === todayS ? ", today" : ""}${done.has(d) ? ", trained" : ""}"><span>${dn[i]}</span><b>${+d.slice(8)}</b><i></i></div>`).join("");
+  return strip;
+}
+// Today's top block, Fitloop-style: this week's days, three tiles (weight, walking minutes today, workouts this week) and one coach line.
+function renderTodayTop() {
+  const el = document.getElementById("tfTodayTop"); if (!el) return;
+  const strip = tfWeekCircles(), todayS = localDateStr();
   let weight = "—";
   try { const ws = sortedWeights(); if (ws.length) weight = String(Math.round(ws[ws.length - 1].weight * 10) / 10); } catch (e) {}
   let mins = 0; try { mins = (state.cardioLogs || []).filter(l => dayKeyOf(l.date) === todayS).reduce((n, l) => n + (parseFloat(l.duration) || 0), 0); } catch (e) {}

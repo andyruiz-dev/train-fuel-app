@@ -902,7 +902,7 @@ function renderProgramView() {
   }).join("");
 
   const pills = `<span class="on">${esc(String(program.source || "program"))}</span><span>${maxWeek} weeks</span>${program.structure.session?.days ? `<span>${program.structure.session.days} days/wk</span>` : `<span>${perWeek} days/wk</span>`}`;
-  el.innerHTML = `<div class="tf-prog-head"><button type="button" class="chg" id="tfChangeProgram">Change program</button><div class="pills">${pills}</div><h2>${esc(program.name)}</h2></div>
+  el.innerHTML = `<div class="tf-wk tf-wk-plan">${typeof tfWeekCircles === "function" ? tfWeekCircles() : ""}</div><div class="tf-prog-head"><button type="button" class="chg" id="tfChangeProgram">Change program</button><div class="pills">${pills}</div><h2>${esc(program.name)}</h2></div>
     <div class="tf-wktabs" id="tfWkTabs">${tabs}</div>
     <div class="tf-pbar"><b>${pct}%</b><div class="bar"><i style="width:${pct}%"></i></div><span>${done === null ? `wk ${cur} / ${maxWeek}` : `${done} / ${total}`}</span></div>
     <div class="tf-pnote">${esc(String(phase?.phase || ""))}${isDeload ? " · deload week" : ""}${wk !== cur ? ` · viewing week ${wk}` : ""}${days.some(d => d.fixed && d.fixed.exercises.some(f => KB_FINISHER_ROTATION[f.id])) ? " · push-up and core finishers rotate weekly" : ""}</div>
