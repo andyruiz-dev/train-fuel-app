@@ -44,8 +44,9 @@ function renderTodayTop() {
     const w = typeof currentWorkout !== "undefined" ? currentWorkout : null;
     msg = w && w.exercises && w.exercises.length ? (todayReasonText(w) || "Ready when you are.") : "Rest day. Recover well.";
   } catch (e) {}
-  el.innerHTML = `<div class="tf-wk">${strip}</div>
-    <div class="tf-t2s">
+  el.innerHTML = `<div class="tf-wk">${strip}</div>`;
+  const tl = document.getElementById("tfTodayTiles");
+  if (tl) tl.innerHTML = `<div class="tf-t2s">
       <div class="tf-t2"><div class="k">WEIGHT</div><div class="v">${weight}</div><div class="s">${weight === "—" ? "not logged" : "lb"}</div></div>
       <div class="tf-t2"><div class="k">WALK</div><div class="rg">${ring(mins / 30, "var(--accent)")}<b>${Math.round(mins)}</b></div><div class="s">min today</div></div>
       <div class="tf-t2"><div class="k">WEEK</div><div class="rg">${ring(wk / goal, "var(--gold)")}<b>${wk}/${goal}</b></div><div class="s">workouts</div></div>

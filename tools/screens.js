@@ -74,7 +74,7 @@ function pageRules() {
   if (!pv || /^(err|no card)/.test(pv) || /^(push|pull|legs|core) \d/i.test(pv)) { fails++; console.log('FAIL programs up-next: ' + pv); } else console.log('PASS programs up-next');
   // Today scrolls like a normal app screen: week strip, 3 tiles, and a Start button pinned clear of the tab bar.
   await p.click('nav.tabs .tab-btn[data-tab="today"]'); await p.waitForTimeout(800);
-  const td = await p.evaluate(() => { const b = document.getElementById('startSessionBtn').getBoundingClientRect(), n = document.querySelector('nav.tabs').getBoundingClientRect(); return { days: document.querySelectorAll('#tfTodayTop .tf-wd').length, tiles: document.querySelectorAll('#tfTodayTop .tf-t2').length, startVisible: b.height > 30 && b.bottom <= n.top + 1 && b.top > 0, rows: document.querySelectorAll('#tab-today .tf-mv-ic').length }; });
+  const td = await p.evaluate(() => { const b = document.getElementById('startSessionBtn').getBoundingClientRect(), n = document.querySelector('nav.tabs').getBoundingClientRect(); return { days: document.querySelectorAll('#tfTodayTop .tf-wd').length, tiles: document.querySelectorAll('#tfTodayTiles .tf-t2').length, startVisible: b.height > 30 && b.bottom <= n.top + 1 && b.top > 0, rows: document.querySelectorAll('#tab-today .tf-mv-ic').length }; });
   if (td.days !== 7 || td.tiles !== 3 || !td.startVisible || td.rows < 1) { fails++; console.log('FAIL today layout: ' + JSON.stringify(td)); } else console.log('PASS today layout');
   // Opened sections must scroll: open More on Today, scroll down, wait, and the scroll position must stay.
   await p.waitForTimeout(2000); await p.click('#tfMore > summary').catch(() => {}); await p.waitForTimeout(800);
