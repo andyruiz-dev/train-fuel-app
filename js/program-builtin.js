@@ -806,7 +806,7 @@ document.getElementById("todayWorkout").addEventListener("click", (e) => {
   if (n) openExerciseSheet(n.dataset.exinfo, n.dataset.exidx !== undefined ? parseInt(n.dataset.exidx, 10) : undefined);
 });
 
-let movesOpen = false;
+let movesOpen = true;
 const PH_COLORS = ["var(--accent)", "var(--gold)", "var(--slate)", "var(--sand-pale)"];
 // Breaks a workout into blocks (each superset, each standalone move, a finisher) with a colour per block.
 function workoutBlocks(workout) {
@@ -832,7 +832,7 @@ function movesListHtml(workout) {
   // Keep the (i) glued to the last word so it never wraps onto a line of its own.
   const nameHtml = (n) => { const t = String(n); const k = t.lastIndexOf(" "); const head = k > 0 ? escapeHtml(t.slice(0, k)) + " " : ""; const last = escapeHtml(k > 0 ? t.slice(k + 1) : t); return `${head}<span class="tf-nw">${last}<span class="tf-mv-i" aria-label="How to">i</span></span>`; };
   const blocks = workoutBlocks(workout);
-  const line = (j) => { const x = ex[j]; return `<div class="tf-mv-line"><div class="tf-mv-name" data-exidx="${j}" data-exinfo="${escapeHtml(x.name)}">${nameHtml(x.name)}</div><div class="tf-mv-det">${det(x)}${x.emom ? ' <span class="tf-pill">EMOM</span>' : ""}</div></div>`; };
+  const line = (j) => { const x = ex[j]; return `<div class="tf-mv-line"><span class="tf-mv-ic" aria-hidden="true">${escapeHtml(String(x.name).replace(/^(kettlebell|kb|ring)\s+/i, "").charAt(0).toUpperCase())}</span><div class="tf-mv-name" data-exidx="${j}" data-exinfo="${escapeHtml(x.name)}">${nameHtml(x.name)}</div><div class="tf-mv-det">${det(x)}${x.emom ? ' <span class="tf-pill">EMOM</span>' : ""}</div></div>`; };
   const rows = blocks.map(bk => `<div class="tf-mv ss" style="border-left-color:${bk.color};">${bk.label ? `<div class="tf-mv-tag" style="color:${bk.color};">${bk.label}</div>` : ""}${bk.idx.map(line).join("")}</div>`).join("");
   const names = [...new Set(ex.map(e => String(e.name).replace(/^(kettlebell|kb)\s+/i, "").replace(/^./, c => c.toUpperCase())))].map(n => escapeHtml(n)).join(" · ");
   const head = `<div class="tf-moves-head" data-moves-toggle role="button" tabindex="0"><span><i class="tf-dot" style="background:var(--accent);"></i>Main work · ${ex.length} moves</span><span style="color:var(--accent);">${movesOpen ? "Hide ▴" : "See all ▾"}</span></div>`;
@@ -1063,6 +1063,7 @@ function renderTodayWorkout(workout) {
 }
 function renderTodayWorkoutInner(workout) {
   currentWorkout = workout;
+  try { renderTodayTop(); } catch (e) {}
   if (typeof syncArmToolLabel === "function") syncArmToolLabel();
   const kick = document.getElementById("tfKicker"); if (kick) kick.textContent = todayKickerText();
   const box = document.getElementById("todayWorkout");

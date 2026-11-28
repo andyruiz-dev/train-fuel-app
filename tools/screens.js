@@ -53,15 +53,15 @@ function pageRules() {
   await p.addStyleTag({ content: '*,*::before,*::after{animation:none!important;transition:none!important}' });
   const report = async (name) => {
     await p.screenshot({ path: path.join(OUT, name + '-' + VP.join('x') + '.png') });
-    const o = await p.evaluate(pageRules); const probs = []; if (o.fit > 1 && name !== 'today-expanded' && name !== 'guided-set') probs.push('does not fit the screen: ' + o.fit + 'px cut off or needing a scroll');
+    const o = await p.evaluate(pageRules); const probs = []; if (o.fit > 1 && name !== 'today-expanded' && name !== 'guided-set' && name !== 'today') probs.push('does not fit the screen: ' + o.fit + 'px cut off or needing a scroll');
     o.overflow.forEach(x => probs.push('overflow: ' + x)); o.tap.forEach(x => probs.push('tap target under 32px: ' + x));
     o.font.forEach(x => probs.push('text under 11px: ' + x)); o.title.forEach(x => probs.push(x)); o.contrast.forEach(x => probs.push('low contrast: ' + x));
     if (o.mast !== null && o.mast > VP[1] * 0.3) probs.push('masthead too tall: content starts at ' + o.mast + 'px (max 30% of screen)');
     if (probs.length) { fails++; console.log('FAIL ' + name); probs.slice(0, 8).forEach(x => console.log('   ' + x)); } else console.log('PASS ' + name);
   };
   // Late layout change (a web font arriving, the header resizing): the screen must re-fit by itself.
-  for (const tab of ['coach', 'food', 'today']) {
-    await p.click('nav.tabs .tab-btn[data-tab="' + tab + '"]'); await p.waitForTimeout(tab === 'today' ? 3500 : 800);
+  for (const tab of ['coach', 'food']) {
+    await p.click('nav.tabs .tab-btn[data-tab="' + tab + '"]'); await p.waitForTimeout(800);
     await p.evaluate(() => { const h = document.getElementById('dayHero'); h.style.paddingBottom = '50px'; });
     await p.waitForTimeout(600);
     const over = await p.evaluate(() => { const m = document.querySelector('main'), n = document.querySelector('nav.tabs'), c = m.querySelector('.tab-panel:not(.hidden)'); m.scrollTop = 0; return Math.ceil(c.getBoundingClientRect().bottom + 8 - n.getBoundingClientRect().top); });
@@ -72,6 +72,10 @@ function pageRules() {
   // Programs: the up-next day lists real move names, not just muscle groups.
   const pv = await p.evaluate(() => { try { renderProgramView(); } catch (e) { return 'err ' + e.message; } const c = document.querySelector('#tfProgramView .tf-dcard.next .ex'); return c ? c.textContent : 'no card'; });
   if (!pv || /^(err|no card)/.test(pv) || /^(push|pull|legs|core) \d/i.test(pv)) { fails++; console.log('FAIL programs up-next: ' + pv); } else console.log('PASS programs up-next');
+  // Today scrolls like a normal app screen: week strip, 3 tiles, and a Start button pinned clear of the tab bar.
+  await p.click('nav.tabs .tab-btn[data-tab="today"]'); await p.waitForTimeout(800);
+  const td = await p.evaluate(() => { const b = document.getElementById('startSessionBtn').getBoundingClientRect(), n = document.querySelector('nav.tabs').getBoundingClientRect(); return { days: document.querySelectorAll('#tfTodayTop .tf-wd').length, tiles: document.querySelectorAll('#tfTodayTop .tf-t2').length, startVisible: b.height > 30 && b.bottom <= n.top + 1 && b.top > 0, rows: document.querySelectorAll('#tab-today .tf-mv-ic').length }; });
+  if (td.days !== 7 || td.tiles !== 3 || !td.startVisible || td.rows < 1) { fails++; console.log('FAIL today layout: ' + JSON.stringify(td)); } else console.log('PASS today layout');
   // Opened sections must scroll: open More on Today, scroll down, wait, and the scroll position must stay.
   await p.waitForTimeout(2000); await p.click('#tfMore > summary').catch(() => {}); await p.waitForTimeout(800);
   // A late re-render can reset the scroll once under load, so try twice before failing.

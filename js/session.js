@@ -1020,6 +1020,7 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
       const active = programs.find(p => p.id === state.activeProgramId);
       if (active) ensureWorkoutReady(active);
       renderCoachTeaser();
+      try { renderTodayTop(); } catch (e) {}
     }
     if (btn.dataset.tab === "coach") {
       renderCoachNote();
