@@ -500,7 +500,7 @@ document.getElementById("dismissSkillIntroBtn").addEventListener("click", async 
 const FIELD_COLORS = { rest: "#2A2C35", train: "#F2F0EA", chest: "#2A2C35" };
 function syncThemeColor() {
   const k = document.documentElement.dataset.kind || "rest";
-  const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute("content", FIELD_COLORS[k] || FIELD_COLORS.rest);
+  const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute("content", getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#08090C");
 }
 function applyMode(m) {
   m = m === "light" ? "light" : "dark";
