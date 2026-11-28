@@ -567,7 +567,7 @@ function renderSessionInner() {
         <div id="restClock" style="font-size:36px; font-weight:600; text-align:center; margin:14px 0; font-family:var(--font-mono);">${formatTime(remaining)}</div>
         <div style="padding:10px 12px; margin-bottom:10px; border:1px solid var(--border); border-radius:8px;">
           <div class="meta" style="text-transform:uppercase; letter-spacing:0.6px; font-size:11px;">Up next${step.supersetLabel ? " · " + step.supersetLabel : ""}</div>
-          <div class="name" style="margin-top:2px;">${step.name}</div>
+          ${exFigureHtml(step.name)}<div class="name" style="margin-top:2px;">${step.name}</div>
           <div class="meta">${step.muscle_group} · set ${step.setNum} of ${step.totalSets} · ${isHoldExercise(step.name) ? "target " + (parseRepRange(step.reps).max || parseRepRange(step.reps).min || 20) + "s hold" : step.reps + " reps"}${step.note ? " " + step.note : ""}</div>
           ${stepCueHtml}
         </div>
@@ -678,7 +678,7 @@ function renderSessionInner() {
     <div class="card">
       ${sxTop("Set " + step.setNum + " of " + step.totalSets)}
       ${step.supersetLabel ? `<div class="meta mt8">${step.supersetLabel}</div>${supersetCueHtml(step)}` : ""}
-      <h2>${step.name}</h2>
+      ${exFigureHtml(step.name)}<h2>${step.name}</h2>
       <div class="sx-hero">${step.reps}<small>reps${step.note ? " · " + escapeHtml(step.note) : ""}</small></div>
       ${eachSideCueHtml(step, false)}
       ${ringStrapNoteFor(step) ? `<div class="meta mt8">${ringStrapNoteFor(step).replace(/^\s*·\s*/, "")}</div>` : ""}

@@ -358,6 +358,26 @@ const BUILTIN_EXERCISES = [
   { id: "kb-push-press", name: "Kettlebell push press", muscle_group: "push", equipment: "kettlebell", cue: "From the rack, dip a few inches by bending the knees, then drive the legs and press the bell overhead in one motion. Lower it back to the rack. Lets you move heavier loads overhead than a strict press." },
 ];
 
+// Still pictures for some moves (two frames, start and end). From the open free-exercise-db set (Unlicense, public domain).
+// Moves with no picture show a letter tile. Rings, kettlebell carries and skills have none yet.
+const EX_IMG = {"pushup":"Pushups","incline-pushup":"Incline_Push-Up","incline-pushup-high":"Incline_Push-Up","decline-pushup":"Decline_Push-Up","handstand-pushup":"Handstand_Push-Ups","ring-dip":"Ring_Dips","ring-dip-supported":"Ring_Dips","scap-pull":"Scapular_Pull-Up","chinup":"Chin-Up","band-pull-apart":"Band_Pull_Apart","band-assisted-pullup":"Band_Assisted_Pull-Up","bodyweight-squat":"Bodyweight_Squat","split-squat":"Split_Squats","single-leg-glute-bridge":"Single_Leg_Glute_Bridge","dead-bug":"Dead_Bug","plank":"Plank","band-pallof-press":"Pallof_Press","bench-dip":"Bench_Dips","muscle-up":"Muscle_Up","superman":"Superman","plyo-pushup":"Plyo_Push-up","one-arm-pushup":"Single-Arm_Push-Up","mountain-climbers":"Mountain_Climbers","inchworm":"Inchworm","arm-circles":"Arm_Circles","wrist-circles":"Wrist_Circles","childs-pose-reach":"Childs_Pose","worlds-greatest-stretch":"Worlds_Greatest_Stretch","ankle-circles":"Ankle_Circles","kb-swing-1h":"One-Arm_Kettlebell_Swings","kb-floor-press":"One-Arm_Kettlebell_Floor_Press","kb-figure8":"Kettlebell_Figure_8","kb-goblet-squat":"Goblet_Squat","kb-windmill":"Kettlebell_Windmill","kb-sl-rdl":"Kettlebell_One-Legged_Deadlift","ring-row":"Inverted_Row","hanging-leg-raise":"Hanging_Leg_Raise","kneeling-hip-flexor-stretch":"Kneeling_Hip_Flexor","band-external-rotation":"External_Rotation_with_Band"};
+function exImgDir(name) {
+  const n = String(name || "").toLowerCase();
+  const all = (typeof exercises !== "undefined" && exercises ? exercises : []).concat(BUILTIN_EXERCISES);
+  const x = all.find(y => String(y.name).toLowerCase() === n);
+  return x ? EX_IMG[x.id] || null : null;
+}
+// Small square thumbnail (first frame), or "" when the move has no picture.
+function exThumbHtml(name) {
+  const d = exImgDir(name);
+  return d ? `<img src="img/ex/${d}/0.jpg" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : "";
+}
+// Larger figure that flips between the two frames.
+function exFigureHtml(name) {
+  const d = exImgDir(name);
+  return d ? `<div class="tf-exfig" aria-hidden="true"><img src="img/ex/${d}/0.jpg" alt="" decoding="async" onerror="this.parentNode.remove()"><img class="b" src="img/ex/${d}/1.jpg" alt="" decoding="async" onerror="this.remove()"></div>` : "";
+}
+
 // Approximate difficulty level (1-5) per exercise, based on the progression
 // ladder each muscle group was authored as. Used only client-side to group
 // the swap picker into regressions/same-level/progressions — not stored in D1.

@@ -89,4 +89,8 @@ t('pull slots get mixed planes too',pm.ppl[0]!==pm.ppl[1]);
 t('already mixed, single, and no-eligible-swap workouts are untouched, other groups too',pm.mixedSame&&pm.singleSame&&pm.noneSame&&pm.core==='Dead bug');
 const dt=await p.evaluate(()=>[dayTitle('Push + core A'),dayTitle('Pull + legs B'),dayTitle('Full body'),dayTitle('Rest day'),dayTitle('Bell A: squat, press, row'),dayTitle(undefined)]);
 t('day names are Title Case ('+dt.join(' | ')+')',dt[0]==='Push + Core A'&&dt[1]==='Pull + Legs B'&&dt[2]==='Full Body'&&dt[3]==='Rest Day'&&dt[4]==='Bell A: Squat, Press, Row'&&dt[5]==='');
+const ip=await p.evaluate(()=>({push:exThumbHtml('Push-up'),none:exThumbHtml('Full front lever'),fig:exFigureHtml('Dead bug'),dirs:[...new Set(Object.values(EX_IMG))]}));
+const fs=require('fs'),pa=require('path');const missing=ip.dirs.filter(d=>!fs.existsSync(pa.join(__dirname,'..','img','ex',d,'0.jpg'))||!fs.existsSync(pa.join(__dirname,'..','img','ex',d,'1.jpg')));
+t('move pictures: matched move gets its picture, unmatched gets none, figure has two frames',/img\/ex\/Pushups\/0\.jpg/.test(ip.push)&&ip.none===''&&(ip.fig.match(/<img/g)||[]).length===2);
+t('move pictures: every mapped picture file exists ('+ip.dirs.length+' moves)',missing.length===0);
 console.log('errors',errs.filter(e=>!/ServiceWorker/.test(e)));await b.close()})();
