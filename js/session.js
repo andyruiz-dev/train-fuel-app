@@ -1005,6 +1005,12 @@ async function finishSession() {
 document.getElementById("startSessionBtn").addEventListener("click", startSession);
 document.getElementById("minimumDayBtn").addEventListener("click", startMinimumDay);
 
+document.getElementById("tfPlanSeg").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-seg]"); if (!b) return;
+  document.querySelectorAll("#tfPlanSeg button").forEach(x => x.classList.toggle("on", x === b));
+  document.getElementById("tfPlanPane").classList.toggle("hidden", b.dataset.seg !== "plan");
+  document.getElementById("subtab-library").classList.toggle("hidden", b.dataset.seg !== "library");
+});
 document.getElementById("programsSubNav").addEventListener("click", (e) => {
   const chip = e.target.closest("[data-subtab]");
   if (!chip) return;

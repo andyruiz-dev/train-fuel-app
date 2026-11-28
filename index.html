@@ -213,11 +213,13 @@
 
   <!-- PROGRAMS (with Library merged in as a sub-section) -->
   <section id="tab-programs" class="tab-panel hidden">
+    <div class="tf-seg" id="tfPlanSeg" role="tablist"><button type="button" class="on" data-seg="plan" role="tab">Plan</button><button type="button" data-seg="library" role="tab">Library</button></div>
+    <div id="tfPlanPane">
     <div id="tfProgramView"></div>
     <details class="exercise-group tf-row" id="programManage" style="margin-top:16px;">
-      <summary>All programs, generate new, exercise library</summary>
+      <summary>All programs and generate new</summary>
       <div class="mt12">
-    <div class="row" id="programsSubNav" style="margin-bottom:14px;">
+    <div class="row" id="programsSubNav" hidden style="margin-bottom:14px;">
       <div class="chip active" data-subtab="my-programs">My programs</div>
       <div class="chip" data-subtab="library">Exercise library</div>
     </div>
@@ -297,7 +299,10 @@
       </div>
     </div>
 
-    <div id="subtab-library" class="hidden">
+      </div>
+    </details>
+    </div>
+    <div id="subtab-library" class="tf-libpane hidden">
       <div class="card">
         <h2>Exercise library</h2>
         <input type="text" id="exerciseSearch" placeholder="Search exercises…">
@@ -330,8 +335,6 @@
         <div id="exerciseList" class="empty mt12">Loading…</div>
       </div>
     </div>
-      </div>
-    </details>
   </section>
 
   <!-- COACH -->
