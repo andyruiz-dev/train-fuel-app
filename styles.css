@@ -1113,3 +1113,15 @@ details.tf-more > summary::-webkit-details-marker{display:none;}
 .tf-lcard .bar i{display:block; height:100%; background:var(--accent);}
 .tf-lcard .nw{font-size:13px; font-weight:600; margin-top:2px;}
 .tf-lcard .nx{font-size:12px; color:var(--text-muted);}
+
+/* Sharper look: deeper dark surfaces, brighter text, larger square thumbnails, roomier rows */
+html[data-mode="dark"]{--bg:#08090C; --surface:#1D1F29; --surface-2:#252834; --surface-3:#2D303D; --surface-deep:#07080B; --border:#262832; --border-3:#2C2E3A; --border-4:#1E2029; --text:#FFFFFF; --text-muted:#A9ACB9;}
+#tab-today .tf-ph-main .tf-mv{padding:10px 0;}
+#tab-today .tf-ph-main .tf-mv-line{gap:14px; padding:4px 0;}
+.tf-mv-ic{width:64px !important; height:64px !important; border-radius:18px !important;}
+#tab-today .tf-mv-name{font-size:18px; font-weight:600;}
+#tab-today .tf-mv-det{font-size:15px; color:var(--text-muted); font-weight:500;}
+.tf-dcard{border-radius:22px;}
+.tf-t2{border-radius:22px;}
+.tf-lcard .ic{border-radius:14px;}
+.tf-exfig img{border-radius:18px;}
