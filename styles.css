@@ -1125,3 +1125,7 @@ html[data-mode="dark"]{--bg:#08090C; --surface:#1D1F29; --surface-2:#252834; --s
 .tf-t2{border-radius:22px;}
 .tf-lcard .ic{border-radius:14px;}
 .tf-exfig img{border-radius:18px;}
+
+/* Today order: week strip, workout (moves, Start), then tiles, coach line and check-in note */
+#tfTodayTiles{order:3; margin-top:14px;}
+#tab-today #tfPending{order:4;}
