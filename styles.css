@@ -1129,3 +1129,19 @@ html[data-mode="dark"]{--bg:#08090C; --surface:#1D1F29; --surface-2:#252834; --s
 /* Today order: week strip, workout (moves, Start), then tiles, coach line and check-in note */
 #tfTodayTiles{order:3; margin-top:14px;}
 #tab-today #tfPending{order:4;}
+
+/* ===== App shell: edge-to-edge dark screen, docked tab bar, native touch behaviour (no coloured band, no rounded panel, no scrollbars) ===== */
+html,body{background:var(--bg) !important;}
+header{background:var(--bg) !important; color:var(--text) !important; padding-top:calc(10px + env(safe-area-inset-top)) !important;}
+#hTitle,#hDate,#profileBtn,#profileBtn.active{color:var(--text) !important;}
+#profileBtn .status-dot{box-shadow:0 0 0 2px var(--bg) !important;}
+main{border-radius:0 !important; background:var(--bg) !important; padding-bottom:calc(96px + env(safe-area-inset-bottom)) !important;}
+nav.tabs{left:0 !important; right:0 !important; bottom:0 !important; border-radius:0 !important; border:0 !important; border-top:1px solid var(--border) !important; background:var(--bg) !important; -webkit-backdrop-filter:none; backdrop-filter:none; box-shadow:none !important; padding:6px 6px calc(6px + env(safe-area-inset-bottom)) !important;}
+#startSessionBtn{bottom:calc(84px + env(safe-area-inset-bottom)) !important;}
+*{-webkit-tap-highlight-color:transparent;}
+html,body,button,nav,header,summary,.tf-dcard,.tf-mv,.tf-t2,.tf-lcard,.tf-wd{-webkit-user-select:none; user-select:none; -webkit-touch-callout:none;}
+input,textarea,[contenteditable]{-webkit-user-select:text; user-select:text;}
+button,a,summary,[role=button],.chip{touch-action:manipulation;}
+*{scrollbar-width:none;}
+*::-webkit-scrollbar{display:none; width:0; height:0;}
+html{overscroll-behavior:none;}
